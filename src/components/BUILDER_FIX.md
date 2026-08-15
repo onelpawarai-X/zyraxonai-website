@@ -1,0 +1,1 @@
+BuilderStudio was rebuilt as a valid JSX implementation after the malformed <pre>/<code> nesting caused the production Vite transform to fail. The route now uses the stable implementation with one SSE assistant message, live activity, web research, code view, light/dark glass UI, preview and GitHub publishing.
