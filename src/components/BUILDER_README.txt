@@ -1,0 +1,1 @@
+Stable BuilderStudio.next.tsx replaces the malformed JSX implementation.
