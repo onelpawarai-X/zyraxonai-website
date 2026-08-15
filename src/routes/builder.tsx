@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import BuilderStudio from '@/components/BuilderStudioMulti'
+import BuilderStudio from '@/components/BuilderStudioEnhancements'
 
 export const Route = createFileRoute('/builder')({
   head: () => ({
