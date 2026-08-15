@@ -1,6 +1,7 @@
 import type { User } from "./ecosystem-types";
 
-const GITHUB_CLIENT_ID = "Ov23li80YUa3q7YPon5m";
+/** Public OAuth client identifier. The client secret never belongs in browser code. */
+export const GITHUB_CLIENT_ID = "Ov23liDGlT46vtrvOSqo";
 const STORAGE_KEY = "zyraxon_ecosystem_auth";
 
 export interface AuthState {
