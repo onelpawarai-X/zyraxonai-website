@@ -1,7 +1,8 @@
-/** GitHub OAuth exchange backed by Lovable Cloud auth sessions. */
+/** GitHub OAuth exchange backed by the ZYRAXON Supabase session. */
 import { createClient } from '@supabase/supabase-js';
 import { HttpError, badRequest, readJson, requireString } from './http.server';
 import type { ApiContext } from './context.server';
+import { encryptGitHubToken } from '@/lib/github-token.server';
 
 type GitHubUser = {
   id: number;
@@ -14,7 +15,16 @@ type GitHubUser = {
   email: string | null;
 };
 
-async function githubToken(code: string): Promise<string> {
+type GitHubTokenResponse = {
+  access_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  refresh_token_expires_in?: number;
+  scope?: string;
+  error_description?: string;
+};
+
+async function githubToken(code: string): Promise<GitHubTokenResponse> {
   const clientId = process.env['GITHUB_CLIENT_ID'];
   const clientSecret = process.env['GITHUB_CLIENT_SECRET'];
   if (!clientId || !clientSecret) {
@@ -25,9 +35,9 @@ async function githubToken(code: string): Promise<string> {
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
   });
-  const body = (await res.json()) as { access_token?: string; error_description?: string };
+  const body = (await res.json()) as GitHubTokenResponse;
   if (!body.access_token) throw badRequest(body.error_description ?? 'GitHub rejected the authorization code');
-  return body.access_token;
+  return body;
 }
 
 async function githubGet<T>(path: string, token: string): Promise<T> {
@@ -42,7 +52,6 @@ async function githubGet<T>(path: string, token: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-/** Mint a Lovable Cloud session for an email address without a password. */
 async function mintSession(email: string) {
   const url = process.env['SUPABASE_URL'];
   const publishable = process.env['SUPABASE_PUBLISHABLE_KEY'];
@@ -76,10 +85,10 @@ async function mintSession(email: string) {
 export async function githubExchange(ctx: ApiContext) {
   const body = await readJson<{ code?: string }>(ctx.request);
   const code = requireString(body.code, 'code', 500);
-
-  const token = await githubToken(code);
-  const ghUser = await githubGet<GitHubUser>('/user', token);
-  const emails = await githubGet<{ email: string; primary: boolean; verified: boolean }[]>('/user/emails', token).catch(
+  const github = await githubToken(code);
+  const accessToken = github.access_token!;
+  const ghUser = await githubGet<GitHubUser>('/user', accessToken);
+  const emails = await githubGet<{ email: string; primary: boolean; verified: boolean }[]>('/user/emails', accessToken).catch(
     () => [],
   );
   const email =
@@ -89,7 +98,6 @@ export async function githubExchange(ctx: ApiContext) {
     `${ghUser.login}@users.noreply.github.com`;
 
   const { data: existing } = await ctx.db.from('profiles').select('id').eq('github_id', ghUser.id).maybeSingle();
-
   if (!existing) {
     const created = await ctx.db.auth.admin.createUser({
       email,
@@ -102,7 +110,6 @@ export async function githubExchange(ctx: ApiContext) {
   }
 
   const session = await mintSession(email);
-
   await ctx.db
     .from('profiles')
     .update({
@@ -117,8 +124,23 @@ export async function githubExchange(ctx: ApiContext) {
     })
     .eq('id', session.user.id);
 
-  const { data: profile } = await ctx.db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+  const encryptedAccessToken = await encryptGitHubToken(accessToken);
+  const encryptedRefreshToken = github.refresh_token ? await encryptGitHubToken(github.refresh_token) : null;
+  const now = Date.now();
+  await ctx.db.from('github_connections').upsert({
+    user_id: session.user.id,
+    github_id: ghUser.id,
+    github_login: ghUser.login,
+    encrypted_access_token: encryptedAccessToken,
+    token_expires_at: github.expires_in ? new Date(now + github.expires_in * 1000).toISOString() : null,
+    refresh_token_encrypted: encryptedRefreshToken,
+    refresh_token_expires_at: github.refresh_token_expires_in
+      ? new Date(now + github.refresh_token_expires_in * 1000).toISOString()
+      : null,
+    scopes: (github.scope ?? '').split(/\s+/).filter(Boolean),
+  });
 
+  const { data: profile } = await ctx.db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
   return {
     user: {
       id: session.user.id,
