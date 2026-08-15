@@ -1,18 +1,17 @@
-/** OpenCode Zen provider integration for the current free model tier. */
+/** OpenCode Console gateway integration for the current free model tier. */
 
-export const ZEN_BASE = 'https://opencode.ai/zen/v1';
+// OpenCode's current Console gateway explicitly supports free chat models without
+// an Authorization header. A user-supplied API key is still accepted for paid
+// models, so the builder works in both no-key and BYO-key modes.
+export const ZEN_BASE = 'https://console.opencode.ai/inference/openai/v1';
 
-export type ZenModel = { id: string; label: string; blurb: string };
+export type ZenModel = { id: string; label: string; blurb: string; free?: boolean };
 
-/** Free OpenCode Zen models documented by OpenCode. Availability is time-limited. */
+/** Models currently documented by OpenCode Console as available to the builder. */
 export const ZEN_FREE_MODELS: ZenModel[] = [
-  { id: 'big-pickle', label: 'Big Pickle', blurb: 'Stealth builder · free for a limited time' },
-  { id: 'deepseek-v4-flash-free', label: 'DeepSeek V4 Flash Free', blurb: 'Fast coding · free for a limited time' },
-  { id: 'mimo-v2.5-free', label: 'MiMo V2.5 Free', blurb: 'Balanced reasoning · free for a limited time' },
-  { id: 'laguna-s-2.1-free', label: 'Laguna S 2.1 Free', blurb: 'General builder · free for a limited time' },
-  { id: 'ling-3.0-flash-free', label: 'Ling 3.0 Flash Free', blurb: 'Fast generation · free for a limited time' },
-  { id: 'north-mini-code-free', label: 'North Mini Code Free', blurb: 'Code focused · free for a limited time' },
-  { id: 'nemotron-3-ultra-free', label: 'Nemotron 3 Ultra Free', blurb: 'Deep reasoning · free for a limited time' },
+  { id: 'big-pickle', label: 'Big Pickle', blurb: 'Fast builder · free', free: true },
+  { id: 'mimo-v2.5-free', label: 'MiMo V2.5 Free', blurb: 'Balanced reasoning · free', free: true },
+  { id: 'nemotron-3-super-free', label: 'Nemotron 3 Super Free', blurb: 'Reasoning · free', free: true },
 ];
 
 export const DEFAULT_ZEN_MODEL = ZEN_FREE_MODELS[0]!.id;
@@ -31,13 +30,16 @@ CRITICAL RULES:
 
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
-export async function zenChatStream(model: string, messages: ChatMessage[], apiKey?: string): Promise<Response> {
+function authHeaders(apiKey?: string): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+  return headers;
+}
 
+export async function zenChatStream(model: string, messages: ChatMessage[], apiKey?: string): Promise<Response> {
   const upstream = await fetch(`${ZEN_BASE}/chat/completions`, {
     method: 'POST',
-    headers,
+    headers: authHeaders(apiKey),
     body: JSON.stringify({
       model,
       stream: true,
@@ -48,11 +50,14 @@ export async function zenChatStream(model: string, messages: ChatMessage[], apiK
 
   if (!upstream.ok || !upstream.body) {
     const text = await upstream.text().catch(() => '');
-    return new Response(JSON.stringify({
-      error: upstream.status === 401 ? 'OpenCode Zen authentication is required.' : `Zen error ${upstream.status}`,
-      detail: text.slice(0, 800),
-    }), {
-      status: upstream.status === 401 ? 401 : 502,
+    const detail = text.slice(0, 1200);
+    let error = `OpenCode Console error ${upstream.status}`;
+    if (upstream.status === 401) error = 'This model requires an OpenCode Console API key.';
+    if (upstream.status === 429) error = 'OpenCode Console rate limit reached. Try another free model or retry shortly.';
+    if (upstream.status >= 500) error = 'OpenCode Console is temporarily unavailable. Try another free model.';
+
+    return new Response(JSON.stringify({ error, detail, provider: 'opencode-console', model }), {
+      status: upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
@@ -65,4 +70,24 @@ export async function zenChatStream(model: string, messages: ChatMessage[], apiK
       'Access-Control-Allow-Origin': '*',
     },
   });
+}
+
+/** Small non-streaming provider probe used by the Builder's model health UI. */
+export async function testZenModel(model: string, apiKey?: string): Promise<{ ok: boolean; status: number; detail?: string }> {
+  try {
+    const response = await fetch(`${ZEN_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: authHeaders(apiKey),
+      body: JSON.stringify({
+        model,
+        stream: false,
+        max_tokens: 8,
+        messages: [{ role: 'user', content: 'Reply with OK.' }],
+      }),
+    });
+    const text = await response.text().catch(() => '');
+    return { ok: response.ok, status: response.status, detail: response.ok ? undefined : text.slice(0, 600) };
+  } catch (error) {
+    return { ok: false, status: 0, detail: error instanceof Error ? error.message : 'Provider connection failed' };
+  }
 }
