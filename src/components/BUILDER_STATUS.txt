@@ -1,0 +1,1 @@
+Production fix: malformed JSX in the previous BuilderStudio implementation was removed. Stable implementation supports single-message SSE streaming, live activity, web research, dark/light ultra-glass UI, live preview, code workspace and GitHub publishing.
