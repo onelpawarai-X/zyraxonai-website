@@ -18,7 +18,6 @@ export function GitHubHomeAuth() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [open, setOpen] = useState(false);
-
   const callbackUrl = useMemo(() => `${window.location.origin}${CALLBACK_PATH}`, []);
 
   useEffect(() => {
@@ -26,11 +25,9 @@ export function GitHubHomeAuth() {
     const code = params.get("code");
     const returnedState = params.get("state");
     if (!code) return;
-
     const expectedState = sessionStorage.getItem(STATE_KEY);
     sessionStorage.removeItem(STATE_KEY);
     window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
-
     if (!returnedState || !expectedState || returnedState !== expectedState) {
       setMessage("GitHub sign-in could not be verified. Please try again.");
       return;
@@ -46,11 +43,8 @@ export function GitHubHomeAuth() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code }),
         });
-        const body = await response.json();
-        if (!response.ok || !body.token || !body.user) {
-          throw new Error(body?.error?.message || "GitHub sign-in failed");
-        }
-
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || !body.token || !body.user) throw new Error(body?.error?.message || body?.error || "GitHub sign-in failed");
         const apiUser = body.user;
         const user: User = {
           id: apiUser.id,
@@ -70,7 +64,6 @@ export function GitHubHomeAuth() {
           publishedCount: 0,
           createdAt: new Date().toISOString(),
         };
-
         if (!cancelled) {
           setAuthState({ user, token: body.token });
           setAuth({ user, token: body.token, isAuthenticated: true });
@@ -82,10 +75,7 @@ export function GitHubHomeAuth() {
         if (!cancelled) setBusy(false);
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const startLogin = () => {
@@ -106,64 +96,30 @@ export function GitHubHomeAuth() {
     setMessage("");
   };
 
-  if (!auth.isAuthenticated || !auth.user) {
-    return (
-      <div style={{ position: "fixed", top: 18, right: 22, zIndex: 2000 }}>
-        <button
-          type="button"
-          onClick={startLogin}
-          disabled={busy}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 14,
-            padding: "11px 16px", color: "#fff", background: "rgba(10,10,16,.72)",
-            border: "1px solid rgba(255,255,255,.14)", backdropFilter: "blur(22px) saturate(150%)",
-            boxShadow: "0 14px 45px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08)",
-            cursor: busy ? "wait" : "pointer", fontWeight: 700, fontSize: 13,
-          }}
-        >
-          {busy ? <Loader2 size={17} className="animate-spin" /> : <Github size={17} />}
-          {busy ? "Connecting…" : "Sign in with GitHub"}
-        </button>
-        {message && (
-          <div style={{ marginTop: 10, maxWidth: 290, padding: "10px 12px", borderRadius: 12, color: "#e7e7ee", background: "rgba(10,10,16,.78)", border: "1px solid rgba(255,255,255,.1)", backdropFilter: "blur(18px)", fontSize: 12 }}>
-            {message}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div style={{ position: "fixed", top: 16, right: 18, zIndex: 2000 }}>
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        style={{
-          display: "flex", alignItems: "center", gap: 10, padding: "7px 11px 7px 7px",
-          borderRadius: 16, color: "#fff", background: "rgba(8,8,14,.72)",
-          border: "1px solid rgba(255,255,255,.14)", backdropFilter: "blur(24px) saturate(160%)",
-          boxShadow: "0 16px 50px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08)", cursor: "pointer",
-        }}
-      >
-        <img src={auth.user.avatarUrl || ""} alt="" style={{ width: 31, height: 31, borderRadius: 10, objectFit: "cover", background: "rgba(255,255,255,.08)" }} />
-        <span style={{ fontWeight: 700, fontSize: 13, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{auth.user.displayName}</span>
-        <CheckCircle2 size={15} style={{ color: "#4ade80" }} />
-      </button>
-
-      {open && (
-        <div style={{ marginTop: 9, width: 250, padding: 14, borderRadius: 18, background: "rgba(9,9,15,.82)", border: "1px solid rgba(255,255,255,.12)", backdropFilter: "blur(28px) saturate(160%)", boxShadow: "0 25px 70px rgba(0,0,0,.48)" }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 13 }}>
-            <UserCircle2 size={18} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ color: "#fff", fontWeight: 750, fontSize: 13 }}>{auth.user.displayName}</div>
-              <div style={{ color: "#9898a8", fontSize: 11 }}>@{auth.user.username}</div>
-            </div>
-          </div>
-          <div style={{ color: "#8f8f9d", fontSize: 11, marginBottom: 12 }}>GitHub is connected to ZYRAXON AI. Repository actions are handled by the server.</div>
-          <button type="button" onClick={logout} style={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: 7, borderRadius: 11, padding: "9px 12px", color: "#ffb4b4", background: "rgba(255,70,70,.07)", border: "1px solid rgba(255,90,90,.14)", cursor: "pointer" }}>
-            <LogOut size={14} /> Sign out
+    <div className="zyraxon-home-auth">
+      <style>{`.zyraxon-home-auth{height:58px;display:flex;justify-content:flex-end;align-items:center;padding:0 18px;box-sizing:border-box;background:rgba(7,7,12,.86);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(26px) saturate(160%);position:relative;z-index:30}.zyraxon-home-auth button{font:inherit}.zha-trigger{display:flex;align-items:center;gap:9px;padding:7px 11px 7px 7px;border-radius:15px;color:#fff;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);box-shadow:0 12px 35px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.07);cursor:pointer}.zha-avatar{width:30px;height:30px;border-radius:10px;object-fit:cover;background:rgba(255,255,255,.08)}.zha-menu{position:absolute;right:18px;top:51px;width:250px;padding:14px;border-radius:18px;background:rgba(10,10,16,.94);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(28px) saturate(160%);box-shadow:0 25px 70px rgba(0,0,0,.5)}.zha-signin{display:inline-flex;align-items:center;gap:9px;border-radius:13px;padding:10px 15px;color:#fff;background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.12);cursor:pointer;font-weight:700}.zha-message{position:absolute;right:18px;top:51px;margin-top:7px;max-width:290px;padding:10px 12px;border-radius:12px;color:#e7e7ee;background:rgba(10,10,16,.94);border:1px solid rgba(255,255,255,.1);font-size:12px;box-shadow:0 18px 45px rgba(0,0,0,.4)}`}</style>
+      {!auth.isAuthenticated || !auth.user ? (
+        <>
+          <button type="button" className="zha-signin" onClick={startLogin} disabled={busy}>
+            {busy ? <Loader2 size={17} className="animate-spin" /> : <Github size={17} />}
+            {busy ? "Connecting…" : "Sign in with GitHub"}
           </button>
-        </div>
+          {message && <div className="zha-message">{message}</div>}
+        </>
+      ) : (
+        <>
+          <button type="button" className="zha-trigger" onClick={() => setOpen((v) => !v)}>
+            <img src={auth.user.avatarUrl || ""} alt="" className="zha-avatar" />
+            <span style={{ fontWeight: 700, fontSize: 13, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{auth.user.displayName}</span>
+            <CheckCircle2 size={15} style={{ color: "#4ade80" }} />
+          </button>
+          {open && <div className="zha-menu">
+            <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 13 }}><UserCircle2 size={18} /><div><div style={{ color: "#fff", fontWeight: 750, fontSize: 13 }}>{auth.user.displayName}</div><div style={{ color: "#9898a8", fontSize: 11 }}>@{auth.user.username}</div></div></div>
+            <div style={{ color: "#8f8f9d", fontSize: 11, marginBottom: 12 }}>GitHub is connected to ZYRAXON AI. Repository actions are handled by the server.</div>
+            <button type="button" onClick={logout} style={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: 7, borderRadius: 11, padding: "9px 12px", color: "#ffb4b4", background: "rgba(255,70,70,.07)", border: "1px solid rgba(255,90,90,.14)", cursor: "pointer" }}><LogOut size={14} /> Sign out</button>
+          </div>}
+        </>
       )}
     </div>
   );
