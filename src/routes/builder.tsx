@@ -1,16 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import BlueprintStudioPro from '@/components/BlueprintStudioPro'
+import BuilderStudio from '@/components/BuilderStudio'
 
 export const Route = createFileRoute('/builder')({
   head: () => ({
     meta: [
-      { title: 'ZYRAXON Blueprint — AI Website Builder' },
-      { name: 'description', content: 'Build, preview, inspect and publish responsive websites with ZYRAXON Blueprint.' },
-      { property: 'og:title', content: 'ZYRAXON Blueprint — AI Website Builder' },
-      { property: 'og:description', content: 'A premium glass AI website builder with live preview, code workspace and GitHub publishing.' },
+      { title: 'ZYRAXON AI Builder' },
+      { name: 'description', content: 'Build, research, preview, inspect and publish websites with ZYRAXON AI.' },
+      { property: 'og:title', content: 'ZYRAXON AI Builder' },
+      { property: 'og:description', content: 'A focused conversational AI website builder with live preview, web research, code view and GitHub publishing.' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
     ],
   }),
-  component: BlueprintStudioPro,
+  component: BuilderStudio,
 })
