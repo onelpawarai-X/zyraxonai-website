@@ -1,9 +1,5 @@
 name: One-shot MYRA integration
-on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - .github/workflows/one-shot-myra-pr.yml
+on: push
 permissions:
   contents: write
   pull-requests: write
@@ -11,82 +7,40 @@ jobs:
   integrate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build integration branch and PR
+      - name: Patch page and open PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          BRANCH="feat/integrate-myra-final"
+          BRANCH=feat/integrate-myra-final
           git checkout -B "$BRANCH" origin/main
           python3 - <<'PY'
           from pathlib import Path
           import re
           p=Path('public/zyraxon.html')
           s=p.read_text(encoding='utf-8')
-
-          # Remove the two requested top navigation buttons.
           s=re.sub(r'<a[^>]*class=["\']nav-blueprint["\'][^>]*>.*?</a>', '', s, flags=re.S)
           s=re.sub(r'<a[^>]*class=["\']nav-cta["\'][^>]*>.*?</a>', '', s, flags=re.S)
           s=re.sub(r'\.nav-blueprint\{.*?\}\n\.nav-blueprint::after\{.*?\}\n\.nav-blueprint:hover\{.*?\}\n', '', s, flags=re.S)
           s=re.sub(r'\.nav-cta\{.*?\}\n\.nav-cta:hover\{.*?\}\n\.nav-cta::after\{.*?\}\n', '', s, flags=re.S)
           s=re.sub(r'\n?<!-- MYRA SHOWCASE START -->.*?<!-- MYRA SHOWCASE END -->\n?', '\n', s, flags=re.S)
-
-          css=r'''
-/* ═══ MYRA ASSISTANT SHOWCASE ═══ */
-.myra-showcase{padding:110px 0;position:relative;z-index:1}
-.myra-shell{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.1);border-radius:30px;background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.018));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 35px 90px rgba(0,0,0,.35),0 0 70px rgba(124,58,237,.09)}
-.myra-shell:before{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(120deg,rgba(0,245,255,.35),transparent 35%,rgba(168,85,247,.3) 68%,rgba(236,72,153,.18));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.myra-layout{display:grid;grid-template-columns:minmax(280px,.82fr) minmax(0,1.18fr);gap:34px;padding:42px}.myra-copy{display:flex;flex-direction:column;justify-content:center;padding:8px 4px}
-.myra-kicker{display:inline-flex;width:max-content;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid rgba(0,245,255,.18);background:rgba(0,245,255,.05);color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.myra-kicker i{width:7px;height:7px;border-radius:50%;background:#d946ef;box-shadow:0 0 14px #d946ef}
-.myra-title{font-size:clamp(42px,5vw,72px);line-height:.98;letter-spacing:-.055em;font-weight:900;margin:22px 0 18px;background:linear-gradient(135deg,#f5f3ff 5%,#d946ef 45%,#8b5cf6 72%,#00f5ff);-webkit-background-clip:text;background-clip:text;color:transparent}.myra-copy p{color:var(--muted);font-size:15px;line-height:1.8;margin:0 0 22px;max-width:520px}.myra-brand{font-size:12px;font-weight:800;letter-spacing:.14em;color:#d8b4fe;text-transform:uppercase;margin-bottom:10px}
-.myra-tags{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 24px}.myra-tag{padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#c9c9d8;font-size:11px;font-weight:700}.myra-actions{display:flex;flex-wrap:wrap;gap:10px}.myra-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;font-size:12px;font-weight:800;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#fff;transition:.25s}.myra-btn:hover{transform:translateY(-2px);border-color:rgba(0,245,255,.35);box-shadow:0 14px 35px rgba(0,0,0,.25)}.myra-btn.primary{background:linear-gradient(135deg,#d946ef,#7c3aed);border-color:transparent;box-shadow:0 0 28px rgba(217,70,239,.18)}
-.myra-media{display:grid;grid-template-rows:auto auto;gap:18px;min-width:0}.myra-video{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:22px;border:1px solid rgba(255,255,255,.1);background:#05050d;box-shadow:0 25px 55px rgba(0,0,0,.4)}.myra-video iframe{width:100%;height:100%;border:0;display:block}.myra-video:after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 50px rgba(217,70,239,.08);pointer-events:none}
-.myra-gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.myra-shot{position:relative;overflow:hidden;aspect-ratio:1/1;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:#080812}.myra-shot img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .45s,filter .45s}.myra-shot:hover img{transform:scale(1.06);filter:saturate(1.1) brightness(1.05)}.myra-shot:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.42));pointer-events:none}
-.myra-bottom{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:0 42px 32px;color:#6f6f86;font-size:11px}.myra-source{color:#a1a1b5}.myra-source strong{color:#d8b4fe}
-@media(max-width:900px){.myra-layout{grid-template-columns:1fr;padding:30px}.myra-copy{text-align:center;align-items:center}.myra-copy p{margin-left:auto;margin-right:auto}.myra-actions{justify-content:center}}@media(max-width:600px){.myra-showcase{padding:80px 0}.myra-layout{padding:20px;gap:22px}.myra-title{font-size:48px}.myra-gallery{grid-template-columns:repeat(2,1fr)}.myra-bottom{padding:0 20px 22px;align-items:flex-start;flex-direction:column}}
-'''
-          s=s.replace('</style>',css+'\n</style>',1)
-          section=r'''<!-- MYRA SHOWCASE START -->
-<section id="myra-showcase" class="myra-showcase">
-  <div class="container"><div class="myra-shell"><div class="myra-layout">
-    <div class="myra-copy">
-      <span class="myra-kicker"><i></i> Featured AI Assistant</span>
-      <div class="myra-title">MYRA</div>
-      <div class="myra-brand">All-in-one powerful mobile agent</div>
-      <p>Meet MYRA — a full-featured Android voice assistant that listens, speaks, and acts. It combines multi-personality conversational AI with real-time voice, smart chat, auto-reply, gaming assistance, and premium features powered by free AI models.</p>
-      <div class="myra-tags"><span class="myra-tag">Real-time Voice</span><span class="myra-tag">Multi-Personality</span><span class="myra-tag">Smart Chat</span><span class="myra-tag">Gaming Vision</span><span class="myra-tag">Free AI Models</span></div>
-      <div class="myra-actions"><a class="myra-btn primary" href="https://github.com/onelpawarai/Myra-Assistant" target="_blank" rel="noopener">View MYRA project ↗</a><a class="myra-btn" href="https://www.youtube.com/watch?v=LIF4xv4IPK0" target="_blank" rel="noopener">Open demo on YouTube</a></div>
-    </div>
-    <div class="myra-media">
-      <div class="myra-video"><iframe src="https://www.youtube.com/embed/LIF4xv4IPK0?rel=0&modestbranding=1" title="MYRA Assistant demo" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-      <div class="myra-gallery">
-        <a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-1.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-1.jpg" alt="MYRA Assistant preview 1" loading="lazy"></a>
-        <a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-2.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-2.jpg" alt="MYRA Assistant preview 2" loading="lazy"></a>
-        <a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-3.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-3.jpg" alt="MYRA Assistant preview 3" loading="lazy"></a>
-        <a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-4.png" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-4.png" alt="MYRA Assistant preview 4" loading="lazy"></a>
-      </div>
-    </div>
-  </div><div class="myra-bottom"><span>MYRA Assistant · integrated from the original project</span><span class="myra-source">Source: <strong>onelpawarai/Myra-Assistant</strong></span></div></div></div>
-</section>
-<!-- MYRA SHOWCASE END -->
-'''
-          idx=s.find('\n<section')
-          if idx<0: raise SystemExit('No section insertion point found')
-          s=s[:idx]+'\n'+section+s[idx:]
-          p.write_text(s,encoding='utf-8')
+          css='''\n.myra-showcase{padding:110px 0;position:relative;z-index:1}.myra-shell{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.1);border-radius:30px;background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.018));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 35px 90px rgba(0,0,0,.35),0 0 70px rgba(124,58,237,.09)}.myra-layout{display:grid;grid-template-columns:minmax(280px,.82fr) minmax(0,1.18fr);gap:34px;padding:42px}.myra-copy{display:flex;flex-direction:column;justify-content:center;padding:8px 4px}.myra-kicker{display:inline-flex;width:max-content;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid rgba(0,245,255,.18);background:rgba(0,245,255,.05);color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.myra-kicker i{width:7px;height:7px;border-radius:50%;background:#d946ef;box-shadow:0 0 14px #d946ef}.myra-title{font-size:clamp(42px,5vw,72px);line-height:.98;letter-spacing:-.055em;font-weight:900;margin:22px 0 18px;background:linear-gradient(135deg,#f5f3ff 5%,#d946ef 45%,#8b5cf6 72%,#00f5ff);-webkit-background-clip:text;background-clip:text;color:transparent}.myra-copy p{color:var(--muted);font-size:15px;line-height:1.8;margin:0 0 22px;max-width:520px}.myra-brand{font-size:12px;font-weight:800;letter-spacing:.14em;color:#d8b4fe;text-transform:uppercase;margin-bottom:10px}.myra-tags{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 24px}.myra-tag{padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#c9c9d8;font-size:11px;font-weight:700}.myra-actions{display:flex;flex-wrap:wrap;gap:10px}.myra-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;font-size:12px;font-weight:800;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#fff;transition:.25s}.myra-btn:hover{transform:translateY(-2px);border-color:rgba(0,245,255,.35);box-shadow:0 14px 35px rgba(0,0,0,.25)}.myra-btn.primary{background:linear-gradient(135deg,#d946ef,#7c3aed);border-color:transparent;box-shadow:0 0 28px rgba(217,70,239,.18)}.myra-media{display:grid;grid-template-rows:auto auto;gap:18px;min-width:0}.myra-video{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:22px;border:1px solid rgba(255,255,255,.1);background:#05050d;box-shadow:0 25px 55px rgba(0,0,0,.4)}.myra-video iframe{width:100%;height:100%;border:0;display:block}.myra-gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.myra-shot{position:relative;overflow:hidden;aspect-ratio:1/1;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:#080812}.myra-shot img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .45s,filter .45s}.myra-shot:hover img{transform:scale(1.06);filter:saturate(1.1) brightness(1.05)}.myra-bottom{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:0 42px 32px;color:#6f6f86;font-size:11px}.myra-source strong{color:#d8b4fe}@media(max-width:900px){.myra-layout{grid-template-columns:1fr;padding:30px}.myra-copy{text-align:center;align-items:center}.myra-copy p{margin-left:auto;margin-right:auto}.myra-actions{justify-content:center}}@media(max-width:600px){.myra-showcase{padding:80px 0}.myra-layout{padding:20px;gap:22px}.myra-title{font-size:48px}.myra-gallery{grid-template-columns:repeat(2,1fr)}.myra-bottom{padding:0 20px 22px;align-items:flex-start;flex-direction:column}}\n'''
+          s=s.replace('</style>',css+'</style>',1)
+          section='''<!-- MYRA SHOWCASE START -->\n<section id="myra-showcase" class="myra-showcase"><div class="container"><div class="myra-shell"><div class="myra-layout"><div class="myra-copy"><span class="myra-kicker"><i></i> Featured AI Assistant</span><div class="myra-title">MYRA</div><div class="myra-brand">All-in-one powerful mobile agent</div><p>Meet MYRA — a full-featured Android voice assistant that listens, speaks, and acts. It combines multi-personality conversational AI with real-time voice, smart chat, auto-reply, gaming assistance, and premium features powered by free AI models.</p><div class="myra-tags"><span class="myra-tag">Real-time Voice</span><span class="myra-tag">Multi-Personality</span><span class="myra-tag">Smart Chat</span><span class="myra-tag">Gaming Vision</span><span class="myra-tag">Free AI Models</span></div><div class="myra-actions"><a class="myra-btn primary" href="https://github.com/onelpawarai/Myra-Assistant" target="_blank" rel="noopener">View MYRA project ↗</a><a class="myra-btn" href="https://www.youtube.com/watch?v=LIF4xv4IPK0" target="_blank" rel="noopener">Open demo on YouTube</a></div></div><div class="myra-media"><div class="myra-video"><iframe src="https://www.youtube.com/embed/LIF4xv4IPK0?rel=0&modestbranding=1" title="MYRA Assistant demo" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="myra-gallery"><a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-1.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-1.jpg" alt="MYRA Assistant preview 1" loading="lazy"></a><a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-2.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-2.jpg" alt="MYRA Assistant preview 2" loading="lazy"></a><a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-3.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-3.jpg" alt="MYRA Assistant preview 3" loading="lazy"></a><a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-4.png" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-4.png" alt="MYRA Assistant preview 4" loading="lazy"></a></div></div></div><div class="myra-bottom"><span>MYRA Assistant · integrated from the original project</span><span class="myra-source">Source: <strong>onelpawarai/Myra-Assistant</strong></span></div></div></div></section>\n<!-- MYRA SHOWCASE END -->\n'''
+          i=s.find('\n<section')
+          if i<0: raise SystemExit('No section insertion point found')
+          p.write_text(s[:i]+'\n'+section+s[i:],encoding='utf-8')
           PY
           git add public/zyraxon.html
           git commit -m "feat: integrate MYRA assistant showcase into ZYRAXON"
           git push -u origin "$BRANCH"
-          gh pr create --repo sayidilxs-web/zyraxonai-website --base main --head "$BRANCH" --title "feat: integrate MYRA Assistant into ZYRAXON" --body "Integrate the original MYRA Assistant project directly into the existing ZYRAXON page. Removes the Blueprint and GitHub top-nav buttons, adds a glassmorphism MYRA branding section, embeds the official YouTube demo, and renders all four official promo images. No separate HTML page is created."
+          gh pr create --repo sayidilxs-web/zyraxonai-website --base main --head "$BRANCH" --title "feat: integrate MYRA Assistant into ZYRAXON" --body "Integrate the original MYRA Assistant directly into the existing ZYRAXON page. Removes Blueprint and GitHub top-nav buttons, adds a glassmorphism MYRA branding section, embeds the official YouTube demo, and renders all four official promo images. No separate HTML page is created."
           git checkout main
-          git rm -f .github/workflows/one-shot-myra-pr.yml
-          git commit -m "chore: remove one-shot MYRA integration workflow"
+          git rm -f .github/workflows/one-shot-myra-pr.yml .myra-trigger .myra-trigger2 .github/workflows/test-myra.yml
+          git commit -m "chore: clean up one-shot MYRA workflow"
           git push origin main
