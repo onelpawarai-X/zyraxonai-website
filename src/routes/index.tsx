@@ -22,13 +22,13 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <main style={{ minHeight: "100vh", background: "#06060e", overflow: "hidden" }}>
+    <main style={{ minHeight: "100vh", height: "100vh", display: "flex", flexDirection: "column", background: "#06060e", overflow: "hidden" }}>
+      <GitHubHomeAuth />
       <iframe
         title="ZYRAXON AI"
         src="/zyraxon.html"
-        style={{ display: "block", width: "100%", height: "100vh", border: 0 }}
+        style={{ display: "block", width: "100%", flex: "1 1 auto", minHeight: 0, border: 0 }}
       />
-      <GitHubHomeAuth />
     </main>
   );
 }
