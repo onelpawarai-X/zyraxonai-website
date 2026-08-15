@@ -22,11 +22,10 @@ function getToken(): string | null {
   return null;
 }
 
-const READ_TOKEN = "ghp_" + "e88UGqpuY9" + "QTlwo10SAQH" + "FjPIbKkOF2" + "HRiZi";
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
   const token = getToken();
-  headers.Authorization = `Bearer ${token || READ_TOKEN}`;
+  if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
 }
 
@@ -126,18 +125,13 @@ async function fetchJson(path: string): Promise<EcosystemItem[]> {
 export async function getAllItems(): Promise<EcosystemItem[]> {
   const now = Date.now();
   if (cachedItems && now - cacheTime < CACHE_TTL) return cachedItems;
-
   const results = await Promise.all(MARKETPLACE_PATHS.map(fetchJson));
   const items = results.flat();
   cachedItems = items;
   cacheTime = now;
-
   if (typeof window !== "undefined" && items.length > 0) {
-    try {
-      localStorage.setItem("zyraxon_marketplace_local_cache", JSON.stringify({ data: items, time: Date.now() }));
-    } catch {}
+    try { localStorage.setItem("zyraxon_marketplace_local_cache", JSON.stringify({ data: items, time: Date.now() })); } catch {}
   }
-
   if (items.length === 0 && typeof window !== "undefined") {
     try {
       const raw = localStorage.getItem("zyraxon_marketplace_local_cache");
@@ -147,104 +141,30 @@ export async function getAllItems(): Promise<EcosystemItem[]> {
       }
     } catch {}
   }
-
   return items;
 }
 
-export async function getItemsByCategory(category: string): Promise<EcosystemItem[]> {
-  return (await getAllItems()).filter((item) => item.category === category);
-}
-
-export async function getFeaturedItems(): Promise<EcosystemItem[]> {
-  return (await getAllItems()).filter((item) => item.featured);
-}
-
-export async function getTopRatedItems(limit = 5): Promise<EcosystemItem[]> {
-  return (await getAllItems()).sort((a, b) => b.rating - a.rating).slice(0, limit);
-}
-
-export async function getTrendingItems(): Promise<EcosystemItem[]> {
-  return (await getAllItems()).sort((a, b) => b.downloads - a.downloads);
-}
-
-export async function getNewArrivals(): Promise<EcosystemItem[]> {
-  return (await getAllItems()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-}
-
+export async function getItemsByCategory(category: string): Promise<EcosystemItem[]> { return (await getAllItems()).filter((item) => item.category === category); }
+export async function getFeaturedItems(): Promise<EcosystemItem[]> { return (await getAllItems()).filter((item) => item.featured); }
+export async function getTopRatedItems(limit = 5): Promise<EcosystemItem[]> { return (await getAllItems()).sort((a, b) => b.rating - a.rating).slice(0, limit); }
+export async function getTrendingItems(): Promise<EcosystemItem[]> { return (await getAllItems()).sort((a, b) => b.downloads - a.downloads); }
+export async function getNewArrivals(): Promise<EcosystemItem[]> { return (await getAllItems()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); }
 export async function searchItems(query: string): Promise<EcosystemItem[]> {
-  const all = await getAllItems();
-  const q = query.toLowerCase();
-  return all.filter(
-    (item) =>
-      item.name.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q) ||
-      item.tags.some((tag) => tag.toLowerCase().includes(q)),
-  );
+  const all = await getAllItems(); const q = query.toLowerCase();
+  return all.filter((item) => item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q) || item.tags.some((tag) => tag.toLowerCase().includes(q)));
 }
-
-export async function getItemById(id: string): Promise<EcosystemItem | undefined> {
-  return (await getAllItems()).find((item) => item.id === id);
-}
-
+export async function getItemById(id: string): Promise<EcosystemItem | undefined> { return (await getAllItems()).find((item) => item.id === id); }
 export async function getCategories(): Promise<CategoryInfo[]> {
   const all = await getAllItems();
   const categoryDefs: { id: CategoryInfo["id"]; name: string; icon: string; description: string }[] = [
-    { id: "ai-bots", name: "AI Bots", icon: "bot", description: "Custom AI assistants" },
-    { id: "plugins", name: "Plugins", icon: "puzzle", description: "Extend ZYRAXON" },
-    { id: "website-templates", name: "Templates", icon: "layout", description: "Website starters" },
-    { id: "themes", name: "Themes", icon: "palette", description: "UI themes" },
-    { id: "components", name: "Components", icon: "box", description: "Reusable UI parts" },
-    { id: "desktop-apps", name: "Desktop Apps", icon: "monitor", description: "Win/Mac/Linux apps" },
-    { id: "mobile-apps", name: "Mobile Apps", icon: "smartphone", description: "Android/iOS apps" },
-    { id: "ai-models", name: "AI Models", icon: "cpu", description: "Pre-trained models" },
-    { id: "tools", name: "Dev Tools", icon: "wrench", description: "Developer utilities" },
-    { id: "cli-tools", name: "CLI Tools", icon: "terminal", description: "Command-line tools" },
-    { id: "sdks", name: "SDKs", icon: "package", description: "Dev kits" },
-    { id: "fonts", name: "Fonts", icon: "type", description: "Custom fonts" },
-    { id: "iso-images", name: "ISO Images", icon: "disc", description: "Bootable images" },
-    { id: "devops", name: "DevOps", icon: "rocket", description: "CI/CD & Docker" },
-    { id: "pdfs", name: "PDFs", icon: "file-text", description: "Docs & guides" },
-    { id: "books", name: "Books", icon: "book", description: "E-books" },
-    { id: "prompts", name: "AI Prompts", icon: "message", description: "Prompt templates" },
-    { id: "datasets", name: "Datasets", icon: "database", description: "Training data" },
-    { id: "code-snippets", name: "Snippets", icon: "code", description: "Code patterns" },
-    { id: "apis", name: "APIs", icon: "globe", description: "API integrations" },
-    { id: "browser-extensions", name: "Extensions", icon: "extension", description: "Browser add-ons" },
-    { id: "landing-pages", name: "Landing Pages", icon: "layout", description: "Marketing pages" },
-    { id: "ui-kits", name: "UI Kits", icon: "layers", description: "Design systems" },
-    { id: "icons", name: "Icons", icon: "image", description: "Icon packs" },
-    { id: "startkits", name: "Starter Kits", icon: "rocket", description: "Project starters" },
-    { id: "workflows", name: "Workflows", icon: "zap", description: "Automation flows" },
-    { id: "types", name: "Types", icon: "file", description: "TS type defs" },
-    { id: "website-games", name: "Website Games", icon: "gamepad", description: "Playable games" },
+    { id: "ai-bots", name: "AI Bots", icon: "bot", description: "Custom AI assistants" }, { id: "plugins", name: "Plugins", icon: "puzzle", description: "Extend ZYRAXON" }, { id: "website-templates", name: "Templates", icon: "layout", description: "Website starters" }, { id: "themes", name: "Themes", icon: "palette", description: "UI themes" }, { id: "components", name: "Components", icon: "box", description: "Reusable UI parts" }, { id: "desktop-apps", name: "Desktop Apps", icon: "monitor", description: "Win/Mac/Linux apps" }, { id: "mobile-apps", name: "Mobile Apps", icon: "smartphone", description: "Android/iOS apps" }, { id: "ai-models", name: "AI Models", icon: "cpu", description: "Pre-trained models" }, { id: "tools", name: "Dev Tools", icon: "wrench", description: "Developer utilities" }, { id: "cli-tools", name: "CLI Tools", icon: "terminal", description: "Command-line tools" }, { id: "sdks", name: "SDKs", icon: "package", description: "Dev kits" }, { id: "fonts", name: "Fonts", icon: "type", description: "Custom fonts" }, { id: "iso-images", name: "ISO Images", icon: "disc", description: "Bootable images" }, { id: "devops", name: "DevOps", icon: "rocket", description: "CI/CD & Docker" }, { id: "pdfs", name: "PDFs", icon: "file-text", description: "Docs & guides" }, { id: "books", name: "Books", icon: "book", description: "E-books" }, { id: "prompts", name: "AI Prompts", icon: "message", description: "Prompt templates" }, { id: "datasets", name: "Datasets", icon: "database", description: "Training data" }, { id: "code-snippets", name: "Snippets", icon: "code", description: "Code patterns" }, { id: "apis", name: "APIs", icon: "globe", description: "API integrations" }, { id: "browser-extensions", name: "Extensions", icon: "extension", description: "Browser add-ons" }, { id: "landing-pages", name: "Landing Pages", icon: "layout", description: "Marketing pages" }, { id: "ui-kits", name: "UI Kits", icon: "layers", description: "Design systems" }, { id: "icons", name: "Icons", icon: "image", description: "Icon packs" }, { id: "startkits", name: "Starter Kits", icon: "rocket", description: "Project starters" }, { id: "workflows", name: "Workflows", icon: "zap", description: "Automation flows" }, { id: "types", name: "Types", icon: "file", description: "TS type defs" }, { id: "website-games", name: "Website Games", icon: "gamepad", description: "Playable games" },
   ];
-  return categoryDefs.map((cat) => ({
-    ...cat,
-    count: all.filter((item) => item.category === cat.id).length,
-  }));
+  return categoryDefs.map((cat) => ({ ...cat, count: all.filter((item) => item.category === cat.id).length }));
 }
-
 export async function getStats(): Promise<EcosystemStats> {
   const all = await getAllItems();
-  return {
-    totalPlugins: all.filter((i) => i.type === "plugin" || i.category === "plugins").length,
-    totalBots: all.filter((i) => i.type === "bot" || i.category === "ai-bots").length,
-    totalTemplates: all.filter((i) => i.type === "template" || i.category === "website-templates").length,
-    totalDownloads: all.reduce((sum, i) => sum + i.downloads, 0),
-    totalUsers: new Set(all.map((i) => i.authorId)).size,
-  };
+  return { totalPlugins: all.filter((i) => i.type === "plugin" || i.category === "plugins").length, totalBots: all.filter((i) => i.type === "bot" || i.category === "ai-bots").length, totalTemplates: all.filter((i) => i.type === "template" || i.category === "website-templates").length, totalDownloads: all.reduce((sum, i) => sum + i.downloads, 0), totalUsers: new Set(all.map((i) => i.authorId)).size };
 }
-
 export async function getRecentActivity(): Promise<RecentActivity[]> {
-  return (await getAllItems())
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 10)
-    .map((item) => ({
-      id: item.id,
-      type: item.type,
-      name: item.name,
-      author: item.author,
-      authorAvatar: item.authorAvatar,
-      timestamp: item.updatedAt,
-    }));
+  return (await getAllItems()).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 10).map((item) => ({ id: item.id, type: item.type, name: item.name, author: item.author, authorAvatar: item.authorAvatar, timestamp: item.updatedAt }));
 }
