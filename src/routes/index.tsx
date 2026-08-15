@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { GitHubHomeAuth } from "../components/home/GitHubHomeAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,12 +21,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  useEffect(() => {
-    window.location.replace("/zyraxon.html");
-  }, []);
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0f", color: "#fff", display: "grid", placeItems: "center", fontFamily: "system-ui" }}>
-      <p>Loading ZYRAXON-AI…</p>
-    </div>
+    <main style={{ minHeight: "100vh", background: "#06060e", overflow: "hidden" }}>
+      <iframe
+        title="ZYRAXON AI"
+        src="/zyraxon.html"
+        style={{ display: "block", width: "100%", height: "100vh", border: 0 }}
+      />
+      <GitHubHomeAuth />
+    </main>
   );
 }
