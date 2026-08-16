@@ -12,9 +12,9 @@ type Activity = { id: string; label: string; detail?: string; state: 'running' |
 
 type Model = { id: string; name: string; note: string }
 const MODELS: Model[] = [
-  { id: 'mimo-v2.5-free', name: 'MiMo V2.5 Free', note: 'Balanced builder' },
-  { id: 'nemotron-3-super-free', name: 'Nemotron 3 Super Free', note: 'Deep reasoning' },
-  { id: 'big-pickle', name: 'Big Pickle', note: 'Fast generation' },
+  { id: 'zyraxon-titan', name: 'ZYRAXON TITAN', note: 'Balanced builder' },
+  { id: 'zyraxon-phantom', name: 'ZYRAXON PHANTOM', note: 'Deep reasoning' },
+  { id: 'zyraxon-velocity', name: 'ZYRAXON OMEGA', note: 'Fast generation' },
 ]
 const STARTER: FileState = {
   'index.html': '<!doctype html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width,initial-scale=1">\n  <title>ZYRAXON</title>\n</head>\n<body>\n  <main><h1>Start with an idea.</h1><p>Describe the website you want ZYRAXON AI to build.</p></main>\n</body>\n</html>',
@@ -48,6 +48,13 @@ function parseFiles(text: string, previous: FileState): FileState {
     if (name && body) next[name] = body
   }
   return next
+}
+
+function fileStateChanged(next: FileState, previous: FileState) {
+  const nextKeys = Object.keys(next)
+  const previousKeys = Object.keys(previous)
+  if (nextKeys.length !== previousKeys.length) return true
+  return nextKeys.some(key => next[key] !== previous[key])
 }
 
 function buildPreview(files: FileState) {
@@ -101,7 +108,15 @@ export default function BuilderStudioMulti() {
   const hasChat = messages.length > 0
 
   useEffect(() => { try { const t = sessionStorage.getItem('zyraxon.builder.theme'); if (t === 'dark' || t === 'light') setTheme(t); const f = sessionStorage.getItem('zyraxon.builder.files'); if (f) setFiles(JSON.parse(f)); const c = sessionStorage.getItem('zyraxon.builder.chat'); if (c) setMessages(JSON.parse(c)) } catch {} }, [])
-  useEffect(() => { try { sessionStorage.setItem('zyraxon.builder.theme', theme); sessionStorage.setItem('zyraxon.builder.files', JSON.stringify(files)); sessionStorage.setItem('zyraxon.builder.chat', JSON.stringify(messages.slice(-40))) } catch {} }, [theme, files, messages])
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('zyraxon.builder.theme', theme)
+      if (!streaming) {
+        sessionStorage.setItem('zyraxon.builder.files', JSON.stringify(files))
+        sessionStorage.setItem('zyraxon.builder.chat', JSON.stringify(messages.slice(-40)))
+      }
+    } catch {}
+  }, [theme, files, messages, streaming])
   useEffect(() => { const move = (e: PointerEvent) => { if (dragRef.current) setSplit(Math.min(68, Math.max(32, (e.clientX / window.innerWidth) * 100))) }; const up = () => { dragRef.current = false }; window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) } }, [])
 
   const addActivity = (label: string, detail?: string) => { const item = { id: uid('a'), label, detail, state: 'running' as const }; setActivities(p => [...p, item]); return item.id }
@@ -144,7 +159,7 @@ export default function BuilderStudioMulti() {
       const response = await fetch('/api/public/builder/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, messages: [{ role: 'system', content: BOLT_SYSTEM }, ...context, { role: 'user', content: prompt }] }), signal: controller.signal })
       if (!response.ok) { const d = await response.json().catch(() => null); throw new Error(d?.error || `Provider returned HTTP ${response.status}`) }
       let latest = ''; let live = files
-      await streamSse(response, value => { latest = value; const parsed = parseFiles(value, live); if (JSON.stringify(parsed) !== JSON.stringify(live)) { live = parsed; setFiles(parsed); const newest = Object.keys(parsed).filter(k => !(k in files) || parsed[k] !== files[k]); if (newest[0]) setActiveFile(newest[0]); finish(previewId, 'done', `${newest.slice(-3).join(', ')} updated`) } setMessages(p => p.map(m => m.id === assistantId ? { ...m, content: value, sources: web } : m)) })
+      await streamSse(response, value => { latest = value; const parsed = parseFiles(value, live); if (fileStateChanged(parsed, live)) { live = parsed; setFiles(parsed); const newest = Object.keys(parsed).filter(k => !(k in files) || parsed[k] !== files[k]); if (newest[0]) setActiveFile(newest[0]); finish(previewId, 'done', `${newest.slice(-3).join(', ')} updated`) } setMessages(p => p.map(m => m.id === assistantId ? { ...m, content: value, sources: web } : m)) })
       finish(stream, 'done', 'Stream complete'); if (!latest) throw new Error('The model returned an empty response.')
     } catch (e: any) { if (e?.name !== 'AbortError') { const msg = e?.message || 'Generation failed'; setError(msg); finish(connect, 'error', msg); finish(stream, 'error', msg); finish(previewId, 'error', 'No preview update') } }
     finally { setStreaming(false); abortRef.current = null }
@@ -164,9 +179,9 @@ export default function BuilderStudioMulti() {
       <a className="zb-brand" href="/"><span className="zb-mark">Z</span><span className="brand-name">ZYRAXON</span><span className="brand-sub">AI BUILDER</span></a>
       <div className="top-title">Builder Studio</div>
       <div className="top-actions">
-        <button className="glass-btn" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle theme">{theme === 'dark' ? '☼' : '☾'}</button>
-        <button className="glass-btn" onClick={() => setActivityOpen(x => !x)}><span className={streaming ? 'live-dot' : ''}/>Activity</button>
-        <button className="glass-btn" onClick={() => setPublishOpen(true)}>Publish</button>
+        <button className={`glass-btn ${view === 'preview' ? 'active' : ''}`} onClick={() => setView('preview')}>Preview</button>
+        <button className={`glass-btn ${view === 'code' ? 'active' : ''}`} onClick={() => setView('code')}>Code</button>
+        <button className="glass-btn publish-top" onClick={() => setPublishOpen(true)}>Publish</button>
       </div>
       {activityOpen && <div className="popover activity-pop"><b>Live activity</b>{activities.length ? activities.slice(-10).reverse().map(a => <div className="activity-row" key={a.id}><span className={`state ${a.state}`}/><div><strong>{a.label}</strong><small>{a.detail}</small></div></div>) : <small>No activity yet.</small>}</div>}
     </header>
@@ -180,9 +195,7 @@ export default function BuilderStudioMulti() {
           <textarea value={input} rows={1} placeholder={mode === 'plan' ? 'Describe what you want planned…' : 'Ask ZYRAXON to build, change, fix or research…'} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
           <div className="composer-row">
             <div className="composer-left">
-              <div className="mode-wrap"><button className="mode-btn" onClick={() => setModeOpen(x => !x)}><span className={mode === 'bolt' ? 'bolt' : 'plan'}/>{mode === 'bolt' ? 'Bolt' : 'Plan'}⌄</button>{modeOpen && <div className="popover mode-pop"><button className={mode === 'bolt' ? 'selected' : ''} onClick={() => { setMode('bolt'); setModeOpen(false) }}><span className="bolt"/><div><b>Bolt</b><small>Talk + build + modify</small></div></button><button className={mode === 'plan' ? 'selected' : ''} onClick={() => { setMode('plan'); setModeOpen(false) }}><span className="plan"/><div><b>Plan</b><small>Plan only — no changes</small></div></button></div>}</div>
-              <div className="model-wrap"><button className="model-btn" onClick={() => setModelOpen(x => !x)}>{current.name}⌄</button>{modelOpen && <div className="popover model-pop">{MODELS.map(m => <button key={m.id} className={m.id === model ? 'selected' : ''} onClick={() => { setModel(m.id); setModelOpen(false) }}><b>{m.name}</b><small>{m.note}</small></button>)}</div>}</div>
-              <span className="auto-access">AI web access · automatic</span>
+              <div className="model-wrap"><button className="model-btn" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen(x => !x)}>{current.name}<span aria-hidden="true">⌄</span></button>{modelOpen && <div className="popover model-pop" role="listbox">{MODELS.map(m => <button key={m.id} role="option" aria-selected={m.id === model} className={m.id === model ? 'selected' : ''} onClick={() => { setModel(m.id); setModelOpen(false) }}><b>{m.name}</b><small>{m.note}</small></button>)}</div>}</div>
             </div>
             <button className="send-btn" disabled={!input.trim() && !streaming} onClick={() => streaming ? abortRef.current?.abort() : send()}>{streaming ? '■' : '↑'}</button>
           </div>
