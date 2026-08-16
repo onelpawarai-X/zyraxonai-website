@@ -3,9 +3,10 @@ import { Github, LogOut, Loader2, CheckCircle2 } from "lucide-react";
 import { GITHUB_CLIENT_ID, clearAuthState, getAuthState, setAuthState } from "../../lib/ecosystem-auth";
 import type { User } from "../../lib/ecosystem-types";
 
-// Production OAuth callback. GitHub requires the redirect_uri used during
-// authorization to match the registered callback exactly.
-const CALLBACK_URL = "https://zyraxonai.lovable.app/api/public/auth/github/callback";
+// GitHub must redirect back to a browser page that is actually rendered by the
+// Builder app. The home route handles the one-time code exchange and then
+// immediately removes code/state from the address bar.
+const CALLBACK_URL = "https://zyraxonai.lovable.app/";
 const OAUTH_SCOPE = "repo user:email";
 const STATE_KEY = "zyraxon_github_oauth_state";
 
@@ -25,33 +26,36 @@ export function GitHubHomeAuth() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     const returnedState = params.get("state");
-    const oauthError = params.get("github_error");
+    const oauthError = params.get("github_error") || params.get("error");
+
+    // Always clean the OAuth query string first so the user never remains on a
+    // cryptic /?code=... URL while the exchange is happening.
+    const cleanUrl = window.location.pathname + window.location.hash;
+    if (code || returnedState || oauthError) window.history.replaceState({}, document.title, cleanUrl);
 
     if (oauthError) {
       setMessage(`GitHub authorization failed: ${oauthError}`);
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
       return;
     }
     if (!code) return;
 
     const expectedState = sessionStorage.getItem(STATE_KEY);
     sessionStorage.removeItem(STATE_KEY);
-    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
 
     if (!returnedState || !expectedState || returnedState !== expectedState) {
-      setMessage("GitHub sign-in could not be verified. Please try again.");
+      setMessage("GitHub sign-in could not be verified. Please start sign-in again.");
       return;
     }
 
     let cancelled = false;
     (async () => {
       setBusy(true);
-      setMessage("Connecting to GitHub…");
+      setMessage("Connecting securely to GitHub…");
       try {
         const response = await fetch("/api/public/auth/github", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code, redirect_uri: CALLBACK_URL }),
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok || !body.token || !body.user) {
@@ -92,6 +96,7 @@ export function GitHubHomeAuth() {
   }, []);
 
   const startLogin = () => {
+    if (busy) return;
     const state = makeState();
     sessionStorage.setItem(STATE_KEY, state);
     const url = new URL("https://github.com/login/oauth/authorize");
@@ -99,6 +104,7 @@ export function GitHubHomeAuth() {
     url.searchParams.set("redirect_uri", CALLBACK_URL);
     url.searchParams.set("scope", OAUTH_SCOPE);
     url.searchParams.set("state", state);
+    setBusy(true);
     window.location.assign(url.toString());
   };
 
@@ -110,7 +116,7 @@ export function GitHubHomeAuth() {
   };
 
   return <div className="zyraxon-home-auth">
-    <style>{`.zyraxon-home-auth{position:absolute;top:12px;right:16px;height:38px;display:flex;align-items:center;z-index:80}.zyraxon-home-auth button{font:inherit}.zha-icon{width:38px;height:38px;padding:0;display:grid;place-items:center;border-radius:12px;color:#f5f5f7;background:rgba(10,10,14,.62);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);box-shadow:0 12px 32px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.08);cursor:pointer;transition:transform .18s ease,background .18s ease}.zha-icon:hover{transform:translateY(-1px);background:rgba(255,255,255,.09)}.zha-avatar{width:30px;height:30px;border-radius:9px;object-fit:cover}.zha-menu{position:absolute;right:0;top:46px;width:250px;padding:14px;border-radius:18px;background:rgba(10,10,16,.94);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(30px) saturate(160%);box-shadow:0 25px 70px rgba(0,0,0,.55)}.zha-message{position:absolute;right:0;top:46px;max-width:320px;padding:10px 12px;border-radius:12px;color:#ededf2;background:rgba(10,10,16,.94);border:1px solid rgba(255,255,255,.1);font-size:12px;line-height:1.45;box-shadow:0 18px 45px rgba(0,0,0,.4)}`}</style>
+    <style>{`.zyraxon-home-auth{position:absolute;top:12px;right:16px;height:38px;display:flex;align-items:center;z-index:80}.zyraxon-home-auth button{font:inherit}.zha-icon{width:38px;height:38px;padding:0;display:grid;place-items:center;border-radius:12px;color:#f5f5f7;background:rgba(10,10,14,.62);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);box-shadow:0 12px 32px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.08);cursor:pointer;transition:transform .18s ease,background .18s ease,opacity .18s ease}.zha-icon:hover{transform:translateY(-1px);background:rgba(255,255,255,.09)}.zha-icon:disabled{opacity:.62;cursor:wait}.zha-avatar{width:30px;height:30px;border-radius:9px;object-fit:cover}.zha-menu{position:absolute;right:0;top:46px;width:250px;padding:14px;border-radius:18px;background:rgba(10,10,16,.94);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(30px) saturate(160%);box-shadow:0 25px 70px rgba(0,0,0,.55)}.zha-message{position:absolute;right:0;top:46px;max-width:320px;padding:10px 12px;border-radius:12px;color:#ededf2;background:rgba(10,10,16,.94);border:1px solid rgba(255,255,255,.1);font-size:12px;line-height:1.45;box-shadow:0 18px 45px rgba(0,0,0,.4)}`}</style>
     {!auth.isAuthenticated || !auth.user ? <>
       <button type="button" className="zha-icon" onClick={startLogin} disabled={busy} aria-label="Sign in with GitHub" title={busy ? "Connecting…" : "Sign in with GitHub"}>
         {busy ? <Loader2 size={18} className="animate-spin"/> : <Github size={20}/>} 
