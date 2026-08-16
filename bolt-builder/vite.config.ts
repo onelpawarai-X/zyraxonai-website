@@ -16,6 +16,11 @@ export default defineConfig((config) => {
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },
+    server: {
+      // The Vercel preview proxy uses a generated hostname during browser QA.
+      // Keep local development and preview hydration reachable without blocking it.
+      allowedHosts: true,
+    },
     build: {
       target: 'esnext',
     },

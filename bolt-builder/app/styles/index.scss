@@ -59,11 +59,6 @@ textarea,
     transform 180ms ease;
 }
 
-button:not(:disabled):hover,
-[role='button']:not([aria-disabled='true']):hover {
-  transform: translateY(-1px);
-}
-
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
