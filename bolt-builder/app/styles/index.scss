@@ -24,6 +24,72 @@ body {
   --zyraxon-glass-border: rgba(255, 255, 255, 0.13);
   --zyraxon-glass-highlight: rgba(255, 255, 255, 0.07);
   --zyraxon-glass-shadow: 0 18px 55px rgba(0, 0, 0, 0.38), inset 0 1px 0 var(--zyraxon-glass-highlight);
+  --zyraxon-cyan: #65e8ff;
+  --zyraxon-violet: #a78bfa;
+  --zyraxon-rose: #fb7185;
+  --zyraxon-panel: rgba(9, 12, 20, 0.72);
+  --zyraxon-panel-strong: rgba(12, 16, 27, 0.92);
+  --zyraxon-grid: rgba(255, 255, 255, 0.035);
+}
+
+html,
+body {
+  background-color: #070910;
+  background-image:
+    linear-gradient(var(--zyraxon-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--zyraxon-grid) 1px, transparent 1px),
+    radial-gradient(circle at 74% 10%, rgba(101, 232, 255, 0.09), transparent 28rem),
+    radial-gradient(circle at 18% 78%, rgba(167, 139, 250, 0.07), transparent 24rem);
+  background-size:
+    42px 42px,
+    42px 42px,
+    auto,
+    auto;
+}
+
+button,
+input,
+textarea,
+[role='button'] {
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+button:not(:disabled):hover,
+[role='button']:not([aria-disabled='true']):hover {
+  transform: translateY(-1px);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid var(--zyraxon-cyan);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(101, 232, 255, 0.14);
+}
+
+.z-workbench > div > div,
+[class*='bg-bolt-elements-background-depth-2'] {
+  background-color: var(--zyraxon-panel) !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+  box-shadow: var(--zyraxon-glass-shadow);
+  backdrop-filter: blur(24px) saturate(135%);
+  -webkit-backdrop-filter: blur(24px) saturate(135%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Dense black glass: layered, readable, and intentionally more opaque than the old thin glass. */
@@ -44,14 +110,18 @@ button[class*='bg-bolt-elements-item-background'],
 textarea {
   background-color: rgba(7, 7, 9, 0.72);
   border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 8px 28px rgba(0, 0, 0, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 8px 28px rgba(0, 0, 0, 0.22);
 }
 
 button[class*='bg-bolt-elements-item-background']:hover,
 [class*='rounded-lg'][class*='border-bolt-elements-borderColor'].backdrop-blur:hover,
 textarea:hover {
   border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 34px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 34px rgba(0, 0, 0, 0.3);
 }
 
 .modern-scrollbar {

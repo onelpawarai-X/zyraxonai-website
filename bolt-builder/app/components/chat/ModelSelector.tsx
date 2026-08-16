@@ -92,6 +92,16 @@ interface ModelSelectorProps {
 }
 
 // Helper function to determine if a model is likely free
+const presetModelMatches = (selectedModel: string | undefined, query: string, models: ModelInfo[]) => {
+  if (!selectedModel) {
+    return false;
+  }
+
+  const selected = models.find((candidate) => candidate.name === selectedModel);
+
+  return Boolean(selected && `${selected.name} ${selected.label}`.toLowerCase().includes(query));
+};
+
 const isModelLikelyFree = (model: ModelInfo, providerName?: string): boolean => {
   // OpenRouter models with zero pricing in the label
   if (providerName === 'OpenRouter' && model.label.includes('in:$0.00') && model.label.includes('out:$0.00')) {
@@ -441,8 +451,53 @@ export const ModelSelector = ({
     );
   }
 
+  const presets = [
+    { name: 'Architect', hint: 'Deep planning', query: 'claude' },
+    { name: 'Velocity', hint: 'Fast iteration', query: 'flash' },
+    { name: 'Precision', hint: 'Careful output', query: 'gpt' },
+  ];
+
+  const selectPreset = (query: string) => {
+    const presetModel =
+      modelList.find((candidate) => {
+        const haystack = `${candidate.name} ${candidate.label}`.toLowerCase();
+        return candidate.provider === provider?.name && haystack.includes(query);
+      }) ?? modelList.find((candidate) => candidate.provider === provider?.name);
+
+    if (presetModel) {
+      setModel?.(presetModel.name);
+    }
+  };
+
   return (
-    <div className="flex gap-2 flex-col sm:flex-row">
+    <div className="flex flex-col gap-3">
+      <div
+        className="grid grid-cols-3 gap-1.5 rounded-xl border border-white/10 bg-black/20 p-1.5"
+        role="group"
+        aria-label="Model presets"
+      >
+        {presets.map((preset) => {
+          const isActive = presetModelMatches(model, preset.query, modelList);
+
+          return (
+            <button
+              key={preset.name}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => selectPreset(preset.query)}
+              className={classNames(
+                'min-w-0 rounded-lg px-2 py-2 text-left transition-all',
+                isActive
+                  ? 'bg-cyan-300/15 text-cyan-100 shadow-[0_0_22px_rgba(101,232,255,0.12)]'
+                  : 'text-bolt-elements-textTertiary hover:bg-white/5 hover:text-bolt-elements-textPrimary',
+              )}
+            >
+              <span className="block truncate text-xs font-semibold">{preset.name}</span>
+              <span className="block truncate text-[10px] opacity-60">{preset.hint}</span>
+            </button>
+          );
+        })}
+      </div>
       {/* Provider Combobox */}
       <div className="relative flex w-full" onKeyDown={handleProviderKeyDown} ref={providerDropdownRef}>
         <div
