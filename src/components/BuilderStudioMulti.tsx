@@ -82,14 +82,12 @@ export default function BuilderStudioMulti() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [model, setModel] = useState(MODELS[0].id)
+  const mode: Mode = 'bolt'
   const [files, setFiles] = useState<FileState>(STARTER)
   const [activeFile, setActiveFile] = useState('index.html')
   const [device, setDevice] = useState<Device>('desktop')
   const [view, setView] = useState<'preview' | 'code'>('preview')
-  const [mode, setMode] = useState<Mode>('bolt')
-  const [modeOpen, setModeOpen] = useState(false)
   const [modelOpen, setModelOpen] = useState(false)
-  const [activityOpen, setActivityOpen] = useState(false)
   const [publishOpen, setPublishOpen] = useState(false)
   const [githubToken, setGithubToken] = useState('')
   const [repo, setRepo] = useState('')
@@ -132,7 +130,7 @@ export default function BuilderStudioMulti() {
 
   const send = useCallback(async () => {
     const text = input.trim(); if (!text || streaming) return
-    setInput(''); setError(''); setModeOpen(false); setModelOpen(false)
+    setInput(''); setError(''); setModelOpen(false)
     const userId = uid('u'), assistantId = uid('ai')
     const context = messages.slice(-18).map(m => ({ role: m.role, content: m.content }))
     setMessages(p => [...p, { id: userId, role: 'user', content: text }, { id: assistantId, role: 'assistant', content: '' }])
@@ -183,7 +181,6 @@ export default function BuilderStudioMulti() {
         <button className={`glass-btn ${view === 'code' ? 'active' : ''}`} onClick={() => setView('code')}>Code</button>
         <button className="glass-btn publish-top" onClick={() => setPublishOpen(true)}>Publish</button>
       </div>
-      {activityOpen && <div className="popover activity-pop"><b>Live activity</b>{activities.length ? activities.slice(-10).reverse().map(a => <div className="activity-row" key={a.id}><span className={`state ${a.state}`}/><div><strong>{a.label}</strong><small>{a.detail}</small></div></div>) : <small>No activity yet.</small>}</div>}
     </header>
 
     <main className={`zb-workspace ${hasChat ? 'has-chat' : 'empty'}`}>
