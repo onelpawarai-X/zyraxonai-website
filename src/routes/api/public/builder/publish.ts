@@ -1,9 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { publishSite } from '@/lib/builder/github-publish.server';
+import { buildContext } from '@/lib/api/context.server';
+import { publishConnectedSite } from '@/lib/builder/github-connected-publish.server';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type',
+  'Access-Control-Allow-Headers': 'content-type, authorization',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
 
@@ -12,32 +13,19 @@ export const Route = createFileRoute('/api/public/builder/publish')({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
-        let body: any;
         try {
-          body = await request.json();
-        } catch {
-          return Response.json({ ok: false, error: 'Invalid JSON body' }, { status: 400, headers: CORS });
-        }
-
-        if (typeof body?.html === 'string' && body.html.length > 5_000_000) {
-          return Response.json({ ok: false, error: 'Site is too large (5MB limit).' }, { status: 413, headers: CORS });
-        }
-
-        try {
-          const result = await publishSite({
-            token: String(body?.token || ''),
+          const body: any = await request.json();
+          const ctx = await buildContext(request, new URL(request.url), {});
+          const result = await publishConnectedSite(ctx, {
             repo: String(body?.repo || ''),
-            html: String(body?.html || ''),
+            files: body?.files && typeof body.files === 'object' ? body.files : { 'index.html': String(body?.html || '') },
             description: body?.description ? String(body.description) : undefined,
-            customDomain: body?.customDomain ? String(body.customDomain) : undefined,
             privateRepo: Boolean(body?.privateRepo),
           });
-          return Response.json(result, { status: result.ok ? 200 : 400, headers: CORS });
-        } catch (error) {
-          return Response.json(
-            { ok: false, error: error instanceof Error ? error.message : 'Publish failed' },
-            { status: 500, headers: CORS },
-          );
+          return Response.json(result, { status: 200, headers: CORS });
+        } catch (error: any) {
+          const status = Number(error?.status || 500);
+          return Response.json({ ok: false, error: error?.message || 'Publish failed', code: error?.code }, { status, headers: CORS });
         }
       },
     },
