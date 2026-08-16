@@ -5,18 +5,17 @@ const NATURAL_SYSTEM_APPEND = `
 
 CONVERSATION AND UX RULES — IMPORTANT:
 - Speak like a polished human AI product assistant, not like a tutorial, installer, or documentation generator.
-- If the user casually asks "what are you doing?", "what's up?", "what did you do?", or similar, answer naturally and briefly. Examples of the intended style: "আমি আপনার সাথে আছি—আপনার পরের নির্দেশের অপেক্ষায়।" or "আমি এখন আপনার নির্দেশ অনুযায়ী Builder-এ কাজ করছি।" Do not answer with numbered setup steps unless the user explicitly asks for instructions.
-- When you have actually completed a build/change, report the result naturally in 1–4 short sentences. Do not tell the user to manually save generated files, copy code, open VS Code, install Live Server, deploy to Netlify/Vercel, or perform work that ZYRAXON itself just performed.
-- Never claim that the user gave you "three files" unless the user actually did. Never prescribe index.html + style.css + script.js as a default structure. The project structure is determined by what the implementation genuinely needs.
-- Do not dump source code into conversational prose. The UI renders generated files as compact file cards; emit each real file once with its real path when code is required.
+- If the user casually asks what you are doing, answer naturally and briefly. Do not answer with numbered setup steps unless explicitly asked.
+- When you have completed a build/change, report it naturally in 1–4 short sentences. Never tell the user to manually save/copy generated files or deploy work that ZYRAXON just performed.
+- Never claim the user gave you three files. Never prescribe index.html + style.css + script.js as a default structure. The project structure is determined by what the implementation genuinely needs.
+- Do not dump source code into conversational prose. Render generated files as compact file cards and emit each real file once with its real path.
 - Do not repeat the same generated file or create duplicate cards for the same file.
-- During streaming, keep progress messages concise and human: say what you are doing, then continue working. Do not fill the chat with repetitive boilerplate.
-- After a successful build, prefer a concise completion message such as "হয়ে গেছে—প্রিভিউতে দেখে নিতে পারেন।" followed only by the most useful result details.
-- Treat the Builder as an interactive workspace: the user should not have to manage the generated files manually unless they explicitly ask how.
+- During streaming, keep progress messages concise and human.
+- After a successful build, prefer a concise completion message such as "হয়ে গেছে—প্রিভিউতে দেখে নিতে পারেন।"
+- Treat the Builder as an interactive workspace; users should not have to manage generated files manually unless explicitly asked.
 `
 
 const ENHANCEMENT_CSS = `
-/* ZYRAXON Builder V3 — fixed conversation workspace */
 .zyraxon-builder .zb-workspace{position:relative;min-width:0}
 .zyraxon-builder .zb-workspace.empty .studio-pane{display:none!important}
 .zyraxon-builder .zb-workspace.empty .chat-pane{flex:1 1 auto!important;width:100%!important;max-width:none}
@@ -37,7 +36,7 @@ const ENHANCEMENT_CSS = `
 .zyraxon-builder .voice-btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.1)}
 .zyraxon-builder .voice-btn.is-listening{background:rgba(255,255,255,.13);box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 32px rgba(255,255,255,.12)}
 .zyraxon-builder .voice-btn svg{width:17px;height:17px}
-.zyraxon-builder .voice-status{position:absolute;left:0;bottom:47px;padding:7px 10px;border:1px solid var(--line2);border-radius:10px;background:rgba(10,10,10,.9);color:var(--muted);font-size:10px;white-space:nowrap;box-shadow:var(--shadow);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.zyraxon-builder .voice-status{position:absolute;right:0;bottom:47px;padding:7px 10px;border:1px solid var(--line2);border-radius:10px;background:rgba(10,10,10,.9);color:var(--muted);font-size:10px;white-space:nowrap;box-shadow:var(--shadow);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
 .zyraxon-builder.light .voice-status{background:rgba(255,255,255,.94)}
 @media(max-width:900px){.zyraxon-builder .zb-workspace.has-chat .chat-pane{flex-basis:100%!important;width:100%!important;min-width:0}.zyraxon-builder .zb-workspace.has-chat .studio-pane{min-height:48vh}.zyraxon-builder .splitter{display:none}}
 `
@@ -62,10 +61,7 @@ export default function BuilderStudioEnhancements() {
         try {
           const payload = JSON.parse(init.body)
           if (Array.isArray(payload.messages) && payload.messages[0]?.role === 'system') {
-            payload.messages[0] = {
-              ...payload.messages[0],
-              content: `${payload.messages[0].content || ''}${NATURAL_SYSTEM_APPEND}`,
-            }
+            payload.messages[0] = { ...payload.messages[0], content: `${payload.messages[0].content || ''}${NATURAL_SYSTEM_APPEND}` }
             return originalFetch(input, { ...init, body: JSON.stringify(payload) })
           }
         } catch {}
@@ -79,6 +75,8 @@ export default function BuilderStudioEnhancements() {
     let baseText = ''
     let voiceButton: HTMLButtonElement | null = null
     let observer: MutationObserver | null = null
+    let languageIndex = 0
+    const languages = ['bn-BD', 'hi-IN', 'en-US', 'en-IN']
 
     const setupVoice = () => {
       const composer = document.querySelector<HTMLElement>('.zyraxon-builder .composer')
@@ -87,21 +85,14 @@ export default function BuilderStudioEnhancements() {
       if (!row || !send || row.querySelector('.voice-btn')) return
 
       const wrap = document.createElement('div')
-      wrap.style.position = 'relative'
-      wrap.style.display = 'flex'
-      wrap.style.alignItems = 'center'
+      wrap.style.position = 'relative'; wrap.style.display = 'flex'; wrap.style.alignItems = 'center'
       const button = document.createElement('button')
-      button.type = 'button'
-      button.className = 'voice-btn'
-      button.setAttribute('aria-label', 'Voice input')
-      button.title = 'Voice input'
+      button.type = 'button'; button.className = 'voice-btn'; button.setAttribute('aria-label', 'Voice input'); button.title = 'Voice input'
       button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>'
-      const status = document.createElement('span')
-      status.className = 'voice-status'
-      status.hidden = true
-      status.textContent = 'শুনছি…'
+      const status = document.createElement('span'); status.className = 'voice-status'; status.hidden = true; status.textContent = 'শুনছি…'
       wrap.append(button, status)
-      row.appendChild(wrap)
+      // Keep Send at the far right; Voice sits immediately beside it.
+      row.insertBefore(wrap, send)
       voiceButton = button
 
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -111,26 +102,39 @@ export default function BuilderStudioEnhancements() {
         return
       }
 
-      recognition = new SpeechRecognition()
-      recognition.continuous = true
-      recognition.interimResults = true
-      recognition.lang = navigator.language || 'bn-BD'
-
-      recognition.onstart = () => { listening = true; baseText = document.querySelector<HTMLTextAreaElement>('.zyraxon-builder .composer textarea')?.value || ''; button.classList.add('is-listening'); status.textContent = 'শুনছি…'; status.hidden = false }
+      const createRecognition = () => {
+        const r = new SpeechRecognition()
+        r.continuous = true; r.interimResults = true; r.maxAlternatives = 3
+        const preferred = (navigator.language || '').toLowerCase()
+        r.lang = preferred.startsWith('bn') ? 'bn-BD' : preferred.startsWith('hi') ? 'hi-IN' : preferred.startsWith('en') ? navigator.language : languages[languageIndex]
+        return r
+      }
+      recognition = createRecognition()
+      recognition.onstart = () => { listening = true; baseText = document.querySelector<HTMLTextAreaElement>('.zyraxon-builder .composer textarea')?.value || ''; button.classList.add('is-listening'); status.textContent = `শুনছি… ${recognition.lang}`; status.hidden = false }
       recognition.onresult = (event: any) => {
-        let interim = ''
-        let finalText = ''
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0]?.transcript || ''
-          if (event.results[i].isFinal) finalText += transcript
-          else interim += transcript
-        }
+        let interim = ''; let finalText = ''
+        for (let i = event.resultIndex; i < event.results.length; i++) { const transcript = event.results[i][0]?.transcript || ''; if (event.results[i].isFinal) finalText += transcript; else interim += transcript }
         const textarea = document.querySelector<HTMLTextAreaElement>('.zyraxon-builder .composer textarea')
         if (textarea) setReactTextareaValue(textarea, `${baseText}${finalText}${interim}`)
       }
-      recognition.onerror = (event: any) => { status.textContent = event?.error === 'not-allowed' ? 'মাইক্রোফোনের অনুমতি দিন' : 'Voice input বন্ধ হয়েছে'; status.hidden = false; setTimeout(() => { status.hidden = true }, 2200) }
-      recognition.onend = () => { listening = false; button.classList.remove('is-listening'); status.hidden = true }
-      button.addEventListener('click', () => { if (listening) recognition.stop(); else { try { recognition.start() } catch {} } })
+      recognition.onerror = (event: any) => {
+        const err = event?.error || ''
+        if (err === 'not-allowed' || err === 'service-not-allowed') { status.textContent = 'মাইক্রোফোনের অনুমতি দিন'; status.hidden = false }
+        else if (err === 'language-not-supported' || err === 'no-speech') { languageIndex = (languageIndex + 1) % languages.length; status.textContent = `আবার চেষ্টা করছি (${languages[languageIndex]})`; status.hidden = false }
+        else { status.textContent = 'Voice input বন্ধ হয়েছে'; status.hidden = false }
+        setTimeout(() => { if (!listening) status.hidden = true }, 2200)
+      }
+      recognition.onend = () => {
+        if (!listening) { button.classList.remove('is-listening'); status.hidden = true; return }
+        window.setTimeout(() => { if (!listening) return; try { recognition = createRecognition(); attachRecognitionHandlers(recognition); recognition.start() } catch {} }, 120)
+      }
+      const attachRecognitionHandlers = (r: any) => {
+        r.onstart = recognition.onstart; r.onresult = recognition.onresult; r.onerror = recognition.onerror; r.onend = recognition.onend
+      }
+      button.addEventListener('click', () => {
+        if (listening) { listening = false; try { recognition.stop() } catch {} }
+        else { listening = true; baseText = document.querySelector<HTMLTextAreaElement>('.zyraxon-builder .composer textarea')?.value || ''; try { recognition.start() } catch { listening = false } }
+      })
     }
 
     observer = new MutationObserver(setupVoice)
@@ -138,11 +142,11 @@ export default function BuilderStudioEnhancements() {
     setupVoice()
 
     return () => {
+      listening = false
       try { recognition?.stop() } catch {}
       observer?.disconnect()
       if (voiceButton?.parentElement) voiceButton.parentElement.remove()
-      style.remove()
-      window.fetch = originalFetch
+      style.remove(); window.fetch = originalFetch
     }
   }, [])
 
