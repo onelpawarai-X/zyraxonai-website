@@ -3,8 +3,8 @@ import BuilderStudioMulti from './BuilderStudioMulti';
 
 const MODEL_ALIASES: Record<string, string> = {
   'MiMo V2.5 Free': 'ZYRAXON TITAN',
-  'Nemotron 3 Super Free': 'ZYRAXON NEXUS',
-  'Big Pickle': 'ZYRAXON OMEGA',
+  'Nemotron 3 Super Free': 'ZYRAXON PHANTOM',
+  'Big Pickle': 'ZYRAXON VELOCITY',
 };
 
 function setNativeValue(el: HTMLTextAreaElement, value: string) {

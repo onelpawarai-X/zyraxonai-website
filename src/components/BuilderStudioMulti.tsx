@@ -14,7 +14,7 @@ type Model = { id: string; name: string; note: string }
 const MODELS: Model[] = [
   { id: 'zyraxon-titan', name: 'ZYRAXON TITAN', note: 'Balanced builder' },
   { id: 'zyraxon-phantom', name: 'ZYRAXON PHANTOM', note: 'Deep reasoning' },
-  { id: 'zyraxon-velocity', name: 'ZYRAXON OMEGA', note: 'Fast generation' },
+  { id: 'zyraxon-velocity', name: 'ZYRAXON VELOCITY', note: 'Ultra-fast building' },
 ]
 const STARTER: FileState = {
   'index.html': '<!doctype html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width,initial-scale=1">\n  <title>ZYRAXON</title>\n</head>\n<body>\n  <main><h1>Start with an idea.</h1><p>Describe the website you want ZYRAXON AI to build.</p></main>\n</body>\n</html>',
