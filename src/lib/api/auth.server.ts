@@ -7,7 +7,10 @@ import { encryptGitHubToken } from '@/lib/github-token.server';
 type GitHubUser = { id: number; login: string; name: string | null; avatar_url: string | null; bio: string | null; blog: string | null; location: string | null; email: string | null };
 type GitHubTokenResponse = { access_token?: string; refresh_token?: string; expires_in?: number; refresh_token_expires_in?: number; scope?: string; error?: string; error_description?: string };
 
-const DEFAULT_GITHUB_REDIRECT_URI = 'https://zyraxonai.lovable.app/';
+// GitHub OAuth binds the one-time authorization code to the exact redirect URI.
+// Keep this value identical in the browser authorize request, this server-side
+// token exchange, and the GitHub OAuth App settings.
+const DEFAULT_GITHUB_REDIRECT_URI = 'https://zyraxonai.lovable.app/api/public/auth/github/callback';
 
 async function githubToken(code: string, redirectUri: string): Promise<GitHubTokenResponse> {
   const clientId = process.env['GITHUB_CLIENT_ID'];
@@ -45,11 +48,9 @@ export async function githubExchange(ctx: ApiContext) {
   const body = await readJson<{ code?: string; redirect_uri?: string }>(ctx.request);
   const code = requireString(body.code, 'code', 400);
 
-  // OAuth codes are bound to the exact redirect URI used during authorization.
-  // Only accept the known ZYRAXON browser callback; never accept an arbitrary URL.
-  const redirectUri = body.redirect_uri === DEFAULT_GITHUB_REDIRECT_URI
-    ? DEFAULT_GITHUB_REDIRECT_URI
-    : DEFAULT_GITHUB_REDIRECT_URI;
+  // Never accept a caller-controlled redirect URI. The browser and GitHub App
+  // must use the single canonical callback below.
+  const redirectUri = DEFAULT_GITHUB_REDIRECT_URI;
 
   const github = await githubToken(code, redirectUri);
   const accessToken = github.access_token!;
