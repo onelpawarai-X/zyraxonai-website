@@ -3,10 +3,10 @@ import { Github, LogOut, Loader2, CheckCircle2 } from "lucide-react";
 import { GITHUB_CLIENT_ID, clearAuthState, getAuthState, setAuthState } from "../../lib/ecosystem-auth";
 import type { User } from "../../lib/ecosystem-types";
 
-// GitHub must redirect back to a browser page that is actually rendered by the
-// Builder app. The home route handles the one-time code exchange and then
-// immediately removes code/state from the address bar.
-const CALLBACK_URL = "https://zyraxonai.lovable.app/";
+// GitHub OAuth requires an exact, pre-registered redirect URI. Use the server
+// callback route as the single canonical callback instead of the app root.
+// The callback exchanges the one-time code server-side and then returns to /.
+const CALLBACK_URL = "https://zyraxonai.lovable.app/api/public/auth/github/callback";
 const OAUTH_SCOPE = "repo user:email";
 const STATE_KEY = "zyraxon_github_oauth_state";
 
@@ -23,13 +23,14 @@ export function GitHubHomeAuth() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    // The canonical callback route performs the exchange and writes the same
+    // client auth store before returning to /. Keep this listener only for
+    // compatibility with an older root callback that may still be bookmarked.
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     const returnedState = params.get("state");
     const oauthError = params.get("github_error") || params.get("error");
 
-    // Always clean the OAuth query string first so the user never remains on a
-    // cryptic /?code=... URL while the exchange is happening.
     const cleanUrl = window.location.pathname + window.location.hash;
     if (code || returnedState || oauthError) window.history.replaceState({}, document.title, cleanUrl);
 
