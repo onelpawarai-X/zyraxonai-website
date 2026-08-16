@@ -6,59 +6,60 @@ const MODEL_NAMES: Record<string, string> = {
   'big-pickle': 'ZYRAXON VELOCITY',
 };
 
-/** Runtime hardening for the Builder shell. It deliberately leaves the
- * existing OpenCode model IDs and generation pipeline untouched while fixing
- * presentation, preview navigation isolation, and the composer layout. */
 export default function BuilderRuntimeFixes() {
   useEffect(() => {
     const style = document.createElement('style');
     style.dataset.zyraxonRuntimeFix = 'true';
     style.textContent = `
-      .zyraxon-builder .zb-topbar,
-      .zyraxon-builder .message-card,
-      .zyraxon-builder .composer-inner,
-      .zyraxon-builder .zb-preview,
-      .zyraxon-builder .zb-models,
-      .zyraxon-builder .zb-drawer,
-      .zyraxon-builder .zb-modal,
-      .zyraxon-builder .code-card,
-      .zyraxon-builder .code-view aside,
-      .zyraxon-builder .preview-bar,
-      .zyraxon-builder .suggestions button,
-      .zyraxon-builder .zb-actions button,
-      .zyraxon-builder .zb-center {
-        border-color: rgba(255,255,255,.18) !important;
-        box-shadow: inset 0 1px rgba(255,255,255,.12), 0 18px 70px rgba(0,0,0,.18) !important;
-      }
-      .zyraxon-builder .composer-inner { background: linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.045)),var(--strong) !important; }
-      .zyraxon-builder .zb-chat-inner { min-height: 0; }
-      .zyraxon-builder .zb-messages { scroll-behavior:smooth; }
-      .zyraxon-builder .composer-tools { justify-content:flex-end; }
-      .zyraxon-builder .composer-tools .auto-web { margin-left:auto; }
-      .zyraxon-builder [data-zyraxon-mic] { order:2 !important; }
-      .zyraxon-builder button.send { order:3 !important; }
+      .zyraxon-builder .zb-topbar,.zyraxon-builder .message,.zyraxon-builder .composer,.zyraxon-builder .studio-pane,.zyraxon-builder .popover,.zyraxon-builder .inline-file,.zyraxon-builder .file-tree,.zyraxon-builder .studio-head{border-color:rgba(255,255,255,.18)!important;box-shadow:inset 0 1px rgba(255,255,255,.12),0 18px 70px rgba(0,0,0,.22)!important}
+      .zyraxon-builder .composer{background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.045)),var(--panel)!important}
+      .zyraxon-builder [data-zyraxon-mic]{order:2!important}
+      .zyraxon-builder .send-btn{order:3!important}
+      .zyraxon-builder.github-connected .publish-modal input[type=password]{display:none!important}
+      .zyraxon-builder.github-connected .publish-modal:before{content:'GitHub connected · publishing will use your secure server-side connection';display:block;color:var(--muted);font-size:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035)}
     `;
     document.head.appendChild(style);
 
+    const getAuthToken = () => {
+      try {
+        const raw = localStorage.getItem('zyraxon_ecosystem_auth');
+        const auth = raw ? JSON.parse(raw) : null;
+        return typeof auth?.token === 'string' ? auth.token : '';
+      } catch { return ''; }
+    };
+
+    const setReactValue = (input: HTMLInputElement, value: string) => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      if (setter) setter.call(input, value); else input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    const hydratePublishAuth = () => {
+      const root = document.querySelector<HTMLElement>('.zyraxon-builder');
+      const token = getAuthToken();
+      if (root) root.classList.toggle('github-connected', !!token);
+      if (!token) return;
+      const input = document.querySelector<HTMLInputElement>('.publish-modal input[type=password]');
+      if (input && input.value !== token) setReactValue(input, token);
+    };
+
     const renameModels = () => {
-      document.querySelectorAll<HTMLElement>('.zb-models button').forEach((button) => {
-        const text = button.textContent || '';
-        for (const [upstream, branded] of Object.entries(MODEL_NAMES)) {
-          if (text.includes(upstream) || text.includes(branded)) continue;
-          if (text.includes('MiMo V2.5 Free')) button.querySelector('b')?.replaceChildren(document.createTextNode(branded));
-          if (text.includes('Nemotron 3 Super Free')) button.querySelector('b')?.replaceChildren(document.createTextNode(branded));
-          if (text.includes('Big Pickle')) button.querySelector('b')?.replaceChildren(document.createTextNode(branded));
-        }
-        const note = button.querySelector('em');
-        if (note) note.textContent = note.textContent?.replace(/Balanced builder|Deep reasoning|Fast generation/i, 'ZYRAXON Builder Engine') || 'ZYRAXON Builder Engine';
+      document.querySelectorAll<HTMLElement>('.model-pop button, .zb-models button').forEach((button) => {
+        const label = button.querySelector('b');
+        if (!label) return;
+        const text = label.textContent || '';
+        if (/MiMo V2\.5 Free/i.test(text)) label.textContent = MODEL_NAMES['mimo-v2.5-free'];
+        else if (/Nemotron 3 Super Free/i.test(text)) label.textContent = MODEL_NAMES['nemotron-3-super-free'];
+        else if (/Big Pickle/i.test(text)) label.textContent = MODEL_NAMES['big-pickle'];
+        const note = button.querySelector('small, em');
+        if (note) note.textContent = 'ZYRAXON Builder Engine';
       });
-      const actions = document.querySelectorAll<HTMLElement>('.zb-actions button');
-      actions.forEach((button) => {
-        for (const [upstream, branded] of Object.entries(MODEL_NAMES)) {
-          if (button.textContent?.includes(upstream) || button.textContent?.includes('MiMo V2.5 Free') || button.textContent?.includes('Nemotron 3 Super Free') || button.textContent?.includes('Big Pickle')) {
-            button.textContent = branded + '⌄';
-          }
-        }
+      document.querySelectorAll<HTMLElement>('.model-btn, .zb-actions button').forEach((button) => {
+        const text = button.textContent || '';
+        if (/MiMo V2\.5 Free/i.test(text)) button.textContent = `${MODEL_NAMES['mimo-v2.5-free']}⌄`;
+        else if (/Nemotron 3 Super Free/i.test(text)) button.textContent = `${MODEL_NAMES['nemotron-3-super-free']}⌄`;
+        else if (/Big Pickle/i.test(text)) button.textContent = `${MODEL_NAMES['big-pickle']}⌄`;
       });
     };
 
@@ -70,7 +71,7 @@ export default function BuilderRuntimeFixes() {
           if (!doc || !win || doc.documentElement.dataset.zyraxonPatched === '1') return;
           doc.documentElement.dataset.zyraxonPatched = '1';
           const css = doc.createElement('style');
-          css.textContent = `a,button,[role="button"]{cursor:pointer!important} body{min-height:100vh}`;
+          css.textContent = `a,button,[role="button"]{cursor:pointer!important}body{min-height:100vh}`;
           doc.head?.appendChild(css);
           doc.addEventListener('click', (event) => {
             const target = event.target as Element | null;
@@ -79,8 +80,7 @@ export default function BuilderRuntimeFixes() {
             const href = anchor.getAttribute('href') || '';
             const external = /^(?:[a-z][a-z0-9+.-]*:)?\\/\\//i.test(href) || /^[a-z][a-z0-9+.-]*:/i.test(href);
             if (!external && href && href !== '#') {
-              event.preventDefault();
-              event.stopPropagation();
+              event.preventDefault(); event.stopPropagation();
               const url = new URL(href, win.location.href);
               win.history.pushState({}, '', url.pathname + url.search + url.hash);
               win.dispatchEvent(new CustomEvent('zyraxon-preview-route', { detail: { path: url.pathname + url.search + url.hash } }));
@@ -89,15 +89,10 @@ export default function BuilderRuntimeFixes() {
           const originalOpen = win.open;
           win.open = ((url?: string | URL, target?: string, features?: string) => {
             const raw = String(url ?? '');
-            if (raw && !/^(?:[a-z][a-z0-9+.-]*:)?\\/\\//i.test(raw) && !/^[a-z][a-z0-9+.-]*:/i.test(raw)) {
-              win.location.href = raw;
-              return win;
-            }
+            if (raw && !/^(?:[a-z][a-z0-9+.-]*:)?\\/\\//i.test(raw) && !/^[a-z][a-z0-9+.-]*:/i.test(raw)) { win.location.href = raw; return win; }
             return originalOpen.call(win, url, target, features);
           }) as typeof win.open;
-        } catch {
-          // Cross-origin or sandbox restrictions: the iframe remains isolated.
-        }
+        } catch {}
       };
       iframe.addEventListener('load', inject);
       inject();
@@ -107,26 +102,18 @@ export default function BuilderRuntimeFixes() {
     const iframeCleanups = new Map<HTMLIFrameElement, () => void>();
     const observe = () => {
       renameModels();
-      document.querySelectorAll<HTMLIFrameElement>('.zb-preview iframe').forEach((iframe) => {
+      hydratePublishAuth();
+      document.querySelectorAll<HTMLIFrameElement>('.preview-frame iframe,.zb-preview iframe').forEach((iframe) => {
         if (!iframeCleanups.has(iframe)) iframeCleanups.set(iframe, patchPreview(iframe));
       });
-      for (const [iframe, cleanup] of iframeCleanups) {
-        if (!document.contains(iframe)) { cleanup(); iframeCleanups.delete(iframe); }
-      }
+      for (const [iframe, cleanup] of iframeCleanups) if (!document.contains(iframe)) { cleanup(); iframeCleanups.delete(iframe); }
     };
 
     const observer = new MutationObserver(observe);
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     const interval = window.setInterval(observe, 350);
     observe();
-
-    return () => {
-      observer.disconnect();
-      window.clearInterval(interval);
-      iframeCleanups.forEach((cleanup) => cleanup());
-      style.remove();
-    };
+    return () => { observer.disconnect(); window.clearInterval(interval); iframeCleanups.forEach(cleanup => cleanup()); style.remove(); };
   }, []);
-
   return null;
 }
