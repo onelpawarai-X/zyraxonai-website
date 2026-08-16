@@ -2,13 +2,9 @@ import { useEffect } from 'react';
 
 const MODEL_NAMES: Record<string, string> = {
   'mimo-v2.5-free': 'ZYRAXON TITAN',
-  'nemotron-3-super-free': 'ZYRAXON PHANTOM',
-  'big-pickle': 'ZYRAXON VELOCITY',
+  'nemotron-3-super-free': 'ZYRAXON NEXUS',
+  'big-pickle': 'ZYRAXON OMEGA',
 };
-
-function getSessionToken() {
-  try { const raw = localStorage.getItem('zyraxon_ecosystem_auth'); const auth = raw ? JSON.parse(raw) : null; return typeof auth?.token === 'string' ? auth.token : ''; } catch { return ''; }
-}
 
 export default function BuilderRuntimeFixes() {
   useEffect(() => {
@@ -17,7 +13,6 @@ export default function BuilderRuntimeFixes() {
     style.textContent = `
       .zyraxon-builder .zb-topbar,.zyraxon-builder .message,.zyraxon-builder .composer,.zyraxon-builder .studio-pane,.zyraxon-builder .popover,.zyraxon-builder .inline-file,.zyraxon-builder .file-tree,.zyraxon-builder .studio-head{border-color:rgba(255,255,255,.18)!important;box-shadow:inset 0 1px rgba(255,255,255,.12),0 18px 70px rgba(0,0,0,.22)!important}
       .zyraxon-builder .composer{background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.045)),var(--panel)!important}
-      .zyraxon-builder [data-zyraxon-mic]{order:2!important}.zyraxon-builder .send-btn{order:3!important}
       .zyraxon-builder.github-connected .publish-modal input[type=password]{display:none!important}
       .zyraxon-builder.github-connected .publish-modal:before{content:'GitHub connected · no token required';display:block;color:var(--muted);font-size:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035)}
     `;
@@ -39,14 +34,22 @@ export default function BuilderRuntimeFixes() {
       });
     };
 
-    const updateGitHubState = () => document.querySelector<HTMLElement>('.zyraxon-builder')?.classList.toggle('github-connected', !!getSessionToken());
+    const updateGitHubState = async () => {
+      const root = document.querySelector<HTMLElement>('.zyraxon-builder');
+      if (!root) return;
+      try {
+        const response = await fetch('/api/public/auth/github/me', { credentials: 'include', cache: 'no-store' });
+        const data = response.ok ? await response.json() : null;
+        root.classList.toggle('github-connected', !!data?.user);
+      } catch { root.classList.remove('github-connected'); }
+    };
 
     const publishConnected = async (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       const button = target?.closest('.publish-now') as HTMLButtonElement | null;
       if (!button) return;
-      const token = getSessionToken();
-      if (!token) return;
+      const root = document.querySelector<HTMLElement>('.zyraxon-builder');
+      if (!root?.classList.contains('github-connected')) return;
       event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();
       const modal = button.closest('.publish-modal');
       const repoInput = modal?.querySelector<HTMLInputElement>('input:not([type=password])');
@@ -54,10 +57,12 @@ export default function BuilderRuntimeFixes() {
       if (!repo) { const status = modal?.querySelector('small'); if (status) status.textContent = 'Enter a repository name.'; return; }
       const iframe = document.querySelector<HTMLIFrameElement>('.preview-frame iframe');
       const html = iframe?.getAttribute('srcdoc') || '';
-      if (!html) return;
+      if (!html) { const status = modal?.querySelector('small'); if (status) status.textContent = 'Generate a website before publishing.'; return; }
       button.disabled = true; button.textContent = 'Publishing…';
       try {
-        const response = await fetch('/api/public/builder/publish', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ repo, files: { 'index.html': html }, html }) });
+        // Authentication is carried by the secure HttpOnly session cookie.
+        // No GitHub token is read from or stored in localStorage.
+        const response = await fetch('/api/public/builder/publish', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ repo, files: { 'index.html': html }, html }) });
         const data = await response.json().catch(() => ({}));
         const status = modal?.querySelector('small'); if (status) status.textContent = response.ok && data.ok ? (data.pagesUrl || data.repoUrl || 'Published successfully.') : (data.error || 'Publish failed.');
       } catch { const status = modal?.querySelector('small'); if (status) status.textContent = 'Publish failed. Check your connection.'; }
@@ -74,10 +79,10 @@ export default function BuilderRuntimeFixes() {
     };
 
     const iframeCleanups = new Map<HTMLIFrameElement, () => void>();
-    const observe = () => { renameModels(); updateGitHubState(); document.querySelectorAll<HTMLIFrameElement>('.preview-frame iframe,.zb-preview iframe').forEach(iframe => { if (!iframeCleanups.has(iframe)) iframeCleanups.set(iframe, patchPreview(iframe)); }); for (const [iframe, cleanup] of iframeCleanups) if (!document.contains(iframe)) { cleanup(); iframeCleanups.delete(iframe); } };
+    const observe = () => { renameModels(); void updateGitHubState(); document.querySelectorAll<HTMLIFrameElement>('.preview-frame iframe,.zb-preview iframe').forEach(iframe => { if (!iframeCleanups.has(iframe)) iframeCleanups.set(iframe, patchPreview(iframe)); }); for (const [iframe, cleanup] of iframeCleanups) if (!document.contains(iframe)) { cleanup(); iframeCleanups.delete(iframe); } };
     document.addEventListener('click', publishConnected, true);
     const observer = new MutationObserver(observe); observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-    const interval = window.setInterval(observe, 400); observe();
+    const interval = window.setInterval(observe, 1200); observe();
     return () => { document.removeEventListener('click', publishConnected, true); observer.disconnect(); window.clearInterval(interval); iframeCleanups.forEach(cleanup => cleanup()); style.remove(); };
   }, []);
   return null;
