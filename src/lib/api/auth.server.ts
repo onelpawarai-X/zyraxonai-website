@@ -8,6 +8,9 @@ type GitHubUser = { id: number; login: string; name: string | null; avatar_url: 
 type GitHubTokenResponse = { access_token?: string; refresh_token?: string; expires_in?: number; refresh_token_expires_in?: number; scope?: string; error?: string; error_description?: string };
 type GitHubEmail = { email: string; primary: boolean; verified: boolean };
 
+// This is the client ID supplied for the production GitHub OAuth application.
+// It is public by design. Never put GITHUB_CLIENT_SECRET in client-side code.
+export const GITHUB_CLIENT_ID = 'Ov23liDGlT46vtrvOSqo';
 export const GITHUB_REDIRECT_URI = 'https://zyraxonai.lovable.app/api/public/auth/github/callback';
 const STATE_COOKIE = 'zyraxon_github_oauth_state';
 const ACCESS_COOKIE = 'zyraxon_session';
@@ -18,9 +21,9 @@ function cookie(name: string, value: string, maxAge: number, httpOnly = true) { 
 function clearCookie(name: string) { return `${name}=; Path=/; Secure; SameSite=Lax; Max-Age=0; HttpOnly`; }
 
 async function githubToken(code: string): Promise<GitHubTokenResponse> {
-  const clientId = process.env['GITHUB_CLIENT_ID']; const clientSecret = process.env['GITHUB_CLIENT_SECRET'];
-  if (!clientId || !clientSecret) throw new HttpError(500, 'NOT_CONFIGURED', 'GitHub OAuth backend is not configured');
-  const res = await fetch('https://github.com/login/oauth/access_token', { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code, redirect_uri: GITHUB_REDIRECT_URI }) });
+  const clientSecret = process.env['GITHUB_CLIENT_SECRET'];
+  if (!clientSecret) throw new HttpError(500, 'NOT_CONFIGURED', 'GitHub OAuth backend is not configured');
+  const res = await fetch('https://github.com/login/oauth/access_token', { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify({ client_id: GITHUB_CLIENT_ID, client_secret: clientSecret, code, redirect_uri: GITHUB_REDIRECT_URI }) });
   const body = (await res.json()) as GitHubTokenResponse;
   if (!body.access_token) throw badRequest(body.error_description || body.error || 'GitHub rejected the authorization code'); return body;
 }
@@ -47,9 +50,14 @@ async function completeGitHubLogin(ctx: ApiContext, code: string) {
   return { session, user: { id: session.user.id, login: ghUser.login, github_id: ghUser.id, name: ghUser.name, avatar_url: ghUser.avatar_url, email } };
 }
 export function githubStart(_ctx: ApiContext): Response {
-  const state = crypto.randomUUID(); const clientId = process.env['GITHUB_CLIENT_ID']; if (!clientId) throw new HttpError(500, 'NOT_CONFIGURED', 'GitHub OAuth backend is not configured');
-  const url = new URL('https://github.com/login/oauth/authorize'); url.searchParams.set('client_id', clientId); url.searchParams.set('redirect_uri', GITHUB_REDIRECT_URI); url.searchParams.set('scope', 'repo user:email'); url.searchParams.set('state', state);
-  return new Response(null, { status: 302, headers: { Location: url.toString(), 'Set-Cookie': cookie(STATE_COOKIE, state, 600) } });
+  const state = crypto.randomUUID();
+  const url = new URL('https://github.com/login/oauth/authorize');
+  url.searchParams.set('client_id', GITHUB_CLIENT_ID);
+  // Let GitHub use the callback registered on the OAuth app. This prevents
+  // preview/alternate-origin redirect_uri values from breaking production login.
+  url.searchParams.set('scope', 'repo user:email');
+  url.searchParams.set('state', state);
+  return new Response(null, { status: 302, headers: { Location: url.toString(), 'Set-Cookie': cookie(STATE_COOKIE, state, 600), 'Cache-Control': 'no-store' } });
 }
 export async function githubCallback(ctx: ApiContext): Promise<Response> {
   const code = ctx.url.searchParams.get('code'); const state = ctx.url.searchParams.get('state'); const expected = cookieValue(ctx.request, STATE_COOKIE);
