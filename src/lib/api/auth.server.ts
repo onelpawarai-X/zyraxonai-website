@@ -7,6 +7,8 @@ import { encryptGitHubToken } from '@/lib/github-token.server';
 type GitHubUser = { id: number; login: string; name: string | null; avatar_url: string | null; bio: string | null; blog: string | null; location: string | null; email: string | null };
 type GitHubTokenResponse = { access_token?: string; refresh_token?: string; expires_in?: number; refresh_token_expires_in?: number; scope?: string; error?: string; error_description?: string };
 
+const DEFAULT_GITHUB_REDIRECT_URI = 'https://zyraxonai.lovable.app/';
+
 async function githubToken(code: string, redirectUri: string): Promise<GitHubTokenResponse> {
   const clientId = process.env['GITHUB_CLIENT_ID'];
   const clientSecret = process.env['GITHUB_CLIENT_SECRET'];
@@ -40,11 +42,15 @@ async function mintSession(email: string) {
 }
 
 export async function githubExchange(ctx: ApiContext) {
-  const body = await readJson<{ code?: string }>(ctx.request);
+  const body = await readJson<{ code?: string; redirect_uri?: string }>(ctx.request);
   const code = requireString(body.code, 'code', 400);
-  // The redirect URI used here is exactly the one used in the browser authorization request.
-  // GitHub authorization codes are single-use; binding the exchange to this URI prevents mismatched callback configuration.
-  const redirectUri = new URL('/api/public/auth/github/callback', ctx.url.origin).toString();
+
+  // OAuth codes are bound to the exact redirect URI used during authorization.
+  // Only accept the known ZYRAXON browser callback; never accept an arbitrary URL.
+  const redirectUri = body.redirect_uri === DEFAULT_GITHUB_REDIRECT_URI
+    ? DEFAULT_GITHUB_REDIRECT_URI
+    : DEFAULT_GITHUB_REDIRECT_URI;
+
   const github = await githubToken(code, redirectUri);
   const accessToken = github.access_token!;
   const ghUser = await githubGet<GitHubUser>('/user', accessToken);
@@ -65,6 +71,11 @@ export async function githubExchange(ctx: ApiContext) {
   return { user: { id: session.user.id, login: profile?.github_login ?? ghUser.login, github_id: ghUser.id, name: profile?.name ?? ghUser.name, avatar_url: profile?.avatar_url ?? ghUser.avatar_url, email }, token: session.access_token, refresh_token: session.refresh_token, expires_at: session.expires_at };
 }
 
+/**
+ * Compatibility bridge for an older registered callback. It immediately sends
+ * the one-time OAuth code to the browser callback surface; no credentials are
+ * exposed in the URL beyond GitHub's short-lived code/state parameters.
+ */
 export function githubCallbackRedirect(ctx: ApiContext): Response {
   const code = ctx.url.searchParams.get('code') ?? '';
   const state = ctx.url.searchParams.get('state') ?? '';
