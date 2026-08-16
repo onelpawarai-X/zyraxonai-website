@@ -1,10 +1,7 @@
 import { useEffect } from 'react';
 
-/**
- * Adds the builder microphone directly beside Send.
- * Uses the browser Web Speech API and updates React's textarea through the
- * native value setter so controlled inputs receive the transcript correctly.
- */
+/** Places the microphone immediately before Send and feeds live Web Speech
+ * transcripts into the controlled builder textarea. */
 export default function BuilderMicEnhancer() {
   useEffect(() => {
     let disposed = false;
@@ -19,17 +16,16 @@ export default function BuilderMicEnhancer() {
 
     const setReactValue = (el: HTMLTextAreaElement, value: string) => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
-      if (setter) setter.call(el, value);
-      else el.value = value;
+      if (setter) setter.call(el, value); else el.value = value;
       el.dispatchEvent(new Event('input', { bubbles: true }));
       el.dispatchEvent(new Event('change', { bubbles: true }));
     };
 
     const attach = () => {
       if (disposed) return;
-      const composer = document.querySelector<HTMLElement>('.zb-composer');
+      const composer = document.querySelector<HTMLElement>('.zb-composer, .composer');
       const textarea = composer?.querySelector<HTMLTextAreaElement>('textarea');
-      const send = composer?.querySelector<HTMLButtonElement>('button.send');
+      const send = composer?.querySelector<HTMLButtonElement>('button.send, button.send-btn');
       if (!composer || !textarea || !send) return;
       if (composer.querySelector('[data-zyraxon-mic]')) return;
 
@@ -41,21 +37,20 @@ export default function BuilderMicEnhancer() {
       mic.title = 'Voice input';
       mic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14.5a3.5 3.5 0 0 0 3.5-3.5V6a3.5 3.5 0 0 0-7 0v5a3.5 3.5 0 0 0 3.5 3.5Zm-6-3.5a6 6 0 0 0 12 0M12 17v4m-3 0h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       mic.style.cssText = [
-        'width:38px','height:38px','min-width:38px','padding:0','margin:0','border-radius:12px',
-        'border:1px solid rgba(255,255,255,.12)','background:rgba(255,255,255,.045)','color:#f5f5f7',
+        'width:37px','height:37px','min-width:37px','padding:0','margin:0','border-radius:12px',
+        'border:1px solid rgba(255,255,255,.16)','background:rgba(255,255,255,.045)','color:inherit',
         'display:inline-flex','align-items:center','justify-content:center','cursor:pointer','flex:0 0 auto',
-        'transition:transform .18s ease,background .18s ease,box-shadow .18s ease,opacity .18s ease'
+        'order:2','transition:transform .18s ease,background .18s ease,box-shadow .18s ease,opacity .18s ease'
       ].join(';');
-      mic.querySelector('svg')?.setAttribute('style', 'width:19px;height:19px;display:block');
-
-      // Send stays at the far right; microphone is immediately before it.
+      mic.querySelector('svg')?.setAttribute('style', 'width:18px;height:18px;display:block');
+      send.style.order = '3';
       send.parentElement?.insertBefore(mic, send);
 
       const setStatus = (text: string, listening = false) => {
         mic.title = text;
         mic.setAttribute('aria-label', text);
         mic.style.background = listening ? 'rgba(255,255,255,.13)' : 'rgba(255,255,255,.045)';
-        mic.style.boxShadow = listening ? '0 0 0 4px rgba(255,255,255,.055),0 0 28px rgba(185,156,255,.28)' : 'none';
+        mic.style.boxShadow = listening ? '0 0 0 4px rgba(255,255,255,.055),0 0 28px rgba(255,255,255,.18)' : 'none';
         mic.style.transform = listening ? 'translateY(-1px)' : 'translateY(0)';
       };
 
@@ -87,21 +82,13 @@ export default function BuilderMicEnhancer() {
         const Ctor = Speech();
         if (!Ctor) return;
         recognition = new Ctor();
-        const lang = languages[languageIndex] || 'bn-BD';
-        recognition.lang = lang;
+        recognition.lang = languages[languageIndex] || 'bn-BD';
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.maxAlternatives = 3;
-
         let committed = textarea.value || '';
-        let heardFinal = false;
 
-        recognition.onstart = () => {
-          active = true;
-          setStatus(`Listening · ${lang} · click to stop`, true);
-          textarea.focus();
-        };
-
+        recognition.onstart = () => { active = true; setStatus(`Listening · ${recognition.lang} · click to stop`, true); textarea.focus(); };
         recognition.onresult = (event: any) => {
           let interim = '';
           for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -109,89 +96,35 @@ export default function BuilderMicEnhancer() {
             const transcript = result?.[0]?.transcript || '';
             if (result?.isFinal) {
               const clean = transcript.trim();
-              if (clean) {
-                committed += (committed && !/\s$/.test(committed) ? ' ' : '') + clean;
-                heardFinal = true;
-              }
-            } else {
-              interim += transcript;
-            }
+              if (clean) committed += (committed && !/\s$/.test(committed) ? ' ' : '') + clean;
+            } else interim += transcript;
           }
-          const value = committed + (interim ? (committed && !/\s$/.test(committed) ? ' ' : '') + interim : '');
-          setReactValue(textarea, value);
+          setReactValue(textarea, committed + (interim ? (committed && !/\s$/.test(committed) ? ' ' : '') + interim : ''));
           textarea.focus();
-          textarea.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: interim || null }));
         };
-
         recognition.onerror = (event: any) => {
           const err = String(event?.error || '');
-          if (err === 'not-allowed' || err === 'service-not-allowed') {
-            active = false;
-            setStatus('Microphone permission blocked — allow microphone access, then try again');
-            return;
-          }
-          if (err === 'audio-capture') {
-            active = false;
-            setStatus('No microphone was detected');
-            return;
-          }
-          // Browser speech services can reject a language. Try the next supported
-          // language on the next recognition session instead of leaving the button dead.
-          if (err === 'language-not-supported' || err === 'network' || err === 'no-speech') {
-            languageIndex = (languageIndex + 1) % languages.length;
-          }
+          if (err === 'not-allowed' || err === 'service-not-allowed') { active = false; setStatus('Microphone permission blocked — allow microphone access and try again'); return; }
+          if (err === 'audio-capture') { active = false; setStatus('No microphone was detected'); return; }
+          if (err === 'language-not-supported' || err === 'network' || err === 'no-speech') languageIndex = (languageIndex + 1) % languages.length;
         };
-
         recognition.onend = () => {
           if (!active || disposed) return;
-          // Web Speech implementations frequently stop after a short silence.
-          // Restart while the user is still holding the listening state.
-          reconnectTimer = window.setTimeout(() => {
-            if (!active || disposed) return;
-            try { recognition.start(); } catch { active = false; setStatus(heardFinal ? 'Voice input' : 'Voice input — try again'); }
-          }, 120);
+          reconnectTimer = window.setTimeout(() => { if (!active || disposed) return; try { recognition.start(); } catch { active = false; setStatus('Voice input — click again to start'); } }, 120);
         };
-
-        try {
-          recognition.start();
-        } catch {
-          active = false;
-          setStatus('Voice input — click again to start');
-        }
+        try { recognition.start(); } catch { active = false; setStatus('Voice input — click again to start'); }
       };
 
       mic.addEventListener('click', start);
-      mic.addEventListener('contextmenu', (event) => {
-        event.preventDefault();
-        languageIndex = (languageIndex + 1) % languages.length;
-        setStatus(`Voice language: ${languages[languageIndex]} · click to start`);
-      });
-
-      cleanup = () => {
-        active = false;
-        if (reconnectTimer) window.clearTimeout(reconnectTimer);
-        try { recognition?.abort(); } catch {}
-        mic.removeEventListener('click', start);
-        mic.remove();
-      };
+      mic.addEventListener('contextmenu', (event) => { event.preventDefault(); languageIndex = (languageIndex + 1) % languages.length; setStatus(`Voice language: ${languages[languageIndex]} · click to start`); });
+      cleanup = () => { active = false; if (reconnectTimer) window.clearTimeout(reconnectTimer); try { recognition?.abort(); } catch {} mic.removeEventListener('click', start); mic.remove(); };
     };
 
     attach();
     timer = window.setInterval(() => {
-      if (!document.querySelector('[data-zyraxon-mic]')) {
-        cleanup?.();
-        cleanup = undefined;
-        attach();
-      }
-    }, 500);
-
-    return () => {
-      disposed = true;
-      if (timer) window.clearInterval(timer);
-      cleanup?.();
-      try { recognition?.abort(); } catch {}
-    };
+      if (!document.querySelector('[data-zyraxon-mic]')) { cleanup?.(); cleanup = undefined; attach(); }
+    }, 400);
+    return () => { disposed = true; if (timer) window.clearInterval(timer); cleanup?.(); try { recognition?.abort(); } catch {} };
   }, []);
-
   return null;
 }
