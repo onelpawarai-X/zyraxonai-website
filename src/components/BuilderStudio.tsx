@@ -1,6 +1,7 @@
 import BuilderStudioMulti from './BuilderStudioMulti';
 import BuilderMicEnhancer from './BuilderMicEnhancer';
 import BuilderRuntimeFixes from './BuilderRuntimeFixes';
+import BuilderMarketplace from './BuilderMarketplace';
 
 export default function BuilderStudio() {
   return (
@@ -8,6 +9,7 @@ export default function BuilderStudio() {
       <BuilderStudioMulti />
       <BuilderMicEnhancer />
       <BuilderRuntimeFixes />
+      <BuilderMarketplace />
     </>
   );
 }
