@@ -34,9 +34,10 @@ export default function BuilderStudioClean() {
       .zyraxon-clean-builder .github-account-btn{position:relative!important;width:34px!important;height:34px!important;padding:0!important;display:grid!important;place-items:center!important;border-radius:10px!important;border:1.5px solid rgba(255,255,255,.16)!important;background:rgba(255,255,255,.06)!important;color:#fff!important;box-shadow:inset 0 1px rgba(255,255,255,.1),0 8px 24px rgba(0,0,0,.25)!important}
       .zyraxon-clean-builder .github-account-btn img{width:24px!important;height:24px!important;border-radius:7px!important;object-fit:cover!important}
       .zyraxon-clean-builder .reset-local-btn{position:relative!important;width:25px!important;height:22px!important;padding:0!important;display:grid!important;place-items:center!important;border-radius:8px!important;border:1px solid rgba(255,255,255,.11)!important;background:rgba(255,255,255,.035)!important;color:#8f8f98!important}
-      .zyraxon-clean-builder .composer-row{display:flex!important;align-items:center!important;gap:8px!important}
-      .zyraxon-clean-builder .composer-row .send-btn{order:20!important;flex:0 0 auto!important}
-      .zyraxon-clean-builder .zyraxon-clean-voice{order:19!important;width:38px!important;height:38px!important;flex:0 0 38px!important;display:grid!important;place-items:center!important;border-radius:11px!important;border:1.5px solid rgba(255,255,255,.16)!important;background:rgba(255,255,255,.06)!important;color:#f4f4f5!important;box-shadow:inset 0 1px rgba(255,255,255,.1),0 8px 24px rgba(0,0,0,.22)!important;cursor:pointer!important}
+      .zyraxon-clean-builder .composer-row{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;width:100%!important}
+      .zyraxon-clean-builder .zyraxon-clean-actions{display:inline-flex!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;flex:0 0 auto!important;margin-left:auto!important;padding:0!important;order:999!important}
+      .zyraxon-clean-builder .composer-row .send-btn{order:2!important;flex:0 0 auto!important;margin:0!important}
+      .zyraxon-clean-builder .zyraxon-clean-voice{order:1!important;width:38px!important;height:38px!important;flex:0 0 38px!important;display:grid!important;place-items:center!important;border-radius:11px!important;border:1.5px solid rgba(255,255,255,.16)!important;background:rgba(255,255,255,.06)!important;color:#f4f4f5!important;box-shadow:inset 0 1px rgba(255,255,255,.1),0 8px 24px rgba(0,0,0,.22)!important;cursor:pointer!important}
       .zyraxon-clean-builder .zyraxon-clean-voice svg{width:18px!important;height:18px!important}
       .zyraxon-clean-builder .zyraxon-clean-voice[data-listening="true"]{background:rgba(255,255,255,.15)!important;box-shadow:0 0 0 3px rgba(255,255,255,.05),0 0 28px rgba(255,255,255,.14)!important}
       .zyraxon-clean-builder .zyraxon-clean-mic-note{position:absolute;right:0;bottom:46px;z-index:30;padding:7px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(8,8,10,.9);backdrop-filter:blur(22px);font-size:11px;color:#bdbdc6;white-space:nowrap}
@@ -50,12 +51,12 @@ export default function BuilderStudioClean() {
     document.head.appendChild(style);
 
     let mic: HTMLButtonElement | null = null;
+    let actionGroup: HTMLSpanElement | null = null;
     let recognition: any = null;
     let listening = false;
     let committed = '';
     let retryIndex = 0;
     let observer: MutationObserver | null = null;
-    let noteTimer: number | null = null;
 
     const aliasModels = () => {
       document.querySelectorAll<HTMLElement>('.zyraxon-clean-builder .model-btn,.zyraxon-clean-builder .model-pop button,[data-model-id]').forEach(el => {
@@ -92,7 +93,7 @@ export default function BuilderStudioClean() {
       if (!Ctor) { if (mic) mic.title = 'Speech recognition is not supported by this browser'; return; }
       if (listening) { stopVoice(); return; }
       const textarea = findTextarea();
-      if (!textarea) return;
+      if (!textarea) { if (mic) mic.title = 'Chat input is not available'; return; }
       committed = textarea.value || '';
       listening = true;
       retryIndex = 0;
@@ -101,27 +102,39 @@ export default function BuilderStudioClean() {
       const run = () => {
         if (!listening) return;
         recognition = new Ctor();
-        recognition.continuous = true;
+        recognition.continuous = false;
         recognition.interimResults = true;
-        recognition.maxAlternatives = 3;
-        recognition.lang = candidates[retryIndex % candidates.length] || 'en-US';
+        recognition.maxAlternatives = 5;
+        recognition.lang = candidates[retryIndex % Math.max(1, candidates.length)] || 'en-US';
         recognition.onstart = () => { if (mic) { mic.dataset.listening = 'true'; mic.title = `Listening · ${recognition.lang}`; } };
         recognition.onresult = (event: any) => {
           let interim = '';
+          let finalText = '';
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const result = event.results[i];
             const text = result?.[0]?.transcript || '';
-            if (result?.isFinal && text.trim()) committed += (committed && !/\s$/.test(committed) ? ' ' : '') + text.trim();
+            if (result?.isFinal) finalText += text;
             else interim += text;
           }
-          setNativeValue(textarea, committed + (interim ? (committed && !/\s$/.test(committed) ? ' ' : '') + interim : ''));
+          const value = finalText.trim() ? committed + (committed && !/\s$/.test(committed) ? ' ' : '') + finalText.trim() : committed + (interim ? (committed && !/\s$/.test(committed) ? ' ' : '') + interim : '');
+          setNativeValue(textarea, value);
+          textarea.focus();
+          if (finalText.trim()) committed = value;
         };
         recognition.onerror = (event: any) => {
           const error = String(event?.error || '');
-          if (error === 'not-allowed' || error === 'service-not-allowed' || error === 'audio-capture') { stopVoice(); return; }
+          if (error === 'not-allowed' || error === 'service-not-allowed') { stopVoice(); if (mic) mic.title = 'Microphone permission was denied'; return; }
+          if (error === 'audio-capture') { stopVoice(); if (mic) mic.title = 'No microphone was detected'; return; }
           if (error === 'language-not-supported' || error === 'language-unavailable' || error === 'no-speech' || error === 'nomatch') retryIndex++;
         };
-        recognition.onend = () => { if (listening) window.setTimeout(run, 120); };
+        recognition.onend = () => {
+          if (!listening) return;
+          // Try the next browser-supported language only when the current
+          // recognition cycle produced no final transcript.
+          if (committed === textarea.value || !textarea.value.trim()) retryIndex++;
+          if (retryIndex < candidates.length) window.setTimeout(run, 120);
+          else stopVoice();
+        };
         try { recognition.start(); } catch { stopVoice(); }
       };
       run();
@@ -141,8 +154,13 @@ export default function BuilderStudioClean() {
         mic.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>';
         mic.addEventListener('click', startVoice);
       }
-      if (mic.parentElement !== row) row.appendChild(mic);
-      row.appendChild(send);
+      if (!actionGroup || !actionGroup.isConnected) {
+        actionGroup = document.createElement('span');
+        actionGroup.className = 'zyraxon-clean-actions';
+      }
+      actionGroup.appendChild(mic);
+      actionGroup.appendChild(send);
+      row.appendChild(actionGroup);
     };
 
     const setupAccount = () => {
@@ -153,7 +171,7 @@ export default function BuilderStudioClean() {
       if (!stack) {
         stack = document.createElement('div'); stack.className = 'zyraxon-account-stack zyraxon-clean-account';
         const login = document.createElement('button'); login.type='button'; login.className='github-account-btn'; login.title='Sign in with GitHub'; login.setAttribute('aria-label','Sign in with GitHub');
-        login.addEventListener('click', () => window.location.assign('/api/public/auth/github/start?return_to=%2Fbuilder'));
+        login.addEventListener('click', () => window.location.assign('/api/public/auth/github/start'));
         const reset = document.createElement('button'); reset.type='button'; reset.className='reset-local-btn'; reset.title='Reset local session and data'; reset.setAttribute('aria-label','Reset local session and data');
         reset.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V4h6v2m-9 0 1 15h10l1-15M10 11v6m4-6v6"/></svg>';
         reset.addEventListener('click', async () => { if (!window.confirm('Reset this ZYRAXON session and all local builder data?')) return; try { await fetch('/api/public/auth/github/logout',{method:'POST',credentials:'include'}); } catch {} clearClientData(); window.location.replace('/builder'); });
@@ -177,9 +195,8 @@ export default function BuilderStudioClean() {
 
     return () => {
       observer?.disconnect();
-      if (mic) mic.remove();
       try { recognition?.abort(); } catch {}
-      if (noteTimer) window.clearTimeout(noteTimer);
+      if (actionGroup?.parentElement) actionGroup.parentElement.appendChild(actionGroup.querySelector('.send-btn') || document.createElement('span'));
       style.remove();
     };
   }, []);

@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-const CLIENT_ID = process.env['GITHUB_CLIENT_ID'] ?? 'Ov23liDGlT46vtrvOSqo';
+// Public client identifier for the production ZYRAXON OAuth application.
+// The secret remains server-side in GITHUB_CLIENT_SECRET.
+const CLIENT_ID = 'Ov23liDGlT46vtrvOSqo';
+const STATE_COOKIE = 'zyraxon_github_oauth_state';
 const CALLBACK_PATH = '/api/public/auth/github/callback';
 
 function randomState() {
@@ -13,17 +16,12 @@ export const Route = createFileRoute('/api/public/auth/github/start')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        if (!CLIENT_ID) {
-          return new Response('GitHub OAuth is not configured', { status: 500 });
-        }
-
-        const url = new URL(request.url);
-        const origin = url.origin;
-        const redirectUri = `${origin}${CALLBACK_PATH}`;
         const state = randomState();
         const authorize = new URL('https://github.com/login/oauth/authorize');
         authorize.searchParams.set('client_id', CLIENT_ID);
-        authorize.searchParams.set('redirect_uri', redirectUri);
+        // Deliberately omit redirect_uri. GitHub then uses the single callback
+        // registered on this OAuth application, eliminating origin/preview URL
+        // drift and the redirect_uri mismatch that previously broke sign-in.
         authorize.searchParams.set('scope', 'repo user:email');
         authorize.searchParams.set('state', state);
 
@@ -32,7 +30,7 @@ export const Route = createFileRoute('/api/public/auth/github/start')({
           headers: {
             Location: authorize.toString(),
             'Cache-Control': 'no-store',
-            'Set-Cookie': `zyraxon_github_oauth_state=${state}; Path=/; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+            'Set-Cookie': `${STATE_COOKIE}=${encodeURIComponent(state)}; Path=/; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
           },
         });
       },
