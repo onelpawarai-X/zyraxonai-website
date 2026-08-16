@@ -12,6 +12,16 @@ function githubToken(request: Request): string {
   return (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
 }
 
+function base64Utf8(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 function sanitizeRepoName(value: string): string {
   return value
     .toLowerCase()
@@ -93,7 +103,7 @@ export const Route = createFileRoute('/api/public/github/publish')({
 
           const payload: Record<string, unknown> = {
             message: `ZYRAXON AI: update ${file.path}`,
-            content: Buffer.from(file.content, 'utf8').toString('base64'),
+            content: base64Utf8(file.content),
             branch,
           };
           if (existingData?.sha) payload.sha = existingData.sha;
@@ -109,13 +119,7 @@ export const Route = createFileRoute('/api/public/github/publish')({
           }
         }
 
-        return Response.json({
-          ok: true,
-          repository: repo.full_name,
-          url: repo.html_url,
-          branch,
-          filesPublished: files.length,
-        }, { headers: CORS });
+        return Response.json({ ok: true, repository: repo.full_name, url: repo.html_url, branch, filesPublished: files.length }, { headers: CORS });
       },
     },
   },
