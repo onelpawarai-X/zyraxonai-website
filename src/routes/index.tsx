@@ -1,34 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { GitHubHomeAuth } from "../components/home/GitHubHomeAuth";
+import { createFileRoute, Link } from '@tanstack/react-router'
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
-      {
-        name: "description",
-        content:
-          "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory.",
-      },
-      { property: "og:title", content: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
-      {
-        property: "og:description",
-        content: "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory.",
-      },
-    ],
-  }),
-  component: Index,
-});
+export const Route = createFileRoute('/')({
+  head: () => ({ meta: [{ title: 'ZYRAXON AI — Build Beyond Limits' }, { name: 'description', content: 'Build with AI. Explore the ZYRAXON ecosystem.' }] }),
+  component: Home,
+})
 
-function Index() {
-  return (
-    <main style={{ minHeight: "100vh", height: "100vh", display: "flex", flexDirection: "column", background: "#06060e", overflow: "hidden" }}>
-      <GitHubHomeAuth />
-      <iframe
-        title="ZYRAXON AI"
-        src="/zyraxon.html"
-        style={{ display: "block", width: "100%", flex: "1 1 auto", minHeight: 0, border: 0 }}
-      />
-    </main>
-  );
+function Home() {
+  return <main className="zy-home"><style>{CSS}</style><div className="aurora a"/><div className="aurora b"/><header className="nav"><Link to="/" className="brand"><span className="mark">Z</span>ZYRAXON <small>AI</small></Link><nav><Link to="/">Home</Link><Link to="/bludar">AI Bludar</Link><Link to="/ecosystem">Ecosystem</Link></nav><Link to="/bludar" className="cta">Open Bludar ↗</Link></header><section className="hero"><div className="eyebrow"><i/> NEXT-GENERATION AI WORKSPACE</div><h1>Build <span>without limits.</span></h1><p>Creation, intelligence and the ZYRAXON ecosystem in one focused experience.</p><div className="actions"><Link to="/bludar" className="primary">✦ Launch AI Bludar</Link><Link to="/ecosystem" className="secondary">◈ Explore Ecosystem</Link></div><div className="url"><span>zyraxon.ai</span><b>/bludar</b><em>● LIVE</em></div></section><section className="cards"><article><div className="icon cyan">✦</div><h3>AI Bludar</h3><p>Turn ideas into polished websites with live building, preview and code.</p><Link to="/bludar">Open builder →</Link></article><article><div className="icon violet">◈</div><h3>Ecosystem</h3><p>Discover tools, products and experiences connected to ZYRAXON.</p><Link to="/ecosystem">Explore ecosystem →</Link></article><article><div className="icon white">⌘</div><h3>Focused by design</h3><p>Dedicated pages, real navigation and purposeful interactions.</p><Link to="/bludar">Start creating →</Link></article></section></main>
 }
+
+const CSS=`*{box-sizing:border-box}.zy-home{min-height:100vh;overflow:hidden;position:relative;background:#05050a;color:#f8f8fb;font-family:Inter,ui-sans-serif,system-ui,sans-serif}.aurora{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(120px);opacity:.12;pointer-events:none}.a{background:#00e5ff;right:-200px;top:-250px}.b{background:#8b5cf6;left:-220px;bottom:-260px}.nav{height:76px;max-width:1240px;margin:auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:5;border-bottom:1px solid rgba(255,255,255,.06)}.brand{display:flex;align-items:center;gap:9px;color:#fff;text-decoration:none;font-weight:850;letter-spacing:.08em}.brand small{font-size:9px;color:#8d8d9e;letter-spacing:.22em}.mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,#13e8ff,#7c3aed);color:#05050a;font-weight:950}.nav nav{display:flex;gap:32px}.nav nav a{color:#8f8fa0;text-decoration:none;font-size:13px}.nav nav a:hover{color:#fff}.cta{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);padding:10px 15px;border-radius:11px;font-size:12px}.hero{position:relative;z-index:2;max-width:900px;margin:auto;text-align:center;padding:128px 24px 92px}.eyebrow{display:inline-flex;gap:9px;align-items:center;color:#8b8b9c;font-size:10px;letter-spacing:.2em;border:1px solid rgba(255,255,255,.08);padding:8px 13px;border-radius:999px;background:rgba(255,255,255,.025)}.eyebrow i{width:6px;height:6px;border-radius:50%;background:#28e8ff;box-shadow:0 0 13px #28e8ff}.hero h1{font-size:clamp(58px,10vw,108px);line-height:.95;letter-spacing:-.07em;margin:28px 0 25px;font-weight:950}.hero h1 span{display:block;background:linear-gradient(100deg,#fff,#74efff,#a978ff);-webkit-background-clip:text;background-clip:text;color:transparent}.hero p{max-width:650px;margin:auto;color:#8e8e9d;font-size:17px;line-height:1.8}.actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:38px}.actions a{display:inline-flex;align-items:center;gap:9px;text-decoration:none;padding:14px 20px;border-radius:13px;font-weight:750;font-size:13px}.primary{background:linear-gradient(135deg,#16e6ff,#9c6cff);color:#05050a}.secondary{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);color:#f3f3f6}.url{margin:52px auto 0;width:min(480px,100%);display:flex;gap:8px;padding:13px 15px;border:1px solid rgba(255,255,255,.08);border-radius:13px;background:rgba(255,255,255,.025);font:12px ui-monospace,monospace;color:#8f8fa0;text-align:left}.url b{color:#fff}.url em{margin-left:auto;color:#52e7b2;font-style:normal;font-size:9px}.cards{position:relative;z-index:2;max-width:1120px;margin:auto;padding:10px 24px 90px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.cards article{padding:26px;border:1px solid rgba(255,255,255,.08);border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015));transition:.3s}.cards article:hover{transform:translateY(-5px);border-color:rgba(255,255,255,.16)}.icon{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;margin-bottom:20px;border:1px solid rgba(255,255,255,.1)}.cyan{color:#54edff}.violet{color:#bb93ff}.white{color:#fff}.cards h3{font-size:17px;margin:0 0 9px}.cards p{color:#858593;font-size:13px;line-height:1.7;min-height:64px}.cards a{color:#c9c9d5;text-decoration:none;font-size:11px;font-weight:700}@media(max-width:760px){.nav{padding:0 15px}.nav nav{display:none}.hero{padding:90px 20px 70px}.hero h1{font-size:58px}.cards{grid-template-columns:1fr;padding:0 15px 55px}.cards p{min-height:auto}}`
