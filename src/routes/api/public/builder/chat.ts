@@ -7,8 +7,6 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
 };
 
-// Current OpenCode Zen route. The older Console inference route can return 410
-// after endpoint retirement, which was the source of the ZYRAXON gateway error.
 const ZEN_BASE = 'https://opencode.ai/zen/v1';
 
 function textFromContent(content: string | ContentPart[]) {
@@ -37,17 +35,34 @@ function attachMedia(messages: ChatMessage[], attachments: BuilderAttachment[], 
   return next;
 }
 
+function gatewayKey() {
+  // Never ship a provider key to the browser. Configure this as a deployment
+  // secret. The aliases make migration from older deployments painless.
+  return process.env.OPENCODE_ZEN_API_KEY?.trim()
+    || process.env.OPENCODE_API_KEY?.trim()
+    || process.env.ZEN_API_KEY?.trim()
+    || '';
+}
+
 function providerError(status: number, model: string, detail: string) {
   let error = `ZYRAXON model gateway error ${status}`;
-  if (status === 401) error = 'This model requires a valid provider key.';
-  if (status === 403) error = 'The model gateway rejected this request.';
+  if (status === 401) error = 'The ZYRAXON model gateway needs a valid OpenCode Zen API key.';
+  if (status === 403) error = 'The ZYRAXON model gateway rejected the configured credentials.';
   if (status === 410) error = 'The previous model gateway endpoint was retired. ZYRAXON now uses the current OpenCode Zen route.';
-  if (status === 429) error = 'Model gateway rate limit reached. Try another model or retry shortly.';
+  if (status === 429) error = 'The configured model gateway quota is exhausted. ZYRAXON will not loop-retry a rate-limited request.';
   if (status >= 500) error = 'The model gateway is temporarily unavailable. Try another model.';
   return new Response(JSON.stringify({ error, detail, provider: 'zyraxon', model }), { status: status >= 400 && status < 600 ? status : 502, headers: { 'Content-Type': 'application/json', ...CORS } });
 }
 
-async function currentZenStream(modelId: string, messages: ChatMessage[], attachments: BuilderAttachment[]) {
+function maxOutputFor(model: string) {
+  // Current OpenCode-served limits; do not send the upstream model's larger
+  // theoretical output budget to the gateway.
+  if (model === 'zyraxon-t10' || model === 'zyraxon-vector') return 32_768;
+  if (model === 'zyraxon-phantom') return 131_072;
+  return 32_768;
+}
+
+async function currentZenStream(modelId: string, messages: ChatMessage[], attachments: BuilderAttachment[], apiKey: string) {
   const selected = resolveZenModel(modelId) || ZEN_FREE_MODELS[0]!;
   const inputMessages = attachMedia(messages.slice(-32), attachments, !!selected.multimodal);
   const lastUser = [...inputMessages].reverse().find(message => message.role === 'user');
@@ -55,8 +70,8 @@ async function currentZenStream(modelId: string, messages: ChatMessage[], attach
   const system = `${BUILDER_SYSTEM_PROMPT}\n\nPER-TURN EXECUTION DIRECTIVE\n- Apply the builder contract to the current request now.\n- Current request excerpt (context only): ${excerpt.slice(0, 8000)}\n- Treat unfinished TODO items from previous turns as active work unless explicitly cancelled.\n- Continue all independent work before asking a question.\n- Stream implementation continuously when possible.`;
   return fetch(`${ZEN_BASE}/chat/completions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-    body: JSON.stringify({ model: selected.upstream, stream: true, max_tokens: selected.maxOutputTokens, temperature: 0.2, messages: [{ role: 'system', content: system }, ...inputMessages] }),
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream', ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
+    body: JSON.stringify({ model: selected.upstream, stream: true, max_tokens: maxOutputFor(selected.id), temperature: 0.2, messages: [{ role: 'system', content: system }, ...inputMessages] }),
   });
 }
 
@@ -68,11 +83,10 @@ export const Route = createFileRoute('/api/public/builder/chat')({
         const url = new URL(request.url);
         const healthModel = url.searchParams.get('health');
         if (healthModel) {
-          const apiKey = url.searchParams.get('apiKey')?.trim() || undefined;
-          const result = await testZenModel(healthModel, apiKey);
-          return Response.json({ ...result, provider: 'opencode-zen', model: healthModel }, { status: result.ok ? 200 : 502, headers: CORS });
+          const result = await testZenModel(healthModel, gatewayKey() || undefined);
+          return Response.json({ ...result, provider: 'opencode-zen', authenticated: !!gatewayKey(), model: healthModel }, { status: result.ok ? 200 : 502, headers: CORS });
         }
-        return Response.json({ models: ZEN_FREE_MODELS, provider: 'opencode-zen', freeWithoutKey: true }, { headers: CORS });
+        return Response.json({ models: ZEN_FREE_MODELS, provider: 'opencode-zen', authenticated: !!gatewayKey(), freeWithoutKey: true }, { headers: CORS });
       },
       POST: async ({ request }) => {
         let body: any;
@@ -94,9 +108,13 @@ export const Route = createFileRoute('/api/public/builder/chat')({
           .map((a: any) => ({ name: a.name.slice(0, 160), mime: a.mime.slice(0, 100), data: a.data }));
 
         try {
-          const upstream = await currentZenStream(selected.id, clean, attachments);
-          if (!upstream.ok || !upstream.body) return providerError(upstream.status || 502, selected.id, (await upstream.text().catch(() => '')).slice(0, 1200));
-          return new Response(upstream.body, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no', ...CORS, 'X-ZYRAXON-Model': selected.id, 'X-ZYRAXON-Upstream': selected.upstream } });
+          const key = gatewayKey();
+          const upstream = await currentZenStream(selected.id, clean, attachments, key);
+          if (!upstream.ok || !upstream.body) {
+            const detail = (await upstream.text().catch(() => '')).slice(0, 1600);
+            return providerError(upstream.status || 502, selected.id, detail);
+          }
+          return new Response(upstream.body, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no', ...CORS, 'X-ZYRAXON-Model': selected.id, 'X-ZYRAXON-Upstream': selected.upstream, 'X-ZYRAXON-Authenticated': key ? 'true' : 'false', 'X-ZYRAXON-Max-Output-Tokens': String(maxOutputFor(selected.id)) } });
         } catch (error) {
           return providerError(502, selected.id, error instanceof Error ? error.message : 'Provider connection failed');
         }
