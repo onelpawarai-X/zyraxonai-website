@@ -1,13 +1,9 @@
 import { useEffect } from 'react';
 
 /**
- * Owns the single microphone button already rendered beside the model selector.
- * It intentionally does not create another mic beside Send.
- *
- * UX: click once -> recording starts immediately; click again -> recording
- * stops and the complete transcript is placed into the composer. Clicking it
- * again starts a fresh recording. No popup and no separate Start Recording
- * button are used.
+ * One-click/toggle voice input for the Builder composer.
+ * The existing Builder mic button is reused; no popup or second Start button.
+ * Click 1: start recording. Click 2: stop -> STT -> append full transcript.
  */
 export default function BuilderMicEnhancer() {
   useEffect(() => {
@@ -15,182 +11,137 @@ export default function BuilderMicEnhancer() {
     let timer: number | undefined;
     let cleanup: (() => void) | undefined;
 
-    const Speech = () => (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
     const setReactValue = (el: HTMLTextAreaElement, value: string) => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
-      if (setter) setter.call(el, value); else el.value = value;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
+      setter?.call(el, value);
+      el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: null }));
       el.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    const findMic = () => {
+      const candidates = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).filter((button) => {
+        const svg = button.querySelector('svg.lucide-mic');
+        return !!svg;
+      });
+      if (!candidates.length) return null;
+      // The first Mic button is the Builder/model-area control. Remove any
+      // duplicate legacy Send-area microphone so only one remains.
+      const keep = candidates[0]!;
+      candidates.slice(1).forEach((button) => {
+        if (button !== keep) {
+          button.dataset.zyraxonLegacyMic = 'true';
+          button.style.display = 'none';
+        }
+      });
+      return keep;
     };
 
     const attach = () => {
       if (disposed) return;
-      const composer = document.querySelector<HTMLElement>('.zb-composer, .composer');
-      const textarea = composer?.querySelector<HTMLTextAreaElement>('textarea');
-      if (!composer || !textarea) return;
+      const mic = findMic();
+      const textarea = document.querySelector<HTMLTextAreaElement>('.zb-composer textarea, .composer textarea, textarea');
+      if (!mic || !textarea || mic.dataset.zyraxonVoiceBound === 'true') return;
 
-      // Remove any legacy enhancer mic that may still exist after a hot reload.
-      composer.querySelectorAll('[data-zyraxon-mic]').forEach((node) => node.remove());
-
-      const mic = Array.from(composer.querySelectorAll<HTMLButtonElement>('button.circle-btn')).find((button) => {
-        const svg = button.querySelector('svg');
-        return !!svg && /Microphone/i.test(button.title || '') || !!svg?.querySelector('path[d*="M12 14.5"]');
-      });
-      if (!mic || mic.dataset.zyraxonVoiceBound === 'true') return;
       mic.dataset.zyraxonVoiceBound = 'true';
-      mic.setAttribute('aria-label', 'Start voice input');
-      mic.title = 'Click to start voice input';
+      mic.type = 'button';
+      mic.setAttribute('aria-label', 'Start voice recording');
+      mic.title = 'Click to start recording';
 
-      const SpeechCtor = Speech();
-      if (!SpeechCtor) {
-        mic.disabled = true;
-        mic.style.opacity = '.45';
-        mic.title = 'Voice input is not supported by this browser';
-        cleanup = () => { mic.disabled = false; mic.style.opacity = ''; };
-        return;
-      }
+      let recorder: MediaRecorder | null = null;
+      let stream: MediaStream | null = null;
+      let chunks: Blob[] = [];
+      let recording = false;
+      let baseText = textarea.value || '';
 
-      let recognition: any = null;
-      let active = false;
-      let committed = textarea.value || '';
-      let interim = '';
-
-      const render = () => {
-        const suffix = interim.trim();
-        const value = committed + (suffix ? (committed && !/\s$/.test(committed) ? ' ' : '') + suffix : '');
-        setReactValue(textarea, value);
+      const visual = (on: boolean) => {
+        mic.classList.toggle('active', on);
+        mic.setAttribute('aria-label', on ? 'Stop voice recording' : 'Start voice recording');
+        mic.title = on ? 'Recording… click again to stop and insert text' : 'Click to start recording';
+        mic.style.background = on ? 'rgba(0,245,255,.14)' : '';
+        mic.style.boxShadow = on ? '0 0 0 4px rgba(0,245,255,.08),0 0 28px rgba(0,245,255,.22)' : '';
       };
 
-      const setVisual = (listening: boolean) => {
-        mic.classList.toggle('active', listening);
-        mic.setAttribute('aria-label', listening ? 'Stop voice input' : 'Start voice input');
-        mic.title = listening ? 'Recording… click to stop and insert transcript' : 'Click to start voice input';
-        mic.style.background = listening ? 'rgba(0,245,255,.14)' : '';
-        mic.style.boxShadow = listening ? '0 0 0 4px rgba(0,245,255,.08),0 0 28px rgba(0,245,255,.22)' : '';
+      const reset = () => {
+        recording = false;
+        visual(false);
+        if (stream) stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+        recorder = null;
       };
 
       const stop = () => {
-        active = false;
-        interim = '';
-        try { recognition?.stop(); } catch {}
-        recognition = null;
-        setVisual(false);
-        render();
-        textarea.focus();
+        if (!recording) return;
+        recording = false;
+        visual(false);
+        try { recorder?.stop(); } catch { reset(); }
       };
 
-      const start = () => {
-        if (active) { stop(); return; }
-        committed = textarea.value || '';
-        interim = '';
-        recognition = new SpeechCtor();
-        recognition.lang = navigator.language || 'bn-BD';
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.maxAlternatives = 1;
-        active = true;
-        setVisual(true);
-        textarea.focus();
-
-        recognition.onresult = (event: any) => {
-          let live = '';
-          for (let i = event.resultIndex; i < event.results.length; i += 1) {
-            const result = event.results[i];
-            const transcript = String(result?.[0]?.transcript || '');
-            if (result?.isFinal) {
-              const clean = transcript.trim();
-              if (clean) committed += (committed && !/\s$/.test(committed) ? ' ' : '') + clean;
-            } else {
-              live += transcript;
+      const start = async () => {
+        if (recording) { stop(); return; }
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+          mic.title = 'Voice recording is not supported by this browser';
+          return;
+        }
+        try {
+          baseText = textarea.value || '';
+          chunks = [];
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (disposed) { stream.getTracks().forEach((track) => track.stop()); return; }
+          const preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((type) => MediaRecorder.isTypeSupported(type));
+          recorder = new MediaRecorder(stream, preferred ? { mimeType: preferred } : undefined);
+          recorder.ondataavailable = (event) => { if (event.data?.size) chunks.push(event.data); };
+          recorder.onerror = () => { reset(); mic.title = 'Recording failed. Click to try again'; };
+          recorder.onstop = async () => {
+            const activeRecorder = recorder;
+            const blob = new Blob(chunks, { type: activeRecorder?.mimeType || 'audio/webm' });
+            reset();
+            if (!blob.size) return;
+            mic.title = 'Transcribing…';
+            try {
+              const form = new FormData();
+              form.append('file', blob, 'zyraxon-voice.webm');
+              form.append('language', 'bn');
+              const response = await fetch('/api/public/stt', { method: 'POST', body: form });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok || !data?.success || !data?.text) throw new Error(data?.error || 'Transcription failed');
+              const transcript = String(data.text).trim();
+              if (transcript) setReactValue(textarea, `${baseText}${baseText ? ' ' : ''}${transcript}`);
+              textarea.focus();
+            } catch (error) {
+              mic.title = error instanceof Error ? error.message : 'Voice transcription failed';
+            } finally {
+              if (!disposed) {
+                visual(false);
+                if (!recording) mic.title = 'Click to start recording';
+              }
             }
-          }
-          interim = live;
-          render();
+          };
+          recorder.start(200);
+          recording = true;
+          visual(true);
           textarea.focus();
-        };
-
-        recognition.onerror = (event: any) => {
-          const error = String(event?.error || '');
-          if (error === 'not-allowed' || error === 'service-not-allowed') {
-            active = false;
-            setVisual(false);
-            mic.title = 'Microphone permission is blocked';
-            return;
-          }
-          if (error === 'audio-capture') {
-            active = false;
-            setVisual(false);
-            mic.title = 'No microphone was detected';
-          }
-        };
-
-        recognition.onend = () => {
-          if (!active || disposed) return;
-          // Some browsers end recognition automatically. Restart it while the
-          // user is still in the same recording session so one click remains
-          // one continuous recording action.
-          window.setTimeout(() => {
-            if (!active || disposed) return;
-            try { recognition = new SpeechCtor(); startRecognitionHandlers(); recognition.start(); } catch { active = false; setVisual(false); }
-          }, 80);
-        };
-
-        const startRecognitionHandlers = () => {
-          if (!recognition) return;
-          recognition.lang = navigator.language || 'bn-BD';
-          recognition.continuous = true;
-          recognition.interimResults = true;
-          recognition.maxAlternatives = 1;
-          recognition.onresult = (event: any) => {
-            let live = '';
-            for (let i = event.resultIndex; i < event.results.length; i += 1) {
-              const result = event.results[i];
-              const transcript = String(result?.[0]?.transcript || '');
-              if (result?.isFinal) {
-                const clean = transcript.trim();
-                if (clean) committed += (committed && !/\s$/.test(committed) ? ' ' : '') + clean;
-              } else live += transcript;
-            }
-            interim = live;
-            render();
-          };
-          recognition.onerror = (event: any) => {
-            const error = String(event?.error || '');
-            if (error === 'not-allowed' || error === 'service-not-allowed' || error === 'audio-capture') {
-              active = false;
-              setVisual(false);
-            }
-          };
-          recognition.onend = () => {
-            if (!active || disposed) return;
-            window.setTimeout(() => {
-              if (!active || disposed) return;
-              try { recognition = new SpeechCtor(); startRecognitionHandlers(); recognition.start(); } catch { active = false; setVisual(false); }
-            }, 80);
-          };
-        };
-
-        startRecognitionHandlers();
-        try { recognition.start(); } catch { active = false; setVisual(false); }
+        } catch {
+          reset();
+          mic.title = 'Microphone permission was denied or unavailable';
+        }
       };
 
-      // Capture phase prevents BuilderStudioV8's old modal-opening onClick from
-      // firing. The same physical button now performs the complete voice flow.
-      mic.addEventListener('click', (event) => {
+      // Capture phase prevents the old popup/device-picker handler from firing.
+      const onClick = (event: Event) => {
         event.preventDefault();
         event.stopPropagation();
-        start();
-      }, true);
+        void start();
+      };
+      mic.addEventListener('click', onClick, true);
 
       cleanup = () => {
-        active = false;
-        try { recognition?.abort(); } catch {}
-        recognition = null;
+        mic.removeEventListener('click', onClick, true);
+        try { recorder?.stop(); } catch {}
+        stream?.getTracks().forEach((track) => track.stop());
         mic.removeAttribute('data-zyraxon-voice-bound');
-        mic.disabled = false;
         mic.style.background = '';
         mic.style.boxShadow = '';
+        mic.disabled = false;
       };
     };
 
@@ -202,7 +153,7 @@ export default function BuilderMicEnhancer() {
         cleanup = undefined;
         attach();
       }
-    }, 500);
+    }, 400);
 
     return () => {
       disposed = true;
