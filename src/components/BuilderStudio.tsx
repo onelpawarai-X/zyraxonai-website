@@ -1,15 +1,5 @@
-import BuilderStudioMulti from './BuilderStudioMulti';
-import BuilderMicEnhancer from './BuilderMicEnhancer';
-import BuilderRuntimeFixes from './BuilderRuntimeFixes';
-import BuilderMarketplace from './BuilderMarketplace';
+import BuilderStudioV3 from './BuilderStudioV3'
 
 export default function BuilderStudio() {
-  return (
-    <>
-      <BuilderStudioMulti />
-      <BuilderMicEnhancer />
-      <BuilderRuntimeFixes />
-      <BuilderMarketplace />
-    </>
-  );
+  return <BuilderStudioV3 />
 }
