@@ -32,6 +32,8 @@ export const Route = createFileRoute('/api/public/builder/chat')({
           return Response.json({ error: 'Invalid JSON body' }, { status: 400, headers: CORS });
         }
 
+        // Keep a larger recent window so multi-step work can continue without
+        // throwing away the agent's recent plan, file decisions, and progress.
         const messages: ChatMessage[] = Array.isArray(body?.messages) ? body.messages.slice(-24) : [];
         if (!messages.length) return Response.json({ error: 'messages required' }, { status: 400, headers: CORS });
 
