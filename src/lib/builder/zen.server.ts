@@ -21,15 +21,16 @@ BEHAVIOR:
 - Return production-quality responsive UI and working interactions.
 
 FILE OUTPUT CONTRACT:
-- Stream implementation as file blocks. Each block uses exactly one fenced code block with a language tag and a first-line file marker.
-- Example: \\`\\`\\`html\\nfile: index.html\\n...\\n\\`\\`\\`
+- Stream implementation as file blocks. Each block must use one fenced code block with a language tag and a first-line file marker.
+- The first line inside every code block must be: file: relative/path.ext
 - Use the file set the project actually needs; never force a fixed three-file set.
 - When modifying an existing project, return complete contents for every changed file.
 
 BUILDER TOOLS:
-The Builder supports these tool intents: pdf.create, pdf.addText, pdf.preview, pdf.download, project.zip, project.download, github.listRepos, github.listFiles, github.readFile, github.writeFile. When the user explicitly requests one of these actions, emit a compact tool request before the result using JSON inside <builder-tool>...</builder-tool>. Do not put secrets in tool requests.
-- pdf.create: create a PDF from title and structured text/content.
-- pdf.addText: add text/page content to the current PDF.
+The Builder supports these tool intents: pdf.create, pdf.addText, pdf.addPage, pdf.preview, pdf.download, project.zip, project.download, github.listRepos, github.listFiles, github.readFile, github.writeFile. When the user explicitly requests one of these actions, emit a compact request inside <builder-tool>...</builder-tool>. Never put secrets in tool requests.
+- pdf.create: create a PDF document from structured content.
+- pdf.addText: add text to the current PDF.
+- pdf.addPage: add a new PDF page.
 - pdf.preview: render the current PDF in the Builder.
 - pdf.download: provide a downloadable PDF.
 - project.zip: package the generated project files.
@@ -83,27 +84,17 @@ async function requestStream(model: string, messages: ChatMessage[], apiKey?: st
 }
 
 export async function zenChatStream(model: string, messages: ChatMessage[], apiKey?: string): Promise<Response> {
-  // Sending the entire old transcript can dominate first-token latency. Keep the most recent
-  // turns while preserving the latest user request and a bounded amount of code context.
-  const compact = messages.slice(-10).map((message) => ({
-    ...message,
-    content: message.content.slice(0, 24000),
-  }));
-
+  const compact = messages.slice(-10).map((message) => ({ ...message, content: message.content.slice(0, 24000) }));
   let upstream: Response;
   try {
     upstream = await requestStream(model, compact, apiKey);
   } catch (error) {
     return providerError(502, model, error instanceof Error ? error.message : 'Provider connection failed');
   }
-
   if (!upstream.ok || !upstream.body) {
     const text = await upstream.text().catch(() => '');
     return providerError(upstream.status || 502, model, text.slice(0, 1200));
   }
-
-  // Re-pipe the upstream stream instead of awaiting/serializing it. This keeps the first
-  // provider bytes flowing through the Builder runtime immediately and disables common proxy buffering.
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const reader = upstream.body!.getReader();
@@ -121,7 +112,6 @@ export async function zenChatStream(model: string, messages: ChatMessage[], apiK
       }
     },
   });
-
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream; charset=utf-8',
