@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import BuilderStudio from '@/components/BuilderStudioClean'
+import BludarPage from '@/components/BludarPage'
 
 export const Route = createFileRoute('/bludar')({
   head: () => ({
@@ -11,5 +11,5 @@ export const Route = createFileRoute('/bludar')({
       { property: 'og:type', content: 'website' },
     ],
   }),
-  component: BuilderStudio,
+  component: BludarPage,
 })
