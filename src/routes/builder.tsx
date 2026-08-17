@@ -1,16 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
-import BuilderStudio from '@/components/BuilderStudioClean'
+import BuilderStudioV3 from '@/components/BuilderStudioV3'
 
 export const Route = createFileRoute('/builder')({
   head: () => ({
     meta: [
-      { title: 'ZYRAXON AI Builder' },
-      { name: 'description', content: 'Build, research, preview, inspect and publish websites with ZYRAXON AI.' },
+      { title: 'ZYRAXON AI Builder — Build Without Limits' },
+      { name: 'description', content: 'Build, preview and refine websites with ZYRAXON AI.' },
       { property: 'og:title', content: 'ZYRAXON AI Builder' },
-      { property: 'og:description', content: 'A focused conversational AI website builder with live preview, code view and GitHub publishing.' },
+      { property: 'og:description', content: 'A focused, responsive AI website builder with a live preview and code studio.' },
       { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
     ],
   }),
-  component: BuilderStudio,
+  component: BuilderStudioV3,
 })
