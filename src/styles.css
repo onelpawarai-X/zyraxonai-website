@@ -1,22 +1,9 @@
+@import "./styles/builder-header-visibility.css";
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -133,14 +120,8 @@
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
-
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-  }
+  * { border-color: var(--color-border); }
+  body { background-color: var(--color-background); color: var(--color-foreground); }
 }
 
 /* ── Ultra glassmorphism (ZYRAXON ecosystem) ── */
@@ -151,31 +132,19 @@
     radial-gradient(900px 700px at 50% 120%, rgba(240, 136, 62, 0.12), transparent 60%),
     #07090f;
 }
-
 .zx-aurora {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background:
     radial-gradient(520px 520px at 20% 30%, rgba(88, 166, 255, 0.16), transparent 70%),
     radial-gradient(620px 620px at 80% 70%, rgba(137, 87, 229, 0.16), transparent 70%);
-  filter: blur(30px);
-  animation: zx-aurora-drift 18s ease-in-out infinite alternate;
+  filter: blur(30px); animation: zx-aurora-drift 18s ease-in-out infinite alternate;
 }
-
 @keyframes zx-aurora-drift {
   from { transform: translate3d(-2%, -1%, 0) scale(1); }
   to { transform: translate3d(2%, 2%, 0) scale(1.08); }
 }
-
-.zx-glass-root [style*="backdrop-filter"],
-.zx-glass-root [style*="backdropFilter"] {
+.zx-glass-root [style*="backdrop-filter"], .zx-glass-root [style*="backdropFilter"] {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
-
 .zx-glass-root ::-webkit-scrollbar { width: 10px; height: 10px; }
-.zx-glass-root ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-}
+.zx-glass-root ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 999px; }
