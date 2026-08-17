@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import BuilderStudioV9 from '@/components/BuilderStudioV9'
+import BuilderStudioV8 from '@/components/BuilderStudioV8'
+import BuilderMicEnhancer from '@/components/BuilderMicEnhancer'
 
 export const Route = createFileRoute('/builder')({
   head: () => ({
@@ -19,5 +20,5 @@ function BuilderRoute() {
   const [ready, setReady] = useState(false)
   useEffect(() => setReady(true), [])
   if (!ready) return null
-  return <BuilderStudioV9 />
+  return <><BuilderStudioV8 /><BuilderMicEnhancer /></>
 }
