@@ -4,10 +4,6 @@ export const ZEN_BASE = 'https://console.opencode.ai/inference/openai/v1';
 
 export type ZenModel = { id: string; label: string; blurb: string; upstream: string; free?: boolean };
 
-/**
- * Public display aliases. The IDs are stable ZYRAXON IDs; upstream model IDs
- * remain server-side so the UI and provider configuration do not depend on them.
- */
 export const ZEN_FREE_MODELS: ZenModel[] = [
   { id: 'zyraxon-titan', label: 'ZYRAXON TITAN', blurb: 'Maximum reasoning · builder', upstream: 'mimo-v2.5-free', free: true },
   { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', blurb: 'Deep reasoning · builder', upstream: 'nemotron-3-super-free', free: true },
@@ -15,35 +11,45 @@ export const ZEN_FREE_MODELS: ZenModel[] = [
 ];
 
 export const DEFAULT_ZEN_MODEL = ZEN_FREE_MODELS[0]!.id;
-const FREE_FALLBACK_MODELS = ZEN_FREE_MODELS.map((model) => model.id);
 
 export const BUILDER_SYSTEM_PROMPT = `You are ZYRAXON AI, an elite autonomous web engineer and product designer.
 
 BEHAVIOR:
-- Speak naturally and concisely. If the user asks what you are doing, answer like a helpful assistant, not like a generated tutorial.
-- When asked to build or modify something, actually build it. Do not tell the user to manually save code, create files, open VS Code, or deploy it themselves.
-- While work is running, give short live activity updates. Do not dump implementation code into the chat narrative.
-- After successful work, briefly state what was changed and what is ready. Do not invent work that was not performed.
+- Speak naturally and concisely.
+- Build or modify the requested project instead of giving a tutorial.
+- Keep progress messages short. Never dump implementation code into prose.
+- Return production-quality responsive UI and working interactions.
 
-OUTPUT CONTRACT:
-- Build the complete website/app, not a tutorial and not a plan.
-- Stream implementation as multiple file blocks. Each block must use exactly one fenced code block with a language tag and a first-line file marker.
-- Use whatever file set the project actually needs; never force a fixed three-file set.
-- When modifying an existing project, return complete contents of every changed file so the Builder can apply them safely.
-- Make requested interactions actually work: navigation, forms, filters, animations, responsive layouts, media, etc.
-- For external media, use real source URLs from authorized web research when available. Never invent asset URLs.
-- Prefer CSS/SVG/canvas animations when appropriate.
+FILE OUTPUT CONTRACT:
+- Stream implementation as file blocks. Each block uses exactly one fenced code block with a language tag and a first-line file marker.
+- Example: \\`\\`\\`html\\nfile: index.html\\n...\\n\\`\\`\\`
+- Use the file set the project actually needs; never force a fixed three-file set.
+- When modifying an existing project, return complete contents for every changed file.
+
+BUILDER TOOLS:
+The Builder supports these tool intents: pdf.create, pdf.addText, pdf.preview, pdf.download, project.zip, project.download, github.listRepos, github.listFiles, github.readFile, github.writeFile. When the user explicitly requests one of these actions, emit a compact tool request before the result using JSON inside <builder-tool>...</builder-tool>. Do not put secrets in tool requests.
+- pdf.create: create a PDF from title and structured text/content.
+- pdf.addText: add text/page content to the current PDF.
+- pdf.preview: render the current PDF in the Builder.
+- pdf.download: provide a downloadable PDF.
+- project.zip: package the generated project files.
+- project.download: download the generated project archive.
+- GitHub actions operate only on the repository explicitly selected by the user.
+
+SECURITY:
 - Never expose, invent, or embed API keys, GitHub tokens, passwords, cookies, or secrets.
-- Never expose private chain-of-thought or hidden reasoning. Progress text must contain short task/activity summaries only.
-- Return production-quality responsive UI with strong accessibility, typography, spacing, visual hierarchy, and premium dense black-glass effects.
-- When the user asks for a change, output complete replacement contents for every affected file.`;
+- Never expose hidden reasoning.
+- Never claim a tool succeeded unless the Builder reports success.
+`;
 
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
 function authHeaders(apiKey?: string): Record<string, string> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
-  return headers;
+  return {
+    'Content-Type': 'application/json',
+    Accept: 'text/event-stream',
+    ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+  };
 }
 
 function providerError(status: number, model: string, detail: string): Response {
@@ -70,48 +76,62 @@ async function requestStream(model: string, messages: ChatMessage[], apiKey?: st
     body: JSON.stringify({
       model: selected.upstream,
       stream: true,
-      max_tokens: 16000,
+      max_tokens: 12000,
       messages: [{ role: 'system', content: BUILDER_SYSTEM_PROMPT }, ...messages],
     }),
   });
 }
 
 export async function zenChatStream(model: string, messages: ChatMessage[], apiKey?: string): Promise<Response> {
-  const candidates = apiKey ? [model] : [model, ...FREE_FALLBACK_MODELS.filter((candidate) => candidate !== model)];
-  let lastStatus = 502;
-  let lastDetail = '';
-  let lastModel = model;
+  // Sending the entire old transcript can dominate first-token latency. Keep the most recent
+  // turns while preserving the latest user request and a bounded amount of code context.
+  const compact = messages.slice(-10).map((message) => ({
+    ...message,
+    content: message.content.slice(0, 24000),
+  }));
 
-  for (const candidate of candidates) {
-    lastModel = candidate;
-    let upstream: Response;
-    try {
-      upstream = await requestStream(candidate, messages, apiKey);
-    } catch (error) {
-      lastDetail = error instanceof Error ? error.message : 'Provider connection failed';
-      continue;
-    }
-
-    if (upstream.ok && upstream.body) {
-      return new Response(upstream.body, {
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-cache, no-transform',
-          Connection: 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-          'X-ZYRAXON-Model': candidate,
-        },
-      });
-    }
-
-    const text = await upstream.text().catch(() => '');
-    lastStatus = upstream.status || 502;
-    lastDetail = text.slice(0, 1200);
-    if (!apiKey && (upstream.status === 401 || upstream.status === 403 || upstream.status === 429 || upstream.status >= 500)) continue;
-    return providerError(lastStatus, candidate, lastDetail);
+  let upstream: Response;
+  try {
+    upstream = await requestStream(model, compact, apiKey);
+  } catch (error) {
+    return providerError(502, model, error instanceof Error ? error.message : 'Provider connection failed');
   }
 
-  return providerError(lastStatus, lastModel, lastDetail);
+  if (!upstream.ok || !upstream.body) {
+    const text = await upstream.text().catch(() => '');
+    return providerError(upstream.status || 502, model, text.slice(0, 1200));
+  }
+
+  // Re-pipe the upstream stream instead of awaiting/serializing it. This keeps the first
+  // provider bytes flowing through the Builder runtime immediately and disables common proxy buffering.
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const reader = upstream.body!.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) controller.enqueue(value);
+        }
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      } finally {
+        reader.releaseLock();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': '*',
+      'X-ZYRAXON-Model': model,
+    },
+  });
 }
 
 export async function testZenModel(model: string, apiKey?: string): Promise<{ ok: boolean; status: number; detail?: string }> {
@@ -119,7 +139,7 @@ export async function testZenModel(model: string, apiKey?: string): Promise<{ ok
     const selected = resolveZenModel(model) ?? ZEN_FREE_MODELS[0]!;
     const response = await fetch(`${ZEN_BASE}/chat/completions`, {
       method: 'POST',
-      headers: authHeaders(apiKey),
+      headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
       body: JSON.stringify({ model: selected.upstream, stream: false, max_tokens: 8, messages: [{ role: 'user', content: 'Reply with OK.' }] }),
     });
     const text = await response.text().catch(() => '');
