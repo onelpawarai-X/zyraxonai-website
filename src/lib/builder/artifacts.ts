@@ -1,4 +1,4 @@
-export type BuilderFile = { path: string; content: string };
+export type BuilderFile = { path: string; content: string; encoding?: 'utf8' | 'base64' };
 
 function crc32(bytes: Uint8Array) {
   let crc = 0xffffffff;
@@ -12,8 +12,9 @@ function crc32(bytes: Uint8Array) {
 function u16(value: number) { return new Uint8Array([value & 255, (value >>> 8) & 255]); }
 function u32(value: number) { return new Uint8Array([value & 255, (value >>> 8) & 255, (value >>> 16) & 255, (value >>> 24) & 255]); }
 function concat(parts: Uint8Array[]) { const size = parts.reduce((n, part) => n + part.length, 0); const out = new Uint8Array(size); let offset = 0; for (const part of parts) { out.set(part, offset); offset += part.length; } return out; }
+function base64Bytes(value: string) { const raw = atob(value.replace(/\s/g, '')); return Uint8Array.from(raw, c => c.charCodeAt(0)); }
 
-/** Store-only ZIP writer: dependency-free and works in the Builder browser runtime. */
+/** Store-only ZIP writer that preserves both UTF-8 source files and imported binary files. */
 export function createProjectZip(files: BuilderFile[]) {
   const encoder = new TextEncoder();
   const locals: Uint8Array[] = [];
@@ -21,7 +22,7 @@ export function createProjectZip(files: BuilderFile[]) {
   let offset = 0;
   for (const file of files) {
     const name = encoder.encode(file.path.replace(/^\/+/, ''));
-    const data = encoder.encode(file.content);
+    const data = file.encoding === 'base64' ? base64Bytes(file.content) : encoder.encode(file.content);
     const crc = crc32(data);
     const local = concat([new Uint8Array([0x50,0x4b,0x03,0x04]), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), name, data]);
     locals.push(local);

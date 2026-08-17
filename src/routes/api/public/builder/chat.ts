@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ZEN_FREE_MODELS, DEFAULT_ZEN_MODEL, testZenModel, zenChatStream, type ChatMessage } from '@/lib/builder/zen.server';
+import { ZEN_FREE_MODELS, DEFAULT_ZEN_MODEL, testZenModel, zenChatStream, type BuilderAttachment, type ChatMessage } from '@/lib/builder/zen.server';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -32,24 +32,26 @@ export const Route = createFileRoute('/api/public/builder/chat')({
           return Response.json({ error: 'Invalid JSON body' }, { status: 400, headers: CORS });
         }
 
-        // Keep a larger recent window so multi-step work can continue without
-        // throwing away the agent's recent plan, file decisions, and progress.
-        const messages: ChatMessage[] = Array.isArray(body?.messages) ? body.messages.slice(-24) : [];
+        const messages: ChatMessage[] = Array.isArray(body?.messages) ? body.messages.slice(-32) : [];
         if (!messages.length) return Response.json({ error: 'messages required' }, { status: 400, headers: CORS });
 
         const requested = typeof body?.model === 'string' ? body.model : DEFAULT_ZEN_MODEL;
         const allowed = ZEN_FREE_MODELS.some((m) => m.id === requested);
         const apiKey = typeof body?.apiKey === 'string' && body.apiKey.trim() ? body.apiKey.trim() : undefined;
-
-        // Free Console models work without a key. Other models are allowed only
-        // when the caller supplies their own OpenCode Console API key.
         const model = allowed || apiKey ? requested : DEFAULT_ZEN_MODEL;
 
         const clean: ChatMessage[] = messages
           .filter((m) => m && typeof m.content === 'string' && (m.role === 'user' || m.role === 'assistant'))
           .map((m) => ({ role: m.role, content: String(m.content).slice(0, 60000) }));
 
-        return zenChatStream(model, clean, apiKey);
+        const rawAttachments = Array.isArray(body?.attachments) ? body.attachments : [];
+        const attachments: BuilderAttachment[] = rawAttachments
+          .filter((a: any) => a && typeof a.name === 'string' && typeof a.mime === 'string' && typeof a.data === 'string')
+          .filter((a: any) => /^(image|audio|video)\//i.test(a.mime))
+          .slice(0, 6)
+          .map((a: any) => ({ name: a.name.slice(0, 160), mime: a.mime.slice(0, 100), data: a.data }));
+
+        return zenChatStream(model, clean, apiKey, attachments);
       },
     },
   },
