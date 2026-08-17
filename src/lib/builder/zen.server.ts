@@ -6,19 +6,21 @@ export type ZenModel = {
   blurb: string;
   upstream: string;
   free?: boolean;
+  contextWindowTokens: number;
   maxOutputTokens: number;
 };
 
 /**
- * Keep provider limits per model instead of pretending every model has the same
- * output capacity. Context windows and output limits are different things.
- * The request budget is raised to the real provider-side output ceiling where
- * the current gateway catalog supports it.
+ * Keep context and output limits separate. The old implementation used a
+ * blanket 16K output ceiling, which artificially constrained every model.
+ * These values track the current OpenCode Zen catalog for the routes used by
+ * this builder: roughly 200K context for the free builder models, with the
+ * model-specific output ceilings supplied by the gateway catalog.
  */
 export const ZEN_FREE_MODELS: ZenModel[] = [
-  { id: 'zyraxon-titan', label: 'ZYRAXON TITAN', blurb: 'Maximum reasoning · builder', upstream: 'mimo-v2.5-free', free: true, maxOutputTokens: 131072 },
-  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', blurb: 'Deep reasoning · builder', upstream: 'nemotron-3-super-free', free: true, maxOutputTokens: 131072 },
-  { id: 'zyraxon-velocity', label: 'ZYRAXON VELOCITY', blurb: 'Ultra-fast building · builder', upstream: 'big-pickle', free: true, maxOutputTokens: 32768 },
+  { id: 'zyraxon-titan', label: 'ZYRAXON TITAN', blurb: 'Maximum reasoning · builder', upstream: 'mimo-v2.5-free', free: true, contextWindowTokens: 200000, maxOutputTokens: 32768 },
+  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', blurb: 'Deep reasoning · builder', upstream: 'nemotron-3-super-free', free: true, contextWindowTokens: 204800, maxOutputTokens: 131072 },
+  { id: 'zyraxon-velocity', label: 'ZYRAXON VELOCITY', blurb: 'Ultra-fast building · builder', upstream: 'big-pickle', free: true, contextWindowTokens: 200000, maxOutputTokens: 32768 },
 ];
 export const DEFAULT_ZEN_MODEL = ZEN_FREE_MODELS[0]!.id;
 
@@ -208,6 +210,7 @@ export async function zenChatStream(model: string, messages: ChatMessage[], apiK
       'X-Accel-Buffering': 'no',
       'Access-Control-Allow-Origin': '*',
       'X-ZYRAXON-Model': model,
+      'X-ZYRAXON-Context-Window': String(selected.contextWindowTokens),
       'X-ZYRAXON-Max-Output-Tokens': String(selected.maxOutputTokens),
     },
   });
