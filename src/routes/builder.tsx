@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import BuilderStudioV4 from '@/components/BuilderStudioV4'
+import BuilderStudioV5 from '@/components/BuilderStudioV5'
 import BuilderPreviewEnhancer from '@/components/BuilderPreviewEnhancer'
+import '../styles/builder-studio-v5.css'
 
 export const Route = createFileRoute('/builder')({
   head: () => ({
@@ -12,10 +14,12 @@ export const Route = createFileRoute('/builder')({
       { property: 'og:type', content: 'website' },
     ],
   }),
-  component: () => (
-    <>
-      <BuilderStudioV4 />
-      <BuilderPreviewEnhancer />
-    </>
-  ),
+  component: BuilderRoute,
 })
+
+function BuilderRoute() {
+  const [ready, setReady] = useState(false)
+  useEffect(() => setReady(true), [])
+  if (!ready) return null
+  return <><BuilderStudioV5 /><BuilderPreviewEnhancer /></>
+}
