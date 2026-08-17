@@ -1,15 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
-import BludarPage from '@/components/BludarPage'
+import BuilderStudioV3 from '@/components/BuilderStudioV3'
 
 export const Route = createFileRoute('/bludar')({
   head: () => ({
     meta: [
       { title: 'ZYRAXON AI Bludar — Build Without Limits' },
-      { name: 'description', content: 'A premium AI website builder for building, previewing and refining projects in real time.' },
+      { name: 'description', content: 'Build, preview and refine websites with ZYRAXON AI.' },
       { property: 'og:title', content: 'ZYRAXON AI Bludar' },
       { property: 'og:description', content: 'Build, preview and refine websites with ZYRAXON AI.' },
       { property: 'og:type', content: 'website' },
     ],
   }),
-  component: BludarPage,
+  component: BuilderStudioV3,
 })
