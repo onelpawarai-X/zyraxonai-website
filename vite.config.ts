@@ -9,7 +9,19 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
     server: { entry: "server" },
+  },
+  // Explicitly keep the legacy standalone homepage as a production public asset.
+  // The homepage is embedded by src/routes/index.tsx at /zyraxon.html. Without an
+  // explicit Nitro public asset entry, some hosted Nitro presets can fall through
+  // unknown .html requests to the hosting platform's starter page.
+  nitro: {
+    serveStatic: true,
+    publicAssets: [
+      {
+        dir: "public",
+        baseURL: "/",
+      },
+    ],
   },
 });
