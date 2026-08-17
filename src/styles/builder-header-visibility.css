@@ -1,0 +1,29 @@
+/* Targeted Builder header regression fix. Keep GitHub project-connect functionality, hide only its redundant header control. */
+.builder-topbar .builder-actions > .glass-action:first-child {
+  display: none !important;
+}
+
+.builder-topbar .builder-actions > .glass-action:nth-child(2),
+.builder-topbar .builder-actions > .glass-action:nth-child(3),
+.builder-topbar .builder-actions > .glass-icon {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.builder-topbar .builder-actions > .glass-action:nth-child(2) {
+  height: 36px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 7px;
+}
+
+@media (max-width: 640px) {
+  .builder-topbar .builder-actions > .glass-action:nth-child(2),
+  .builder-topbar .builder-actions > .glass-action:nth-child(3) {
+    display: grid !important;
+    width: 36px;
+    padding: 0;
+    place-items: center;
+  }
+}
