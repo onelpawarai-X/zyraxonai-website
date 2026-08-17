@@ -17,11 +17,13 @@ export type ZenModel = {
  * T10 -> MiMo-V2.5 Free (text/image/audio/video)
  * Vector -> Big Pickle
  * Phantom -> Nemotron 3 Ultra Free
+ * Limits below are the current OpenCode-served model limits, not the upstream
+ * model's theoretical limits.
  */
 export const ZEN_FREE_MODELS: ZenModel[] = [
-  { id: 'zyraxon-t10', label: 'ZYRAXON T10', blurb: 'MiMo-V2.5 Free · multimodal · 1M context', upstream: 'mimo-v2.5-free', free: true, contextWindowTokens: 1_000_000, maxOutputTokens: 131_072, multimodal: true },
-  { id: 'zyraxon-vector', label: 'ZYRAXON VECTOR', blurb: 'Big Pickle · fast autonomous building', upstream: 'big-pickle', free: true, contextWindowTokens: 200_000, maxOutputTokens: 32_768, multimodal: false },
-  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', blurb: 'Nemotron 3 Ultra Free · deep reasoning builder', upstream: 'nemotron-3-ultra-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 131_072, multimodal: false },
+  { id: 'zyraxon-t10', label: 'ZYRAXON T10', blurb: 'MiMo-V2.5 Free · multimodal · 200K context · 32K output', upstream: 'mimo-v2.5-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 32_000, multimodal: true },
+  { id: 'zyraxon-vector', label: 'ZYRAXON VECTOR', blurb: 'Big Pickle · 200K context · 32K output', upstream: 'big-pickle', free: true, contextWindowTokens: 200_000, maxOutputTokens: 32_000, multimodal: false },
+  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', blurb: 'Nemotron 3 Ultra Free · 1M context · 128K output', upstream: 'nemotron-3-ultra-free', free: true, contextWindowTokens: 1_000_000, maxOutputTokens: 128_000, multimodal: false },
 ];
 
 export const DEFAULT_ZEN_MODEL = ZEN_FREE_MODELS[0]!.id;
