@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import BuilderStudioV5 from '@/components/BuilderStudioV5'
 import BuilderPreviewEnhancer from '@/components/BuilderPreviewEnhancer'
+import '../styles/builder-studio-v5.css'
 
 export const Route = createFileRoute('/builder')({
   head: () => ({
