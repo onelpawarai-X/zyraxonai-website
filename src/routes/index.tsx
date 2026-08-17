@@ -1,6 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GitHubHomeAuth } from "../components/home/GitHubHomeAuth";
-
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -23,7 +21,6 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <main style={{ minHeight: "100vh", height: "100vh", display: "flex", flexDirection: "column", background: "#06060e", overflow: "hidden" }}>
-      <GitHubHomeAuth />
       <iframe
         title="ZYRAXON AI"
         src="/zyraxon.html"
