@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import BuilderStudioV4 from '@/components/BuilderStudioV4'
+import BuilderStudioV5 from '@/components/BuilderStudioV5'
 import BuilderPreviewEnhancer from '@/components/BuilderPreviewEnhancer'
 
 export const Route = createFileRoute('/builder')({
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/builder')({
   }),
   component: () => (
     <>
-      <BuilderStudioV4 />
+      <BuilderStudioV5 />
       <BuilderPreviewEnhancer />
     </>
   ),
