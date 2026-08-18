@@ -17,18 +17,21 @@ export function createRequestId() {
   return randomUUID();
 }
 
-function safeDetail(value: unknown, max = 1600) {
-  const text = typeof value === 'string' ? value : JSON.stringify(value);
+function redact(value: unknown, max = 2400) {
+  const text = typeof value === 'string' ? value : JSON.stringify(value ?? {});
   return text
     .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [REDACTED]')
-    .replace(/(api[_-]?key|authorization|access[_-]?token|token)\s*[:=]\s*[^,\s}]+/gi, '$1=[REDACTED]')
+    .replace(/("?(?:api[_-]?key|authorization|access[_-]?token|token)"?\s*[:=]\s*)[^,\s}]+/gi, '$1[REDACTED]')
     .slice(0, max);
 }
 
 export async function writeRuntimeLog(entry: RuntimeLog) {
   const line = JSON.stringify({
-    ...entry,
-    data: entry.data ? JSON.parse(safeDetail(entry.data)) : undefined,
+    requestId: entry.requestId,
+    event: entry.event,
+    at: entry.at,
+    elapsedMs: entry.elapsedMs,
+    data: entry.data ? { redacted: redact(entry.data) } : undefined,
   }) + '\n';
   try {
     await mkdir(dirname(LOG_FILE), { recursive: true });
