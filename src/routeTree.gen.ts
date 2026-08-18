@@ -37,7 +37,6 @@ import { Route as ApiPublicGithubPublishRouteImport } from './routes/api/public/
 import { Route as ApiPublicDownloadPlatformRouteImport } from './routes/api/public/download/$platform'
 import { Route as ApiPublicBuilderSitesRouteImport } from './routes/api/public/builder/sites'
 import { Route as ApiPublicBuilderSearchRouteImport } from './routes/api/public/builder/search'
-import { Route as ApiPublicBuilderRuntimeLogRouteImport } from './routes/api/public/builder/runtime-log'
 import { Route as ApiPublicBuilderPublishRouteImport } from './routes/api/public/builder/publish'
 import { Route as ApiPublicBuilderPowershellRouteImport } from './routes/api/public/builder/powershell'
 import { Route as ApiPublicBuilderChatRouteImport } from './routes/api/public/builder/chat'
@@ -194,12 +193,6 @@ const ApiPublicBuilderSearchRoute = ApiPublicBuilderSearchRouteImport.update({
   path: '/api/public/builder/search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicBuilderRuntimeLogRoute =
-  ApiPublicBuilderRuntimeLogRouteImport.update({
-    id: '/api/public/builder/runtime-log',
-    path: '/api/public/builder/runtime-log',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicBuilderPublishRoute = ApiPublicBuilderPublishRouteImport.update({
   id: '/api/public/builder/publish',
   path: '/api/public/builder/publish',
@@ -297,7 +290,6 @@ export interface FileRoutesByFullPath {
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
   '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
-  '/api/public/builder/runtime-log': typeof ApiPublicBuilderRuntimeLogRoute
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
@@ -341,7 +333,6 @@ export interface FileRoutesByTo {
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
   '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
-  '/api/public/builder/runtime-log': typeof ApiPublicBuilderRuntimeLogRoute
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
@@ -386,7 +377,6 @@ export interface FileRoutesById {
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
   '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
-  '/api/public/builder/runtime-log': typeof ApiPublicBuilderRuntimeLogRoute
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
@@ -432,7 +422,6 @@ export interface FileRouteTypes {
     | '/api/public/builder/chat'
     | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
-    | '/api/public/builder/runtime-log'
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
@@ -476,7 +465,6 @@ export interface FileRouteTypes {
     | '/api/public/builder/chat'
     | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
-    | '/api/public/builder/runtime-log'
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
@@ -520,7 +508,6 @@ export interface FileRouteTypes {
     | '/api/public/builder/chat'
     | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
-    | '/api/public/builder/runtime-log'
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
@@ -565,7 +552,6 @@ export interface RootRouteChildren {
   ApiPublicBuilderChatRoute: typeof ApiPublicBuilderChatRoute
   ApiPublicBuilderPowershellRoute: typeof ApiPublicBuilderPowershellRoute
   ApiPublicBuilderPublishRoute: typeof ApiPublicBuilderPublishRoute
-  ApiPublicBuilderRuntimeLogRoute: typeof ApiPublicBuilderRuntimeLogRoute
   ApiPublicBuilderSearchRoute: typeof ApiPublicBuilderSearchRoute
   ApiPublicBuilderSitesRoute: typeof ApiPublicBuilderSitesRoute
   ApiPublicDownloadPlatformRoute: typeof ApiPublicDownloadPlatformRoute
@@ -780,13 +766,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBuilderSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/builder/runtime-log': {
-      id: '/api/public/builder/runtime-log'
-      path: '/api/public/builder/runtime-log'
-      fullPath: '/api/public/builder/runtime-log'
-      preLoaderRoute: typeof ApiPublicBuilderRuntimeLogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/builder/publish': {
       id: '/api/public/builder/publish'
       path: '/api/public/builder/publish'
@@ -932,7 +911,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBuilderChatRoute: ApiPublicBuilderChatRoute,
   ApiPublicBuilderPowershellRoute: ApiPublicBuilderPowershellRoute,
   ApiPublicBuilderPublishRoute: ApiPublicBuilderPublishRoute,
-  ApiPublicBuilderRuntimeLogRoute: ApiPublicBuilderRuntimeLogRoute,
   ApiPublicBuilderSearchRoute: ApiPublicBuilderSearchRoute,
   ApiPublicBuilderSitesRoute: ApiPublicBuilderSitesRoute,
   ApiPublicDownloadPlatformRoute: ApiPublicDownloadPlatformRoute,
