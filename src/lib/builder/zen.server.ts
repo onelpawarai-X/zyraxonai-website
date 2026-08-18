@@ -27,6 +27,16 @@ export const ZEN_FREE_MODELS: ZenModel[] = [
 
 export const DEFAULT_ZEN_MODEL = ZEN_FREE_MODELS[0]!.id;
 
+// OpenCode may rate-limit an individual free upstream while other free routes remain healthy.
+// Keep the public aliases stable, but fail over across the provider's current free pool.
+const ZEN_FAILOVER_MODELS: ZenModel[] = [
+  ...ZEN_FREE_MODELS,
+  { id: 'opencode-deepseek-fallback', label: 'OpenCode fallback', blurb: 'DeepSeek V4 Flash free fallback', upstream: 'deepseek-v4-flash-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
+  { id: 'opencode-hy3-fallback', label: 'OpenCode fallback', blurb: 'Hy3 free fallback', upstream: 'hy3-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
+  { id: 'opencode-nemotron-fallback', label: 'OpenCode fallback', blurb: 'Nemotron Lightning free fallback', upstream: 'nemotron-3.5-lightning-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
+  { id: 'opencode-laguna-fallback', label: 'OpenCode fallback', blurb: 'Laguna free fallback', upstream: 'laguna-s-2.1-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
+];
+
 export const BUILDER_SYSTEM_PROMPT = `You are ZYRAXON AI, an autonomous production-grade web builder.
 Build complete working projects, not mockups. Preserve existing project behavior unless the user asks to change it. Inspect the project context, implement all required files and interactions, keep responsive/polished UI intact, and verify cross-file references before completion. Never expose credentials or hidden reasoning. For substantial work maintain an honest TODO plan and perform final preview verification.`;
 
@@ -112,7 +122,7 @@ function errorResponse(model: ZenModel, failures: Array<{ model: string; status:
 
 export async function zenChatStream(model: string, messages: ChatMessage[], apiKey?: string, attachments: BuilderAttachment[] = []) {
   const requested = selectedModel(model);
-  const order = [requested, ...ZEN_FREE_MODELS.filter(m => m.id !== requested.id)];
+  const order = [requested, ...ZEN_FAILOVER_MODELS.filter(m => m.id !== requested.id)];
   const failures: Array<{ model: string; status: number; detail: string }> = [];
   for (const candidate of order) {
     let response: Response;
