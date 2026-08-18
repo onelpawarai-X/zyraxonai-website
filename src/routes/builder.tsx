@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import BuilderStudioV8 from '@/components/BuilderStudioV8'
 import BuilderMicEnhancer from '@/components/BuilderMicEnhancer'
+import BuilderControlsGuard from '@/components/BuilderControlsGuard'
+import '../styles/builder-controls.css'
 
 export const Route = createFileRoute('/builder')({
   head: () => ({
@@ -20,5 +22,5 @@ function BuilderRoute() {
   const [ready, setReady] = useState(false)
   useEffect(() => setReady(true), [])
   if (!ready) return null
-  return <><BuilderStudioV8 /><BuilderMicEnhancer /></>
+  return <><BuilderStudioV8 /><BuilderMicEnhancer /><BuilderControlsGuard /></>
 }
