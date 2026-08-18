@@ -1,29 +1,32 @@
-/* Targeted Builder header regression fix. Keep GitHub project-connect functionality, hide only its redundant header control. */
-.builder-topbar .builder-actions > .glass-action:first-child {
-  display: none !important;
+/* Builder header visibility: keep every existing action rendered and interactive. */
+.builder-topbar .builder-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
-.builder-topbar .builder-actions > .glass-action:nth-child(2),
-.builder-topbar .builder-actions > .glass-action:nth-child(3),
-.builder-topbar .builder-actions > .glass-icon {
+.builder-topbar .builder-actions > .glass-action,
+.builder-topbar .builder-actions > .glass-icon,
+.builder-topbar .builder-actions > button,
+.builder-topbar .builder-actions > a {
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
-.builder-topbar .builder-actions > .glass-action:nth-child(2) {
-  height: 36px;
-  padding: 0 12px;
-  align-items: center;
-  gap: 7px;
+.builder-topbar .builder-actions > .glass-action[hidden],
+.builder-topbar .builder-actions > .glass-icon[hidden],
+.builder-topbar .builder-actions > button[hidden],
+.builder-topbar .builder-actions > a[hidden] {
+  display: flex !important;
 }
 
 @media (max-width: 640px) {
-  .builder-topbar .builder-actions > .glass-action:nth-child(2),
-  .builder-topbar .builder-actions > .glass-action:nth-child(3) {
-    display: grid !important;
-    width: 36px;
-    padding: 0;
-    place-items: center;
+  .builder-topbar .builder-actions > .glass-action,
+  .builder-topbar .builder-actions > .glass-icon,
+  .builder-topbar .builder-actions > button,
+  .builder-topbar .builder-actions > a {
+    min-width: 36px;
   }
 }
