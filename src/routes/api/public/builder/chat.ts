@@ -7,13 +7,14 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
 };
 
-// Single gateway by design. Do not add a second provider surface here.
-const GATEWAY = 'https://console.opencode.ai/inference/openai/v1';
+// ONE gateway only. The old Console inference route was retired; all three
+// branded ZYRAXON aliases now resolve through the current OpenCode Zen route.
+const GATEWAY = 'https://opencode.ai/zen/v1';
 
 const MODELS = [
   { id: 'zyraxon-t10', label: 'ZYRAXON T10', upstream: 'mimo-v2.5-free', maxOutputTokens: 32768, multimodal: true },
   { id: 'zyraxon-vector', label: 'ZYRAXON VECTOR', upstream: 'big-pickle', maxOutputTokens: 32768, multimodal: false },
-  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', upstream: 'nemotron-3-super-free', maxOutputTokens: 32768, multimodal: false },
+  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', upstream: 'nemotron-3-ultra-free', maxOutputTokens: 32768, multimodal: false },
 ] as const;
 
 type GatewayModel = (typeof MODELS)[number];
@@ -70,9 +71,10 @@ function retryable(status: number) { return [408, 409, 429, 500, 502, 503, 504].
 function errorResponse(status: number, requested: GatewayModel, detail: string, tried: string[]) {
   let error = 'ZYRAXON could not get a response from the OpenCode model.';
   if (status === 429) error = 'The selected OpenCode free model is temporarily rate-limited.';
-  if (status === 410) error = 'The configured OpenCode Console endpoint is no longer available.';
-  if (status === 401 || status === 403) error = 'The OpenCode Console rejected the model request.';
-  return new Response(JSON.stringify({ error, detail, provider: 'opencode-console', model: requested.id, tried, endpoint: `${GATEWAY}/chat/completions` }), { status: status >= 400 && status < 600 ? status : 502, headers: { 'Content-Type': 'application/json', ...CORS } });
+  if (status === 401 || status === 403) error = 'The OpenCode gateway rejected the model request.';
+  if (status === 404) error = 'The selected OpenCode model is not available on the current gateway.';
+  if (status >= 500) error = 'The OpenCode gateway is temporarily unavailable.';
+  return new Response(JSON.stringify({ error, detail, provider: 'opencode-zen', model: requested.id, tried, endpoint: `${GATEWAY}/chat/completions` }), { status: status >= 400 && status < 600 ? status : 502, headers: { 'Content-Type': 'application/json', ...CORS } });
 }
 
 export const Route = createFileRoute('/api/public/builder/chat')({
@@ -112,7 +114,7 @@ export const Route = createFileRoute('/api/public/builder/chat')({
         tried.push(model.id);
         try {
           const upstream = await requestModel(model, clean, attachments);
-          if (upstream.ok && upstream.body) return new Response(upstream.body, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no', ...CORS, 'X-ZYRAXON-Model': model.id, 'X-ZYRAXON-Upstream': model.upstream, 'X-ZYRAXON-Gateway': 'opencode-console' } });
+          if (upstream.ok && upstream.body) return new Response(upstream.body, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no', ...CORS, 'X-ZYRAXON-Model': model.id, 'X-ZYRAXON-Upstream': model.upstream, 'X-ZYRAXON-Gateway': 'opencode-zen' } });
           lastStatus = upstream.status || 502;
           lastDetail = (await upstream.text().catch(() => '')).slice(0, 1200) || lastDetail;
           if (!retryable(lastStatus)) break;
