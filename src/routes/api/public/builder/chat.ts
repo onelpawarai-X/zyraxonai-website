@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import {
   DEFAULT_ZEN_MODEL,
   ZEN_FREE_MODELS,
+  ZEN_CHAT_URL,
   resolveZenModel,
   testZenModel,
   discoverConsoleModels,
@@ -28,7 +29,7 @@ export const Route = createFileRoute('/api/public/builder/chat')({
 
         if (healthModel) {
           const result = await testZenModel(healthModel, apiKey);
-          return Response.json({ ...result, provider: 'opencode-console', userApiKeyRequired: false }, {
+          return Response.json({ ...result, provider: 'opencode-zen', userApiKeyRequired: false }, {
             status: result.ok ? 200 : (result.status >= 400 ? result.status : 502),
             headers: CORS,
           });
@@ -38,7 +39,7 @@ export const Route = createFileRoute('/api/public/builder/chat')({
         return Response.json({
           models: ZEN_FREE_MODELS,
           defaultModel: DEFAULT_ZEN_MODEL,
-          gateway: 'https://console.opencode.ai/inference/openai/v1/chat/completions',
+          gateway: ZEN_CHAT_URL,
           userApiKeyRequired: false,
           discoveredModelIds: discovery.ids,
           discoveryOk: discovery.ok,
@@ -47,11 +48,8 @@ export const Route = createFileRoute('/api/public/builder/chat')({
 
       POST: async ({ request }) => {
         let body: any;
-        try {
-          body = await request.json();
-        } catch {
-          return Response.json({ error: 'Invalid JSON body' }, { status: 400, headers: CORS });
-        }
+        try { body = await request.json(); }
+        catch { return Response.json({ error: 'Invalid JSON body' }, { status: 400, headers: CORS }); }
 
         const messages: ChatMessage[] = Array.isArray(body?.messages)
           ? body.messages
@@ -65,11 +63,7 @@ export const Route = createFileRoute('/api/public/builder/chat')({
           .filter((attachment: any) => attachment && typeof attachment.name === 'string' && typeof attachment.mime === 'string' && typeof attachment.data === 'string')
           .filter((attachment: any) => /^(image|audio|video)\//i.test(attachment.mime))
           .slice(0, 6)
-          .map((attachment: any) => ({
-            name: attachment.name.slice(0, 160),
-            mime: attachment.mime.slice(0, 100),
-            data: attachment.data,
-          }));
+          .map((attachment: any) => ({ name: attachment.name.slice(0, 160), mime: attachment.mime.slice(0, 100), data: attachment.data }));
 
         const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : undefined;
         const response = await zenChatStream(model, messages, apiKey, attachments);
