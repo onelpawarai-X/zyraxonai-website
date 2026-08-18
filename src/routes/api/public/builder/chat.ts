@@ -13,9 +13,15 @@ import {
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type',
+  'Access-Control-Allow-Headers': 'content-type, authorization',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
 };
+
+function requestApiKey(request: Request, body?: any) {
+  const authorization = request.headers.get('authorization')?.trim();
+  if (authorization?.toLowerCase().startsWith('bearer ')) return authorization.slice(7).trim() || undefined;
+  return typeof body?.apiKey === 'string' ? body.apiKey.trim() || undefined : undefined;
+}
 
 export const Route = createFileRoute('/api/public/builder/chat')({
   server: {
@@ -25,11 +31,11 @@ export const Route = createFileRoute('/api/public/builder/chat')({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const healthModel = url.searchParams.get('health');
-        const apiKey = url.searchParams.get('apiKey')?.trim() || undefined;
+        const apiKey = requestApiKey(request);
 
         if (healthModel) {
           const result = await testZenModel(healthModel, apiKey);
-          return Response.json({ ...result, provider: 'opencode-zen', userApiKeyRequired: false }, {
+          return Response.json({ ...result, provider: 'opencode-zen', userApiKeyOptional: true }, {
             status: result.ok ? 200 : (result.status >= 400 ? result.status : 502),
             headers: CORS,
           });
@@ -40,7 +46,7 @@ export const Route = createFileRoute('/api/public/builder/chat')({
           models: ZEN_FREE_MODELS,
           defaultModel: DEFAULT_ZEN_MODEL,
           gateway: ZEN_CHAT_URL,
-          userApiKeyRequired: false,
+          userApiKeyOptional: true,
           discoveredModelIds: discovery.ids,
           discoveryOk: discovery.ok,
         }, { headers: CORS });
@@ -65,7 +71,8 @@ export const Route = createFileRoute('/api/public/builder/chat')({
           .slice(0, 6)
           .map((attachment: any) => ({ name: attachment.name.slice(0, 160), mime: attachment.mime.slice(0, 100), data: attachment.data }));
 
-        const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : undefined;
+        // API keys are accepted only for the current request. They are not persisted by this route.
+        const apiKey = requestApiKey(request, body);
         const response = await zenChatStream(model, messages, apiKey, attachments);
         return new Response(response.body, {
           status: response.status,

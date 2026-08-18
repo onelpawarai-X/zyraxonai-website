@@ -1,6 +1,7 @@
 /**
  * ZYRAXON provider integration.
- * One gateway, stable ZYRAXON aliases, and current OpenCode Zen model IDs.
+ * UI aliases stay stable while every request uses an official current
+ * OpenCode Zen model ID. No private/guessed fallback model IDs live here.
  */
 
 export const ZEN_BASE = 'https://opencode.ai/zen/v1';
@@ -18,24 +19,27 @@ export type ZenModel = {
   multimodal?: boolean;
 };
 
-/** UI aliases are deliberately separate from provider model IDs. */
+/**
+ * Public ZYRAXON names are aliases only. The upstream IDs are the current
+ * OpenCode Zen free model IDs documented by OpenCode.
+ */
 export const ZEN_FREE_MODELS: ZenModel[] = [
-  { id: 'zyraxon-t10', label: 'ZYRAXON T10', blurb: 'MiMo-V2.5 Free · multimodal builder', upstream: 'mimo-v2.5-free', free: true, contextWindowTokens: 1_000_000, maxOutputTokens: 32_768, multimodal: true },
-  { id: 'zyraxon-vector', label: 'ZYRAXON VECTOR', blurb: 'Big Pickle · fast autonomous building', upstream: 'big-pickle', free: true, contextWindowTokens: 200_000, maxOutputTokens: 32_768 },
+  { id: 'zyraxon-titan', label: 'ZYRAXON TITAN', blurb: 'DeepSeek V4 Flash Free · fast coding and reasoning', upstream: 'deepseek-v4-flash-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
+  { id: 'zyraxon-nova', label: 'ZYRAXON NOVA', blurb: 'MiMo-V2.5 Free · multimodal builder', upstream: 'mimo-v2.5-free', free: true, contextWindowTokens: 1_000_000, maxOutputTokens: 32_768, multimodal: true },
+  { id: 'zyraxon-vector', label: 'ZYRAXON VECTOR', blurb: 'Big Pickle · autonomous coding and building', upstream: 'big-pickle', free: true, contextWindowTokens: 200_000, maxOutputTokens: 32_768 },
   { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', blurb: 'Nemotron 3 Ultra Free · deep reasoning', upstream: 'nemotron-3-ultra-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 32_768 },
+  { id: 'zyraxon-lumen', label: 'ZYRAXON LUMEN', blurb: 'Laguna S 2.1 Free · balanced general builder', upstream: 'laguna-s-2.1-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
+  { id: 'zyraxon-pulse', label: 'ZYRAXON PULSE', blurb: 'Ling 3.0 Flash Free · rapid responses', upstream: 'ling-3.0-flash-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
+  { id: 'zyraxon-forge', label: 'ZYRAXON FORGE', blurb: 'North Mini Code Free · focused code generation', upstream: 'north-mini-code-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
 ];
 
 export const DEFAULT_ZEN_MODEL = ZEN_FREE_MODELS[0]!.id;
 
-// OpenCode may rate-limit an individual free upstream while other free routes remain healthy.
-// Keep the public aliases stable, but fail over across the provider's current free pool.
-const ZEN_FAILOVER_MODELS: ZenModel[] = [
-  ...ZEN_FREE_MODELS,
-  { id: 'opencode-deepseek-fallback', label: 'OpenCode fallback', blurb: 'DeepSeek V4 Flash free fallback', upstream: 'deepseek-v4-flash-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
-  { id: 'opencode-hy3-fallback', label: 'OpenCode fallback', blurb: 'Hy3 free fallback', upstream: 'hy3-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
-  { id: 'opencode-nemotron-fallback', label: 'OpenCode fallback', blurb: 'Nemotron Lightning free fallback', upstream: 'nemotron-3.5-lightning-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
-  { id: 'opencode-laguna-fallback', label: 'OpenCode fallback', blurb: 'Laguna free fallback', upstream: 'laguna-s-2.1-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
-];
+/**
+ * If the selected free route is unavailable/rate-limited, try the other
+ * official free routes only. We never invent or silently add paid models.
+ */
+const ZEN_FAILOVER_MODELS = ZEN_FREE_MODELS;
 
 export const BUILDER_SYSTEM_PROMPT = `You are ZYRAXON AI, an autonomous production-grade web builder.
 Build complete working projects, not mockups. Preserve existing project behavior unless the user asks to change it. Inspect the project context, implement all required files and interactions, keep responsive/polished UI intact, and verify cross-file references before completion. Never expose credentials or hidden reasoning. For substantial work maintain an honest TODO plan and perform final preview verification.`;
@@ -111,23 +115,30 @@ async function requestModel(model: ZenModel, messages: ChatMessage[], apiKey?: s
   });
 }
 
-function errorResponse(model: ZenModel, failures: Array<{ model: string; status: number; detail: string }>) {
+function errorResponse(model: ZenModel, failures: Array<{ model: string; upstream: string; status: number; detail: string; retryAfter?: string | null }>) {
   const status = failures[failures.length - 1]?.status || 502;
+  const retryAfter = failures.find(f => f.retryAfter)?.retryAfter;
   return Response.json({
-    error: status === 429 ? 'OpenCode temporarily limited this free model.' : status === 410 ? 'The configured OpenCode route is retired.' : 'OpenCode request failed.',
+    error: status === 429 ? 'OpenCode free models are temporarily rate-limited.' : status === 401 || status === 403 ? 'OpenCode requires a valid API key for this request.' : status === 410 ? 'The configured OpenCode route is retired.' : 'OpenCode request failed.',
     detail: JSON.stringify({ tried: failures }),
     provider: 'opencode-zen', model: model.id, upstream: model.upstream, endpoint: ZEN_CHAT_URL,
-  }, { status: status >= 400 && status < 600 ? status : 502, headers: { 'Access-Control-Allow-Origin': '*' } });
+  }, { status: status >= 400 && status < 600 ? status : 502, headers: { 'Access-Control-Allow-Origin': '*', ...(retryAfter ? { 'Retry-After': retryAfter } : {}) } });
 }
 
 export async function zenChatStream(model: string, messages: ChatMessage[], apiKey?: string, attachments: BuilderAttachment[] = []) {
   const requested = selectedModel(model);
   const order = [requested, ...ZEN_FAILOVER_MODELS.filter(m => m.id !== requested.id)];
-  const failures: Array<{ model: string; status: number; detail: string }> = [];
+  const failures: Array<{ model: string; upstream: string; status: number; detail: string; retryAfter?: string | null }> = [];
+
   for (const candidate of order) {
     let response: Response;
-    try { response = await requestModel(candidate, messages, apiKey, attachments, true); }
-    catch (error) { failures.push({ model: candidate.id, status: 0, detail: error instanceof Error ? error.message : 'connection failed' }); continue; }
+    try {
+      response = await requestModel(candidate, messages, apiKey, attachments, true);
+    } catch (error) {
+      failures.push({ model: candidate.id, upstream: candidate.upstream, status: 0, detail: error instanceof Error ? error.message : 'connection failed' });
+      continue;
+    }
+
     if (response.ok && response.body) {
       return new Response(response.body, { headers: {
         'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform',
@@ -135,10 +146,14 @@ export async function zenChatStream(model: string, messages: ChatMessage[], apiK
         'X-ZYRAXON-Model': candidate.id, 'X-ZYRAXON-Upstream': candidate.upstream,
       }});
     }
+
     const detail = (await response.text().catch(() => '')).slice(0, 1200);
-    failures.push({ model: candidate.id, status: response.status, detail });
+    failures.push({ model: candidate.id, upstream: candidate.upstream, status: response.status, detail, retryAfter: response.headers.get('retry-after') });
+
+    // Authentication failures cannot be fixed by switching models.
     if (response.status === 401 || response.status === 403) break;
   }
+
   return errorResponse(requested, failures);
 }
 
@@ -147,7 +162,7 @@ export async function testZenModel(model: string, apiKey?: string) {
   try {
     const response = await requestModel(selected, [{ role: 'user', content: 'Reply with OK.' }], apiKey, [], false);
     const detail = (await response.text().catch(() => '')).slice(0, 1200);
-    return { ok: response.ok, status: response.status, model: selected.id, upstream: selected.upstream, detail };
+    return { ok: response.ok, status: response.status, model: selected.id, upstream: selected.upstream, detail, retryAfter: response.headers.get('retry-after') };
   } catch (error) {
     return { ok: false, status: 0, model: selected.id, upstream: selected.upstream, detail: error instanceof Error ? error.message : 'connection failed' };
   }
