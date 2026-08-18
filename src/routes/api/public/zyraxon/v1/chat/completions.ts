@@ -49,7 +49,9 @@ export const Route = createFileRoute('/api/public/zyraxon/v1/chat/completions')(
           return Response.json({ error: { message: 'messages is required', type: 'invalid_request_error' } }, { status: 400, headers: CORS });
         }
 
-        return zenChatStream(model, messages);
+        const requestId = request.headers.get('x-request-id') || `api-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const apiKey = providerKey(request);
+        return zenChatStream(model, messages, apiKey, [], requestId);
       },
     },
   },

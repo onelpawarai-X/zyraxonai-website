@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as BuilderRouteImport } from './routes/builder'
+import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EcosystemIndexRouteImport } from './routes/ecosystem/index'
 import { Route as ShareIdRouteImport } from './routes/share/$id'
@@ -26,20 +27,39 @@ import { Route as ApiPublicDownloadsRouteImport } from './routes/api/public/down
 import { Route as ApiPublicCommunityStoreRouteImport } from './routes/api/public/community-store'
 import { Route as ApiPublicCommunityRouteImport } from './routes/api/public/community'
 import { Route as ApiPublicSplatRouteImport } from './routes/api/public/$'
+import { Route as ApiGithubReposRouteImport } from './routes/api/github/repos'
 import { Route as ApiSharesIdIndexRouteImport } from './routes/api/shares/$id/index'
 import { Route as ApiPublicSharesIndexRouteImport } from './routes/api/public/shares/index'
 import { Route as ApiSharesIdSyncRouteImport } from './routes/api/shares/$id/sync'
 import { Route as ApiSharesIdDataRouteImport } from './routes/api/shares/$id/data'
+import { Route as ApiPublicZyraxonSearchRouteImport } from './routes/api/public/zyraxon/search'
+import { Route as ApiPublicGithubPublishRouteImport } from './routes/api/public/github/publish'
 import { Route as ApiPublicDownloadPlatformRouteImport } from './routes/api/public/download/$platform'
+import { Route as ApiPublicBuilderSitesRouteImport } from './routes/api/public/builder/sites'
+import { Route as ApiPublicBuilderSearchRouteImport } from './routes/api/public/builder/search'
+import { Route as ApiPublicBuilderRuntimeLogRouteImport } from './routes/api/public/builder/runtime-log'
 import { Route as ApiPublicBuilderPublishRouteImport } from './routes/api/public/builder/publish'
+import { Route as ApiPublicBuilderPowershellRouteImport } from './routes/api/public/builder/powershell'
 import { Route as ApiPublicBuilderChatRouteImport } from './routes/api/public/builder/chat'
+import { Route as ApiPublicAuthGithubRouteImport } from './routes/api/public/auth/github'
 import { Route as ApiPublicSharesIdIndexRouteImport } from './routes/api/public/shares/$id/index'
+import { Route as ApiPublicZyraxonV1ModelsRouteImport } from './routes/api/public/zyraxon/v1/models'
 import { Route as ApiPublicSharesIdSyncRouteImport } from './routes/api/public/shares/$id/sync'
 import { Route as ApiPublicSharesIdDataRouteImport } from './routes/api/public/shares/$id/data'
+import { Route as ApiPublicAuthGithubStartRouteImport } from './routes/api/public/auth/github/start'
+import { Route as ApiPublicAuthGithubLogoutRouteImport } from './routes/api/public/auth/github/logout'
+import { Route as ApiPublicAuthGithubCallbackRouteImport } from './routes/api/public/auth/github/callback'
+import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/api/public/zyraxon/v1/chat/completions'
+import { Route as ApiGithubReposOwnerRepoPublishRouteImport } from './routes/api/github/repos/$owner/$repo/publish'
 
 const BuilderRoute = BuilderRouteImport.update({
   id: '/builder',
   path: '/builder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BludarRoute = BludarRouteImport.update({
+  id: '/bludar',
+  path: '/bludar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -123,6 +143,11 @@ const ApiPublicSplatRoute = ApiPublicSplatRouteImport.update({
   path: '/api/public/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGithubReposRoute = ApiGithubReposRouteImport.update({
+  id: '/api/github/repos',
+  path: '/api/github/repos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSharesIdIndexRoute = ApiSharesIdIndexRouteImport.update({
   id: '/api/shares/$id/',
   path: '/api/shares/$id/',
@@ -143,10 +168,36 @@ const ApiSharesIdDataRoute = ApiSharesIdDataRouteImport.update({
   path: '/api/shares/$id/data',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicZyraxonSearchRoute = ApiPublicZyraxonSearchRouteImport.update({
+  id: '/api/public/zyraxon/search',
+  path: '/api/public/zyraxon/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicGithubPublishRoute = ApiPublicGithubPublishRouteImport.update({
+  id: '/api/public/github/publish',
+  path: '/api/public/github/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicDownloadPlatformRoute =
   ApiPublicDownloadPlatformRouteImport.update({
     id: '/api/public/download/$platform',
     path: '/api/public/download/$platform',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBuilderSitesRoute = ApiPublicBuilderSitesRouteImport.update({
+  id: '/api/public/builder/sites',
+  path: '/api/public/builder/sites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBuilderSearchRoute = ApiPublicBuilderSearchRouteImport.update({
+  id: '/api/public/builder/search',
+  path: '/api/public/builder/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBuilderRuntimeLogRoute =
+  ApiPublicBuilderRuntimeLogRouteImport.update({
+    id: '/api/public/builder/runtime-log',
+    path: '/api/public/builder/runtime-log',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicBuilderPublishRoute = ApiPublicBuilderPublishRouteImport.update({
@@ -154,9 +205,20 @@ const ApiPublicBuilderPublishRoute = ApiPublicBuilderPublishRouteImport.update({
   path: '/api/public/builder/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBuilderPowershellRoute =
+  ApiPublicBuilderPowershellRouteImport.update({
+    id: '/api/public/builder/powershell',
+    path: '/api/public/builder/powershell',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBuilderChatRoute = ApiPublicBuilderChatRouteImport.update({
   id: '/api/public/builder/chat',
   path: '/api/public/builder/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuthGithubRoute = ApiPublicAuthGithubRouteImport.update({
+  id: '/api/public/auth/github',
+  path: '/api/public/auth/github',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicSharesIdIndexRoute = ApiPublicSharesIdIndexRouteImport.update({
@@ -164,6 +226,12 @@ const ApiPublicSharesIdIndexRoute = ApiPublicSharesIdIndexRouteImport.update({
   path: '/api/public/shares/$id/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicZyraxonV1ModelsRoute =
+  ApiPublicZyraxonV1ModelsRouteImport.update({
+    id: '/api/public/zyraxon/v1/models',
+    path: '/api/public/zyraxon/v1/models',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSharesIdSyncRoute = ApiPublicSharesIdSyncRouteImport.update({
   id: '/api/public/shares/$id/sync',
   path: '/api/public/shares/$id/sync',
@@ -174,14 +242,46 @@ const ApiPublicSharesIdDataRoute = ApiPublicSharesIdDataRouteImport.update({
   path: '/api/public/shares/$id/data',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAuthGithubStartRoute =
+  ApiPublicAuthGithubStartRouteImport.update({
+    id: '/start',
+    path: '/start',
+    getParentRoute: () => ApiPublicAuthGithubRoute,
+  } as any)
+const ApiPublicAuthGithubLogoutRoute =
+  ApiPublicAuthGithubLogoutRouteImport.update({
+    id: '/logout',
+    path: '/logout',
+    getParentRoute: () => ApiPublicAuthGithubRoute,
+  } as any)
+const ApiPublicAuthGithubCallbackRoute =
+  ApiPublicAuthGithubCallbackRouteImport.update({
+    id: '/callback',
+    path: '/callback',
+    getParentRoute: () => ApiPublicAuthGithubRoute,
+  } as any)
+const ApiPublicZyraxonV1ChatCompletionsRoute =
+  ApiPublicZyraxonV1ChatCompletionsRouteImport.update({
+    id: '/api/public/zyraxon/v1/chat/completions',
+    path: '/api/public/zyraxon/v1/chat/completions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiGithubReposOwnerRepoPublishRoute =
+  ApiGithubReposOwnerRepoPublishRouteImport.update({
+    id: '/$owner/$repo/publish',
+    path: '/$owner/$repo/publish',
+    getParentRoute: () => ApiGithubReposRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/share/$id': typeof ShareIdRoute
   '/ecosystem/': typeof EcosystemIndexRoute
+  '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/$': typeof ApiPublicSplatRoute
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
@@ -193,24 +293,39 @@ export interface FileRoutesByFullPath {
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
   '/api/shares/': typeof ApiSharesIndexRoute
+  '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
+  '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
+  '/api/public/builder/runtime-log': typeof ApiPublicBuilderRuntimeLogRoute
+  '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
+  '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
+  '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
   '/api/public/shares/': typeof ApiPublicSharesIndexRoute
   '/api/shares/$id/': typeof ApiSharesIdIndexRoute
+  '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
+  '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
+  '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
+  '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
   '/api/public/shares/$id/': typeof ApiPublicSharesIdIndexRoute
+  '/api/github/repos/$owner/$repo/publish': typeof ApiGithubReposOwnerRepoPublishRoute
+  '/api/public/zyraxon/v1/chat/completions': typeof ApiPublicZyraxonV1ChatCompletionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/share/$id': typeof ShareIdRoute
   '/ecosystem': typeof EcosystemIndexRoute
+  '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/$': typeof ApiPublicSplatRoute
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
@@ -222,25 +337,40 @@ export interface FileRoutesByTo {
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
   '/api/shares': typeof ApiSharesIndexRoute
+  '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
+  '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
+  '/api/public/builder/runtime-log': typeof ApiPublicBuilderRuntimeLogRoute
+  '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
+  '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
+  '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
   '/api/public/shares': typeof ApiPublicSharesIndexRoute
   '/api/shares/$id': typeof ApiSharesIdIndexRoute
+  '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
+  '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
+  '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
+  '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
   '/api/public/shares/$id': typeof ApiPublicSharesIdIndexRoute
+  '/api/github/repos/$owner/$repo/publish': typeof ApiGithubReposOwnerRepoPublishRoute
+  '/api/public/zyraxon/v1/chat/completions': typeof ApiPublicZyraxonV1ChatCompletionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/share/$id': typeof ShareIdRoute
   '/ecosystem/': typeof EcosystemIndexRoute
+  '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/$': typeof ApiPublicSplatRoute
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
@@ -252,26 +382,41 @@ export interface FileRoutesById {
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
   '/api/shares/': typeof ApiSharesIndexRoute
+  '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
+  '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
+  '/api/public/builder/runtime-log': typeof ApiPublicBuilderRuntimeLogRoute
+  '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
+  '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
+  '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
   '/api/public/shares/': typeof ApiPublicSharesIndexRoute
   '/api/shares/$id/': typeof ApiSharesIdIndexRoute
+  '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
+  '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
+  '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
+  '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
   '/api/public/shares/$id/': typeof ApiPublicSharesIdIndexRoute
+  '/api/github/repos/$owner/$repo/publish': typeof ApiGithubReposOwnerRepoPublishRoute
+  '/api/public/zyraxon/v1/chat/completions': typeof ApiPublicZyraxonV1ChatCompletionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bludar'
     | '/builder'
     | '/api/$'
     | '/api/marketplace-search'
     | '/share/$id'
     | '/ecosystem/'
+    | '/api/github/repos'
     | '/api/public/$'
     | '/api/public/community'
     | '/api/public/community-store'
@@ -283,24 +428,39 @@ export interface FileRouteTypes {
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
     | '/api/shares/'
+    | '/api/public/auth/github'
     | '/api/public/builder/chat'
+    | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
+    | '/api/public/builder/runtime-log'
+    | '/api/public/builder/search'
+    | '/api/public/builder/sites'
     | '/api/public/download/$platform'
+    | '/api/public/github/publish'
+    | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
     | '/api/public/shares/'
     | '/api/shares/$id/'
+    | '/api/public/auth/github/callback'
+    | '/api/public/auth/github/logout'
+    | '/api/public/auth/github/start'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
+    | '/api/public/zyraxon/v1/models'
     | '/api/public/shares/$id/'
+    | '/api/github/repos/$owner/$repo/publish'
+    | '/api/public/zyraxon/v1/chat/completions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bludar'
     | '/builder'
     | '/api/$'
     | '/api/marketplace-search'
     | '/share/$id'
     | '/ecosystem'
+    | '/api/github/repos'
     | '/api/public/$'
     | '/api/public/community'
     | '/api/public/community-store'
@@ -312,24 +472,39 @@ export interface FileRouteTypes {
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
     | '/api/shares'
+    | '/api/public/auth/github'
     | '/api/public/builder/chat'
+    | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
+    | '/api/public/builder/runtime-log'
+    | '/api/public/builder/search'
+    | '/api/public/builder/sites'
     | '/api/public/download/$platform'
+    | '/api/public/github/publish'
+    | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
     | '/api/public/shares'
     | '/api/shares/$id'
+    | '/api/public/auth/github/callback'
+    | '/api/public/auth/github/logout'
+    | '/api/public/auth/github/start'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
+    | '/api/public/zyraxon/v1/models'
     | '/api/public/shares/$id'
+    | '/api/github/repos/$owner/$repo/publish'
+    | '/api/public/zyraxon/v1/chat/completions'
   id:
     | '__root__'
     | '/'
+    | '/bludar'
     | '/builder'
     | '/api/$'
     | '/api/marketplace-search'
     | '/share/$id'
     | '/ecosystem/'
+    | '/api/github/repos'
     | '/api/public/$'
     | '/api/public/community'
     | '/api/public/community-store'
@@ -341,25 +516,40 @@ export interface FileRouteTypes {
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
     | '/api/shares/'
+    | '/api/public/auth/github'
     | '/api/public/builder/chat'
+    | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
+    | '/api/public/builder/runtime-log'
+    | '/api/public/builder/search'
+    | '/api/public/builder/sites'
     | '/api/public/download/$platform'
+    | '/api/public/github/publish'
+    | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
     | '/api/public/shares/'
     | '/api/shares/$id/'
+    | '/api/public/auth/github/callback'
+    | '/api/public/auth/github/logout'
+    | '/api/public/auth/github/start'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
+    | '/api/public/zyraxon/v1/models'
     | '/api/public/shares/$id/'
+    | '/api/github/repos/$owner/$repo/publish'
+    | '/api/public/zyraxon/v1/chat/completions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiMarketplaceSearchRoute: typeof ApiMarketplaceSearchRoute
   ShareIdRoute: typeof ShareIdRoute
   EcosystemIndexRoute: typeof EcosystemIndexRoute
+  ApiGithubReposRoute: typeof ApiGithubReposRouteWithChildren
   ApiPublicSplatRoute: typeof ApiPublicSplatRoute
   ApiPublicCommunityRoute: typeof ApiPublicCommunityRoute
   ApiPublicCommunityStoreRoute: typeof ApiPublicCommunityStoreRoute
@@ -371,16 +561,25 @@ export interface RootRouteChildren {
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
   EcosystemItemIdRoute: typeof EcosystemItemIdRoute
   ApiSharesIndexRoute: typeof ApiSharesIndexRoute
+  ApiPublicAuthGithubRoute: typeof ApiPublicAuthGithubRouteWithChildren
   ApiPublicBuilderChatRoute: typeof ApiPublicBuilderChatRoute
+  ApiPublicBuilderPowershellRoute: typeof ApiPublicBuilderPowershellRoute
   ApiPublicBuilderPublishRoute: typeof ApiPublicBuilderPublishRoute
+  ApiPublicBuilderRuntimeLogRoute: typeof ApiPublicBuilderRuntimeLogRoute
+  ApiPublicBuilderSearchRoute: typeof ApiPublicBuilderSearchRoute
+  ApiPublicBuilderSitesRoute: typeof ApiPublicBuilderSitesRoute
   ApiPublicDownloadPlatformRoute: typeof ApiPublicDownloadPlatformRoute
+  ApiPublicGithubPublishRoute: typeof ApiPublicGithubPublishRoute
+  ApiPublicZyraxonSearchRoute: typeof ApiPublicZyraxonSearchRoute
   ApiSharesIdDataRoute: typeof ApiSharesIdDataRoute
   ApiSharesIdSyncRoute: typeof ApiSharesIdSyncRoute
   ApiPublicSharesIndexRoute: typeof ApiPublicSharesIndexRoute
   ApiSharesIdIndexRoute: typeof ApiSharesIdIndexRoute
   ApiPublicSharesIdDataRoute: typeof ApiPublicSharesIdDataRoute
   ApiPublicSharesIdSyncRoute: typeof ApiPublicSharesIdSyncRoute
+  ApiPublicZyraxonV1ModelsRoute: typeof ApiPublicZyraxonV1ModelsRoute
   ApiPublicSharesIdIndexRoute: typeof ApiPublicSharesIdIndexRoute
+  ApiPublicZyraxonV1ChatCompletionsRoute: typeof ApiPublicZyraxonV1ChatCompletionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -390,6 +589,13 @@ declare module '@tanstack/react-router' {
       path: '/builder'
       fullPath: '/builder'
       preLoaderRoute: typeof BuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bludar': {
+      id: '/bludar'
+      path: '/bludar'
+      fullPath: '/bludar'
+      preLoaderRoute: typeof BludarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -504,6 +710,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/github/repos': {
+      id: '/api/github/repos'
+      path: '/api/github/repos'
+      fullPath: '/api/github/repos'
+      preLoaderRoute: typeof ApiGithubReposRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/shares/$id/': {
       id: '/api/shares/$id/'
       path: '/api/shares/$id'
@@ -532,11 +745,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSharesIdDataRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zyraxon/search': {
+      id: '/api/public/zyraxon/search'
+      path: '/api/public/zyraxon/search'
+      fullPath: '/api/public/zyraxon/search'
+      preLoaderRoute: typeof ApiPublicZyraxonSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/github/publish': {
+      id: '/api/public/github/publish'
+      path: '/api/public/github/publish'
+      fullPath: '/api/public/github/publish'
+      preLoaderRoute: typeof ApiPublicGithubPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/download/$platform': {
       id: '/api/public/download/$platform'
       path: '/api/public/download/$platform'
       fullPath: '/api/public/download/$platform'
       preLoaderRoute: typeof ApiPublicDownloadPlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/builder/sites': {
+      id: '/api/public/builder/sites'
+      path: '/api/public/builder/sites'
+      fullPath: '/api/public/builder/sites'
+      preLoaderRoute: typeof ApiPublicBuilderSitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/builder/search': {
+      id: '/api/public/builder/search'
+      path: '/api/public/builder/search'
+      fullPath: '/api/public/builder/search'
+      preLoaderRoute: typeof ApiPublicBuilderSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/builder/runtime-log': {
+      id: '/api/public/builder/runtime-log'
+      path: '/api/public/builder/runtime-log'
+      fullPath: '/api/public/builder/runtime-log'
+      preLoaderRoute: typeof ApiPublicBuilderRuntimeLogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/builder/publish': {
@@ -546,6 +794,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBuilderPublishRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/builder/powershell': {
+      id: '/api/public/builder/powershell'
+      path: '/api/public/builder/powershell'
+      fullPath: '/api/public/builder/powershell'
+      preLoaderRoute: typeof ApiPublicBuilderPowershellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/builder/chat': {
       id: '/api/public/builder/chat'
       path: '/api/public/builder/chat'
@@ -553,11 +808,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBuilderChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/auth/github': {
+      id: '/api/public/auth/github'
+      path: '/api/public/auth/github'
+      fullPath: '/api/public/auth/github'
+      preLoaderRoute: typeof ApiPublicAuthGithubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/shares/$id/': {
       id: '/api/public/shares/$id/'
       path: '/api/public/shares/$id'
       fullPath: '/api/public/shares/$id/'
       preLoaderRoute: typeof ApiPublicSharesIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zyraxon/v1/models': {
+      id: '/api/public/zyraxon/v1/models'
+      path: '/api/public/zyraxon/v1/models'
+      fullPath: '/api/public/zyraxon/v1/models'
+      preLoaderRoute: typeof ApiPublicZyraxonV1ModelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/shares/$id/sync': {
@@ -574,16 +843,80 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSharesIdDataRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/auth/github/start': {
+      id: '/api/public/auth/github/start'
+      path: '/start'
+      fullPath: '/api/public/auth/github/start'
+      preLoaderRoute: typeof ApiPublicAuthGithubStartRouteImport
+      parentRoute: typeof ApiPublicAuthGithubRoute
+    }
+    '/api/public/auth/github/logout': {
+      id: '/api/public/auth/github/logout'
+      path: '/logout'
+      fullPath: '/api/public/auth/github/logout'
+      preLoaderRoute: typeof ApiPublicAuthGithubLogoutRouteImport
+      parentRoute: typeof ApiPublicAuthGithubRoute
+    }
+    '/api/public/auth/github/callback': {
+      id: '/api/public/auth/github/callback'
+      path: '/callback'
+      fullPath: '/api/public/auth/github/callback'
+      preLoaderRoute: typeof ApiPublicAuthGithubCallbackRouteImport
+      parentRoute: typeof ApiPublicAuthGithubRoute
+    }
+    '/api/public/zyraxon/v1/chat/completions': {
+      id: '/api/public/zyraxon/v1/chat/completions'
+      path: '/api/public/zyraxon/v1/chat/completions'
+      fullPath: '/api/public/zyraxon/v1/chat/completions'
+      preLoaderRoute: typeof ApiPublicZyraxonV1ChatCompletionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/repos/$owner/$repo/publish': {
+      id: '/api/github/repos/$owner/$repo/publish'
+      path: '/$owner/$repo/publish'
+      fullPath: '/api/github/repos/$owner/$repo/publish'
+      preLoaderRoute: typeof ApiGithubReposOwnerRepoPublishRouteImport
+      parentRoute: typeof ApiGithubReposRoute
+    }
   }
 }
 
+interface ApiGithubReposRouteChildren {
+  ApiGithubReposOwnerRepoPublishRoute: typeof ApiGithubReposOwnerRepoPublishRoute
+}
+
+const ApiGithubReposRouteChildren: ApiGithubReposRouteChildren = {
+  ApiGithubReposOwnerRepoPublishRoute: ApiGithubReposOwnerRepoPublishRoute,
+}
+
+const ApiGithubReposRouteWithChildren = ApiGithubReposRoute._addFileChildren(
+  ApiGithubReposRouteChildren,
+)
+
+interface ApiPublicAuthGithubRouteChildren {
+  ApiPublicAuthGithubCallbackRoute: typeof ApiPublicAuthGithubCallbackRoute
+  ApiPublicAuthGithubLogoutRoute: typeof ApiPublicAuthGithubLogoutRoute
+  ApiPublicAuthGithubStartRoute: typeof ApiPublicAuthGithubStartRoute
+}
+
+const ApiPublicAuthGithubRouteChildren: ApiPublicAuthGithubRouteChildren = {
+  ApiPublicAuthGithubCallbackRoute: ApiPublicAuthGithubCallbackRoute,
+  ApiPublicAuthGithubLogoutRoute: ApiPublicAuthGithubLogoutRoute,
+  ApiPublicAuthGithubStartRoute: ApiPublicAuthGithubStartRoute,
+}
+
+const ApiPublicAuthGithubRouteWithChildren =
+  ApiPublicAuthGithubRoute._addFileChildren(ApiPublicAuthGithubRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiMarketplaceSearchRoute: ApiMarketplaceSearchRoute,
   ShareIdRoute: ShareIdRoute,
   EcosystemIndexRoute: EcosystemIndexRoute,
+  ApiGithubReposRoute: ApiGithubReposRouteWithChildren,
   ApiPublicSplatRoute: ApiPublicSplatRoute,
   ApiPublicCommunityRoute: ApiPublicCommunityRoute,
   ApiPublicCommunityStoreRoute: ApiPublicCommunityStoreRoute,
@@ -595,17 +928,37 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
   EcosystemItemIdRoute: EcosystemItemIdRoute,
   ApiSharesIndexRoute: ApiSharesIndexRoute,
+  ApiPublicAuthGithubRoute: ApiPublicAuthGithubRouteWithChildren,
   ApiPublicBuilderChatRoute: ApiPublicBuilderChatRoute,
+  ApiPublicBuilderPowershellRoute: ApiPublicBuilderPowershellRoute,
   ApiPublicBuilderPublishRoute: ApiPublicBuilderPublishRoute,
+  ApiPublicBuilderRuntimeLogRoute: ApiPublicBuilderRuntimeLogRoute,
+  ApiPublicBuilderSearchRoute: ApiPublicBuilderSearchRoute,
+  ApiPublicBuilderSitesRoute: ApiPublicBuilderSitesRoute,
   ApiPublicDownloadPlatformRoute: ApiPublicDownloadPlatformRoute,
+  ApiPublicGithubPublishRoute: ApiPublicGithubPublishRoute,
+  ApiPublicZyraxonSearchRoute: ApiPublicZyraxonSearchRoute,
   ApiSharesIdDataRoute: ApiSharesIdDataRoute,
   ApiSharesIdSyncRoute: ApiSharesIdSyncRoute,
   ApiPublicSharesIndexRoute: ApiPublicSharesIndexRoute,
   ApiSharesIdIndexRoute: ApiSharesIdIndexRoute,
   ApiPublicSharesIdDataRoute: ApiPublicSharesIdDataRoute,
   ApiPublicSharesIdSyncRoute: ApiPublicSharesIdSyncRoute,
+  ApiPublicZyraxonV1ModelsRoute: ApiPublicZyraxonV1ModelsRoute,
   ApiPublicSharesIdIndexRoute: ApiPublicSharesIdIndexRoute,
+  ApiPublicZyraxonV1ChatCompletionsRoute:
+    ApiPublicZyraxonV1ChatCompletionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
