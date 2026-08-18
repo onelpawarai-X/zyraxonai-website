@@ -11,9 +11,9 @@ export const ZEN_MODELS_URL = `${ZEN_BASE}/models`;
 export type ZenModel = { id: string; label: string; blurb: string; upstream: string; free: true; contextWindowTokens: number; maxOutputTokens: number; multimodal?: boolean };
 
 export const ZEN_FREE_MODELS: ZenModel[] = [
-  { id: 'zyraxon-t10', label: 'ZYRAXON T10', blurb: 'MiMo-V2.5 Free · multimodal builder', upstream: 'mimo-v2.5-free', free: true, contextWindowTokens: 1_000_000, maxOutputTokens: 16_000, multimodal: true },
-  { id: 'zyraxon-vector', label: 'ZYRAXON VECTOR', blurb: 'Big Pickle · fast autonomous building', upstream: 'big-pickle', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
-  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', blurb: 'Nemotron 3 Ultra Free · deep reasoning', upstream: 'nemotron-3-ultra-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 16_000 },
+  { id: 'zyraxon-t10', label: 'ZYRAXON T10', blurb: 'MiMo-V2.5 Free · multimodal builder', upstream: 'mimo-v2.5-free', free: true, contextWindowTokens: 1_000_000, maxOutputTokens: 32_768, multimodal: true },
+  { id: 'zyraxon-vector', label: 'ZYRAXON VECTOR', blurb: 'Big Pickle · fast autonomous building', upstream: 'big-pickle', free: true, contextWindowTokens: 200_000, maxOutputTokens: 32_768 },
+  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', blurb: 'Nemotron 3 Ultra Free · deep reasoning', upstream: 'nemotron-3-ultra-free', free: true, contextWindowTokens: 200_000, maxOutputTokens: 32_768 },
 ];
 
 export const DEFAULT_ZEN_MODEL = ZEN_FREE_MODELS[0]!.id;

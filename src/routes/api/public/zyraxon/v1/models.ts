@@ -11,7 +11,7 @@ const CORS = {
 const MODELS = [
   { id: 'zyraxon-t10', label: 'ZYRAXON T10', description: 'MiMo-V2.5 Free · multimodal', upstream: 'mimo-v2.5-free' },
   { id: 'zyraxon-vector', label: 'ZYRAXON VECTOR', description: 'Big Pickle · fast autonomous building', upstream: 'big-pickle' },
-  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', description: 'Nemotron 3 Super Free · deep reasoning builder', upstream: 'nemotron-3-super-free' },
+  { id: 'zyraxon-phantom', label: 'ZYRAXON PHANTOM', description: 'Nemotron 3 Ultra Free · deep reasoning builder', upstream: 'nemotron-3-ultra-free' },
 ] as const;
 
 export const Route = createFileRoute('/api/public/zyraxon/v1/models')({
