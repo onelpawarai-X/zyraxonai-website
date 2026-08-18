@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import BuilderStudioV8 from '@/components/BuilderStudioV8'
 import BuilderMicEnhancer from '@/components/BuilderMicEnhancer'
 import BuilderControlsGuard from '@/components/BuilderControlsGuard'
+import '../styles/builder-controls.css'
 
 export const Route = createFileRoute('/builder')({
   head: () => ({
