@@ -1,28 +1,20 @@
 import { useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { Volume2, VolumeX, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
-      {
-        name: "description",
-        content:
-          "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory.",
-      },
+      { name: "description", content: "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory." },
       { property: "og:title", content: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
-      {
-        property: "og:description",
-        content:
-          "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory.",
-      },
+      { property: "og:description", content: "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory." },
     ],
   }),
   component: Index,
 });
 
-const WELCOME_TEXT =
-  "Welcome to ZYRAXON AI — your all-in-one AI workspace. Build, create, and explore with powerful intelligence at your fingertips.";
+const WELCOME_TEXT = "Welcome to ZYRAXON AI — your all-in-one AI workspace. Build, create, and explore with powerful intelligence at your fingertips.";
 
 function speakWelcome() {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -67,16 +59,9 @@ function Index() {
         .zyraxon-sound{background:rgba(255,255,255,.05);color:#f4f4fb;display:inline-flex;align-items:center;gap:8px}
         @media(prefers-reduced-motion:reduce){.zyraxon-red-pulse,.zyraxon-red-edge{animation:none}}
       `}</style>
-
-      <iframe
-        title="ZYRAXON AI"
-        src="/zyraxon.html"
-        allow="autoplay"
-        style={{ display: "block", width: "100%", flex: "1 1 auto", minHeight: 0, border: 0 }}
-      />
+      <iframe title="ZYRAXON AI" src="/zyraxon.html" allow="autoplay" style={{ display: "block", width: "100%", flex: "1 1 auto", minHeight: 0, border: 0 }} />
       <div className="zyraxon-red-pulse" aria-hidden="true" />
       <div className="zyraxon-red-edge" aria-hidden="true" />
-
       {welcome && (
         <section className="zyraxon-welcome" aria-label="Welcome to ZYRAXON AI">
           <div className="zyraxon-welcome-card">
