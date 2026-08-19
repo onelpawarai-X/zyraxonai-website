@@ -104,12 +104,17 @@ function sdkMessages(messages: ChatMessage[], attachments: BuilderAttachment[], 
   return [{ role: 'system' as const, content: withSystem(input) }, ...input] as any;
 }
 
-function openAiSseStream(textStream: AsyncIterable<string>, model: ZenModel) {
+function openAiSseStream(first: string | undefined, iterator: AsyncIterator<string>, model: ZenModel) {
   const encoder = new TextEncoder();
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        for await (const delta of textStream) {
+        if (first) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ id: `zyraxon-${Date.now()}`, object: 'chat.completion.chunk', choices: [{ index: 0, delta: { content: first }, finish_reason: null }], model: model.upstream })}\n\n`));
+        while (true) {
+          const next = await iterator.next();
+          if (next.done) break;
+          const delta = next.value;
+          if (!delta) continue;
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ id: `zyraxon-${Date.now()}`, object: 'chat.completion.chunk', choices: [{ index: 0, delta: { content: delta }, finish_reason: null }], model: model.upstream })}\n\n`));
         }
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ id: `zyraxon-${Date.now()}`, object: 'chat.completion.chunk', choices: [{ index: 0, delta: {}, finish_reason: 'stop' }], model: model.upstream })}\n\n`));
@@ -147,9 +152,18 @@ export async function zenChatStream(model: string, messages: ChatMessage[], apiK
   for (const candidate of order) {
     try {
       const result = streamText({ model: provider.chatModel(candidate.upstream), messages: sdkMessages(messages, attachments, candidate), maxOutputTokens: candidate.maxOutputTokens, temperature: 0.2 });
-      return new Response(openAiSseStream(result.textStream, candidate), { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no', 'Access-Control-Allow-Origin': '*', 'X-ZYRAXON-Model': candidate.id, 'X-ZYRAXON-Upstream': candidate.upstream } });
+      const iterator = result.textStream[Symbol.asyncIterator]();
+      const first = await iterator.next();
+      if (first.done) {
+        failures.push({ model: candidate.id, upstream: candidate.upstream, status: 502, detail: 'OpenCode returned an empty stream' });
+        continue;
+      }
+      return new Response(openAiSseStream(first.value, iterator, candidate), { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no', 'Access-Control-Allow-Origin': '*', 'X-ZYRAXON-Model': candidate.id, 'X-ZYRAXON-Upstream': candidate.upstream } });
     } catch (error) {
-      failures.push({ model: candidate.id, upstream: candidate.upstream, status: 502, detail: error instanceof Error ? error.message : 'SDK request failed' });
+      const detail = error instanceof Error ? error.message : 'SDK request failed';
+      const status = /429|rate.?limit/i.test(detail) ? 429 : /401|unauthorized|api key/i.test(detail) ? 401 : /403|forbidden/i.test(detail) ? 403 : /404|not.?found|unsupported/i.test(detail) ? 404 : 502;
+      failures.push({ model: candidate.id, upstream: candidate.upstream, status, detail });
+      if (status === 401 || status === 403 || status === 429) break;
     }
   }
 
