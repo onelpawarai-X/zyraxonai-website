@@ -4,6 +4,7 @@ import {
   ZEN_FREE_MODELS,
   ZEN_CHAT_URL,
   resolveZenModel,
+  resolveApiKey,
   testZenModel,
   discoverConsoleModels,
   zenChatStream,
@@ -35,7 +36,7 @@ export const Route = createFileRoute('/api/public/builder/chat')({
 
         if (healthModel) {
           const result = await testZenModel(healthModel, apiKey);
-          return Response.json({ ...result, provider: 'opencode-zen', userApiKeyOptional: true }, {
+          return Response.json({ ...result, provider: 'opencode-zen', userApiKeyRequired: !resolveApiKey(apiKey) }, {
             status: result.ok ? 200 : (result.status >= 400 ? result.status : 502),
             headers: CORS,
           });
@@ -46,7 +47,8 @@ export const Route = createFileRoute('/api/public/builder/chat')({
           models: ZEN_FREE_MODELS,
           defaultModel: DEFAULT_ZEN_MODEL,
           gateway: ZEN_CHAT_URL,
-          userApiKeyOptional: true,
+          userApiKeyRequired: !resolveApiKey(apiKey),
+          serverKeyConfigured: Boolean(resolveApiKey()),
           discoveredModelIds: discovery.ids,
           discoveryOk: discovery.ok,
         }, { headers: CORS });
@@ -71,7 +73,6 @@ export const Route = createFileRoute('/api/public/builder/chat')({
           .slice(0, 6)
           .map((attachment: any) => ({ name: attachment.name.slice(0, 160), mime: attachment.mime.slice(0, 100), data: attachment.data }));
 
-        // API keys are accepted only for the current request. They are not persisted by this route.
         const apiKey = requestApiKey(request, body);
         const response = await zenChatStream(model, messages, apiKey, attachments);
         return new Response(response.body, {
