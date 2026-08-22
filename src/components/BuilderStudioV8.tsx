@@ -446,7 +446,6 @@ export default function BuilderStudioV8() {
   const messages = current?.messages || [];
   const preview = useMemo(() => {
     if (files.length > 0) return buildPreview(files);
-    if (streamText && !current?.busy) return buildPreview(files);
     if (streamText) {
       const codeBlocks = [
         ...streamText.matchAll(
@@ -472,7 +471,7 @@ export default function BuilderStudioV8() {
       return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
     }
     return buildPreview(files);
-  }, [files, streamText, current?.busy]);
+  }, [files, streamText]);
   useEffect(() => {
     if (!sid && sessions[0]) setSid(sessions[0].id);
     localStorage.setItem(
@@ -668,6 +667,14 @@ export default function BuilderStudioV8() {
           }
         }
       }
+      // Fix duplicate first token (e.g. "HiHi!" from model)
+      if (full.length > 4) {
+        const match = full.match(/^([a-zA-Z]+)/);
+        if (match && match[1].length < 8) {
+          const word = match[1];
+          if (full.startsWith(word + word)) full = full.slice(word.length);
+        }
+      }
       const parsed = parseBlocks(full);
       if (parsed.length)
         updateFiles(id, (old) => {
@@ -752,7 +759,7 @@ export default function BuilderStudioV8() {
         },
         [...(latest?.files || [])],
       );
-      const verification = verifyProject(merged);
+      const verification = parsed.length ? verifyProject(merged) : [];
       const summary = pdfResult
         ? "PDF created and verified."
         : parsed.length
@@ -767,10 +774,11 @@ export default function BuilderStudioV8() {
         busy: false,
       });
       setView("preview");
-      // Auto-retry: if AI responded with text/tools but NO code blocks,
-      // send a follow-up asking for code directly.
+      // Auto-retry: ONLY when user asked to build something AND AI didn't produce code.
       if (!parsed.length && !pdfResult && full.length > 20) {
-        const hasCodeIntent = /build|create|make|design|page|site|app|landing/i.test(text);
+        const hasCodeIntent = /build|create|make|design|page|site|app|landing|screenshot|pdf/i.test(
+          text,
+        );
         const hasTools = /<builder-tool>|<github-tool>|<web-tool>/i.test(full);
         if (hasCodeIntent || hasTools) {
           const retryNext = [
@@ -1536,6 +1544,12 @@ export default function BuilderStudioV8() {
                     </article>
                   ))
                 )}
+                {current?.busy && streamText ? (
+                  <article className="chat-message assistant streaming-msg">
+                    <span>ZYRAXON AI</span>
+                    <p>{streamText}</p>
+                  </article>
+                ) : null}
               </div>
               <div className="composer glass-card">
                 {attachments.length > 0 && (
