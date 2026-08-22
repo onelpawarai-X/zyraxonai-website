@@ -1488,60 +1488,74 @@ export default function BuilderStudioV8() {
                     </div>
                   </div>
                 ) : (
-                  messages.map((m, i) => (
-                    <article className={`chat-message ${m.role}`} key={i}>
-                      <span>{m.role === "user" ? "YOU" : "ZYRAXON AI"}</span>
-                      <p>{m.content}</p>
-                      {m.attachments?.length ? (
-                        <div className="v7-attachments">
-                          {m.attachments.map((a) => (
-                            <span key={a.name}>
-                              <ImageIcon size={12} />
-                              {a.name}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                      {m.files?.length ? (
-                        <div className="code-card-grid">
-                          {m.files.map((f) => (
-                            <button
-                              key={f.path}
-                              className="code-card"
-                              onClick={() => {
-                                patch(current!.id, { activeFile: f.path });
-                                setView("code");
-                              }}
-                            >
-                              <FileIcon path={f.path} />
-                              <span>
-                                <b>{f.path}</b>
-                                <small>
-                                  {f.content.length.toLocaleString()} chars · Open in editor
-                                </small>
+                  messages.map((m, i) => {
+                    const displayText =
+                      m.role === "assistant"
+                        ? m.content
+                            .replace(/```[\s\S]*?```/g, "")
+                            .replace(/<[-a-z]+-tool>[\s\S]*?<\/[-a-z]+-tool>/gi, "")
+                            .trim()
+                        : m.content;
+                    return (
+                      <article className={`chat-message ${m.role}`} key={i}>
+                        <span>{m.role === "user" ? "YOU" : "ZYRAXON AI"}</span>
+                        {displayText ? <p>{displayText}</p> : null}
+                        {m.attachments?.length ? (
+                          <div className="v7-attachments">
+                            {m.attachments.map((a) => (
+                              <span key={a.name}>
+                                <ImageIcon size={12} />
+                                {a.name}
                               </span>
-                              <Code2 size={13} />
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                      {m.pdf ? (
-                        <button className="pdf-result" onClick={() => void openPdf(m.pdf!)}>
-                          <FileText size={14} />
-                          <span>
-                            <b>{m.pdf.title}</b>
-                            <small>Preview and download PDF</small>
-                          </span>
-                          <Eye size={14} />
-                        </button>
-                      ) : null}
-                    </article>
-                  ))
+                            ))}
+                          </div>
+                        ) : null}
+                        {m.files?.length ? (
+                          <div className="code-card-grid">
+                            {m.files.map((f) => (
+                              <button
+                                key={f.path}
+                                className="code-card"
+                                onClick={() => {
+                                  patch(current!.id, { activeFile: f.path });
+                                  setView("code");
+                                }}
+                              >
+                                <FileIcon path={f.path} />
+                                <span>
+                                  <b>{f.path}</b>
+                                  <small>
+                                    {f.content.length.toLocaleString()} chars · Open in editor
+                                  </small>
+                                </span>
+                                <Code2 size={13} />
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                        {m.pdf ? (
+                          <button className="pdf-result" onClick={() => void openPdf(m.pdf!)}>
+                            <FileText size={14} />
+                            <span>
+                              <b>{m.pdf.title}</b>
+                              <small>Preview and download PDF</small>
+                            </span>
+                            <Eye size={14} />
+                          </button>
+                        ) : null}
+                      </article>
+                    );
+                  })
                 )}
                 {current?.busy && streamText ? (
                   <article className="chat-message assistant streaming-msg">
                     <span>ZYRAXON AI</span>
-                    <p>{streamText}</p>
+                    <p>
+                      {streamText
+                        .replace(/```[\s\S]*?```/g, "")
+                        .replace(/<[-a-z]+-tool>[\s\S]*?<\/[-a-z]+-tool>/gi, "")
+                        .trim() || "Thinking…"}
+                    </p>
                   </article>
                 ) : null}
               </div>
@@ -1741,14 +1755,8 @@ export default function BuilderStudioV8() {
                           theme="vs-dark"
                           language={LANG[ext(active.path)] || "plaintext"}
                           value={active.content}
-                          onChange={(v) =>
-                            updateFiles(current!.id, (old) =>
-                              old.map((f) =>
-                                f.path === active.path ? { ...f, content: v || "" } : f,
-                              ),
-                            )
-                          }
                           options={{
+                            readOnly: !!current?.busy,
                             automaticLayout: true,
                             minimap: { enabled: false },
                             fontSize: 13,
@@ -1757,6 +1765,13 @@ export default function BuilderStudioV8() {
                             scrollBeyondLastLine: false,
                             wordWrap: "on",
                           }}
+                          onChange={(v) =>
+                            updateFiles(current!.id, (old) =>
+                              old.map((f) =>
+                                f.path === active.path ? { ...f, content: v || "" } : f,
+                              ),
+                            )
+                          }
                         />
                       </div>
                     </div>
