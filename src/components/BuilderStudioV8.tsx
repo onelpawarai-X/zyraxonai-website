@@ -388,6 +388,7 @@ export default function BuilderStudioV8() {
   const [listening, setListening] = useState(false);
   const [notice, setNotice] = useState("");
   const [streamText, setStreamText] = useState("");
+  const [streamFiles, setStreamFiles] = useState<BuilderFile[]>([]);
   const [streamTick, setStreamTick] = useState(0);
   const controllers = useRef(new Map<string, AbortController>());
   const media = useRef<MediaRecorder | null>(null);
@@ -440,7 +441,8 @@ export default function BuilderStudioV8() {
     })();
   }, []);
   const current = sessions.find((s) => s.id === sid) || sessions[0];
-  const files = current?.files || [];
+  const baseFiles = current?.files || [];
+  const files = current?.busy && streamFiles.length ? streamFiles : baseFiles;
   const active = files.find((f) => f.path === current?.activeFile) ||
     files[0] || { path: "index.html", content: "" };
   const messages = current?.messages || [];
@@ -660,6 +662,9 @@ export default function BuilderStudioV8() {
             if (c) {
               full += c;
               setStreamText(full);
+              // Real-time code parsing: update files as code blocks complete
+              const partial = parseBlocks(full);
+              if (partial.length) setStreamFiles(partial);
               setStreamTick((t) => t + 1);
             }
           } catch {
@@ -686,6 +691,7 @@ export default function BuilderStudioV8() {
           }
           return n;
         });
+      setStreamFiles([]);
       const tool = /<builder-tool>\s*([\s\S]*?)\s*<\/builder-tool>/i.exec(full);
       let pdfResult: Msg["pdf"];
       let engineOut: "" | string = "";
@@ -761,10 +767,8 @@ export default function BuilderStudioV8() {
       );
       const verification = parsed.length ? verifyProject(merged) : [];
       const summary = pdfResult
-        ? "PDF created and verified."
-        : parsed.length
-          ? `Generated ${parsed.length} project file${parsed.length === 1 ? "" : "s"} and verified the workspace.`
-          : full.slice(0, 200) || "No response received.";
+        ? full || "PDF created."
+        : full.slice(0, 500) || "No response received.";
       patch(id, {
         messages: [
           ...next,
@@ -1386,6 +1390,7 @@ export default function BuilderStudioV8() {
                       setSid(s.id);
                       setAttachments([]);
                       setStreamText("");
+                      setStreamFiles([]);
                       setStreamTick(0);
                       setSide(false);
                     }}
@@ -1529,17 +1534,6 @@ export default function BuilderStudioV8() {
                           </span>
                           <Eye size={14} />
                         </button>
-                      ) : null}
-                      {m.verification ? (
-                        <div className={`v7-verify ${m.verification.ok ? "ok" : "warn"}`}>
-                          <CheckCircle2 size={14} />
-                          <span>
-                            {m.verification.ok
-                              ? "Verification passed"
-                              : "Verification found issues"}{" "}
-                            · {m.verification.checks.join(" · ")}
-                          </span>
-                        </div>
                       ) : null}
                     </article>
                   ))
