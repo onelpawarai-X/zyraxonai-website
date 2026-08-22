@@ -387,6 +387,8 @@ export default function BuilderStudioV8() {
   const [micOpen, setMicOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [notice, setNotice] = useState("");
+  const [streamText, setStreamText] = useState("");
+  const [streamTick, setStreamTick] = useState(0);
   const controllers = useRef(new Map<string, AbortController>());
   const media = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -442,7 +444,35 @@ export default function BuilderStudioV8() {
   const active = files.find((f) => f.path === current?.activeFile) ||
     files[0] || { path: "index.html", content: "" };
   const messages = current?.messages || [];
-  const preview = useMemo(() => buildPreview(files), [files]);
+  const preview = useMemo(() => {
+    if (files.length > 0) return buildPreview(files);
+    if (streamText && !current?.busy) return buildPreview(files);
+    if (streamText) {
+      const codeBlocks = [
+        ...streamText.matchAll(
+          /```(?:html|css|javascript|js|tsx?|jsx?)\s+file:[^\n]*\n([\s\S]*?)```/gi,
+        ),
+      ];
+      if (codeBlocks.length > 0) {
+        const code = codeBlocks.map((m) => m[1]).join("\n");
+        const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+          body{background:#050505;color:#e5e5e5;font-family:Inter,system-ui,sans-serif;padding:40px 32px;max-width:800px;margin:0 auto;line-height:1.7}
+          h1{color:#fff;font-size:1.8em;margin-bottom:16px}
+          pre{background:#111;border:1px solid #222;border-radius:10px;padding:20px;overflow-x:auto;font-size:14px;color:#e5e5e5}
+          code{font-family:'SF Mono',SFMono-Regular,monospace}
+        </style></head><body><h1>Preview Loading…</h1><pre><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;").slice(0, 2000)}</code></pre></body></html>`;
+        return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+      }
+      const escaped = streamText.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+      const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+        body{background:#050505;color:#e5e5e5;font-family:Inter,system-ui,sans-serif;padding:40px 32px;max-width:800px;margin:0 auto;line-height:1.7}
+        h1{color:#fff;font-size:1.8em;margin-bottom:16px}
+        .text{font-size:15px;opacity:0.9}
+      </style></head><body><h1>ZYRAXON AI</h1><div class="text">${escaped}</div></body></html>`;
+      return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+    }
+    return buildPreview(files);
+  }, [files, streamText, current?.busy]);
   useEffect(() => {
     if (!sid && sessions[0]) setSid(sessions[0].id);
     localStorage.setItem(
@@ -628,7 +658,11 @@ export default function BuilderStudioV8() {
           try {
             const j = JSON.parse(raw);
             const c = j?.choices?.[0]?.delta?.content || j?.content || "";
-            if (c) full += c;
+            if (c) {
+              full += c;
+              setStreamText(full);
+              setStreamTick((t) => t + 1);
+            }
           } catch {
             /* ignored */
           }
@@ -723,7 +757,7 @@ export default function BuilderStudioV8() {
         ? "PDF created and verified."
         : parsed.length
           ? `Generated ${parsed.length} project file${parsed.length === 1 ? "" : "s"} and verified the workspace.`
-          : "Task completed. Verification ran against the current workspace.";
+          : full.slice(0, 200) || "No response received.";
       patch(id, {
         messages: [
           ...next,
@@ -733,6 +767,102 @@ export default function BuilderStudioV8() {
         busy: false,
       });
       setView("preview");
+      // Auto-retry: if AI responded with text/tools but NO code blocks,
+      // send a follow-up asking for code directly.
+      if (!parsed.length && !pdfResult && full.length > 20) {
+        const hasCodeIntent = /build|create|make|design|page|site|app|landing/i.test(text);
+        const hasTools = /<builder-tool>|<github-tool>|<web-tool>/i.test(full);
+        if (hasCodeIntent || hasTools) {
+          const retryNext = [
+            ...next,
+            { role: "assistant" as const, content: summary },
+            {
+              role: "user" as const,
+              content:
+                "Stop talking. Stop using tools. JUST output the code in fenced blocks NOW. Start with ```html file:index.html",
+            },
+          ];
+          patch(id, { messages: retryNext, busy: true });
+          try {
+            const r2 = await fetch("/api/public/builder/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+              body: JSON.stringify({
+                model: sel.model,
+                providerId: sel.provider,
+                apiKey:
+                  sel.provider === "zyraxon" || sel.provider === "opencode"
+                    ? connected["opencode"]?.apiKey || undefined
+                    : connected[sel.provider]?.apiKey || undefined,
+                messages: retryNext.map((m) => ({ role: m.role, content: m.content })),
+              }),
+              signal: controller.signal,
+            });
+            if (r2.ok && r2.body) {
+              const reader2 = r2.body.getReader();
+              const dec2 = new TextDecoder();
+              let buf2 = "";
+              let full2 = "";
+              while (true) {
+                const q2 = await reader2.read();
+                if (q2.done) break;
+                buf2 += dec2.decode(q2.value, { stream: true });
+                const lines2 = buf2.split(/\r?\n/);
+                buf2 = lines2.pop() || "";
+                for (const line2 of lines2) {
+                  if (!line2.startsWith("data:")) continue;
+                  const raw2 = line2.slice(5).trim();
+                  if (!raw2 || raw2 === "[DONE]") continue;
+                  try {
+                    const j2 = JSON.parse(raw2);
+                    const c2 = j2?.choices?.[0]?.delta?.content || j2?.content || "";
+                    if (c2) full2 += c2;
+                  } catch {
+                    /* ignored */
+                  }
+                }
+              }
+              const parsed2 = parseBlocks(full2);
+              if (parsed2.length) {
+                updateFiles(id, (old) => {
+                  const n = [...old];
+                  for (const f of parsed2) {
+                    const i = n.findIndex((x) => x.path === f.path);
+                    if (i >= 0) n[i] = f;
+                    else n.push(f);
+                  }
+                  return n;
+                });
+                const merged2 = parsed2.reduce(
+                  (arr, f) => {
+                    const i = arr.findIndex((x) => x.path === f.path);
+                    if (i >= 0) arr[i] = f;
+                    else arr.push(f);
+                    return arr;
+                  },
+                  [...(sessions.find((s) => s.id === id)?.files || [])],
+                );
+                const ver2 = verifyProject(merged2);
+                patch(id, {
+                  messages: [
+                    ...retryNext,
+                    {
+                      role: "assistant",
+                      content: `Generated ${parsed2.length} project file${parsed2.length === 1 ? "" : "s"} and verified the workspace.`,
+                      files: parsed2,
+                      verification: ver2,
+                    },
+                  ],
+                  busy: false,
+                });
+                setView("preview");
+              }
+            }
+          } catch {
+            /* retry failed — keep first response */
+          }
+        }
+      }
     } catch (e) {
       if ((e as unknown)?.name !== "AbortError")
         patch(id, {
@@ -1247,6 +1377,8 @@ export default function BuilderStudioV8() {
                     onClick={() => {
                       setSid(s.id);
                       setAttachments([]);
+                      setStreamText("");
+                      setStreamTick(0);
                       setSide(false);
                     }}
                   >

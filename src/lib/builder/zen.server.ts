@@ -4,6 +4,7 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateText, streamText } from "ai";
 import { getProviderDetail } from "@/lib/providers/modelsdev.server";
+import ZYRAXON_SYSTEM_PROMPT from "./system-prompt.txt?raw";
 
 export const ZEN_BASE = "https://opencode.ai/zen/v1";
 export const ZEN_CHAT_URL = `${ZEN_BASE}/chat/completions`;
@@ -203,40 +204,16 @@ export function attachMedia(
   return next;
 }
 
-const SYSTEM = `You are ZYRAXON AI, an autonomous production-grade web builder. Build complete working projects, preserve existing behavior unless asked to change it, keep responsive polished UI intact, verify cross-file references, never expose credentials or hidden reasoning.`;
-
-/** Real tool protocol. The client executes these directives with the user's locally-stored keys. */
-export const TOOL_GUIDE = `
-TOOLS YOU CAN USE — emit a directive block as the LAST thing in your reply, exactly one per action, JSON only inside:
-
-1) GitHub (the user's token is already connected in their browser):
-<github-tool>{"action":"status"}</github-tool>
-<github-tool>{"action":"list_repos"}</github-tool>
-<github-tool>{"action":"create_repo","name":"my-site","private":false}</github-tool>
-<github-tool>{"action":"push_files","name":"my-site"}</github-tool>   → pushes ALL current workspace files (creates the repo if missing)
-<github-tool>{"action":"enable_pages","name":"my-site"}</github-tool>  → publishes to GitHub Pages and returns the live URL
-
-2) Live web — real online search & page reader:
-<web-tool>{"action":"search","query":"react 19 release notes"}</web-tool>
-<web-tool>{"action":"open_url","url":"https://example.com/docs"}</web-tool>
-
-3) PowerShell/Shell Engine — REAL commands on the computer that hosts this website (build/test/run anything):
-<builder-tool>{"tool":"powershell","command":"node --version"}</builder-tool>
-
-Rules: use a tool ONLY when needed for the user's request; you may chain multiple directives across turns; never print or repeat API tokens; after acting, tell the user exactly what happened; for publishing ask for a repo name if none was given; when the user asks about current events, docs or facts you are unsure of — search first.`;
-
 export function sdkMessages(
   messages: ChatMessage[],
   attachments: BuilderAttachment[],
   model: { multimodal?: boolean },
 ) {
   const input = attachMedia(messages.slice(-32), attachments, model);
-  const last = [...input].reverse().find((m) => m.role === "user");
-  const request = last ? textOf(last.content).slice(0, 6000) : "";
   return [
     {
       role: "system" as const,
-      content: `${SYSTEM}\n${TOOL_GUIDE}\n\nCURRENT REQUEST:\n${request}`,
+      content: ZYRAXON_SYSTEM_PROMPT.trim(),
     },
     ...input,
   ] as unknown;
