@@ -19,10 +19,32 @@ const HEADERS = {
 const NOISE = /(\.blockmap$|\.ya?ml$|\.sha\d*$|\.sig$|\.txt$|^latest)/i;
 
 export const PLATFORM_PATTERNS: Record<string, RegExp[]> = {
-  windows: [/win.*installer.*\.exe$/i, /setup.*\.exe$/i, /win.*\.exe$/i, /\.exe$/i, /win.*\.msi$/i, /win.*\.zip$/i],
-  "mac-arm": [/(mac|osx|darwin).*(arm64|aarch64|silicon).*\.dmg$/i, /-arm64\.dmg$/i, /(mac|osx|darwin).*(arm64|aarch64)\.zip$/i],
-  "mac-intel": [/(mac|osx|darwin).*(x64|x86_64|intel).*\.dmg$/i, /-x64\.dmg$/i, /(mac|osx|darwin).*\.dmg$/i, /(mac|osx|darwin).*(x64|x86_64)\.zip$/i],
-  linux: [/\.AppImage$/i, /\.deb$/i, /\.rpm$/i, /linux.*(x64|x86_64|amd64).*\.tar\.gz$/i, /linux.*\.tar\.gz$/i],
+  windows: [
+    /win.*installer.*\.exe$/i,
+    /setup.*\.exe$/i,
+    /win.*\.exe$/i,
+    /\.exe$/i,
+    /win.*\.msi$/i,
+    /win.*\.zip$/i,
+  ],
+  "mac-arm": [
+    /(mac|osx|darwin).*(arm64|aarch64|silicon).*\.dmg$/i,
+    /-arm64\.dmg$/i,
+    /(mac|osx|darwin).*(arm64|aarch64)\.zip$/i,
+  ],
+  "mac-intel": [
+    /(mac|osx|darwin).*(x64|x86_64|intel).*\.dmg$/i,
+    /-x64\.dmg$/i,
+    /(mac|osx|darwin).*\.dmg$/i,
+    /(mac|osx|darwin).*(x64|x86_64)\.zip$/i,
+  ],
+  linux: [
+    /\.AppImage$/i,
+    /\.deb$/i,
+    /\.rpm$/i,
+    /linux.*(x64|x86_64|amd64).*\.tar\.gz$/i,
+    /linux.*\.tar\.gz$/i,
+  ],
   android: [/\.apk$/i],
 };
 
@@ -82,7 +104,12 @@ export async function resolveReleases() {
   const latest = releases[0];
   return {
     latest: latest
-      ? { tag: latest.tag_name, name: latest.name || latest.tag_name, url: latest.html_url, publishedAt: latest.published_at }
+      ? {
+          tag: latest.tag_name,
+          name: latest.name || latest.tag_name,
+          url: latest.html_url,
+          publishedAt: latest.published_at,
+        }
       : null,
     platforms,
     releasesUrl: `https://github.com/${REPO}/releases`,
@@ -98,7 +125,12 @@ export const Route = createFileRoute("/api/public/downloads")({
           return Response.json(await resolveReleases(), { headers: HEADERS });
         } catch (err) {
           return Response.json(
-            { latest: null, platforms: {}, releasesUrl: `https://github.com/${REPO}/releases`, error: String(err) },
+            {
+              latest: null,
+              platforms: {},
+              releasesUrl: `https://github.com/${REPO}/releases`,
+              error: String(err),
+            },
             { status: 200, headers: HEADERS },
           );
         }

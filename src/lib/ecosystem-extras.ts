@@ -26,7 +26,8 @@ async function deviceFlowRequest(action: "start" | "poll", deviceCode?: string) 
     body: JSON.stringify({ action, device_code: deviceCode }),
   });
   const result = (await response.json()) as DeviceFlowStart & DeviceFlowPoll & { message?: string };
-  if (!response.ok) throw new Error(result.message || result.error_description || "GitHub authentication failed");
+  if (!response.ok)
+    throw new Error(result.message || result.error_description || "GitHub authentication failed");
   return result;
 }
 
@@ -43,9 +44,11 @@ export async function completeDeviceFlowLogin(accessToken: string) {
 }
 
 export async function handleGitHubCallback(code: string, state: string) {
-  if (typeof window === "undefined") return { success: false, error: "Callback is only available in the browser" };
+  if (typeof window === "undefined")
+    return { success: false, error: "Callback is only available in the browser" };
   const expectedState = sessionStorage.getItem("zyraxon_github_oauth_state");
-  if (expectedState && state !== expectedState) return { success: false, error: "Invalid OAuth state" };
+  if (expectedState && state !== expectedState)
+    return { success: false, error: "Invalid OAuth state" };
 
   try {
     const response = await fetch("/api/public/auth/github", {
@@ -53,13 +56,23 @@ export async function handleGitHubCallback(code: string, state: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),
     });
-    const body = (await response.json()) as { token?: string; data?: { token?: string }; error?: { message?: string } };
+    const body = (await response.json()) as {
+      token?: string;
+      data?: { token?: string };
+      error?: { message?: string };
+    };
     const token = body.token || body.data?.token;
-    if (!response.ok || !token) return { success: false, error: body.error?.message || "Authentication failed" };
+    if (!response.ok || !token)
+      return { success: false, error: body.error?.message || "Authentication failed" };
     const user = await loginWithToken(token);
-    return user ? { success: true, user } : { success: false, error: "Could not load the GitHub user" };
+    return user
+      ? { success: true, user }
+      : { success: false, error: "Could not load the GitHub user" };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Authentication failed" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Authentication failed",
+    };
   }
 }
 
@@ -79,7 +92,9 @@ export function getAIConnection() {
       };
     },
     trackEvent(event: string, payload: unknown) {
-      window.dispatchEvent(new CustomEvent("zyraxon:ecosystem-event", { detail: { event, payload } }));
+      window.dispatchEvent(
+        new CustomEvent("zyraxon:ecosystem-event", { detail: { event, payload } }),
+      );
     },
   };
 }
@@ -89,39 +104,49 @@ export async function uploadFileToRepo(
   repoName: string,
   filePath: string,
   fileContent: ArrayBuffer,
-  message: string
+  message: string,
 ): Promise<string | null> {
   const auth = getAuthState();
   if (!auth.token) return null;
 
   const contentBase64 = btoa(
-    new Uint8Array(fileContent).reduce((data, byte) => data + String.fromCharCode(byte), "")
+    new Uint8Array(fileContent).reduce((data, byte) => data + String.fromCharCode(byte), ""),
   );
 
   let sha: string | undefined;
   try {
     const resp = await fetch(
       `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`,
-      { headers: { Authorization: `Bearer ${auth.token}`, Accept: "application/vnd.github.v3+json" } }
+      {
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      },
     );
     if (resp.ok) {
       const data = await resp.json();
       sha = data.sha;
     }
-  } catch {}
+  } catch {
+    /* ignored */
+  }
 
-  const body: Record<string, any> = { message, content: contentBase64 };
+  const body: Record<string, unknown> = { message, content: contentBase64 };
   if (sha) body.sha = sha;
 
-  const resp = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-      Accept: "application/vnd.github.v3+json",
-      "Content-Type": "application/json",
+  const resp = await fetch(
+    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
+  );
 
   if (resp.ok) {
     return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/main/${filePath}`;
@@ -134,7 +159,7 @@ export async function createGitHubRelease(
   repoName: string,
   tagName: string,
   name: string,
-  body: string
+  body: string,
 ): Promise<{ id: number; uploadUrl: string } | null> {
   const auth = getAuthState();
   if (!auth.token) return null;
@@ -160,7 +185,7 @@ export async function uploadReleaseAsset(
   uploadUrl: string,
   fileName: string,
   fileContent: ArrayBuffer,
-  contentType: string
+  contentType: string,
 ): Promise<string | null> {
   const auth = getAuthState();
   if (!auth.token) return null;
@@ -187,7 +212,7 @@ export async function uploadReleaseAsset(
 export async function uploadFileForItem(
   file: File,
   itemId: string,
-  auth: { username: string; token: string }
+  auth: { username: string; token: string },
 ): Promise<string | null> {
   const reader = new FileReader();
   return new Promise((resolve) => {
@@ -199,7 +224,7 @@ export async function uploadFileForItem(
         "zyraxon-ecosystem-data",
         filePath,
         ArrayBuffer,
-        `Upload asset: ${file.name} for ${itemId}`
+        `Upload asset: ${file.name} for ${itemId}`,
       );
       resolve(url);
     };
@@ -209,11 +234,11 @@ export async function uploadFileForItem(
 }
 
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 export async function publishItem(
@@ -223,7 +248,7 @@ export async function publishItem(
     screenshots?: File[];
     downloadFile?: File;
     logo?: File;
-  }
+  },
 ): Promise<EcosystemItem> {
   const auth = getAuthState();
   if (!auth.isAuthenticated || !auth.user) throw new Error("Sign in before publishing");
@@ -261,14 +286,14 @@ export async function publishItem(
       "zyraxon-ecosystem-data",
       tagName,
       `${item.name} v${item.version || "1.0.0"}`,
-      item.description
+      item.description,
     );
     if (release) {
       const assetUrl = await uploadReleaseAsset(
         release.uploadUrl,
         files.downloadFile.name,
         ArrayBuffer,
-        files.downloadFile.type || "application/octet-stream"
+        files.downloadFile.type || "application/octet-stream",
       );
       if (assetUrl) downloadUrl = assetUrl;
     }

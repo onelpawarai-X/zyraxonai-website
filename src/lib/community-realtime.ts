@@ -20,7 +20,7 @@ export type CommunityIdentity = {
 };
 
 type Handlers = {
-  onChat?: (message: any) => void;
+  onChat?: (message: unknown) => void;
   onPeers?: (peers: { id: string; username: string; stream: MediaStream }[]) => void;
   onPresence?: (users: string[]) => void;
   onCallers?: (users: string[]) => void;
@@ -68,10 +68,15 @@ export class CommunityRealtime {
       void this.onSignal(payload);
     });
     channel.on("presence", { event: "sync" }, () => {
-      const state = channel.presenceState() as Record<string, any[]>;
-      const all = Object.values(state).flat() as any[];
+      const state = channel.presenceState() as Record<string, unknown[]>;
+      const all = Object.values(state).flat() as unknown[];
       this.handlers.onPresence?.(all.map((p) => p.username).filter(Boolean));
-      this.handlers.onCallers?.(all.filter((p) => p.inCall).map((p) => p.username).filter(Boolean));
+      this.handlers.onCallers?.(
+        all
+          .filter((p) => p.inCall)
+          .map((p) => p.username)
+          .filter(Boolean),
+      );
     });
 
     await new Promise<void>((resolve) => {
@@ -84,11 +89,11 @@ export class CommunityRealtime {
     });
   }
 
-  private send(event: string, payload: any) {
+  private send(event: string, payload: unknown) {
     this.channel?.send({ type: "broadcast", event, payload });
   }
 
-  sendChat(message: any) {
+  sendChat(message: unknown) {
     this.send("chat", { message, from: this.peerId });
   }
 
@@ -96,7 +101,11 @@ export class CommunityRealtime {
 
   private emitPeers() {
     this.handlers.onPeers?.(
-      Array.from(this.remote.entries()).map(([id, v]) => ({ id, username: v.username, stream: v.stream })),
+      Array.from(this.remote.entries()).map(([id, v]) => ({
+        id,
+        username: v.username,
+        stream: v.stream,
+      })),
     );
   }
 
@@ -111,7 +120,12 @@ export class CommunityRealtime {
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        this.send("signal", { kind: "ice", to: peerId, from: this.peerId, candidate: event.candidate.toJSON() });
+        this.send("signal", {
+          kind: "ice",
+          to: peerId,
+          from: this.peerId,
+          candidate: event.candidate.toJSON(),
+        });
       }
     };
     pc.ontrack = (event) => {
@@ -134,7 +148,7 @@ export class CommunityRealtime {
     this.emitPeers();
   }
 
-  private async onSignal(payload: any) {
+  private async onSignal(payload: unknown) {
     if (!payload || payload.from === this.peerId) return;
     const from = payload.from as string;
 
@@ -144,7 +158,13 @@ export class CommunityRealtime {
       const pc = this.createConnection(from, payload.username || "peer");
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      this.send("signal", { kind: "offer", to: from, from: this.peerId, username: this.identity.username, sdp: offer });
+      this.send("signal", {
+        kind: "offer",
+        to: from,
+        from: this.peerId,
+        username: this.identity.username,
+        sdp: offer,
+      });
       return;
     }
 
@@ -157,7 +177,13 @@ export class CommunityRealtime {
       await this.flushIce(from, pc);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-      this.send("signal", { kind: "answer", to: from, from: this.peerId, username: this.identity.username, sdp: answer });
+      this.send("signal", {
+        kind: "answer",
+        to: from,
+        from: this.peerId,
+        username: this.identity.username,
+        sdp: answer,
+      });
     } else if (payload.kind === "answer") {
       const pc = this.connections.get(from);
       if (!pc) return;

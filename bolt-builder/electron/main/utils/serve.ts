@@ -21,7 +21,6 @@ export async function loadServerBuild(): Promise<any> {
     const serverBuild: ServerBuild = /** @type {ServerBuild} */ await import(fileUrl);
     console.log('Server build loaded successfully');
 
-    // eslint-disable-next-line consistent-return
     return serverBuild;
   } catch (buildError) {
     console.log('Failed to load server build:', {
@@ -66,6 +65,5 @@ export async function serveAsset(req: Request, assetsPath: string): Promise<Resp
 
   const body = createReadableStreamFromReadable(createReadStream(fullPath));
 
-  // eslint-disable-next-line consistent-return
   return new Response(body, { headers });
 }

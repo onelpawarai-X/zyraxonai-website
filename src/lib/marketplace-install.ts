@@ -16,7 +16,12 @@
  * reconciles with the app whenever the app reports back.
  */
 
-export type InstallState = "not-installed" | "installing" | "installed" | "disabled" | "uninstalling";
+export type InstallState =
+  | "not-installed"
+  | "installing"
+  | "installed"
+  | "disabled"
+  | "uninstalling";
 
 export interface InstalledRecord {
   id: string;
@@ -79,7 +84,10 @@ export function installDeepLink(t: InstallTarget): string {
   return `${SCHEME}install/${kind}/${encodeURIComponent(t.id)}?${q.toString()}`;
 }
 
-export function uninstallDeepLink(id: string, kind: InstalledRecord["source"] = "extension"): string {
+export function uninstallDeepLink(
+  id: string,
+  kind: InstalledRecord["source"] = "extension",
+): string {
   return `${SCHEME}uninstall/${kind}/${encodeURIComponent(id)}`;
 }
 
@@ -92,7 +100,11 @@ export function openDeepLink(url: string): void {
     document.body.appendChild(frame);
     window.setTimeout(() => frame.remove(), 1500);
   } catch {
-    try { window.location.href = url; } catch { /* app not installed */ }
+    try {
+      window.location.href = url;
+    } catch {
+      /* app not installed */
+    }
   }
 }
 
@@ -118,7 +130,11 @@ function read(): Record<string, InstalledRecord> {
 
 function write(next: Record<string, InstalledRecord>): void {
   cache = next;
-  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* quota */ }
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    /* quota */
+  }
   listeners.forEach((fn) => fn(next));
 }
 
@@ -136,7 +152,9 @@ export function isInstalled(id: string): boolean {
 
 export function subscribe(fn: Listener): () => void {
   listeners.add(fn);
-  return () => { listeners.delete(fn); };
+  return () => {
+    listeners.delete(fn);
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -146,7 +164,11 @@ export function subscribe(fn: Listener): () => void {
 export async function install(t: InstallTarget): Promise<InstalledRecord> {
   const b = bridge();
   if (b?.installExtension) {
-    try { await b.installExtension({ ...t, kind: t.source ?? "extension" }); } catch { /* fall through */ }
+    try {
+      await b.installExtension({ ...t, kind: t.source ?? "extension" });
+    } catch {
+      /* fall through */
+    }
   } else {
     openDeepLink(installDeepLink(t));
   }
@@ -171,7 +193,11 @@ export async function uninstall(id: string): Promise<void> {
   const existing = read()[id];
   const b = bridge();
   if (b?.uninstallExtension) {
-    try { await b.uninstallExtension(id); } catch { /* fall through */ }
+    try {
+      await b.uninstallExtension(id);
+    } catch {
+      /* fall through */
+    }
   } else {
     openDeepLink(uninstallDeepLink(id, existing?.source ?? "extension"));
   }
@@ -185,9 +211,15 @@ export async function setEnabled(id: string, enabled: boolean): Promise<void> {
   if (!existing) return;
   const b = bridge();
   if (b?.setExtensionEnabled) {
-    try { await b.setExtensionEnabled(id, enabled); } catch { /* fall through */ }
+    try {
+      await b.setExtensionEnabled(id, enabled);
+    } catch {
+      /* fall through */
+    }
   } else {
-    openDeepLink(`${SCHEME}${enabled ? "enable" : "disable"}/${existing.source}/${encodeURIComponent(id)}`);
+    openDeepLink(
+      `${SCHEME}${enabled ? "enable" : "disable"}/${existing.source}/${encodeURIComponent(id)}`,
+    );
   }
   write({ ...read(), [id]: { ...existing, enabled } });
 }
@@ -208,7 +240,9 @@ export async function syncWithApp(): Promise<void> {
     const next: Record<string, InstalledRecord> = {};
     for (const r of list) if (r?.id) next[r.id] = r;
     write(next);
-  } catch { /* app unavailable */ }
+  } catch {
+    /* app unavailable */
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -220,24 +254,27 @@ export async function syncWithApp(): Promise<void> {
  */
 export async function fetchVSIXUrl(extensionId: string): Promise<string | null> {
   try {
-    const [publisher, name] = extensionId.split('.');
+    const [publisher, name] = extensionId.split(".");
     if (!publisher || !name) return null;
 
-    const response = await fetch('https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json;api-version=6.1-preview.1',
-      },
-      body: JSON.stringify({
-        filters: [{
-          criteria: [
-            { filterType: 7, value: extensionId },
+    const response = await fetch(
+      "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json;api-version=6.1-preview.1",
+        },
+        body: JSON.stringify({
+          filters: [
+            {
+              criteria: [{ filterType: 7, value: extensionId }],
+            },
           ],
-        }],
-        flags: 0x200,
-      }),
-    });
+          flags: 0x200,
+        }),
+      },
+    );
 
     if (!response.ok) return null;
 
@@ -248,7 +285,9 @@ export async function fetchVSIXUrl(extensionId: string): Promise<string | null> 
     const version = extension.versions?.[0];
     if (!version) return null;
 
-    const asset = version.files?.find((f: any) => f.assetType === 'Microsoft.VisualStudio.Services.VSIXPackage');
+    const asset = version.files?.find(
+      (f: unknown) => f.assetType === "Microsoft.VisualStudio.Services.VSIXPackage",
+    );
     return asset?.source || null;
   } catch {
     return null;
@@ -273,11 +312,11 @@ export async function installFromMarketplace(
   const target: InstallTarget = {
     id: extensionId,
     displayName,
-    version: 'latest',
+    version: "latest",
     publisher,
     icon,
     vsixUrl,
-    source: 'extension',
+    source: "extension",
   };
 
   return install(target);

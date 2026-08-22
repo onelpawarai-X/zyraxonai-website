@@ -25,7 +25,7 @@ export interface SpeechRecognitionResult {
 
 // WebSocket Message Types
 export interface WSMessage {
-  type: 'start' | 'audio' | 'end' | 'result' | 'error' | 'ping' | 'pong';
+  type: "start" | "audio" | "end" | "result" | "error" | "ping" | "pong";
   language?: string;
   audioData?: string; // base64 encoded
   text?: string;

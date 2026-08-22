@@ -7,7 +7,10 @@ import { Header } from '~/components/header/Header';
 import BackgroundRays from '~/components/ui/BackgroundRays';
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'Zyraxon AI Builder' }, { name: 'description', content: 'Create any website with AI - Powered by Zyraxon AI' }];
+  return [
+    { title: 'Zyraxon AI Builder' },
+    { name: 'description', content: 'Create any website with AI - Powered by Zyraxon AI' },
+  ];
 };
 
 export async function loader(args: LoaderFunctionArgs) {

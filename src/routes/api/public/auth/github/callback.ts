@@ -1,6 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { buildContext } from '@/lib/api/context.server';
-import { githubCallback } from '@/lib/api/auth.server';
+import { createFileRoute } from "@tanstack/react-router";
+import { buildContext } from "@/lib/api/context.server";
+import { githubCallback } from "@/lib/api/auth.server";
 
 /**
  * Single server-owned OAuth callback.
@@ -8,7 +8,7 @@ import { githubCallback } from '@/lib/api/auth.server';
  * returned as HttpOnly cookies. No access token or OAuth code is placed in
  * localStorage or exposed to browser JavaScript.
  */
-export const Route = createFileRoute('/api/public/auth/github/callback')({
+export const Route = createFileRoute("/api/public/auth/github/callback")({
   server: {
     handlers: {
       GET: async ({ request }) => {

@@ -14,7 +14,8 @@
  *   - GitHub Extensions (direct from repos)
  */
 
-const VSCODE_MARKETPLACE_API = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery";
+const VSCODE_MARKETPLACE_API =
+  "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery";
 const OPEN_VSX_API = "https://open-vsx.org/api";
 const GITHUB_API = "https://api.github.com";
 
@@ -91,7 +92,7 @@ async function queryVSCodeMarketplace(
     pageSize?: number;
     pageNumber?: number;
     targetPlatform?: string;
-  } = {}
+  } = {},
 ): Promise<MarketplaceSearchResult> {
   const {
     filters = ["Microsoft", "Visual Studio Code"],
@@ -100,9 +101,7 @@ async function queryVSCodeMarketplace(
     pageNumber = 1,
   } = options;
 
-  const criteria = [
-    { filterType: 8, value: "Microsoft.VisualStudio.Code" },
-  ];
+  const criteria = [{ filterType: 8, value: "Microsoft.VisualStudio.Code" }];
 
   if (searchText) {
     criteria.push({ filterType: 10, value: searchText });
@@ -116,7 +115,8 @@ async function queryVSCodeMarketplace(
         direction: 2,
         pageSize,
         pageNumber,
-        sortBy: sortBy === "Installs" ? 4 : sortBy === "Rating" ? 12 : sortBy === "LastUpdated" ? 8 : 6,
+        sortBy:
+          sortBy === "Installs" ? 4 : sortBy === "Rating" ? 12 : sortBy === "LastUpdated" ? 8 : 6,
         sortOrder: 0,
       },
     ],
@@ -140,7 +140,7 @@ async function queryVSCodeMarketplace(
     const data = await response.json();
     const results = data?.results?.[0] || { extensions: [], metadata: { resultMetadata: [] } };
 
-    const extensions: VSCodeExtension[] = (results.extensions || []).map((ext: any) => {
+    const extensions: VSCodeExtension[] = (results.extensions || []).map((ext: unknown) => {
       const latestVersion = ext.versions?.[0] || {};
       const statistics = latestVersion.statistics || [];
 
@@ -157,35 +157,39 @@ async function queryVSCodeMarketplace(
           isDomainVerified: ext.publisher?.isDomainVerified,
           publisherId: ext.publisher?.publisherId,
         },
-        versions: (ext.versions || []).map((v: any) => ({
+        versions: (ext.versions || []).map((v: unknown) => ({
           version: v.version,
           targetPlatform: v.targetPlatform,
           lastUpdated: v.lastUpdated,
           assetUri: v.assetUri,
           install: v.install || "",
-          statistics: (v.statistics || []).map((s: any) => ({
+          statistics: (v.statistics || []).map((s: unknown) => ({
             statisticName: s.statisticName,
             value: s.value || 0,
           })),
         })),
         categories: ext.categories || [],
         tags: ext.tags || [],
-        installCount: statistics.find((s: any) => s.statisticName === "install")?.value || 0,
-        rating: statistics.find((s: any) => s.statisticName === "averagerating")?.value || 0,
-        ratingCount: statistics.find((s: any) => s.statisticName === "ratingcount")?.value || 0,
+        installCount: statistics.find((s: unknown) => s.statisticName === "install")?.value || 0,
+        rating: statistics.find((s: unknown) => s.statisticName === "averagerating")?.value || 0,
+        ratingCount: statistics.find((s: unknown) => s.statisticName === "ratingcount")?.value || 0,
         lastUpdated: latestVersion.lastUpdated || "",
         publishedDate: ext.publishedDate || "",
         license: ext.versions?.[0]?.targetPlatform ? undefined : undefined,
         repository: ext.repository,
         homepage: ext.homepage,
-        icon: ext.versions?.[0]?.assetUri ? `${ext.versions[0].assetUri}/Microsoft.VisualStudio.Services.Icons.Default` : undefined,
+        icon: ext.versions?.[0]?.assetUri
+          ? `${ext.versions[0].assetUri}/Microsoft.VisualStudio.Services.Icons.Default`
+          : undefined,
         screenshots: [],
       };
     });
 
     return {
       extensions,
-      totalCount: results.resultMetadata?.find((m: any) => m.metadataType === "ResultCount")?.metadata?.[0]?.count || extensions.length,
+      totalCount:
+        results.resultMetadata?.find((m: unknown) => m.metadataType === "ResultCount")
+          ?.metadata?.[0]?.count || extensions.length,
       hasMore: extensions.length === pageSize,
     };
   } catch (error) {
@@ -199,7 +203,7 @@ async function queryVSCodeMarketplace(
 async function queryOpenVSX(
   namespace?: string,
   query?: string,
-  options: { size?: number; offset?: number } = {}
+  options: { size?: number; offset?: number } = {},
 ): Promise<MarketplaceSearchResult> {
   const { size = 50, offset = 0 } = options;
 
@@ -217,7 +221,7 @@ async function queryOpenVSX(
     }
 
     const data = await response.json();
-    const extensions: VSCodeExtension[] = (data.extensions || []).map((ext: any) => ({
+    const extensions: VSCodeExtension[] = (data.extensions || []).map((ext: unknown) => ({
       id: ext.id || `${ext.namespace?.toLowerCase()}.${ext.name}`,
       extensionId: ext.id || `${ext.namespace?.toLowerCase()}.${ext.name}`,
       extensionName: ext.name,
@@ -228,11 +232,13 @@ async function queryOpenVSX(
         displayName: ext.namespace || "",
         isDomainVerified: false,
       },
-      versions: [{
-        version: ext.version || "1.0.0",
-        lastUpdated: ext.timestamp || new Date().toISOString(),
-        install: "",
-      }],
+      versions: [
+        {
+          version: ext.version || "1.0.0",
+          lastUpdated: ext.timestamp || new Date().toISOString(),
+          install: "",
+        },
+      ],
       categories: ext.categories || [],
       tags: ext.keywords || [],
       installCount: ext.downloadCount || 0,
@@ -241,8 +247,9 @@ async function queryOpenVSX(
       lastUpdated: ext.timestamp || "",
       publishedDate: ext.timestamp || "",
       repository: ext.repository,
-      icon: ext.files?.find((f: any) => f.type === "icon")?.url,
-      screenshots: ext.files?.filter((f: any) => f.type === "screenshot").map((f: any) => f.url) || [],
+      icon: ext.files?.find((f: unknown) => f.type === "icon")?.url,
+      screenshots:
+        ext.files?.filter((f: unknown) => f.type === "screenshot").map((f: unknown) => f.url) || [],
     }));
 
     return {
@@ -259,9 +266,21 @@ async function queryOpenVSX(
 // ── MCP Server Detection ────────────────────────────────────────
 
 const MCP_KEYWORDS = [
-  "mcp", "model-context-protocol", "model context protocol", "mcp-server",
-  "mcp-server-vscode", "mcp extension", "ai agent", "tool use", "function calling",
-  "llm", "chatgpt", "copilot", "ai assistant", "code generation", "code completion",
+  "mcp",
+  "model-context-protocol",
+  "model context protocol",
+  "mcp-server",
+  "mcp-server-vscode",
+  "mcp extension",
+  "ai agent",
+  "tool use",
+  "function calling",
+  "llm",
+  "chatgpt",
+  "copilot",
+  "ai assistant",
+  "code generation",
+  "code completion",
 ];
 
 function isMCPExtension(ext: VSCodeExtension): boolean {
@@ -270,7 +289,9 @@ function isMCPExtension(ext: VSCodeExtension): boolean {
     ext.shortDescription,
     ...(ext.categories || []),
     ...(ext.tags || []),
-  ].join(" ").toLowerCase();
+  ]
+    .join(" ")
+    .toLowerCase();
 
   return MCP_KEYWORDS.some((kw) => text.includes(kw));
 }
@@ -284,7 +305,7 @@ export async function searchExtensions(
     category?: string;
     sortBy?: "Installs" | "Rating" | "LastUpdated";
     pageSize?: number;
-  } = {}
+  } = {},
 ): Promise<MarketplaceSearchResult> {
   const { source = "marketplace", category, sortBy = "Installs", pageSize = 50 } = options;
 
@@ -312,7 +333,7 @@ export async function searchExtensions(
 }
 
 export async function getMCPServers(
-  options: { pageSize?: number; pageNumber?: number } = {}
+  options: { pageSize?: number; pageNumber?: number } = {},
 ): Promise<MarketplaceSearchResult> {
   const { pageSize = 50, pageNumber = 1 } = options;
 
@@ -336,7 +357,7 @@ export async function getMCPServers(
 
 export async function getTopExtensions(
   category?: string,
-  options: { pageSize?: number } = {}
+  options: { pageSize?: number } = {},
 ): Promise<MarketplaceSearchResult> {
   return queryVSCodeMarketplace(category || "", {
     sortBy: "Installs",
@@ -345,7 +366,7 @@ export async function getTopExtensions(
 }
 
 export async function getTrendingExtensions(
-  options: { pageSize?: number } = {}
+  options: { pageSize?: number } = {},
 ): Promise<MarketplaceSearchResult> {
   return queryVSCodeMarketplace("", {
     sortBy: "Rating",
@@ -354,7 +375,7 @@ export async function getTrendingExtensions(
 }
 
 export async function getNewExtensions(
-  options: { pageSize?: number } = {}
+  options: { pageSize?: number } = {},
 ): Promise<MarketplaceSearchResult> {
   return queryVSCodeMarketplace("", {
     sortBy: "LastUpdated",

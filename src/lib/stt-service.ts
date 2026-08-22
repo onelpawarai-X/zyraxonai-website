@@ -1,4 +1,4 @@
-import type { STTResponse, SpeechRecognitionResult } from './types/stt';
+import type { STTResponse, SpeechRecognitionResult } from "./types/stt";
 
 /**
  * Speech-To-Text Service
@@ -7,7 +7,7 @@ import type { STTResponse, SpeechRecognitionResult } from './types/stt';
 
 export async function convertAudioToText(
   audioBuffer: ArrayBuffer,
-  language: string = 'en-US'
+  language: string = "en-US",
 ): Promise<STTResponse> {
   try {
     // Option 1: Using Google Cloud Speech-to-Text API (Recommended for production)
@@ -27,11 +27,11 @@ export async function convertAudioToText(
     // Fallback: Use local web-speech-api (less accurate, but works offline)
     return await localSpeechToText(audioBuffer);
   } catch (error) {
-    console.error('STT Error:', error);
+    console.error("STT Error:", error);
     return {
       success: false,
-      text: '',
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      text: "",
+      error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
 }
@@ -43,31 +43,31 @@ export async function convertAudioToText(
 async function googleSpeechToText(
   audioBuffer: ArrayBuffer,
   language: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<STTResponse> {
   try {
-    const base64Audio = Buffer.from(audioBuffer).toString('base64');
+    const base64Audio = Buffer.from(audioBuffer).toString("base64");
 
     const response = await fetch(
       `https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           config: {
-            encoding: 'LINEAR16',
+            encoding: "LINEAR16",
             sampleRateHertz: 16000,
             languageCode: language,
             enableAutomaticPunctuation: true,
-            model: 'default',
+            model: "default",
           },
           audio: {
             content: base64Audio,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -80,10 +80,8 @@ async function googleSpeechToText(
       }>;
     };
 
-    const transcript =
-      data.results?.[0]?.alternatives?.[0]?.transcript || '';
-    const confidence =
-      data.results?.[0]?.alternatives?.[0]?.confidence || 0;
+    const transcript = data.results?.[0]?.alternatives?.[0]?.transcript || "";
+    const confidence = data.results?.[0]?.alternatives?.[0]?.confidence || 0;
 
     return {
       success: !!transcript,
@@ -92,7 +90,7 @@ async function googleSpeechToText(
       confidence,
     };
   } catch (error) {
-    console.error('Google Speech-to-Text error:', error);
+    console.error("Google Speech-to-Text error:", error);
     throw error;
   }
 }
@@ -104,14 +102,14 @@ async function googleSpeechToText(
 async function deepgramSpeechToText(
   audioBuffer: ArrayBuffer,
   language: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<STTResponse> {
   try {
-    const response = await fetch('https://api.deepgram.com/v1/listen', {
-      method: 'POST',
+    const response = await fetch("https://api.deepgram.com/v1/listen", {
+      method: "POST",
       headers: {
         Authorization: `Token ${apiKey}`,
-        'Content-Type': 'application/octet-stream',
+        "Content-Type": "application/octet-stream",
       },
       body: audioBuffer,
     });
@@ -131,10 +129,8 @@ async function deepgramSpeechToText(
       };
     };
 
-    const transcript =
-      data.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
-    const confidence =
-      data.results?.channels?.[0]?.alternatives?.[0]?.confidence || 0;
+    const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript || "";
+    const confidence = data.results?.channels?.[0]?.alternatives?.[0]?.confidence || 0;
 
     return {
       success: !!transcript,
@@ -143,7 +139,7 @@ async function deepgramSpeechToText(
       confidence,
     };
   } catch (error) {
-    console.error('Deepgram Speech-to-Text error:', error);
+    console.error("Deepgram Speech-to-Text error:", error);
     throw error;
   }
 }
@@ -153,9 +149,7 @@ async function deepgramSpeechToText(
  * Uses browser's built-in speech recognition
  * Note: This is a server-side simulation and may have limited accuracy
  */
-async function localSpeechToText(
-  _audioBuffer: ArrayBuffer
-): Promise<STTResponse> {
+async function localSpeechToText(_audioBuffer: ArrayBuffer): Promise<STTResponse> {
   // In a real scenario, you would use a library like:
   // - node-vosk (offline speech recognition)
   // - pocketsphinx
@@ -163,9 +157,9 @@ async function localSpeechToText(
 
   return {
     success: false,
-    text: '',
+    text: "",
     error:
-      'No speech recognition service configured. Please set GOOGLE_SPEECH_API_KEY or DEEPGRAM_API_KEY environment variables.',
+      "No speech recognition service configured. Please set GOOGLE_SPEECH_API_KEY or DEEPGRAM_API_KEY environment variables.",
   };
 }
 
@@ -175,7 +169,7 @@ async function localSpeechToText(
 export async function convertAudioFormat(
   buffer: ArrayBuffer,
   fromFormat: string,
-  toFormat: string = 'wav'
+  toFormat: string = "wav",
 ): Promise<ArrayBuffer> {
   // For production, use a library like:
   // - ffmpeg.js
@@ -187,8 +181,6 @@ export async function convertAudioFormat(
   }
 
   // Placeholder implementation
-  console.warn(
-    `Audio format conversion from ${fromFormat} to ${toFormat} not fully implemented`
-  );
+  console.warn(`Audio format conversion from ${fromFormat} to ${toFormat} not fully implemented`);
   return buffer;
 }

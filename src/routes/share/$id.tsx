@@ -1,30 +1,31 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 
 type Share = {
   id: string;
   sessionID: string;
   timeCreated: string;
   timeUpdated: string;
-  session: Record<string, any> | null;
-  messages: Record<string, any>[];
-  parts: Record<string, any>[];
-  diffs: Record<string, any>[];
-  models: Record<string, any>[];
+  session: Record<string, unknown> | null;
+  messages: Record<string, unknown>[];
+  parts: Record<string, unknown>[];
+  diffs: Record<string, unknown>[];
+  models: Record<string, unknown>[];
 };
 
-export const Route = createFileRoute('/share/$id')({
+export const Route = createFileRoute("/share/$id")({
   head: ({ params }) => {
     const title = `ZYRAXON Shared Session — ${params.id}`;
-    const description = 'A published ZYRAXON AI coding session: prompts, AI responses, code and file diffs.';
+    const description =
+      "A published ZYRAXON AI coding session: prompts, AI responses, code and file diffs.";
     return {
       meta: [
         { title },
-        { name: 'description', content: description },
-        { property: 'og:title', content: title },
-        { property: 'og:description', content: description },
-        { property: 'og:type', content: 'article' },
-        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "article" },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
     };
   },
@@ -36,7 +37,7 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
   return (
     <div className="relative my-3 overflow-hidden rounded-lg border border-white/10 bg-black/50">
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5 text-[11px] uppercase tracking-wider text-cyan-300/70">
-        <span>{lang || 'code'}</span>
+        <span>{lang || "code"}</span>
         <button
           onClick={() => {
             navigator.clipboard.writeText(code);
@@ -45,7 +46,7 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
           }}
           className="rounded px-2 py-0.5 text-[11px] text-slate-300 transition hover:bg-white/10"
         >
-          {copied ? 'Copied' : 'Copy'}
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
       <pre className="overflow-x-auto p-3 text-[13px] leading-relaxed text-slate-200">
@@ -59,10 +60,10 @@ function renderContent(content: string) {
   const blocks = content.split(/```/g);
   return blocks.map((block, i) => {
     if (i % 2 === 1) {
-      const nl = block.indexOf('\n');
-      const lang = nl > 0 ? block.slice(0, nl).trim() : '';
+      const nl = block.indexOf("\n");
+      const lang = nl > 0 ? block.slice(0, nl).trim() : "";
       const code = nl > 0 ? block.slice(nl + 1) : block;
-      return <CodeBlock key={i} code={code.replace(/\s+$/, '')} lang={lang} />;
+      return <CodeBlock key={i} code={code.replace(/\s+$/, "")} lang={lang} />;
     }
     return (
       <p key={i} className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-200">
@@ -94,9 +95,9 @@ function SharePage() {
   }, [id]);
 
   const partsByMessage = useMemo(() => {
-    const map = new Map<string, Record<string, any>[]>();
+    const map = new Map<string, Record<string, unknown>[]>();
     for (const p of share?.parts ?? []) {
-      const key = String(p['messageID'] ?? '');
+      const key = String(p["messageID"] ?? "");
       map.set(key, [...(map.get(key) ?? []), p]);
     }
     return map;
@@ -121,17 +122,19 @@ function SharePage() {
     );
   }
 
-  const title = (share.session?.['title'] as string) || 'Untitled session';
+  const title = (share.session?.["title"] as string) || "Untitled session";
 
   return (
     <main className="min-h-screen bg-[#0a0a0f] text-slate-200">
       <header className="border-b border-white/10 bg-gradient-to-b from-cyan-500/10 to-transparent">
         <div className="mx-auto flex max-w-4xl flex-col gap-3 px-5 py-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">ZYRAXON AI · Shared session</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">
+              ZYRAXON AI · Shared session
+            </p>
             <h1 className="mt-2 text-2xl font-bold text-white sm:text-3xl">{title}</h1>
             <p className="mt-1 text-xs text-slate-400">
-              Created {new Date(share.timeCreated).toLocaleString()} · Updated{' '}
+              Created {new Date(share.timeCreated).toLocaleString()} · Updated{" "}
               {new Date(share.timeUpdated).toLocaleString()}
             </p>
             {share.models.length > 0 && (
@@ -141,7 +144,7 @@ function SharePage() {
                     key={i}
                     className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-[11px] text-cyan-200"
                   >
-                    {(m['name'] as string) || `${m['providerID']}/${m['modelID']}`}
+                    {(m["name"] as string) || `${m["providerID"]}/${m["modelID"]}`}
                   </span>
                 ))}
               </div>
@@ -155,7 +158,7 @@ function SharePage() {
             }}
             className="self-start rounded-md border border-white/15 px-3 py-1.5 text-sm text-slate-200 transition hover:bg-white/10"
           >
-            {copied ? 'Link copied' : 'Share'}
+            {copied ? "Link copied" : "Share"}
           </button>
         </div>
       </header>
@@ -163,27 +166,35 @@ function SharePage() {
       <div className="mx-auto max-w-4xl px-5 py-8">
         <section className="space-y-5">
           {share.messages.length === 0 && (
-            <p className="text-sm text-slate-500">No messages have been synced to this share yet.</p>
+            <p className="text-sm text-slate-500">
+              No messages have been synced to this share yet.
+            </p>
           )}
           {share.messages.map((msg, i) => {
-            const role = String(msg['role'] ?? 'assistant');
-            const isUser = role === 'user';
-            const extraParts = partsByMessage.get(String(msg['id'] ?? '')) ?? [];
+            const role = String(msg["role"] ?? "assistant");
+            const isUser = role === "user";
+            const extraParts = partsByMessage.get(String(msg["id"] ?? "")) ?? [];
             return (
               <article
-                key={String(msg['id'] ?? i)}
+                key={String(msg["id"] ?? i)}
                 className={`rounded-xl border p-4 ${
-                  isUser ? 'border-cyan-400/25 bg-cyan-400/[0.06]' : 'border-white/10 bg-white/[0.03]'
+                  isUser
+                    ? "border-cyan-400/25 bg-cyan-400/[0.06]"
+                    : "border-white/10 bg-white/[0.03]"
                 }`}
               >
                 <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-400">
-                  <span className={isUser ? 'text-cyan-300' : 'text-fuchsia-300'}>{isUser ? 'You' : 'ZYRAXON'}</span>
-                  {msg['model'] ? <span>· {String(msg['model'])}</span> : null}
-                  {msg['timeCreated'] ? <span>· {new Date(String(msg['timeCreated'])).toLocaleString()}</span> : null}
+                  <span className={isUser ? "text-cyan-300" : "text-fuchsia-300"}>
+                    {isUser ? "You" : "ZYRAXON"}
+                  </span>
+                  {msg["model"] ? <span>· {String(msg["model"])}</span> : null}
+                  {msg["timeCreated"] ? (
+                    <span>· {new Date(String(msg["timeCreated"])).toLocaleString()}</span>
+                  ) : null}
                 </div>
-                {renderContent(String(msg['content'] ?? ''))}
+                {renderContent(String(msg["content"] ?? ""))}
                 {extraParts.map((p, j) => (
-                  <div key={j}>{renderContent(String(p['content'] ?? ''))}</div>
+                  <div key={j}>{renderContent(String(p["content"] ?? ""))}</div>
                 ))}
               </article>
             );
@@ -195,29 +206,32 @@ function SharePage() {
             <h2 className="text-lg font-semibold text-white">File changes</h2>
             <div className="mt-4 space-y-4">
               {share.diffs.map((d, i) => (
-                <div key={i} className="overflow-hidden rounded-lg border border-white/10 bg-black/40">
+                <div
+                  key={i}
+                  className="overflow-hidden rounded-lg border border-white/10 bg-black/40"
+                >
                   <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-sm">
-                    <span className="font-mono text-slate-200">{String(d['path'] ?? 'file')}</span>
+                    <span className="font-mono text-slate-200">{String(d["path"] ?? "file")}</span>
                     <span className="font-mono text-xs">
-                      <span className="text-emerald-400">+{Number(d['additions'] ?? 0)}</span>{' '}
-                      <span className="text-rose-400">-{Number(d['deletions'] ?? 0)}</span>
+                      <span className="text-emerald-400">+{Number(d["additions"] ?? 0)}</span>{" "}
+                      <span className="text-rose-400">-{Number(d["deletions"] ?? 0)}</span>
                     </span>
                   </div>
                   <pre className="overflow-x-auto p-3 text-[13px] leading-relaxed">
-                    {String(d['content'] ?? '')
-                      .split('\n')
+                    {String(d["content"] ?? "")
+                      .split("\n")
                       .map((line, k) => (
                         <div
                           key={k}
                           className={
-                            line.startsWith('+')
-                              ? 'bg-emerald-500/10 text-emerald-300'
-                              : line.startsWith('-')
-                                ? 'bg-rose-500/10 text-rose-300'
-                                : 'text-slate-300'
+                            line.startsWith("+")
+                              ? "bg-emerald-500/10 text-emerald-300"
+                              : line.startsWith("-")
+                                ? "bg-rose-500/10 text-rose-300"
+                                : "text-slate-300"
                           }
                         >
-                          {line || ' '}
+                          {line || " "}
                         </div>
                       ))}
                   </pre>

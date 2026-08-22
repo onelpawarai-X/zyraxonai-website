@@ -64,7 +64,6 @@ keys.forEach((key) => console.log(`${key}:`, app.getPath(key)));
 console.log('start whenReady');
 
 declare global {
-  // eslint-disable-next-line no-var, @typescript-eslint/naming-convention
   var __electron__: typeof electron;
 }
 

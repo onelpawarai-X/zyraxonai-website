@@ -33,7 +33,10 @@ export const Route = createFileRoute("/api/public/github-device")({
         }
 
         if (input.action === "start") {
-          return postForm("https://github.com/login/device/code", { client_id: CLIENT_ID, scope: "read:user user:email repo" });
+          return postForm("https://github.com/login/device/code", {
+            client_id: CLIENT_ID,
+            scope: "read:user user:email repo",
+          });
         }
         if (input.action === "poll" && input.device_code) {
           return postForm("https://github.com/login/oauth/access_token", {
@@ -42,7 +45,10 @@ export const Route = createFileRoute("/api/public/github-device")({
             grant_type: "urn:ietf:params:oauth:grant-type:device_code",
           });
         }
-        return Response.json({ message: "Use action start, or poll with a device_code" }, { status: 400, headers: HEADERS });
+        return Response.json(
+          { message: "Use action start, or poll with a device_code" },
+          { status: 400, headers: HEADERS },
+        );
       },
     },
   },
