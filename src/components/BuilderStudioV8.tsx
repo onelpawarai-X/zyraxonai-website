@@ -447,8 +447,9 @@ export default function BuilderStudioV8() {
     files[0] || { path: "index.html", content: "" };
   const messages = current?.messages || [];
   const preview = useMemo(() => {
+    if (streamFiles.length > 0) return buildPreview(streamFiles);
     if (files.length > 0) return buildPreview(files);
-    if (streamText) {
+    if (streamText && current?.busy) {
       const codeBlocks = [
         ...streamText.matchAll(
           /```(?:html|css|javascript|js|tsx?|jsx?)\s+file:[^\n]*\n([\s\S]*?)```/gi,
@@ -457,23 +458,19 @@ export default function BuilderStudioV8() {
       if (codeBlocks.length > 0) {
         const code = codeBlocks.map((m) => m[1]).join("\n");
         const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-          body{background:#050505;color:#e5e5e5;font-family:Inter,system-ui,sans-serif;padding:40px 32px;max-width:800px;margin:0 auto;line-height:1.7}
-          h1{color:#fff;font-size:1.8em;margin-bottom:16px}
-          pre{background:#111;border:1px solid #222;border-radius:10px;padding:20px;overflow-x:auto;font-size:14px;color:#e5e5e5}
-          code{font-family:'SF Mono',SFMono-Regular,monospace}
-        </style></head><body><h1>Preview Loading…</h1><pre><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;").slice(0, 2000)}</code></pre></body></html>`;
+          body{background:#050505;color:#e5e5e5;font-family:Inter,system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0}
+          .loader{display:flex;flex-direction:column;align-items:center;gap:16px}
+          .bar{width:200px;height:4px;background:#222;border-radius:4px;overflow:hidden}
+          .bar-fill{height:100%;background:linear-gradient(90deg,#b99cff,#65ead8);border-radius:4px;animation:load 1.5s ease-in-out infinite}
+          p{color:#888;font-size:13px}
+          @keyframes load{0%{width:0}50%{width:100%}100%{width:0}}
+        </style></head><body><div class="loader"><div class="bar"><div class="bar-fill"></div></div><p>Building website…</p></div></body></html>`;
         return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
       }
-      const escaped = streamText.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
-      const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-        body{background:#050505;color:#e5e5e5;font-family:Inter,system-ui,sans-serif;padding:40px 32px;max-width:800px;margin:0 auto;line-height:1.7}
-        h1{color:#fff;font-size:1.8em;margin-bottom:16px}
-        .text{font-size:15px;opacity:0.9}
-      </style></head><body><h1>ZYRAXON AI</h1><div class="text">${escaped}</div></body></html>`;
-      return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+      return `data:text/html;charset=utf-8,${encodeURIComponent("<!doctype html><html><head><meta charset='utf-8'><style>body{background:#050505;color:#888;font-family:Inter,system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0}p{font-size:13px}</style></head><body><p>Thinking…</p></body></html>")}`;
     }
     return buildPreview(files);
-  }, [files, streamText]);
+  }, [files, streamFiles, streamText, current?.busy]);
   useEffect(() => {
     if (!sid && sessions[0]) setSid(sessions[0].id);
     localStorage.setItem(
@@ -674,8 +671,8 @@ export default function BuilderStudioV8() {
       }
       // Fix duplicate first token (e.g. "HiHi!" from model)
       if (full.length > 4) {
-        const match = full.match(/^([a-zA-Z]+)/);
-        if (match && match[1].length < 8) {
+        const match = full.match(/^([a-zA-Z']+)/);
+        if (match && match[1].length < 12) {
           const word = match[1];
           if (full.startsWith(word + word)) full = full.slice(word.length);
         }
@@ -1488,64 +1485,67 @@ export default function BuilderStudioV8() {
                     </div>
                   </div>
                 ) : (
-                  messages.map((m, i) => {
-                    const displayText =
-                      m.role === "assistant"
-                        ? m.content
-                            .replace(/```[\s\S]*?```/g, "")
-                            .replace(/<[-a-z]+-tool>[\s\S]*?<\/[-a-z]+-tool>/gi, "")
-                            .trim()
-                        : m.content;
-                    return (
-                      <article className={`chat-message ${m.role}`} key={i}>
-                        <span>{m.role === "user" ? "YOU" : "ZYRAXON AI"}</span>
-                        {displayText ? <p>{displayText}</p> : null}
-                        {m.attachments?.length ? (
-                          <div className="v7-attachments">
-                            {m.attachments.map((a) => (
-                              <span key={a.name}>
-                                <ImageIcon size={12} />
-                                {a.name}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-                        {m.files?.length ? (
-                          <div className="code-card-grid">
-                            {m.files.map((f) => (
-                              <button
-                                key={f.path}
-                                className="code-card"
-                                onClick={() => {
-                                  patch(current!.id, { activeFile: f.path });
-                                  setView("code");
-                                }}
-                              >
-                                <FileIcon path={f.path} />
-                                <span>
-                                  <b>{f.path}</b>
-                                  <small>
-                                    {f.content.length.toLocaleString()} chars · Open in editor
-                                  </small>
+                  messages
+                    .filter((m) => !/Stop talking\. Stop using tools/i.test(m.content))
+                    .map((m, i) => {
+                      const displayText =
+                        m.role === "assistant"
+                          ? m.content
+                              .replace(/```[\s\S]*?```/g, "")
+                              .replace(/```[\s\S]*$/g, "")
+                              .replace(/<[-a-z]+-tool>[\s\S]*?<\/[-a-z]+-tool>/gi, "")
+                              .trim()
+                          : m.content;
+                      return (
+                        <article className={`chat-message ${m.role}`} key={i}>
+                          <span>{m.role === "user" ? "YOU" : "ZYRAXON AI"}</span>
+                          {displayText ? <p>{displayText}</p> : null}
+                          {m.attachments?.length ? (
+                            <div className="v7-attachments">
+                              {m.attachments.map((a) => (
+                                <span key={a.name}>
+                                  <ImageIcon size={12} />
+                                  {a.name}
                                 </span>
-                                <Code2 size={13} />
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
-                        {m.pdf ? (
-                          <button className="pdf-result" onClick={() => void openPdf(m.pdf!)}>
-                            <FileText size={14} />
-                            <span>
-                              <b>{m.pdf.title}</b>
-                              <small>Preview and download PDF</small>
-                            </span>
-                            <Eye size={14} />
-                          </button>
-                        ) : null}
-                      </article>
-                    );
-                  })
+                              ))}
+                            </div>
+                          ) : null}
+                          {m.files?.length ? (
+                            <div className="code-card-grid">
+                              {m.files.map((f) => (
+                                <button
+                                  key={f.path}
+                                  className="code-card"
+                                  onClick={() => {
+                                    patch(current!.id, { activeFile: f.path });
+                                    setView("code");
+                                  }}
+                                >
+                                  <FileIcon path={f.path} />
+                                  <span>
+                                    <b>{f.path}</b>
+                                    <small>
+                                      {f.content.length.toLocaleString()} chars · Open in editor
+                                    </small>
+                                  </span>
+                                  <Code2 size={13} />
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                          {m.pdf ? (
+                            <button className="pdf-result" onClick={() => void openPdf(m.pdf!)}>
+                              <FileText size={14} />
+                              <span>
+                                <b>{m.pdf.title}</b>
+                                <small>Preview and download PDF</small>
+                              </span>
+                              <Eye size={14} />
+                            </button>
+                          ) : null}
+                        </article>
+                      );
+                    })
                 )}
                 {current?.busy && streamText ? (
                   <article className="chat-message assistant streaming-msg">
@@ -1553,6 +1553,7 @@ export default function BuilderStudioV8() {
                     <p>
                       {streamText
                         .replace(/```[\s\S]*?```/g, "")
+                        .replace(/```[\s\S]*$/g, "")
                         .replace(/<[-a-z]+-tool>[\s\S]*?<\/[-a-z]+-tool>/gi, "")
                         .trim() || "Thinking…"}
                     </p>
