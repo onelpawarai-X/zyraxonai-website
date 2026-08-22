@@ -3,14 +3,14 @@
  * Handles real-time audio streaming and text conversion
  */
 
-import type { WSMessage, STTResponse } from './types/stt';
+import type { WSMessage, STTResponse } from "./types/stt";
 
 export class WebSocketSTTClient {
   private ws: WebSocket | null = null;
   private url: string;
-  private language: string = 'en-US';
+  private language: string = "en-US";
   private isConnected: boolean = false;
-  private sessionId: string = '';
+  private sessionId: string = "";
   private audioBuffer: AudioBuffer[] = [];
   private recognitionContext: AudioContext | null = null;
   private recognizer: ((result: string) => void) | null = null;
@@ -20,7 +20,7 @@ export class WebSocketSTTClient {
   private maxReconnectAttempts: number = 5;
   private reconnectDelay: number = 1000;
 
-  constructor(url: string, language: string = 'en-US') {
+  constructor(url: string, language: string = "en-US") {
     this.url = url;
     this.language = language;
     this.sessionId = this.generateSessionId();
@@ -33,14 +33,14 @@ export class WebSocketSTTClient {
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.url);
-        this.ws.binaryType = 'arraybuffer';
+        this.ws.binaryType = "arraybuffer";
 
         this.ws.onopen = () => {
-          console.log('[WebSocket STT] Connected');
+          console.log("[WebSocket STT] Connected");
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.sendMessage({
-            type: 'start',
+            type: "start",
             language: this.language,
             sessionId: this.sessionId,
           });
@@ -52,19 +52,19 @@ export class WebSocketSTTClient {
         };
 
         this.ws.onerror = (error) => {
-          console.error('[WebSocket STT] Connection error:', error);
+          console.error("[WebSocket STT] Connection error:", error);
           this.isConnected = false;
-          this.onErrorCallback?.('WebSocket connection error');
+          this.onErrorCallback?.("WebSocket connection error");
           reject(error);
         };
 
         this.ws.onclose = () => {
-          console.log('[WebSocket STT] Disconnected');
+          console.log("[WebSocket STT] Disconnected");
           this.isConnected = false;
           this.attemptReconnect();
         };
       } catch (error) {
-        console.error('[WebSocket STT] Connection failed:', error);
+        console.error("[WebSocket STT] Connection failed:", error);
         this.isConnected = false;
         reject(error);
       }
@@ -76,13 +76,13 @@ export class WebSocketSTTClient {
    */
   sendAudioChunk(audioData: ArrayBuffer): void {
     if (!this.isConnected || !this.ws) {
-      console.error('[WebSocket STT] Not connected');
+      console.error("[WebSocket STT] Not connected");
       return;
     }
 
     const base64Audio = this.arrayBufferToBase64(audioData);
     this.sendMessage({
-      type: 'audio',
+      type: "audio",
       audioData: base64Audio,
       sessionId: this.sessionId,
     });
@@ -93,12 +93,12 @@ export class WebSocketSTTClient {
    */
   endStream(): void {
     if (!this.isConnected || !this.ws) {
-      console.error('[WebSocket STT] Not connected');
+      console.error("[WebSocket STT] Not connected");
       return;
     }
 
     this.sendMessage({
-      type: 'end',
+      type: "end",
       sessionId: this.sessionId,
     });
   }
@@ -151,25 +151,25 @@ export class WebSocketSTTClient {
       const message: WSMessage = JSON.parse(data);
 
       switch (message.type) {
-        case 'result':
-          console.log('[WebSocket STT] Result:', message.text);
-          this.onTextCallback?.(message.text || '');
+        case "result":
+          console.log("[WebSocket STT] Result:", message.text);
+          this.onTextCallback?.(message.text || "");
           break;
 
-        case 'error':
-          console.error('[WebSocket STT] Server error:', message.error);
-          this.onErrorCallback?.(message.error || 'Unknown error');
+        case "error":
+          console.error("[WebSocket STT] Server error:", message.error);
+          this.onErrorCallback?.(message.error || "Unknown error");
           break;
 
-        case 'pong':
-          console.log('[WebSocket STT] Pong received');
+        case "pong":
+          console.log("[WebSocket STT] Pong received");
           break;
 
         default:
-          console.log('[WebSocket STT] Unknown message type:', message.type);
+          console.log("[WebSocket STT] Unknown message type:", message.type);
       }
     } catch (error) {
-      console.error('[WebSocket STT] Failed to parse message:', error);
+      console.error("[WebSocket STT] Failed to parse message:", error);
     }
   }
 
@@ -189,18 +189,16 @@ export class WebSocketSTTClient {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-      console.log(
-        `[WebSocket STT] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`
-      );
+      console.log(`[WebSocket STT] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
       setTimeout(() => {
         this.connect().catch((error) => {
-          console.error('[WebSocket STT] Reconnection failed:', error);
+          console.error("[WebSocket STT] Reconnection failed:", error);
         });
       }, delay);
     } else {
-      console.error('[WebSocket STT] Max reconnection attempts reached');
-      this.onErrorCallback?.('Failed to reconnect after multiple attempts');
+      console.error("[WebSocket STT] Max reconnection attempts reached");
+      this.onErrorCallback?.("Failed to reconnect after multiple attempts");
     }
   }
 
@@ -216,7 +214,7 @@ export class WebSocketSTTClient {
    */
   private arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
-    let binary = '';
+    let binary = "";
     for (let i = 0; i < bytes.byteLength; i++) {
       binary += String.fromCharCode(bytes[i]);
     }
@@ -238,9 +236,7 @@ export class AudioCaptureService {
   /**
    * Start recording from microphone
    */
-  async startRecording(
-    onAudioChunk: (chunk: ArrayBuffer) => void
-  ): Promise<void> {
+  async startRecording(onAudioChunk: (chunk: ArrayBuffer) => void): Promise<void> {
     try {
       this.onAudioChunk = onAudioChunk;
 
@@ -255,18 +251,13 @@ export class AudioCaptureService {
       });
 
       // Create audio context
-      this.audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+      this.audioContext = new (window.AudioContext || (window as unknown).webkitAudioContext)();
       this.audioContext.resume();
 
       const source = this.audioContext.createMediaStreamSource(this.mediaStream);
 
       // Create script processor for audio chunks
-      this.processor = this.audioContext.createScriptProcessor(
-        4096,
-        1,
-        1
-      );
+      this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
 
       source.connect(this.processor);
       this.processor.connect(this.audioContext.destination);
@@ -278,9 +269,9 @@ export class AudioCaptureService {
       };
 
       this.isRecording = true;
-      console.log('[AudioCapture] Recording started');
+      console.log("[AudioCapture] Recording started");
     } catch (error) {
-      console.error('[AudioCapture] Failed to start recording:', error);
+      console.error("[AudioCapture] Failed to start recording:", error);
       throw error;
     }
   }
@@ -305,7 +296,7 @@ export class AudioCaptureService {
     }
 
     this.isRecording = false;
-    console.log('[AudioCapture] Recording stopped');
+    console.log("[AudioCapture] Recording stopped");
   }
 
   /**
@@ -318,10 +309,7 @@ export class AudioCaptureService {
   /**
    * Private: Downsample audio to 16kHz PCM
    */
-  private downsampleAudio(
-    audioData: Float32Array,
-    targetSampleRate: number = 16000
-  ): Int16Array {
+  private downsampleAudio(audioData: Float32Array, targetSampleRate: number = 16000): Int16Array {
     const currentSampleRate = this.audioContext?.sampleRate || 44100;
     const ratio = currentSampleRate / targetSampleRate;
     const newLength = Math.ceil(audioData.length / ratio);
@@ -336,9 +324,8 @@ export class AudioCaptureService {
       const fraction = pointerIn - Math.floor(pointerIn);
       const sample = a + (b - a) * fraction;
 
-      result[pointerOut] = Math.max(-1, Math.min(1, sample)) < 0 
-        ? sample * 0x8000 
-        : sample * 0x7fff;
+      result[pointerOut] =
+        Math.max(-1, Math.min(1, sample)) < 0 ? sample * 0x8000 : sample * 0x7fff;
 
       pointerIn += ratio;
       pointerOut++;

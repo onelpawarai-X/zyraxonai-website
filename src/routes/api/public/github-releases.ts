@@ -142,7 +142,9 @@ async function getRepos(owner: string): Promise<Repo[]> {
     const res = await gh(url);
     if (res && res.ok) {
       const data = (await res.json()) as Repo[];
-      return data.filter((r) => !r.full_name.toLowerCase().endsWith(".github")).slice(0, SEARCH_PAGE_SIZE);
+      return data
+        .filter((r) => !r.full_name.toLowerCase().endsWith(".github"))
+        .slice(0, SEARCH_PAGE_SIZE);
     }
   }
   return [];
@@ -207,7 +209,11 @@ function normalize(repo: Repo, r: Release): NormalizedRelease {
 }
 
 /** Concurrency-safe batch fetch for releases across many repos. */
-async function releasesForRepos(repos: Repo[], depth: number, perRepo: number): Promise<NormalizedRelease[]> {
+async function releasesForRepos(
+  repos: Repo[],
+  depth: number,
+  perRepo: number,
+): Promise<NormalizedRelease[]> {
   const out: NormalizedRelease[] = [];
   const batchSize = 5;
   for (let i = 0; i < repos.length && i < depth; i += batchSize) {
@@ -240,7 +246,11 @@ async function collectWithCache(
 }
 
 /** Global search: top repos matching the query + ALL their releases. */
-function collectGlobal(query: string, depth: number, perRepo: number): Promise<NormalizedRelease[]> {
+function collectGlobal(
+  query: string,
+  depth: number,
+  perRepo: number,
+): Promise<NormalizedRelease[]> {
   const key = `global:${query}:${depth}:${perRepo}`;
   return collectWithCache(key, async () => {
     const repos = await searchRepos(query);
@@ -291,8 +301,14 @@ export const Route = createFileRoute("/api/public/github-releases")({
         const url = new URL(request.url);
         const q = (url.searchParams.get("q") ?? "").trim();
         const repo = (url.searchParams.get("repo") ?? "").trim();
-        const depth = Math.min(MAX_DEPTH, Math.max(1, Number(url.searchParams.get("depth") ?? DEFAULT_DEPTH)));
-        const perRepo = Math.min(MAX_PER_REPO, Math.max(1, Number(url.searchParams.get("perRepo") ?? DEFAULT_PER_REPO)));
+        const depth = Math.min(
+          MAX_DEPTH,
+          Math.max(1, Number(url.searchParams.get("depth") ?? DEFAULT_DEPTH)),
+        );
+        const perRepo = Math.min(
+          MAX_PER_REPO,
+          Math.max(1, Number(url.searchParams.get("perRepo") ?? DEFAULT_PER_REPO)),
+        );
         const page = Math.max(1, Number(url.searchParams.get("page") ?? 1));
         const perPage = Math.min(100, Math.max(1, Number(url.searchParams.get("perPage") ?? 60)));
 

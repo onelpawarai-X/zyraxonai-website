@@ -314,7 +314,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     }
 
     // Return the cleanup function
-    // eslint-disable-next-line consistent-return
+
     return cleanupResizeListeners;
   }, [isDeviceModeOn, SCALING_FACTOR]);
 

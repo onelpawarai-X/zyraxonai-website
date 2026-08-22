@@ -10,7 +10,9 @@ const DATA_PREFIX = "marketplace/data";
 
 async function readJson<T>(file: string, fallback: T): Promise<T> {
   try {
-    const res = await fetch(`${STORE}?file=${encodeURIComponent(file)}`, { headers: { Accept: "application/json" } });
+    const res = await fetch(`${STORE}?file=${encodeURIComponent(file)}`, {
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) return fallback;
     const data = (await res.json()) as { content?: unknown };
     if (data.content == null) return fallback;
@@ -43,7 +45,10 @@ export async function getUserLikes(userId: string): Promise<string[]> {
   return data[userId] || [];
 }
 
-export async function toggleLike(itemId: string, userId: string): Promise<{ liked: boolean; count: number }> {
+export async function toggleLike(
+  itemId: string,
+  userId: string,
+): Promise<{ liked: boolean; count: number }> {
   const allLikes = await readJson<Record<string, number>>(`${DATA_PREFIX}/likes.json`, {});
   const userLikes = await readJson<Record<string, string[]>>(`${DATA_PREFIX}/user_likes.json`, {});
   const userArr = userLikes[userId] || [];
@@ -83,10 +88,20 @@ export async function addComment(comment: SharedComment): Promise<void> {
   await writeJson(`${DATA_PREFIX}/comments.json`, all, `Comment on ${comment.itemId}`);
 }
 
-interface RatingEntry { userId: string; rating: number; createdAt: string }
+interface RatingEntry {
+  userId: string;
+  rating: number;
+  createdAt: string;
+}
 
-export async function getRating(itemId: string, userId?: string): Promise<{ average: number; count: number; userRating: number }> {
-  const allRatings = await readJson<Record<string, RatingEntry[]>>(`${DATA_PREFIX}/ratings.json`, {});
+export async function getRating(
+  itemId: string,
+  userId?: string,
+): Promise<{ average: number; count: number; userRating: number }> {
+  const allRatings = await readJson<Record<string, RatingEntry[]>>(
+    `${DATA_PREFIX}/ratings.json`,
+    {},
+  );
   const ratings = allRatings[itemId] || [];
   if (ratings.length === 0) return { average: 0, count: 0, userRating: 0 };
   const sum = ratings.reduce((s, r) => s + r.rating, 0);
@@ -94,12 +109,22 @@ export async function getRating(itemId: string, userId?: string): Promise<{ aver
   return { average: sum / ratings.length, count: ratings.length, userRating: mine };
 }
 
-export async function setRating(itemId: string, userId: string, rating: number): Promise<{ average: number; count: number }> {
-  const allRatings = await readJson<Record<string, RatingEntry[]>>(`${DATA_PREFIX}/ratings.json`, {});
+export async function setRating(
+  itemId: string,
+  userId: string,
+  rating: number,
+): Promise<{ average: number; count: number }> {
+  const allRatings = await readJson<Record<string, RatingEntry[]>>(
+    `${DATA_PREFIX}/ratings.json`,
+    {},
+  );
   const itemRatings = allRatings[itemId] || [];
   const existing = itemRatings.findIndex((r) => r.userId === userId);
-  if (existing >= 0) { itemRatings[existing].rating = rating; }
-  else { itemRatings.push({ userId, rating, createdAt: new Date().toISOString() }); }
+  if (existing >= 0) {
+    itemRatings[existing].rating = rating;
+  } else {
+    itemRatings.push({ userId, rating, createdAt: new Date().toISOString() });
+  }
   allRatings[itemId] = itemRatings;
   await writeJson(`${DATA_PREFIX}/ratings.json`, allRatings, `Rate ${itemId}`);
   const sum = itemRatings.reduce((s, r) => s + r.rating, 0);
@@ -111,7 +136,10 @@ export async function getStarCount(itemId: string): Promise<number> {
   return (data[itemId] || []).length;
 }
 
-export async function toggleStar(itemId: string, userId: string): Promise<{ starred: boolean; count: number }> {
+export async function toggleStar(
+  itemId: string,
+  userId: string,
+): Promise<{ starred: boolean; count: number }> {
   const data = await readJson<Record<string, string[]>>(`${DATA_PREFIX}/stars.json`, {});
   const arr = data[itemId] || [];
   const starred = arr.includes(userId);

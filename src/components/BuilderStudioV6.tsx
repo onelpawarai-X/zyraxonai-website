@@ -1,62 +1,1231 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import Editor from '@monaco-editor/react'
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
-import { Activity, Bot, Code2, Download, Eye, FileArchive, FileText, FolderOpen, Github, Laptop, Loader2, Mic, Moon, Plus, Send, Smartphone, Sparkles, Sun, Tablet, Upload, X } from 'lucide-react'
-import { createProjectZip, downloadBlob, type BuilderFile } from '@/lib/builder/artifacts'
-import '../styles/builder-studio.css'
+import { useEffect, useMemo, useRef, useState } from "react";
+import Editor from "@monaco-editor/react";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import {
+  Activity,
+  Bot,
+  Code2,
+  Download,
+  Eye,
+  FileArchive,
+  FileText,
+  FolderOpen,
+  Github,
+  Laptop,
+  Loader2,
+  Mic,
+  Moon,
+  Plus,
+  Send,
+  Smartphone,
+  Sparkles,
+  Sun,
+  Tablet,
+  Upload,
+  X,
+} from "lucide-react";
+import { createProjectZip, downloadBlob, type BuilderFile } from "@/lib/builder/artifacts";
+import "../styles/builder-studio.css";
 
-type Device = 'desktop' | 'tablet' | 'mobile'
-type View = 'preview' | 'code'
-type Msg = { role: 'user' | 'assistant'; content: string; files?: BuilderFile[]; pdf?: string }
-type Session = { id: string; title: string; messages: Msg[]; files: BuilderFile[]; activeFile: string; busy: boolean; repo?: any | null; connected?: boolean }
+type Device = "desktop" | "tablet" | "mobile";
+type View = "preview" | "code";
+type Msg = { role: "user" | "assistant"; content: string; files?: BuilderFile[]; pdf?: string };
+type Session = {
+  id: string;
+  title: string;
+  messages: Msg[];
+  files: BuilderFile[];
+  activeFile: string;
+  busy: boolean;
+  repo?: unknown | null;
+  connected?: boolean;
+};
 
 const MODELS = [
-  { id: 'zyraxon-velocity', name: 'ZYRAXON VELOCITY' },
-  { id: 'zyraxon-titan', name: 'ZYRAXON TITAN' },
-  { id: 'zyraxon-phantom', name: 'ZYRAXON PHANTOM' },
-]
-const ICONS: Record<string,string> = { html:'html5',htm:'html5',css:'css3',scss:'sass',sass:'sass',less:'less',js:'javascript',mjs:'javascript',cjs:'javascript',jsx:'react',ts:'typescript',tsx:'react',json:'json',md:'markdown',mdx:'markdown',py:'python',php:'php',java:'java',kt:'kotlin',go:'go',rs:'rust',c:'c',cpp:'cplusplus',cs:'csharp',swift:'swift',dart:'dart',sql:'azuresqldatabase',vue:'vuejs',svelte:'svelte',xml:'xml',yaml:'yaml',yml:'yaml',toml:'toml',sh:'bash',bash:'bash',zsh:'bash',ps1:'powershell',dockerfile:'docker',sol:'solidity',r:'r',scala:'scala',lua:'lua',rb:'ruby',ex:'elixir',exs:'elixir',erl:'erlang',fs:'fsharp',hs:'haskell',clj:'clojure',groovy:'groovy',proto:'protobuf',graphql:'graphql',gql:'graphql',prisma:'prisma',ini:'ini',conf:'nginx',env:'dotenv',csv:'csv',txt:'text',wasm:'webassembly' }
-const LANGS: Record<string,string> = { html:'html',htm:'html',css:'css',scss:'scss',sass:'scss',less:'less',js:'javascript',mjs:'javascript',cjs:'javascript',jsx:'javascript',ts:'typescript',tsx:'typescript',json:'json',md:'markdown',mdx:'markdown',py:'python',php:'php',java:'java',kt:'kotlin',go:'go',rs:'rust',c:'c',cpp:'cpp',cs:'csharp',swift:'swift',dart:'dart',sql:'sql',vue:'vue',svelte:'html',xml:'xml',yaml:'yaml',yml:'yaml',sh:'shell',bash:'shell',ps1:'powershell',dockerfile:'dockerfile',sol:'solidity',r:'r',scala:'scala',lua:'lua',rb:'ruby',graphql:'graphql',gql:'graphql',prisma:'plaintext' }
-const ext = (path:string) => { const n = path.split('/').pop()?.toLowerCase() || ''; return n === 'dockerfile' ? n : (n.split('.').pop() || n) }
-const lang = (path:string) => LANGS[ext(path)] || 'plaintext'
-function FileIcon({path}:{path:string}) { const key=ext(path); const icon=ICONS[key]; return <span className="file-icon-wrap">{icon ? <img className="file-icon" src={`https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/${icon}/${icon}-original.svg`} width={16} height={16} alt="" onError={e=>{e.currentTarget.style.display='none'; const n=e.currentTarget.nextElementSibling as HTMLElement|null; if(n) n.style.display='grid'}}/> : null}<span className="generic-file-icon" style={{display:icon?'none':'grid'}}>{key.slice(0,3).toUpperCase()}</span></span> }
-function safeJson<T>(key:string,fallback:T):T { try { const raw=localStorage.getItem(key); return raw?JSON.parse(raw):fallback } catch { return fallback } }
-function newSession():Session { return {id:crypto.randomUUID(),title:'New session',messages:[],files:[{path:'index.html',content:'<!doctype html><html><head><meta charset="utf-8"><title>ZYRAXON</title></head><body><main><h1>Start with an idea.</h1></main></body></html>'}],activeFile:'index.html',busy:false,repo:null,connected:false} }
-function encode64(value:string){const bytes=new TextEncoder().encode(value);let raw='';bytes.forEach(b=>raw+=String.fromCharCode(b));return btoa(raw)}
-function decode64(value:string){const raw=atob(value.replace(/\s/g,''));return new TextDecoder().decode(Uint8Array.from(raw,c=>c.charCodeAt(0)))}
-function normalizePath(value:string){return value.trim().replace(/^['"`]|['"`]$/g,'').replace(/^\/+/,'')}
-function parseBlocks(text:string):BuilderFile[]{const found:BuilderFile[]=[];const marked=/```([^\n]*)\n([\s\S]*?)```/g;let m:RegExpExecArray|null;while((m=marked.exec(text))){const info=m[1].trim();const body=m[2];const first=body.match(/^(?:file|filename|path)\s*[:=]\s*(.+)\r?\n/i);let path=first?normalizePath(first[1]):'';let content=first?body.slice(first[0].length):body;if(!path){const named=info.match(/(?:file|filename|path)\s*[=:]\s*([^\s]+)/i);if(named)path=normalizePath(named[1])}if(!path){const map:Record<string,string>={html:'index.html',css:'styles.css',scss:'styles.scss',js:'script.js',jsx:'App.jsx',ts:'main.ts',tsx:'App.tsx',json:'package.json',py:'main.py',java:'Main.java',go:'main.go',rs:'main.rs',md:'README.md',sql:'query.sql',php:'index.php'};path=map[info.split(/\s+/)[0].toLowerCase()]||''}if(path)found.push({path,content:content.replace(/\r\n/g,'\n').replace(/\n```$/,'')})}const unique:BuilderFile[]=[];for(const file of found){const i=unique.findIndex(x=>x.path===file.path);if(i>=0)unique[i]=file;else unique.push(file)}return unique}
-function parseLive(text:string):BuilderFile|null{const m=/```([^\n]*)\n([\s\S]*)$/i.exec(text);if(!m)return null;const first=m[2].match(/^(?:file|filename|path)\s*[:=]\s*(.+)\r?\n/i);if(!first)return null;return{path:normalizePath(first[1]),content:m[2].slice(first[0].length).replace(/```$/,'')}}
-function upsertFiles(old:BuilderFile[],incoming:BuilderFile[]){const next=[...old];for(const file of incoming){const i=next.findIndex(x=>x.path===file.path);if(i>=0)next[i]=file;else next.push(file)}return next}
-function isTextBlob(path:string,size=0){if(size>1500000)return false;return !/\.(png|jpe?g|gif|webp|svg|ico|pdf|zip|7z|rar|mp4|mp3|wav|mov|avi|exe|dll|so|dylib|woff2?|ttf|otf|class|jar)$/i.test(path)}
-
-export default function BuilderStudioV6(){
- const [sessions,setSessions]=useState<Session[]>(()=>{const saved=safeJson<Session[]>('zyraxon.builder.sessions.v6',[]);return saved.length?saved:[newSession()]});const [sid,setSid]=useState('');const [model,setModel]=useState(MODELS[0].id);const [input,setInput]=useState('');const [view,setView]=useState<View>('preview');const [device,setDevice]=useState<Device>('desktop');const [dark,setDark]=useState(true);const [activity,setActivity]=useState(false);const [side,setSide]=useState(false);const [gh,setGh]=useState(false);const [repos,setRepos]=useState<any[]>([]);const [token,setToken]=useState(()=>localStorage.getItem('zyraxon.github.token')||'');const [ghBusy,setGhBusy]=useState(false);const [ghMsg,setGhMsg]=useState('');const [listening,setListening]=useState(false);const [pub,setPub]=useState(false);const [pubToken,setPubToken]=useState(()=>localStorage.getItem('zyraxon.publish.token')||'');const [pubRepo,setPubRepo]=useState('');const [pubMsg,setPubMsg]=useState('');const [pubUrl,setPubUrl]=useState('');const [pdfUrl,setPdfUrl]=useState('');const [live,setLive]=useState<{sessionId:string;file:BuilderFile}|null>(null)
- const recognition=useRef<any>(null);const media=useRef<MediaRecorder|null>(null);const chunks=useRef<Blob[]>([]);const controllers=useRef(new Map<string,AbortController>());const current=sessions.find(s=>s.id===sid)||sessions[0];const files=current?.files||[];const messages=current?.messages||[];const active=files.find(f=>f.path===current?.activeFile)||files[0]||{path:'index.html',content:''};const preview=useMemo(()=>buildPreview(files),[files])
- useEffect(()=>{if(!sid&&sessions[0])setSid(sessions[0].id);localStorage.setItem('zyraxon.builder.sessions.v6',JSON.stringify(sessions))},[sessions,sid])
- useEffect(()=>{const S=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!S)return;const r=new S();r.continuous=false;r.interimResults=true;r.lang='en-US';r.onresult=(e:any)=>setInput(Array.from(e.results).map((x:any)=>x[0].transcript).join(''));r.onend=()=>setListening(false);r.onerror=()=>setListening(false);recognition.current=r;return()=>{try{r.stop()}catch{}}},[])
- function patchSession(id:string,patch:Partial<Session>){setSessions(all=>all.map(s=>s.id===id?{...s,...patch}:s))}
- function updateFiles(id:string,fn:(files:BuilderFile[])=>BuilderFile[]){setSessions(all=>all.map(s=>s.id===id?{...s,files:fn(s.files)}:s))}
- function addSession(){const s=newSession();setSessions(all=>[...all,s]);setSid(s.id);setInput('');setView('preview');setSide(false)}
- function stopVoice(){try{recognition.current?.stop()}catch{}try{media.current?.stop()}catch{}setListening(false)}
- async function mic(){if(listening){stopVoice();return}if(recognition.current){try{setListening(true);recognition.current.start();return}catch{}}if(!navigator.mediaDevices?.getUserMedia||!('MediaRecorder' in window)){setGhMsg('Voice input is not supported by this browser.');return}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const recorder=new MediaRecorder(stream);media.current=recorder;chunks.current=[];setListening(true);recorder.ondataavailable=e=>{if(e.data.size)chunks.current.push(e.data)};recorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const blob=new Blob(chunks.current,{type:'audio/webm'});try{const form=new FormData();form.append('file',blob,'recording.webm');form.append('language','en');const r=await fetch('/api/public/stt',{method:'POST',body:form});const data=await r.json();if(data?.success&&data.text)setInput(v=>`${v}${v?' ':''}${data.text}`);else setGhMsg(data?.error||'Voice transcription failed.')}catch{setGhMsg('Voice transcription is unavailable right now.')}finally{setListening(false)}};recorder.start();window.setTimeout(()=>{if(media.current===recorder&&recorder.state==='recording')recorder.stop()},8000)}catch{setListening(false);setGhMsg('Microphone permission was denied or unavailable.')}}
- async function generate(){const text=input.trim();if(!text||!current)return;const id=current.id;if(controllers.current.has(id))return;const nextMessages=[...current.messages,{role:'user' as const,content:text}];patchSession(id,{messages:nextMessages,title:current.messages.length?current.title:text.slice(0,32),busy:true});setInput('');setView('code');const controller=new AbortController();controllers.current.set(id,controller);let full='';try{const r=await fetch('/api/public/builder/chat',{method:'POST',headers:{'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:nextMessages.slice(-12)}),signal:controller.signal});if(!r.ok||!r.body)throw new Error((await r.text().catch(()=>''))||'AI connection failed');const reader=r.body.getReader();const decoder=new TextDecoder();let buffer='';while(true){const q=await reader.read();if(q.done)break;buffer+=decoder.decode(q.value,{stream:true});const lines=buffer.split(/\r?\n/);buffer=lines.pop()||'';for(const line of lines){if(!line.startsWith('data:'))continue;const raw=line.slice(5).trim();if(!raw||raw==='[DONE]')continue;try{const j=JSON.parse(raw);const c=j?.choices?.[0]?.delta?.content||j?.content||'';if(!c)continue;full+=c;const parsed=parseBlocks(full);const l=parseLive(full);if(l){updateFiles(id,old=>upsertFiles(old,[l]));patchSession(id,{activeFile:l.path});setLive({sessionId:id,file:l})}if(parsed.length){updateFiles(id,old=>upsertFiles(old,parsed));patchSession(id,{activeFile:parsed[parsed.length-1].path})}}catch{}}}const parsed=parseBlocks(full);if(parsed.length)updateFiles(id,old=>upsertFiles(old,parsed));const tool=parsePdfTool(full);let pdf='';if(tool){const blob=await createAiPdf(tool.title,tool.content);pdf=URL.createObjectURL(blob);setPdfUrl(pdf)}const summary=tool?`PDF created: ${tool.title}`:parsed.length?`Generated ${parsed.length} file${parsed.length===1?'':'s'} and streamed them into the workspace.`:'Build complete.';patchSession(id,{messages:[...nextMessages,{role:'assistant',content:summary,files:parsed,pdf:pdf||undefined}],busy:false});setLive(null)}catch(e){if((e as any)?.name!=='AbortError')patchSession(id,{messages:[...nextMessages,{role:'assistant',content:e instanceof Error?e.message:'The AI connection failed. Please retry.'}],busy:false});else patchSession(id,{busy:false})}finally{controllers.current.delete(id)}}
- async function connectGitHub(){if(!token.trim())return;localStorage.setItem('zyraxon.github.token',token.trim());setGhBusy(true);setGhMsg('');try{const r=await fetch('https://api.github.com/user/repos?per_page=100&sort=updated',{headers:{Authorization:`Bearer ${token.trim()}`,Accept:'application/vnd.github+json'}});if(!r.ok)throw new Error('GitHub token rejected.');setRepos(await r.json())}catch(e){setGhMsg(e instanceof Error?e.message:'GitHub connection failed.')}finally{setGhBusy(false)}}
- async function importRepo(repo:any){if(!current)return;setGhBusy(true);setGhMsg(`Importing ${repo.full_name}…`);try{const h={Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json'};const ref=repo.default_branch||'main';const treeRes=await fetch(`https://api.github.com/repos/${repo.full_name}/git/trees/${ref}?recursive=1`,{headers:h});if(!treeRes.ok)throw new Error('Could not read the repository tree.');const tree=await treeRes.json();const blobs=(tree.tree||[]).filter((x:any)=>x.type==='blob'&&isTextBlob(x.path,x.size));const out:BuilderFile[]=[];for(let i=0;i<blobs.length;i+=8){const batch=await Promise.all(blobs.slice(i,i+8).map(async(b:any)=>{try{const r=await fetch(`https://api.github.com/repos/${repo.full_name}/git/blobs/${b.sha}`,{headers:h});if(!r.ok)return null;const d=await r.json();return d.encoding==='base64'?{path:b.path,content:decode64(d.content)}:null}catch{return null}}));out.push(...batch.filter(Boolean) as BuilderFile[])}if(!out.length)throw new Error('No readable project files were found.');patchSession(current.id,{files:out,activeFile:out.find(f=>f.path==='index.html')?.path||out[0].path,repo,connected:true});setView('code');setGhMsg(`Connected: ${repo.full_name} · ${out.length} readable files`);setGh(false)}catch(e){setGhMsg(e instanceof Error?e.message:'Repository import failed.')}finally{setGhBusy(false)}}
- async function sync(){if(!current?.repo||!token||ghBusy)return;setGhBusy(true);try{const ref=current.repo.default_branch||'main';const h:any={Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json','Content-Type':'application/json'};for(const f of current.files){const path=f.path.replace(/^\/+/, '');const url=`https://api.github.com/repos/${current.repo.full_name}/contents/${path}`;const old=await fetch(`${url}?ref=${ref}`,{headers:h});const body:any={message:`chore: sync ${path} from ZYRAXON AI`,content:encode64(f.content),branch:ref};if(old.ok)body.sha=(await old.json()).sha;const r=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify(body)});if(!r.ok)throw new Error(`Failed to sync ${path}`)}setGhMsg(`Synced ${current.files.length} files to ${current.repo.full_name}.`)}catch(e){setGhMsg(e instanceof Error?e.message:'GitHub sync failed.')}finally{setGhBusy(false)}}
- async function publish(){const t=pubToken.trim();const name=pubRepo.trim().replace(/\.git$/,'');if(!t||!name){setPubMsg('Enter a GitHub token and repository name.');return}localStorage.setItem('zyraxon.publish.token',t);setPubMsg('Publishing…');const h:any={Authorization:`Bearer ${t}`,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'};try{const me=await fetch('https://api.github.com/user',{headers:h});if(!me.ok)throw new Error('GitHub token was rejected.');const u=await me.json();let rr=await fetch(`https://api.github.com/repos/${u.login}/${name}`,{headers:h});if(rr.status===404)rr=await fetch('https://api.github.com/user/repos',{method:'POST',headers:h,body:JSON.stringify({name,private:false,auto_init:true})});if(!rr.ok)throw new Error('Could not create or open the repository.');const data=await rr.json();const ref=data.default_branch||'main';for(const f of files){const p=f.path.replace(/^\/+/, '');const url=`https://api.github.com/repos/${u.login}/${name}/contents/${p}`;const old=await fetch(`${url}?ref=${ref}`,{headers:h});const body:any={message:`feat: publish ${p} from ZYRAXON AI`,content:encode64(f.content),branch:ref};if(old.ok)body.sha=(await old.json()).sha;const r=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify(body)});if(!r.ok)throw new Error(`Failed to publish ${p}`)}const pages=await fetch(`https://api.github.com/repos/${u.login}/${name}/pages`,{method:'POST',headers:h,body:JSON.stringify({source:{branch:ref,path:'/'},build_type:'legacy',https_enforced:true})});if(!pages.ok&&pages.status!==409)throw new Error('Files uploaded, but GitHub Pages could not be enabled.');const url=`https://${u.login}.github.io/${name}/`;setPubUrl(url);setPubMsg(`Published ${files.length} files.`)}catch(e){setPubMsg(e instanceof Error?e.message:'Publish failed.')}}
- function downloadZip(){downloadBlob(createProjectZip(files),'zyraxon-project.zip')}function closePdf(){if(pdfUrl)URL.revokeObjectURL(pdfUrl);setPdfUrl('')}
- return <div className={`builder-root ${dark?'is-dark':'is-light'}`}><header className="builder-topbar"><div style={{display:'flex',alignItems:'center',gap:8}}><button className="glass-icon" onClick={()=>setSide(true)} title="Sessions"><Plus size={15}/></button><a className="builder-brand" href="/">ZYRAXON <em>AI BLUDAR</em></a></div><div className="builder-actions"><button className="glass-action" onClick={()=>setPub(true)}><Upload size={14}/> Publish</button><button className="glass-action" onClick={()=>setActivity(v=>!v)}><Activity size={14}/> Activity</button><button className="glass-action" onClick={()=>setGh(true)}><Github size={14}/> GitHub</button><button className="glass-icon" onClick={()=>setDark(v=>!v)}>{dark?<Sun size={15}/>:<Moon size={15}/>}</button></div></header>
- {side&&<><div className="session-backdrop" onClick={()=>setSide(false)}/><aside className="session-sidebar glass-card"><div className="session-head"><b>Sessions</b><button className="glass-icon" onClick={()=>setSide(false)}><X size={14}/></button></div><button className="new-session-btn" onClick={addSession}><Plus size={15}/> New session</button><div className="session-list">{sessions.map(s=><button key={s.id} className={`session-row ${s.id===current?.id?'selected':''}`} onClick={()=>{setSid(s.id);setSide(false)}}><Bot size={14}/><span>{s.title}{s.busy?' · working':''}</span></button>)}</div></aside></>}
- <main className={`builder-main ${messages.length?'with-workspace':'chat-only'}`}><section className="chat-pane glass-card"><div className="chat-title"><span className="eyebrow"><Sparkles size={11}/> AI BUILDER</span><h1>{messages.length?'Building with ZYRAXON':'What are we building?'}</h1></div><div className="chat-history">{messages.length===0?<div className="welcome-state"><div className="ai-orb"><Bot size={26}/></div><h2>Describe your idea</h2><p>Tell ZYRAXON what to build. The workspace opens when the AI starts generating files.</p><div className="suggestions"><button onClick={()=>setInput('Build a complete premium dark AI SaaS website with HTML, CSS and JavaScript')}><Sparkles size={14}/> AI SaaS</button><button onClick={()=>setInput('Build a complete developer portfolio')}><Code2 size={14}/> Portfolio</button><button onClick={()=>setInput('Create a complete PDF report about this project')}><FileText size={14}/> PDF</button></div></div>:messages.map((m,i)=><article className={`chat-message ${m.role}`} key={i}><span>{m.role==='user'?'YOU':'ZYRAXON AI'}</span><p>{m.content}</p>{m.files?.length?<div className="code-card-grid">{m.files.map(f=><button key={f.path} className="code-card" onClick={()=>{patchSession(current!.id,{activeFile:f.path});setView('code')}}><FileIcon path={f.path}/><span><b>{f.path}</b><small>{f.content.length.toLocaleString()} chars · Open in editor</small></span><Code2 size={13}/></button>)}</div>:null}{m.pdf?<button className="pdf-result" onClick={()=>{setPdfUrl(m.pdf!);setView('preview')}}><FileText size={14}/><span><b>PDF ready</b><small>Open preview and download</small></span><Eye size={14}/></button>:null}</article>)}{current?.busy&&live?.sessionId===current.id?<div className="inline-live glass-card"><div className="live-head"><span className="live-dot"/> LIVE · {live.file.path}</div><div className="live-lines"><span>Streaming directly into Monaco</span><span>{live.file.content.length.toLocaleString()} chars</span></div></div>:null}</div><div className="composer glass-card"><textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();void generate()}}} placeholder="Describe what you want to build…"/><div className="composer-row"><div className="composer-left"><label className="select-pill"><Sparkles size={14}/><select value={model} onChange={e=>setModel(e.target.value)}>{MODELS.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label><button className={`circle-btn ${listening?'active':''}`} onClick={()=>void mic()} title="Voice input"><Mic size={16}/></button></div><div className="composer-right"><button className="circle-btn" onClick={downloadZip} title="Download project ZIP"><FileArchive size={16}/></button><button className="send-btn" disabled={!input.trim()||!!current?.busy} onClick={()=>void generate()}>{current?.busy?<Loader2 size={17} className="spin"/>:<Send size={17}/>}</button></div></div></div></section>
- {messages.length>0&&<section className="workspace-pane glass-card"><div className="workspace-bar"><div className="view-switch"><button className={view==='preview'?'selected':''} onClick={()=>setView('preview')}><Eye size={15}/> Preview</button><button className={view==='code'?'selected':' '} onClick={()=>setView('code')}><Code2 size={15}/> Code</button></div><div className="device-switch"><button className={device==='desktop'?'selected':''} onClick={()=>setDevice('desktop')}><Laptop size={15}/></button><button className={device==='tablet'?'selected':''} onClick={()=>setDevice('tablet')}><Tablet size={15}/></button><button className={device==='mobile'?'selected':''} onClick={()=>setDevice('mobile')}><Smartphone size={15}/></button></div><span className={current?.connected?'connection live':'connection'}><i/>{current?.repo?`Connected · ${current.repo.name}`:current?.connected?'AI Connected':'Ready'}</span></div>{view==='preview'?<div className="preview-stage"><div className={`preview-device ${device}`}><iframe title="Generated website preview" sandbox="allow-scripts allow-forms allow-modals" src={preview}/></div></div>:<div className="ide-shell"><aside className="file-pane"><div className="pane-title"><span><FolderOpen size={14}/> Project files</span><b>{files.length}</b></div><div className="file-list">{files.map(f=><button key={f.path} className={`file-row ${f.path===active.path?'selected':''}`} onClick={()=>patchSession(current!.id,{activeFile:f.path})}><FileIcon path={f.path}/><span>{f.path}</span></button>)}</div></aside><div className="editor-pane"><div className="editor-top"><span><FileIcon path={active.path}/> {active.path}</span><div style={{display:'flex',gap:6}}><button onClick={()=>void sync()} disabled={!current?.repo||ghBusy}><Github size={13}/> {ghBusy?'Syncing':'Sync'}</button><button onClick={()=>downloadBlob(new Blob([active.content],{type:'text/plain'}),active.path.split('/').pop()||'file.txt')}><Download size={13}/> Download</button></div></div><Editor theme="vs-dark" language={lang(active.path)} value={active.content} onChange={v=>updateFiles(current!.id,old=>old.map(f=>f.path===active.path?{...f,content:v||''}:f))} options={{automaticLayout:true,minimap:{enabled:false},fontSize:13,padding:{top:14},smoothScrolling:true,scrollBeyondLastLine:false,wordWrap:'on'}}/></div></div>}</section>}
- </main>
- {activity&&<div className="activity-pop glass-card"><div><b>Activity</b><button className="close-btn" onClick={()=>setActivity(false)}><X size={14}/></button></div><p>{current?.busy?'AI is streaming into the selected session and Monaco.':current?.repo?`Connected project: ${current.repo.full_name}`:'Ready. Session state is saved locally.'}</p></div>}
- {gh&&<div className="modal-backdrop"><div className="publish-modal glass-card"><button className="modal-close" onClick={()=>setGh(false)}><X size={17}/></button><div className="modal-icon"><Github size={22}/></div><h2>GitHub Project</h2><p>Enter a token, load repositories, then select one repository. The complete readable project tree is imported into the editor and remains connected for Sync.</p><label>Access token<input type="password" value={token} onChange={e=>setToken(e.target.value)} placeholder="GitHub access token"/></label><button className="publish-submit" disabled={!token||ghBusy} onClick={()=>void connectGitHub()}>{ghBusy?<Loader2 className="spin" size={16}/>:<Github size={16}/>} Load repositories</button>{ghMsg&&<div className="publish-status">{ghMsg}</div>}{repos.length>0&&<div className="repo-list">{repos.map(r=><button className="file-row" key={r.id} onClick={()=>void importRepo(r)}><Github size={13}/><span>{r.full_name}</span></button>)}</div>}</div></div>}
- {pub&&<div className="modal-backdrop"><div className="publish-modal glass-card"><button className="modal-close" onClick={()=>setPub(false)}><X size={17}/></button><div className="modal-icon"><Upload size={22}/></div><h2>Publish Website</h2><p>Publish the complete generated project to GitHub Pages and return its live URL.</p><label>GitHub access token<input type="password" value={pubToken} onChange={e=>setPubToken(e.target.value)} placeholder="GitHub token"/></label><label>Repository name<input value={pubRepo} onChange={e=>setPubRepo(e.target.value)} placeholder="my-zyraxon-site"/></label><button className="publish-submit" onClick={()=>void publish()}><Upload size={16}/> Publish website</button>{pubMsg&&<div className="publish-status">{pubMsg}</div>}{pubUrl&&<a className="published-url" href={pubUrl} target="_blank" rel="noreferrer">{pubUrl}</a>}</div></div>}
- {pdfUrl&&<div className="modal-backdrop"><div className="publish-modal glass-card pdf-modal"><button className="modal-close" onClick={closePdf}><X size={17}/></button><h2>PDF Preview</h2><iframe title="PDF preview" src={pdfUrl}/><button className="publish-submit" onClick={()=>fetch(pdfUrl).then(r=>r.blob()).then(b=>downloadBlob(b,'zyraxon-ai-document.pdf'))}><Download size={16}/> Download PDF</button></div></div>}
- </div>
+  { id: "zyraxon-velocity", name: "ZYRAXON VELOCITY" },
+  { id: "zyraxon-titan", name: "ZYRAXON TITAN" },
+  { id: "zyraxon-phantom", name: "ZYRAXON PHANTOM" },
+];
+const ICONS: Record<string, string> = {
+  html: "html5",
+  htm: "html5",
+  css: "css3",
+  scss: "sass",
+  sass: "sass",
+  less: "less",
+  js: "javascript",
+  mjs: "javascript",
+  cjs: "javascript",
+  jsx: "react",
+  ts: "typescript",
+  tsx: "react",
+  json: "json",
+  md: "markdown",
+  mdx: "markdown",
+  py: "python",
+  php: "php",
+  java: "java",
+  kt: "kotlin",
+  go: "go",
+  rs: "rust",
+  c: "c",
+  cpp: "cplusplus",
+  cs: "csharp",
+  swift: "swift",
+  dart: "dart",
+  sql: "azuresqldatabase",
+  vue: "vuejs",
+  svelte: "svelte",
+  xml: "xml",
+  yaml: "yaml",
+  yml: "yaml",
+  toml: "toml",
+  sh: "bash",
+  bash: "bash",
+  zsh: "bash",
+  ps1: "powershell",
+  dockerfile: "docker",
+  sol: "solidity",
+  r: "r",
+  scala: "scala",
+  lua: "lua",
+  rb: "ruby",
+  ex: "elixir",
+  exs: "elixir",
+  erl: "erlang",
+  fs: "fsharp",
+  hs: "haskell",
+  clj: "clojure",
+  groovy: "groovy",
+  proto: "protobuf",
+  graphql: "graphql",
+  gql: "graphql",
+  prisma: "prisma",
+  ini: "ini",
+  conf: "nginx",
+  env: "dotenv",
+  csv: "csv",
+  txt: "text",
+  wasm: "webassembly",
+};
+const LANGS: Record<string, string> = {
+  html: "html",
+  htm: "html",
+  css: "css",
+  scss: "scss",
+  sass: "scss",
+  less: "less",
+  js: "javascript",
+  mjs: "javascript",
+  cjs: "javascript",
+  jsx: "javascript",
+  ts: "typescript",
+  tsx: "typescript",
+  json: "json",
+  md: "markdown",
+  mdx: "markdown",
+  py: "python",
+  php: "php",
+  java: "java",
+  kt: "kotlin",
+  go: "go",
+  rs: "rust",
+  c: "c",
+  cpp: "cpp",
+  cs: "csharp",
+  swift: "swift",
+  dart: "dart",
+  sql: "sql",
+  vue: "vue",
+  svelte: "html",
+  xml: "xml",
+  yaml: "yaml",
+  yml: "yaml",
+  sh: "shell",
+  bash: "shell",
+  ps1: "powershell",
+  dockerfile: "dockerfile",
+  sol: "solidity",
+  r: "r",
+  scala: "scala",
+  lua: "lua",
+  rb: "ruby",
+  graphql: "graphql",
+  gql: "graphql",
+  prisma: "plaintext",
+};
+const ext = (path: string) => {
+  const n = path.split("/").pop()?.toLowerCase() || "";
+  return n === "dockerfile" ? n : n.split(".").pop() || n;
+};
+const lang = (path: string) => LANGS[ext(path)] || "plaintext";
+function FileIcon({ path }: { path: string }) {
+  const key = ext(path);
+  const icon = ICONS[key];
+  return (
+    <span className="file-icon-wrap">
+      {icon ? (
+        <img
+          className="file-icon"
+          src={`https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/${icon}/${icon}-original.svg`}
+          width={16}
+          height={16}
+          alt=""
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+            const n = e.currentTarget.nextElementSibling as HTMLElement | null;
+            if (n) n.style.display = "grid";
+          }}
+        />
+      ) : null}
+      <span className="generic-file-icon" style={{ display: icon ? "none" : "grid" }}>
+        {key.slice(0, 3).toUpperCase()}
+      </span>
+    </span>
+  );
 }
-function buildPreview(files:BuilderFile[]){const htmlFile=files.find(f=>/(^|\/)index\.html$/i.test(f.path))||files.find(f=>/\.html?$/i.test(f.path));let html=htmlFile?.content||'<!doctype html><html><body><h1>No HTML entry file yet.</h1></body></html>';const css=files.filter(f=>/\.(css|scss|sass|less)$/i.test(f.path)).map(f=>f.content).join('\n');const js=files.filter(f=>/\.(js|mjs|cjs)$/i.test(f.path)).map(f=>f.content).join('\n');html=html.replace(/<link[^>]+href=["'][^"']+\.css[^>]*>/gi,'').replace(/<script[^>]+src=["'][^"']+\.js[^"']*["'][^>]*><\/script>/gi,'');if(css)html=html.includes('</head>')?html.replace('</head>',`<style data-zyraxon-css>\n${css}\n</style></head>`):`<style>${css}</style>${html}`;if(js)html=html.includes('</body>')?html.replace('</body>',`<script>\n${js}\n</script></body>`):`${html}<script>${js}</script>`;return`data:text/html;charset=utf-8,${encodeURIComponent(html)}`}
-function parsePdfTool(text:string){const m=/<builder-tool>\s*([\s\S]*?)\s*<\/builder-tool>/i.exec(text);if(!m)return null;try{const raw=JSON.parse(m[1]);if(raw?.tool==='pdf.create')return{title:String(raw.title||'ZYRAXON AI Document'),content:String(raw.content||'')}}catch{}return null}
-async function createAiPdf(title:string,content:string){const pdf=await PDFDocument.create();const font=await pdf.embedFont(StandardFonts.Helvetica);const bold=await pdf.embedFont(StandardFonts.HelveticaBold);const W=595.28,H=841.89,M=48;const lines=content.split(/\r?\n/).flatMap(line=>line.length>92?(line.match(/.{1,92}/g)||['']):[line]);let page=pdf.addPage([W,H]);let y=H-M;page.drawText(title,{x:M,y,size:18,font:bold,color:rgb(.08,.08,.08)});y-=30;for(const line of lines){if(y<M+18){page=pdf.addPage([W,H]);y=H-M}page.drawText(line.slice(0,110),{x:M,y,size:10,font,color:rgb(.15,.15,.15)});y-=14}return new Blob([await pdf.save()],{type:'application/pdf'})}
+function safeJson<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function newSession(): Session {
+  return {
+    id: crypto.randomUUID(),
+    title: "New session",
+    messages: [],
+    files: [
+      {
+        path: "index.html",
+        content:
+          '<!doctype html><html><head><meta charset="utf-8"><title>ZYRAXON</title></head><body><main><h1>Start with an idea.</h1></main></body></html>',
+      },
+    ],
+    activeFile: "index.html",
+    busy: false,
+    repo: null,
+    connected: false,
+  };
+}
+function encode64(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  let raw = "";
+  bytes.forEach((b) => (raw += String.fromCharCode(b)));
+  return btoa(raw);
+}
+function decode64(value: string) {
+  const raw = atob(value.replace(/\s/g, ""));
+  return new TextDecoder().decode(Uint8Array.from(raw, (c) => c.charCodeAt(0)));
+}
+function normalizePath(value: string) {
+  return value
+    .trim()
+    .replace(/^['"`]|['"`]$/g, "")
+    .replace(/^\/+/, "");
+}
+function parseBlocks(text: string): BuilderFile[] {
+  const found: BuilderFile[] = [];
+  const marked = /```([^\n]*)\n([\s\S]*?)```/g;
+  let m: RegExpExecArray | null;
+  while ((m = marked.exec(text))) {
+    const info = m[1].trim();
+    const body = m[2];
+    const first = body.match(/^(?:file|filename|path)\s*[:=]\s*(.+)\r?\n/i);
+    let path = first ? normalizePath(first[1]) : "";
+    const content = first ? body.slice(first[0].length) : body;
+    if (!path) {
+      const named = info.match(/(?:file|filename|path)\s*[=:]\s*([^\s]+)/i);
+      if (named) path = normalizePath(named[1]);
+    }
+    if (!path) {
+      const map: Record<string, string> = {
+        html: "index.html",
+        css: "styles.css",
+        scss: "styles.scss",
+        js: "script.js",
+        jsx: "App.jsx",
+        ts: "main.ts",
+        tsx: "App.tsx",
+        json: "package.json",
+        py: "main.py",
+        java: "Main.java",
+        go: "main.go",
+        rs: "main.rs",
+        md: "README.md",
+        sql: "query.sql",
+        php: "index.php",
+      };
+      path = map[info.split(/\s+/)[0].toLowerCase()] || "";
+    }
+    if (path) found.push({ path, content: content.replace(/\r\n/g, "\n").replace(/\n```$/, "") });
+  }
+  const unique: BuilderFile[] = [];
+  for (const file of found) {
+    const i = unique.findIndex((x) => x.path === file.path);
+    if (i >= 0) unique[i] = file;
+    else unique.push(file);
+  }
+  return unique;
+}
+function parseLive(text: string): BuilderFile | null {
+  const m = /```([^\n]*)\n([\s\S]*)$/i.exec(text);
+  if (!m) return null;
+  const first = m[2].match(/^(?:file|filename|path)\s*[:=]\s*(.+)\r?\n/i);
+  if (!first) return null;
+  return {
+    path: normalizePath(first[1]),
+    content: m[2].slice(first[0].length).replace(/```$/, ""),
+  };
+}
+function upsertFiles(old: BuilderFile[], incoming: BuilderFile[]) {
+  const next = [...old];
+  for (const file of incoming) {
+    const i = next.findIndex((x) => x.path === file.path);
+    if (i >= 0) next[i] = file;
+    else next.push(file);
+  }
+  return next;
+}
+function isTextBlob(path: string, size = 0) {
+  if (size > 1500000) return false;
+  return !/\.(png|jpe?g|gif|webp|svg|ico|pdf|zip|7z|rar|mp4|mp3|wav|mov|avi|exe|dll|so|dylib|woff2?|ttf|otf|class|jar)$/i.test(
+    path,
+  );
+}
+
+export default function BuilderStudioV6() {
+  const [sessions, setSessions] = useState<Session[]>(() => {
+    const saved = safeJson<Session[]>("zyraxon.builder.sessions.v6", []);
+    return saved.length ? saved : [newSession()];
+  });
+  const [sid, setSid] = useState("");
+  const [model, setModel] = useState(MODELS[0].id);
+  const [input, setInput] = useState("");
+  const [view, setView] = useState<View>("preview");
+  const [device, setDevice] = useState<Device>("desktop");
+  const [dark, setDark] = useState(true);
+  const [activity, setActivity] = useState(false);
+  const [side, setSide] = useState(false);
+  const [gh, setGh] = useState(false);
+  const [repos, setRepos] = useState<unknown[]>([]);
+  const [token, setToken] = useState(() => localStorage.getItem("zyraxon.github.token") || "");
+  const [ghBusy, setGhBusy] = useState(false);
+  const [ghMsg, setGhMsg] = useState("");
+  const [listening, setListening] = useState(false);
+  const [pub, setPub] = useState(false);
+  const [pubToken, setPubToken] = useState(
+    () => localStorage.getItem("zyraxon.publish.token") || "",
+  );
+  const [pubRepo, setPubRepo] = useState("");
+  const [pubMsg, setPubMsg] = useState("");
+  const [pubUrl, setPubUrl] = useState("");
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [live, setLive] = useState<{ sessionId: string; file: BuilderFile } | null>(null);
+  const recognition = useRef<unknown>(null);
+  const media = useRef<MediaRecorder | null>(null);
+  const chunks = useRef<Blob[]>([]);
+  const controllers = useRef(new Map<string, AbortController>());
+  const current = sessions.find((s) => s.id === sid) || sessions[0];
+  const files = current?.files || [];
+  const messages = current?.messages || [];
+  const active = files.find((f) => f.path === current?.activeFile) ||
+    files[0] || { path: "index.html", content: "" };
+  const preview = useMemo(() => buildPreview(files), [files]);
+  useEffect(() => {
+    if (!sid && sessions[0]) setSid(sessions[0].id);
+    localStorage.setItem("zyraxon.builder.sessions.v6", JSON.stringify(sessions));
+  }, [sessions, sid]);
+  useEffect(() => {
+    const S = (window as unknown).SpeechRecognition || (window as unknown).webkitSpeechRecognition;
+    if (!S) return;
+    const r = new S();
+    r.continuous = false;
+    r.interimResults = true;
+    r.lang = "en-US";
+    r.onresult = (e: unknown) =>
+      setInput(
+        Array.from(e.results)
+          .map((x: unknown) => x[0].transcript)
+          .join(""),
+      );
+    r.onend = () => setListening(false);
+    r.onerror = () => setListening(false);
+    recognition.current = r;
+    return () => {
+      try {
+        r.stop();
+      } catch {
+        /* ignored */
+      }
+    };
+  }, []);
+  function patchSession(id: string, patch: Partial<Session>) {
+    setSessions((all) => all.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }
+  function updateFiles(id: string, fn: (files: BuilderFile[]) => BuilderFile[]) {
+    setSessions((all) => all.map((s) => (s.id === id ? { ...s, files: fn(s.files) } : s)));
+  }
+  function addSession() {
+    const s = newSession();
+    setSessions((all) => [...all, s]);
+    setSid(s.id);
+    setInput("");
+    setView("preview");
+    setSide(false);
+  }
+  function stopVoice() {
+    try {
+      recognition.current?.stop();
+    } catch {
+      /* ignored */
+    }
+    try {
+      media.current?.stop();
+    } catch {
+      /* ignored */
+    }
+    setListening(false);
+  }
+  async function mic() {
+    if (listening) {
+      stopVoice();
+      return;
+    }
+    if (recognition.current) {
+      try {
+        setListening(true);
+        recognition.current.start();
+        return;
+      } catch {
+        /* ignored */
+      }
+    }
+    if (!navigator.mediaDevices?.getUserMedia || !("MediaRecorder" in window)) {
+      setGhMsg("Voice input is not supported by this browser.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      media.current = recorder;
+      chunks.current = [];
+      setListening(true);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size) chunks.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunks.current, { type: "audio/webm" });
+        try {
+          const form = new FormData();
+          form.append("file", blob, "recording.webm");
+          form.append("language", "en");
+          const r = await fetch("/api/public/stt", { method: "POST", body: form });
+          const data = await r.json();
+          if (data?.success && data.text) setInput((v) => `${v}${v ? " " : ""}${data.text}`);
+          else setGhMsg(data?.error || "Voice transcription failed.");
+        } catch {
+          setGhMsg("Voice transcription is unavailable right now.");
+        } finally {
+          setListening(false);
+        }
+      };
+      recorder.start();
+      window.setTimeout(() => {
+        if (media.current === recorder && recorder.state === "recording") recorder.stop();
+      }, 8000);
+    } catch {
+      setListening(false);
+      setGhMsg("Microphone permission was denied or unavailable.");
+    }
+  }
+  async function generate() {
+    const text = input.trim();
+    if (!text || !current) return;
+    const id = current.id;
+    if (controllers.current.has(id)) return;
+    const nextMessages = [...current.messages, { role: "user" as const, content: text }];
+    patchSession(id, {
+      messages: nextMessages,
+      title: current.messages.length ? current.title : text.slice(0, 32),
+      busy: true,
+    });
+    setInput("");
+    setView("code");
+    const controller = new AbortController();
+    controllers.current.set(id, controller);
+    let full = "";
+    try {
+      const r = await fetch("/api/public/builder/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+        body: JSON.stringify({ model, messages: nextMessages.slice(-12) }),
+        signal: controller.signal,
+      });
+      if (!r.ok || !r.body)
+        throw new Error((await r.text().catch(() => "")) || "AI connection failed");
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const q = await reader.read();
+        if (q.done) break;
+        buffer += decoder.decode(q.value, { stream: true });
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          const raw = line.slice(5).trim();
+          if (!raw || raw === "[DONE]") continue;
+          try {
+            const j = JSON.parse(raw);
+            const c = j?.choices?.[0]?.delta?.content || j?.content || "";
+            if (!c) continue;
+            full += c;
+            const parsed = parseBlocks(full);
+            const l = parseLive(full);
+            if (l) {
+              updateFiles(id, (old) => upsertFiles(old, [l]));
+              patchSession(id, { activeFile: l.path });
+              setLive({ sessionId: id, file: l });
+            }
+            if (parsed.length) {
+              updateFiles(id, (old) => upsertFiles(old, parsed));
+              patchSession(id, { activeFile: parsed[parsed.length - 1].path });
+            }
+          } catch {
+            /* ignored */
+          }
+        }
+      }
+      const parsed = parseBlocks(full);
+      if (parsed.length) updateFiles(id, (old) => upsertFiles(old, parsed));
+      const tool = parsePdfTool(full);
+      let pdf = "";
+      if (tool) {
+        const blob = await createAiPdf(tool.title, tool.content);
+        pdf = URL.createObjectURL(blob);
+        setPdfUrl(pdf);
+      }
+      const summary = tool
+        ? `PDF created: ${tool.title}`
+        : parsed.length
+          ? `Generated ${parsed.length} file${parsed.length === 1 ? "" : "s"} and streamed them into the workspace.`
+          : "Build complete.";
+      patchSession(id, {
+        messages: [
+          ...nextMessages,
+          { role: "assistant", content: summary, files: parsed, pdf: pdf || undefined },
+        ],
+        busy: false,
+      });
+      setLive(null);
+    } catch (e) {
+      if ((e as unknown)?.name !== "AbortError")
+        patchSession(id, {
+          messages: [
+            ...nextMessages,
+            {
+              role: "assistant",
+              content: e instanceof Error ? e.message : "The AI connection failed. Please retry.",
+            },
+          ],
+          busy: false,
+        });
+      else patchSession(id, { busy: false });
+    } finally {
+      controllers.current.delete(id);
+    }
+  }
+  async function connectGitHub() {
+    if (!token.trim()) return;
+    localStorage.setItem("zyraxon.github.token", token.trim());
+    setGhBusy(true);
+    setGhMsg("");
+    try {
+      const r = await fetch("https://api.github.com/user/repos?per_page=100&sort=updated", {
+        headers: { Authorization: `Bearer ${token.trim()}`, Accept: "application/vnd.github+json" },
+      });
+      if (!r.ok) throw new Error("GitHub token rejected.");
+      setRepos(await r.json());
+    } catch (e) {
+      setGhMsg(e instanceof Error ? e.message : "GitHub connection failed.");
+    } finally {
+      setGhBusy(false);
+    }
+  }
+  async function importRepo(repo: unknown) {
+    if (!current) return;
+    setGhBusy(true);
+    setGhMsg(`Importing ${repo.full_name}…`);
+    try {
+      const h = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" };
+      const ref = repo.default_branch || "main";
+      const treeRes = await fetch(
+        `https://api.github.com/repos/${repo.full_name}/git/trees/${ref}?recursive=1`,
+        { headers: h },
+      );
+      if (!treeRes.ok) throw new Error("Could not read the repository tree.");
+      const tree = await treeRes.json();
+      const blobs = (tree.tree || []).filter(
+        (x: unknown) => x.type === "blob" && isTextBlob(x.path, x.size),
+      );
+      const out: BuilderFile[] = [];
+      for (let i = 0; i < blobs.length; i += 8) {
+        const batch = await Promise.all(
+          blobs.slice(i, i + 8).map(async (b: unknown) => {
+            try {
+              const r = await fetch(
+                `https://api.github.com/repos/${repo.full_name}/git/blobs/${b.sha}`,
+                { headers: h },
+              );
+              if (!r.ok) return null;
+              const d = await r.json();
+              return d.encoding === "base64"
+                ? { path: b.path, content: decode64(d.content) }
+                : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        out.push(...(batch.filter(Boolean) as BuilderFile[]));
+      }
+      if (!out.length) throw new Error("No readable project files were found.");
+      patchSession(current.id, {
+        files: out,
+        activeFile: out.find((f) => f.path === "index.html")?.path || out[0].path,
+        repo,
+        connected: true,
+      });
+      setView("code");
+      setGhMsg(`Connected: ${repo.full_name} · ${out.length} readable files`);
+      setGh(false);
+    } catch (e) {
+      setGhMsg(e instanceof Error ? e.message : "Repository import failed.");
+    } finally {
+      setGhBusy(false);
+    }
+  }
+  async function sync() {
+    if (!current?.repo || !token || ghBusy) return;
+    setGhBusy(true);
+    try {
+      const ref = current.repo.default_branch || "main";
+      const h: unknown = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json",
+      };
+      for (const f of current.files) {
+        const path = f.path.replace(/^\/+/, "");
+        const url = `https://api.github.com/repos/${current.repo.full_name}/contents/${path}`;
+        const old = await fetch(`${url}?ref=${ref}`, { headers: h });
+        const body: unknown = {
+          message: `chore: sync ${path} from ZYRAXON AI`,
+          content: encode64(f.content),
+          branch: ref,
+        };
+        if (old.ok) body.sha = (await old.json()).sha;
+        const r = await fetch(url, { method: "PUT", headers: h, body: JSON.stringify(body) });
+        if (!r.ok) throw new Error(`Failed to sync ${path}`);
+      }
+      setGhMsg(`Synced ${current.files.length} files to ${current.repo.full_name}.`);
+    } catch (e) {
+      setGhMsg(e instanceof Error ? e.message : "GitHub sync failed.");
+    } finally {
+      setGhBusy(false);
+    }
+  }
+  async function publish() {
+    const t = pubToken.trim();
+    const name = pubRepo.trim().replace(/\.git$/, "");
+    if (!t || !name) {
+      setPubMsg("Enter a GitHub token and repository name.");
+      return;
+    }
+    localStorage.setItem("zyraxon.publish.token", t);
+    setPubMsg("Publishing…");
+    const h: unknown = {
+      Authorization: `Bearer ${t}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "Content-Type": "application/json",
+    };
+    try {
+      const me = await fetch("https://api.github.com/user", { headers: h });
+      if (!me.ok) throw new Error("GitHub token was rejected.");
+      const u = await me.json();
+      let rr = await fetch(`https://api.github.com/repos/${u.login}/${name}`, { headers: h });
+      if (rr.status === 404)
+        rr = await fetch("https://api.github.com/user/repos", {
+          method: "POST",
+          headers: h,
+          body: JSON.stringify({ name, private: false, auto_init: true }),
+        });
+      if (!rr.ok) throw new Error("Could not create or open the repository.");
+      const data = await rr.json();
+      const ref = data.default_branch || "main";
+      for (const f of files) {
+        const p = f.path.replace(/^\/+/, "");
+        const url = `https://api.github.com/repos/${u.login}/${name}/contents/${p}`;
+        const old = await fetch(`${url}?ref=${ref}`, { headers: h });
+        const body: unknown = {
+          message: `feat: publish ${p} from ZYRAXON AI`,
+          content: encode64(f.content),
+          branch: ref,
+        };
+        if (old.ok) body.sha = (await old.json()).sha;
+        const r = await fetch(url, { method: "PUT", headers: h, body: JSON.stringify(body) });
+        if (!r.ok) throw new Error(`Failed to publish ${p}`);
+      }
+      const pages = await fetch(`https://api.github.com/repos/${u.login}/${name}/pages`, {
+        method: "POST",
+        headers: h,
+        body: JSON.stringify({
+          source: { branch: ref, path: "/" },
+          build_type: "legacy",
+          https_enforced: true,
+        }),
+      });
+      if (!pages.ok && pages.status !== 409)
+        throw new Error("Files uploaded, but GitHub Pages could not be enabled.");
+      const url = `https://${u.login}.github.io/${name}/`;
+      setPubUrl(url);
+      setPubMsg(`Published ${files.length} files.`);
+    } catch (e) {
+      setPubMsg(e instanceof Error ? e.message : "Publish failed.");
+    }
+  }
+  function downloadZip() {
+    downloadBlob(createProjectZip(files), "zyraxon-project.zip");
+  }
+  function closePdf() {
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    setPdfUrl("");
+  }
+  return (
+    <div className={`builder-root ${dark ? "is-dark" : "is-light"}`}>
+      <header className="builder-topbar">
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button className="glass-icon" onClick={() => setSide(true)} title="Sessions">
+            <Plus size={15} />
+          </button>
+          <a className="builder-brand" href="/">
+            ZYRAXON <em>AI BLUDAR</em>
+          </a>
+        </div>
+        <div className="builder-actions">
+          <button className="glass-action" onClick={() => setPub(true)}>
+            <Upload size={14} /> Publish
+          </button>
+          <button className="glass-action" onClick={() => setActivity((v) => !v)}>
+            <Activity size={14} /> Activity
+          </button>
+          <button className="glass-action" onClick={() => setGh(true)}>
+            <Github size={14} /> GitHub
+          </button>
+          <button className="glass-icon" onClick={() => setDark((v) => !v)}>
+            {dark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+        </div>
+      </header>
+      {side && (
+        <>
+          <div className="session-backdrop" onClick={() => setSide(false)} />
+          <aside className="session-sidebar glass-card">
+            <div className="session-head">
+              <b>Sessions</b>
+              <button className="glass-icon" onClick={() => setSide(false)}>
+                <X size={14} />
+              </button>
+            </div>
+            <button className="new-session-btn" onClick={addSession}>
+              <Plus size={15} /> New session
+            </button>
+            <div className="session-list">
+              {sessions.map((s) => (
+                <button
+                  key={s.id}
+                  className={`session-row ${s.id === current?.id ? "selected" : ""}`}
+                  onClick={() => {
+                    setSid(s.id);
+                    setSide(false);
+                  }}
+                >
+                  <Bot size={14} />
+                  <span>
+                    {s.title}
+                    {s.busy ? " · working" : ""}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        </>
+      )}
+      <main className={`builder-main ${messages.length ? "with-workspace" : "chat-only"}`}>
+        <section className="chat-pane glass-card">
+          <div className="chat-title">
+            <span className="eyebrow">
+              <Sparkles size={11} /> AI BUILDER
+            </span>
+            <h1>{messages.length ? "Building with ZYRAXON" : "What are we building?"}</h1>
+          </div>
+          <div className="chat-history">
+            {messages.length === 0 ? (
+              <div className="welcome-state">
+                <div className="ai-orb">
+                  <Bot size={26} />
+                </div>
+                <h2>Describe your idea</h2>
+                <p>
+                  Tell ZYRAXON what to build. The workspace opens when the AI starts generating
+                  files.
+                </p>
+                <div className="suggestions">
+                  <button
+                    onClick={() =>
+                      setInput(
+                        "Build a complete premium dark AI SaaS website with HTML, CSS and JavaScript",
+                      )
+                    }
+                  >
+                    <Sparkles size={14} /> AI SaaS
+                  </button>
+                  <button onClick={() => setInput("Build a complete developer portfolio")}>
+                    <Code2 size={14} /> Portfolio
+                  </button>
+                  <button
+                    onClick={() => setInput("Create a complete PDF report about this project")}
+                  >
+                    <FileText size={14} /> PDF
+                  </button>
+                </div>
+              </div>
+            ) : (
+              messages.map((m, i) => (
+                <article className={`chat-message ${m.role}`} key={i}>
+                  <span>{m.role === "user" ? "YOU" : "ZYRAXON AI"}</span>
+                  <p>{m.content}</p>
+                  {m.files?.length ? (
+                    <div className="code-card-grid">
+                      {m.files.map((f) => (
+                        <button
+                          key={f.path}
+                          className="code-card"
+                          onClick={() => {
+                            patchSession(current!.id, { activeFile: f.path });
+                            setView("code");
+                          }}
+                        >
+                          <FileIcon path={f.path} />
+                          <span>
+                            <b>{f.path}</b>
+                            <small>
+                              {f.content.length.toLocaleString()} chars · Open in editor
+                            </small>
+                          </span>
+                          <Code2 size={13} />
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  {m.pdf ? (
+                    <button
+                      className="pdf-result"
+                      onClick={() => {
+                        setPdfUrl(m.pdf!);
+                        setView("preview");
+                      }}
+                    >
+                      <FileText size={14} />
+                      <span>
+                        <b>PDF ready</b>
+                        <small>Open preview and download</small>
+                      </span>
+                      <Eye size={14} />
+                    </button>
+                  ) : null}
+                </article>
+              ))
+            )}
+            {current?.busy && live?.sessionId === current.id ? (
+              <div className="inline-live glass-card">
+                <div className="live-head">
+                  <span className="live-dot" /> LIVE · {live.file.path}
+                </div>
+                <div className="live-lines">
+                  <span>Streaming directly into Monaco</span>
+                  <span>{live.file.content.length.toLocaleString()} chars</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <div className="composer glass-card">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void generate();
+                }
+              }}
+              placeholder="Describe what you want to build…"
+            />
+            <div className="composer-row">
+              <div className="composer-left">
+                <label className="select-pill">
+                  <Sparkles size={14} />
+                  <select value={model} onChange={(e) => setModel(e.target.value)}>
+                    {MODELS.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className={`circle-btn ${listening ? "active" : ""}`}
+                  onClick={() => void mic()}
+                  title="Voice input"
+                >
+                  <Mic size={16} />
+                </button>
+              </div>
+              <div className="composer-right">
+                <button className="circle-btn" onClick={downloadZip} title="Download project ZIP">
+                  <FileArchive size={16} />
+                </button>
+                <button
+                  className="send-btn"
+                  disabled={!input.trim() || !!current?.busy}
+                  onClick={() => void generate()}
+                >
+                  {current?.busy ? <Loader2 size={17} className="spin" /> : <Send size={17} />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        {messages.length > 0 && (
+          <section className="workspace-pane glass-card">
+            <div className="workspace-bar">
+              <div className="view-switch">
+                <button
+                  className={view === "preview" ? "selected" : ""}
+                  onClick={() => setView("preview")}
+                >
+                  <Eye size={15} /> Preview
+                </button>
+                <button
+                  className={view === "code" ? "selected" : " "}
+                  onClick={() => setView("code")}
+                >
+                  <Code2 size={15} /> Code
+                </button>
+              </div>
+              <div className="device-switch">
+                <button
+                  className={device === "desktop" ? "selected" : ""}
+                  onClick={() => setDevice("desktop")}
+                >
+                  <Laptop size={15} />
+                </button>
+                <button
+                  className={device === "tablet" ? "selected" : ""}
+                  onClick={() => setDevice("tablet")}
+                >
+                  <Tablet size={15} />
+                </button>
+                <button
+                  className={device === "mobile" ? "selected" : ""}
+                  onClick={() => setDevice("mobile")}
+                >
+                  <Smartphone size={15} />
+                </button>
+              </div>
+              <span className={current?.connected ? "connection live" : "connection"}>
+                <i />
+                {current?.repo
+                  ? `Connected · ${current.repo.name}`
+                  : current?.connected
+                    ? "AI Connected"
+                    : "Ready"}
+              </span>
+            </div>
+            {view === "preview" ? (
+              <div className="preview-stage">
+                <div className={`preview-device ${device}`}>
+                  <iframe
+                    title="Generated website preview"
+                    sandbox="allow-scripts allow-forms allow-modals"
+                    src={preview}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="ide-shell">
+                <aside className="file-pane">
+                  <div className="pane-title">
+                    <span>
+                      <FolderOpen size={14} /> Project files
+                    </span>
+                    <b>{files.length}</b>
+                  </div>
+                  <div className="file-list">
+                    {files.map((f) => (
+                      <button
+                        key={f.path}
+                        className={`file-row ${f.path === active.path ? "selected" : ""}`}
+                        onClick={() => patchSession(current!.id, { activeFile: f.path })}
+                      >
+                        <FileIcon path={f.path} />
+                        <span>{f.path}</span>
+                      </button>
+                    ))}
+                  </div>
+                </aside>
+                <div className="editor-pane">
+                  <div className="editor-top">
+                    <span>
+                      <FileIcon path={active.path} /> {active.path}
+                    </span>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => void sync()} disabled={!current?.repo || ghBusy}>
+                        <Github size={13} /> {ghBusy ? "Syncing" : "Sync"}
+                      </button>
+                      <button
+                        onClick={() =>
+                          downloadBlob(
+                            new Blob([active.content], { type: "text/plain" }),
+                            active.path.split("/").pop() || "file.txt",
+                          )
+                        }
+                      >
+                        <Download size={13} /> Download
+                      </button>
+                    </div>
+                  </div>
+                  <Editor
+                    theme="vs-dark"
+                    language={lang(active.path)}
+                    value={active.content}
+                    onChange={(v) =>
+                      updateFiles(current!.id, (old) =>
+                        old.map((f) => (f.path === active.path ? { ...f, content: v || "" } : f)),
+                      )
+                    }
+                    options={{
+                      automaticLayout: true,
+                      minimap: { enabled: false },
+                      fontSize: 13,
+                      padding: { top: 14 },
+                      smoothScrolling: true,
+                      scrollBeyondLastLine: false,
+                      wordWrap: "on",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+      </main>
+      {activity && (
+        <div className="activity-pop glass-card">
+          <div>
+            <b>Activity</b>
+            <button className="close-btn" onClick={() => setActivity(false)}>
+              <X size={14} />
+            </button>
+          </div>
+          <p>
+            {current?.busy
+              ? "AI is streaming into the selected session and Monaco."
+              : current?.repo
+                ? `Connected project: ${current.repo.full_name}`
+                : "Ready. Session state is saved locally."}
+          </p>
+        </div>
+      )}
+      {gh && (
+        <div className="modal-backdrop">
+          <div className="publish-modal glass-card">
+            <button className="modal-close" onClick={() => setGh(false)}>
+              <X size={17} />
+            </button>
+            <div className="modal-icon">
+              <Github size={22} />
+            </div>
+            <h2>GitHub Project</h2>
+            <p>
+              Enter a token, load repositories, then select one repository. The complete readable
+              project tree is imported into the editor and remains connected for Sync.
+            </p>
+            <label>
+              Access token
+              <input
+                type="password"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="GitHub access token"
+              />
+            </label>
+            <button
+              className="publish-submit"
+              disabled={!token || ghBusy}
+              onClick={() => void connectGitHub()}
+            >
+              {ghBusy ? <Loader2 className="spin" size={16} /> : <Github size={16} />} Load
+              repositories
+            </button>
+            {ghMsg && <div className="publish-status">{ghMsg}</div>}
+            {repos.length > 0 && (
+              <div className="repo-list">
+                {repos.map((r) => (
+                  <button className="file-row" key={r.id} onClick={() => void importRepo(r)}>
+                    <Github size={13} />
+                    <span>{r.full_name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {pub && (
+        <div className="modal-backdrop">
+          <div className="publish-modal glass-card">
+            <button className="modal-close" onClick={() => setPub(false)}>
+              <X size={17} />
+            </button>
+            <div className="modal-icon">
+              <Upload size={22} />
+            </div>
+            <h2>Publish Website</h2>
+            <p>Publish the complete generated project to GitHub Pages and return its live URL.</p>
+            <label>
+              GitHub access token
+              <input
+                type="password"
+                value={pubToken}
+                onChange={(e) => setPubToken(e.target.value)}
+                placeholder="GitHub token"
+              />
+            </label>
+            <label>
+              Repository name
+              <input
+                value={pubRepo}
+                onChange={(e) => setPubRepo(e.target.value)}
+                placeholder="my-zyraxon-site"
+              />
+            </label>
+            <button className="publish-submit" onClick={() => void publish()}>
+              <Upload size={16} /> Publish website
+            </button>
+            {pubMsg && <div className="publish-status">{pubMsg}</div>}
+            {pubUrl && (
+              <a className="published-url" href={pubUrl} target="_blank" rel="noreferrer">
+                {pubUrl}
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+      {pdfUrl && (
+        <div className="modal-backdrop">
+          <div className="publish-modal glass-card pdf-modal">
+            <button className="modal-close" onClick={closePdf}>
+              <X size={17} />
+            </button>
+            <h2>PDF Preview</h2>
+            <iframe title="PDF preview" src={pdfUrl} />
+            <button
+              className="publish-submit"
+              onClick={() =>
+                fetch(pdfUrl)
+                  .then((r) => r.blob())
+                  .then((b) => downloadBlob(b, "zyraxon-ai-document.pdf"))
+              }
+            >
+              <Download size={16} /> Download PDF
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+function buildPreview(files: BuilderFile[]) {
+  const htmlFile =
+    files.find((f) => /(^|\/)index\.html$/i.test(f.path)) ||
+    files.find((f) => /\.html?$/i.test(f.path));
+  let html =
+    htmlFile?.content ||
+    "<!doctype html><html><body><h1>No HTML entry file yet.</h1></body></html>";
+  const css = files
+    .filter((f) => /\.(css|scss|sass|less)$/i.test(f.path))
+    .map((f) => f.content)
+    .join("\n");
+  const js = files
+    .filter((f) => /\.(js|mjs|cjs)$/i.test(f.path))
+    .map((f) => f.content)
+    .join("\n");
+  html = html
+    .replace(/<link[^>]+href=["'][^"']+\.css[^>]*>/gi, "")
+    .replace(/<script[^>]+src=["'][^"']+\.js[^"']*["'][^>]*><\/script>/gi, "");
+  if (css)
+    html = html.includes("</head>")
+      ? html.replace("</head>", `<style data-zyraxon-css>\n${css}\n</style></head>`)
+      : `<style>${css}</style>${html}`;
+  if (js)
+    html = html.includes("</body>")
+      ? html.replace("</body>", `<script>\n${js}\n</script></body>`)
+      : `${html}<script>${js}</script>`;
+  return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+}
+function parsePdfTool(text: string) {
+  const m = /<builder-tool>\s*([\s\S]*?)\s*<\/builder-tool>/i.exec(text);
+  if (!m) return null;
+  try {
+    const raw = JSON.parse(m[1]);
+    if (raw?.tool === "pdf.create")
+      return {
+        title: String(raw.title || "ZYRAXON AI Document"),
+        content: String(raw.content || ""),
+      };
+  } catch {
+    /* ignored */
+  }
+  return null;
+}
+async function createAiPdf(title: string, content: string) {
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const W = 595.28,
+    H = 841.89,
+    M = 48;
+  const lines = content
+    .split(/\r?\n/)
+    .flatMap((line) => (line.length > 92 ? line.match(/.{1,92}/g) || [""] : [line]));
+  let page = pdf.addPage([W, H]);
+  let y = H - M;
+  page.drawText(title, { x: M, y, size: 18, font: bold, color: rgb(0.08, 0.08, 0.08) });
+  y -= 30;
+  for (const line of lines) {
+    if (y < M + 18) {
+      page = pdf.addPage([W, H]);
+      y = H - M;
+    }
+    page.drawText(line.slice(0, 110), { x: M, y, size: 10, font, color: rgb(0.15, 0.15, 0.15) });
+    y -= 14;
+  }
+  return new Blob([await pdf.save()], { type: "application/pdf" });
+}

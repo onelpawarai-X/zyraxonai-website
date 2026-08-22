@@ -61,7 +61,7 @@ export default class OpenAILikeProvider extends BaseProvider {
       logger.info(`${this.name}: Could not fetch /models endpoint, checking fallback env`, error);
 
       // Fallback to OPENAI_LIKE_API_MODELS if available
-      // eslint-disable-next-line dot-notation
+
       const modelsEnv = serverEnv['OPENAI_LIKE_API_MODELS'] || settings?.OPENAI_LIKE_API_MODELS;
 
       if (modelsEnv) {

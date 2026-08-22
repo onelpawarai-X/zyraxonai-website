@@ -1,13 +1,13 @@
-const GITHUB_API = "https://api.github.com"
+const GITHUB_API = "https://api.github.com";
 
 class GitHubDataStorage {
-  private token: string
-  private username: string
-  private repoName = "zyraxon-ecosystem-data"
+  private token: string;
+  private username: string;
+  private repoName = "zyraxon-ecosystem-data";
 
   constructor(token: string, username: string) {
-    this.token = token
-    this.username = username
+    this.token = token;
+    this.username = username;
   }
 
   private get headers() {
@@ -15,17 +15,27 @@ class GitHubDataStorage {
       Authorization: `token ${this.token}`,
       Accept: "application/vnd.github.v3+json",
       "Content-Type": "application/json",
-    }
+    };
   }
 
   async initUserData(): Promise<void> {
-    const exists = await this.checkRepoExists()
+    const exists = await this.checkRepoExists();
     if (!exists) {
-      await this.createDataRepo()
+      await this.createDataRepo();
     }
 
     const files = [
-      { path: "profile.json", content: JSON.stringify({ username: this.username, bio: "", avatar: "", skills: [], interests: [], joinedAt: new Date().toISOString() }) },
+      {
+        path: "profile.json",
+        content: JSON.stringify({
+          username: this.username,
+          bio: "",
+          avatar: "",
+          skills: [],
+          interests: [],
+          joinedAt: new Date().toISOString(),
+        }),
+      },
       { path: "likes.json", content: JSON.stringify([]) },
       { path: "comments.json", content: JSON.stringify([]) },
       { path: "follows.json", content: JSON.stringify({ followers: [], following: [] }) },
@@ -33,10 +43,10 @@ class GitHubDataStorage {
       { path: "ai-connection.json", content: JSON.stringify({ connected: false, sessions: [] }) },
       { path: "community_chat.json", content: JSON.stringify([]) },
       { path: "marketplace.json", content: JSON.stringify([]) },
-    ]
+    ];
 
     for (const file of files) {
-      await this.ensureFileExists(file.path, file.content)
+      await this.ensureFileExists(file.path, file.content);
     }
   }
 
@@ -44,10 +54,10 @@ class GitHubDataStorage {
     try {
       const res = await fetch(`${GITHUB_API}/repos/${this.username}/${this.repoName}`, {
         headers: this.headers,
-      })
-      return res.status === 200
+      });
+      return res.status === 200;
     } catch {
-      return false
+      return false;
     }
   }
 
@@ -61,24 +71,27 @@ class GitHubDataStorage {
         private: true,
         auto_init: true,
       }),
-    })
+    });
   }
 
   private async ensureFileExists(path: string, defaultContent: string): Promise<void> {
     try {
-      const res = await fetch(`${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`, {
-        headers: this.headers,
-      })
+      const res = await fetch(
+        `${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`,
+        {
+          headers: this.headers,
+        },
+      );
       if (res.status === 404) {
-        await this.createFile(path, defaultContent)
+        await this.createFile(path, defaultContent);
       }
     } catch {
-      await this.createFile(path, defaultContent)
+      await this.createFile(path, defaultContent);
     }
   }
 
   private async createFile(path: string, content: string): Promise<void> {
-    const encoded = btoa(unescape(encodeURIComponent(content)))
+    const encoded = btoa(unescape(encodeURIComponent(content)));
     await fetch(`${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`, {
       method: "PUT",
       headers: this.headers,
@@ -86,25 +99,31 @@ class GitHubDataStorage {
         message: `Initialize ${path}`,
         content: encoded,
       }),
-    })
+    });
   }
 
-  private async getFile(path: string): Promise<any> {
-    const res = await fetch(`${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`, {
-      headers: this.headers,
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    const raw = decodeURIComponent(escape(atob(data.content)))
-    return JSON.parse(raw)
+  private async getFile(path: string): Promise<unknown> {
+    const res = await fetch(
+      `${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`,
+      {
+        headers: this.headers,
+      },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const raw = decodeURIComponent(escape(atob(data.content)));
+    return JSON.parse(raw);
   }
 
-  async updateFile(path: string, content: any, message: string): Promise<void> {
-    const res = await fetch(`${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`, {
-      headers: this.headers,
-    })
-    const fileData = await res.json()
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))))
+  async updateFile(path: string, content: unknown, message: string): Promise<void> {
+    const res = await fetch(
+      `${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`,
+      {
+        headers: this.headers,
+      },
+    );
+    const fileData = await res.json();
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
     await fetch(`${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`, {
       method: "PUT",
       headers: this.headers,
@@ -113,180 +132,214 @@ class GitHubDataStorage {
         content: encoded,
         sha: fileData.sha,
       }),
-    })
+    });
   }
 
-  async getProfile(): Promise<any> {
-    return (await this.getFile("profile.json")) || { username: this.username, bio: "", avatar: "", skills: [], interests: [] }
+  async getProfile(): Promise<unknown> {
+    return (
+      (await this.getFile("profile.json")) || {
+        username: this.username,
+        bio: "",
+        avatar: "",
+        skills: [],
+        interests: [],
+      }
+    );
   }
 
-  async updateProfile(profile: any): Promise<void> {
-    await this.updateFile("profile.json", profile, "Update profile")
+  async updateProfile(profile: unknown): Promise<void> {
+    await this.updateFile("profile.json", profile, "Update profile");
   }
 
   async getLikes(): Promise<string[]> {
-    return (await this.getFile("likes.json")) || []
+    return (await this.getFile("likes.json")) || [];
   }
 
   async addLike(itemId: string): Promise<void> {
-    const likes = await this.getLikes()
+    const likes = await this.getLikes();
     if (!likes.includes(itemId)) {
-      likes.push(itemId)
-      await this.updateFile("likes.json", likes, `Like ${itemId}`)
+      likes.push(itemId);
+      await this.updateFile("likes.json", likes, `Like ${itemId}`);
     }
   }
 
   async removeLike(itemId: string): Promise<void> {
-    const likes = await this.getLikes()
-    const filtered = likes.filter((id: string) => id !== itemId)
-    await this.updateFile("likes.json", filtered, `Unlike ${itemId}`)
+    const likes = await this.getLikes();
+    const filtered = likes.filter((id: string) => id !== itemId);
+    await this.updateFile("likes.json", filtered, `Unlike ${itemId}`);
   }
 
   async isLiked(itemId: string): Promise<boolean> {
-    const likes = await this.getLikes()
-    return likes.includes(itemId)
+    const likes = await this.getLikes();
+    return likes.includes(itemId);
   }
 
-  async getComments(): Promise<any[]> {
-    return (await this.getFile("comments.json")) || []
+  async getComments(): Promise<unknown[]> {
+    return (await this.getFile("comments.json")) || [];
   }
 
-  async addComment(itemIdOrComment: string | any, possibleComment?: any): Promise<void> {
-    const comments = await this.getComments()
-    const comment = possibleComment ? { ...possibleComment, itemId: itemIdOrComment } : itemIdOrComment
-    comments.push({ ...comment, id: crypto.randomUUID(), userId: this.username, createdAt: new Date().toISOString() })
-    await this.updateFile("comments.json", comments, "Add comment")
+  async addComment(itemIdOrComment: string | unknown, possibleComment?: unknown): Promise<void> {
+    const comments = await this.getComments();
+    const comment = possibleComment
+      ? { ...possibleComment, itemId: itemIdOrComment }
+      : itemIdOrComment;
+    comments.push({
+      ...comment,
+      id: crypto.randomUUID(),
+      userId: this.username,
+      createdAt: new Date().toISOString(),
+    });
+    await this.updateFile("comments.json", comments, "Add comment");
   }
 
   async getFollows(): Promise<{ followers: string[]; following: string[] }> {
-    return (await this.getFile("follows.json")) || { followers: [], following: [] }
+    return (await this.getFile("follows.json")) || { followers: [], following: [] };
   }
 
   async followUser(userId: string): Promise<void> {
-    const follows = await this.getFollows()
+    const follows = await this.getFollows();
     if (!follows.following.includes(userId)) {
-      follows.following.push(userId)
-      await this.updateFile("follows.json", follows, `Follow ${userId}`)
+      follows.following.push(userId);
+      await this.updateFile("follows.json", follows, `Follow ${userId}`);
     }
   }
 
   async unfollowUser(userId: string): Promise<void> {
-    const follows = await this.getFollows()
-    follows.following = follows.following.filter((id: string) => id !== userId)
-    await this.updateFile("follows.json", follows, `Unfollow ${userId}`)
+    const follows = await this.getFollows();
+    follows.following = follows.following.filter((id: string) => id !== userId);
+    await this.updateFile("follows.json", follows, `Unfollow ${userId}`);
   }
 
   async isFollowing(userId: string): Promise<boolean> {
-    const follows = await this.getFollows()
-    return follows.following.includes(userId)
+    const follows = await this.getFollows();
+    return follows.following.includes(userId);
   }
 
-  async getPublishedItems(): Promise<any[]> {
-    return (await this.getFile("published.json")) || []
+  async getPublishedItems(): Promise<unknown[]> {
+    return (await this.getFile("published.json")) || [];
   }
 
-  async addPublishedItem(item: any): Promise<void> {
-    const items = await this.getPublishedItems()
-    items.push({ ...item, id: crypto.randomUUID(), publishedBy: this.username, publishedAt: new Date().toISOString() })
-    await this.updateFile("published.json", items, "Publish item")
+  async addPublishedItem(item: unknown): Promise<void> {
+    const items = await this.getPublishedItems();
+    items.push({
+      ...item,
+      id: crypto.randomUUID(),
+      publishedBy: this.username,
+      publishedAt: new Date().toISOString(),
+    });
+    await this.updateFile("published.json", items, "Publish item");
   }
 
-  async getAIConnection(): Promise<any> {
-    return (await this.getFile("ai-connection.json")) || { connected: false, sessions: [] }
+  async getAIConnection(): Promise<unknown> {
+    return (await this.getFile("ai-connection.json")) || { connected: false, sessions: [] };
   }
 
-  async updateAIConnection(connection: any): Promise<void> {
-    await this.updateFile("ai-connection.json", connection, "Update AI connection")
+  async updateAIConnection(connection: unknown): Promise<void> {
+    await this.updateFile("ai-connection.json", connection, "Update AI connection");
   }
 
   async syncWithAI(sessionId: string): Promise<void> {
-    const connection = await this.getAIConnection()
-    const sessions = connection.sessions || []
+    const connection = await this.getAIConnection();
+    const sessions = connection.sessions || [];
     if (!sessions.includes(sessionId)) {
-      sessions.push(sessionId)
+      sessions.push(sessionId);
     }
-    connection.connected = true
-    connection.sessions = sessions
-    connection.lastSync = new Date().toISOString()
-    await this.updateAIConnection(connection)
+    connection.connected = true;
+    connection.sessions = sessions;
+    connection.lastSync = new Date().toISOString();
+    await this.updateAIConnection(connection);
   }
 
-  async getChatMessages(): Promise<any[]> {
-    return (await this.getFile("community_chat.json")) || []
+  async getChatMessages(): Promise<unknown[]> {
+    return (await this.getFile("community_chat.json")) || [];
   }
 
-  async addChatMessage(message: any): Promise<void> {
-    const messages = await this.getChatMessages()
-    messages.push(message)
-    await this.updateFile("community_chat.json", messages, `Chat message from ${message.username}`)
+  async addChatMessage(message: unknown): Promise<void> {
+    const messages = await this.getChatMessages();
+    messages.push(message);
+    await this.updateFile("community_chat.json", messages, `Chat message from ${message.username}`);
   }
 
   async likeChatMessage(messageId: string, userId: string): Promise<void> {
-    const messages = await this.getChatMessages()
-    const msg = messages.find((m: any) => m.id === messageId)
+    const messages = await this.getChatMessages();
+    const msg = messages.find((m: unknown) => m.id === messageId);
     if (msg) {
-      if (!msg.likes) msg.likes = []
+      if (!msg.likes) msg.likes = [];
       if (!msg.likes.includes(userId)) {
-        msg.likes.push(userId)
+        msg.likes.push(userId);
       }
-      await this.updateFile("community_chat.json", messages, `Like message: ${messageId}`)
+      await this.updateFile("community_chat.json", messages, `Like message: ${messageId}`);
     }
   }
 
-  async getMarketplaceItems(): Promise<any[]> {
-    return (await this.getFile("marketplace.json")) || []
+  async getMarketplaceItems(): Promise<unknown[]> {
+    return (await this.getFile("marketplace.json")) || [];
   }
 
-  async addMarketplaceItem(item: any): Promise<void> {
-    const items = await this.getMarketplaceItems()
-    items.push({ ...item, id: crypto.randomUUID(), listedBy: this.username, listedAt: new Date().toISOString() })
-    await this.updateFile("marketplace.json", items, "Add marketplace item")
+  async addMarketplaceItem(item: unknown): Promise<void> {
+    const items = await this.getMarketplaceItems();
+    items.push({
+      ...item,
+      id: crypto.randomUUID(),
+      listedBy: this.username,
+      listedAt: new Date().toISOString(),
+    });
+    await this.updateFile("marketplace.json", items, "Add marketplace item");
   }
 
-  async get(key: string): Promise<any> {
-    return this.getFile(`${key}.json`)
+  async get(key: string): Promise<unknown> {
+    return this.getFile(`${key}.json`);
   }
 
-  async set(key: string, value: any): Promise<void> {
-    const path = `${key}.json`
-    const current = await fetch(`${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`, {
-      headers: this.headers,
-    })
+  async set(key: string, value: unknown): Promise<void> {
+    const path = `${key}.json`;
+    const current = await fetch(
+      `${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`,
+      {
+        headers: this.headers,
+      },
+    );
     if (current.status === 404) {
-      await this.createFile(path, JSON.stringify(value, null, 2))
-      return
+      await this.createFile(path, JSON.stringify(value, null, 2));
+      return;
     }
-    await this.updateFile(path, value, `Update ${key}`)
+    await this.updateFile(path, value, `Update ${key}`);
   }
 
-  async getStats(): Promise<{ totalLikes: number; totalComments: number; totalFollowers: number; totalFollowing: number; totalPublished: number }> {
+  async getStats(): Promise<{
+    totalLikes: number;
+    totalComments: number;
+    totalFollowers: number;
+    totalFollowing: number;
+    totalPublished: number;
+  }> {
     const [likes, comments, follows, published] = await Promise.all([
       this.getLikes(),
       this.getComments(),
       this.getFollows(),
       this.getPublishedItems(),
-    ])
+    ]);
     return {
       totalLikes: likes.length,
       totalComments: comments.length,
       totalFollowers: follows.followers.length,
       totalFollowing: follows.following.length,
       totalPublished: published.length,
-    }
+    };
   }
 }
 
-let storageInstance: GitHubDataStorage | null = null
+let storageInstance: GitHubDataStorage | null = null;
 
 export function getGitHubStorage(): GitHubDataStorage | null {
-  return storageInstance
+  return storageInstance;
 }
 
 export function initGitHubStorage(token: string, username: string): GitHubDataStorage {
-  storageInstance = new GitHubDataStorage(token, username)
-  return storageInstance
+  storageInstance = new GitHubDataStorage(token, username);
+  return storageInstance;
 }
 
 export function clearGitHubStorage(): void {
-  storageInstance = null
+  storageInstance = null;
 }

@@ -31,7 +31,6 @@ export function getApiKeysFromCookies() {
   return parsedKeys;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const APIKeyManager: React.FC<APIKeyManagerProps> = ({ provider, apiKey, setApiKey }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempKey, setTempKey] = useState(apiKey);

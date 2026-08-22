@@ -14,7 +14,6 @@ export async function reloadOnChange() {
   try {
     const watcher = fs.watch(dir, { signal, recursive: true });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const _event of watcher) {
       if (!isQuited) {
         isQuited = true;

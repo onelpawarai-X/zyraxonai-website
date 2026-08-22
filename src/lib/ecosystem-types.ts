@@ -1,16 +1,61 @@
 export type Category =
-  | "ai-bots" | "plugins" | "website-templates" | "themes" | "components"
-  | "startkits" | "workflows" | "ai-models" | "tools" | "sdks" | "types"
-  | "pdfs" | "books" | "apis" | "mobile-apps" | "browser-extensions"
-  | "cli-tools" | "prompts" | "datasets" | "icons" | "ui-kits"
-  | "landing-pages" | "desktop-apps" | "iso-images" | "fonts"
-  | "code-snippets" | "devops" | "website-games";
+  | "ai-bots"
+  | "plugins"
+  | "website-templates"
+  | "themes"
+  | "components"
+  | "startkits"
+  | "workflows"
+  | "ai-models"
+  | "tools"
+  | "sdks"
+  | "types"
+  | "pdfs"
+  | "books"
+  | "apis"
+  | "mobile-apps"
+  | "browser-extensions"
+  | "cli-tools"
+  | "prompts"
+  | "datasets"
+  | "icons"
+  | "ui-kits"
+  | "landing-pages"
+  | "desktop-apps"
+  | "iso-images"
+  | "fonts"
+  | "code-snippets"
+  | "devops"
+  | "website-games";
 
 export type ItemType =
-  | "plugin" | "template" | "bot" | "model" | "tool" | "sdk" | "api"
-  | "app" | "extension" | "cli" | "prompt" | "dataset" | "icon"
-  | "ui-kit" | "landing-page" | "workflow" | "pdf" | "book" | "component"
-  | "theme" | "startkit" | "desktop-app" | "iso" | "font" | "snippet" | "devops" | "website-game";
+  | "plugin"
+  | "template"
+  | "bot"
+  | "model"
+  | "tool"
+  | "sdk"
+  | "api"
+  | "app"
+  | "extension"
+  | "cli"
+  | "prompt"
+  | "dataset"
+  | "icon"
+  | "ui-kit"
+  | "landing-page"
+  | "workflow"
+  | "pdf"
+  | "book"
+  | "component"
+  | "theme"
+  | "startkit"
+  | "desktop-app"
+  | "iso"
+  | "font"
+  | "snippet"
+  | "devops"
+  | "website-game";
 
 export interface EcosystemItem {
   id: string;
@@ -82,10 +127,25 @@ export interface RecentActivity {
 }
 
 export type ViewMode =
-  | "home" | "explore" | "categories" | "top-rated" | "trending"
-  | "new" | "my-plugins" | "my-downloads" | "my-favorites"
-  | "profile" | "community" | "marketplace" | "product-detail"
-  | "settings" | "ai-settings" | "vscode" | "github" | "mcp" | "builder";
+  | "home"
+  | "explore"
+  | "categories"
+  | "top-rated"
+  | "trending"
+  | "new"
+  | "my-plugins"
+  | "my-downloads"
+  | "my-favorites"
+  | "profile"
+  | "community"
+  | "marketplace"
+  | "product-detail"
+  | "settings"
+  | "ai-settings"
+  | "vscode"
+  | "github"
+  | "mcp"
+  | "builder";
 
 export interface User {
   id: string;

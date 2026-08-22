@@ -1,8 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { handleCreateShare } from '@/lib/share-handlers';
-import { preflight } from '@/lib/share-http';
+import { createFileRoute } from "@tanstack/react-router";
+import { handleCreateShare } from "@/lib/share-handlers";
+import { preflight } from "@/lib/share-http";
 
-export const Route = createFileRoute('/api/public/shares/')({
+export const Route = createFileRoute("/api/public/shares/")({
   server: {
     handlers: {
       OPTIONS: async () => preflight(),

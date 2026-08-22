@@ -30,15 +30,18 @@ import { Route as ApiPublicSplatRouteImport } from './routes/api/public/$'
 import { Route as ApiGithubReposRouteImport } from './routes/api/github/repos'
 import { Route as ApiSharesIdIndexRouteImport } from './routes/api/shares/$id/index'
 import { Route as ApiPublicSharesIndexRouteImport } from './routes/api/public/shares/index'
+import { Route as ApiPublicProvidersIndexRouteImport } from './routes/api/public/providers/index'
 import { Route as ApiSharesIdSyncRouteImport } from './routes/api/shares/$id/sync'
 import { Route as ApiSharesIdDataRouteImport } from './routes/api/shares/$id/data'
 import { Route as ApiPublicZyraxonSearchRouteImport } from './routes/api/public/zyraxon/search'
+import { Route as ApiPublicProvidersProviderRouteImport } from './routes/api/public/providers/$provider'
 import { Route as ApiPublicGithubPublishRouteImport } from './routes/api/public/github/publish'
 import { Route as ApiPublicDownloadPlatformRouteImport } from './routes/api/public/download/$platform'
 import { Route as ApiPublicBuilderSitesRouteImport } from './routes/api/public/builder/sites'
 import { Route as ApiPublicBuilderSearchRouteImport } from './routes/api/public/builder/search'
 import { Route as ApiPublicBuilderPublishRouteImport } from './routes/api/public/builder/publish'
 import { Route as ApiPublicBuilderPowershellRouteImport } from './routes/api/public/builder/powershell'
+import { Route as ApiPublicBuilderEngineRouteImport } from './routes/api/public/builder/engine'
 import { Route as ApiPublicBuilderChatRouteImport } from './routes/api/public/builder/chat'
 import { Route as ApiPublicAuthGithubRouteImport } from './routes/api/public/auth/github'
 import { Route as ApiPublicSharesIdIndexRouteImport } from './routes/api/public/shares/$id/index'
@@ -157,6 +160,11 @@ const ApiPublicSharesIndexRoute = ApiPublicSharesIndexRouteImport.update({
   path: '/api/public/shares/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicProvidersIndexRoute = ApiPublicProvidersIndexRouteImport.update({
+  id: '/api/public/providers/',
+  path: '/api/public/providers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSharesIdSyncRoute = ApiSharesIdSyncRouteImport.update({
   id: '/api/shares/$id/sync',
   path: '/api/shares/$id/sync',
@@ -172,6 +180,12 @@ const ApiPublicZyraxonSearchRoute = ApiPublicZyraxonSearchRouteImport.update({
   path: '/api/public/zyraxon/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicProvidersProviderRoute =
+  ApiPublicProvidersProviderRouteImport.update({
+    id: '/api/public/providers/$provider',
+    path: '/api/public/providers/$provider',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicGithubPublishRoute = ApiPublicGithubPublishRouteImport.update({
   id: '/api/public/github/publish',
   path: '/api/public/github/publish',
@@ -204,6 +218,11 @@ const ApiPublicBuilderPowershellRoute =
     path: '/api/public/builder/powershell',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBuilderEngineRoute = ApiPublicBuilderEngineRouteImport.update({
+  id: '/api/public/builder/engine',
+  path: '/api/public/builder/engine',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBuilderChatRoute = ApiPublicBuilderChatRouteImport.update({
   id: '/api/public/builder/chat',
   path: '/api/public/builder/chat',
@@ -288,15 +307,18 @@ export interface FileRoutesByFullPath {
   '/api/shares/': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
+  '/api/public/builder/engine': typeof ApiPublicBuilderEngineRoute
   '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
   '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
+  '/api/public/providers/': typeof ApiPublicProvidersIndexRoute
   '/api/public/shares/': typeof ApiPublicSharesIndexRoute
   '/api/shares/$id/': typeof ApiSharesIdIndexRoute
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
@@ -331,15 +353,18 @@ export interface FileRoutesByTo {
   '/api/shares': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
+  '/api/public/builder/engine': typeof ApiPublicBuilderEngineRoute
   '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
   '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
+  '/api/public/providers': typeof ApiPublicProvidersIndexRoute
   '/api/public/shares': typeof ApiPublicSharesIndexRoute
   '/api/shares/$id': typeof ApiSharesIdIndexRoute
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
@@ -375,15 +400,18 @@ export interface FileRoutesById {
   '/api/shares/': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
+  '/api/public/builder/engine': typeof ApiPublicBuilderEngineRoute
   '/api/public/builder/powershell': typeof ApiPublicBuilderPowershellRoute
   '/api/public/builder/publish': typeof ApiPublicBuilderPublishRoute
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
   '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
+  '/api/public/providers/': typeof ApiPublicProvidersIndexRoute
   '/api/public/shares/': typeof ApiPublicSharesIndexRoute
   '/api/shares/$id/': typeof ApiSharesIdIndexRoute
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
@@ -420,15 +448,18 @@ export interface FileRouteTypes {
     | '/api/shares/'
     | '/api/public/auth/github'
     | '/api/public/builder/chat'
+    | '/api/public/builder/engine'
     | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
     | '/api/public/github/publish'
+    | '/api/public/providers/$provider'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
+    | '/api/public/providers/'
     | '/api/public/shares/'
     | '/api/shares/$id/'
     | '/api/public/auth/github/callback'
@@ -463,15 +494,18 @@ export interface FileRouteTypes {
     | '/api/shares'
     | '/api/public/auth/github'
     | '/api/public/builder/chat'
+    | '/api/public/builder/engine'
     | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
     | '/api/public/github/publish'
+    | '/api/public/providers/$provider'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
+    | '/api/public/providers'
     | '/api/public/shares'
     | '/api/shares/$id'
     | '/api/public/auth/github/callback'
@@ -506,15 +540,18 @@ export interface FileRouteTypes {
     | '/api/shares/'
     | '/api/public/auth/github'
     | '/api/public/builder/chat'
+    | '/api/public/builder/engine'
     | '/api/public/builder/powershell'
     | '/api/public/builder/publish'
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
     | '/api/public/github/publish'
+    | '/api/public/providers/$provider'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
+    | '/api/public/providers/'
     | '/api/public/shares/'
     | '/api/shares/$id/'
     | '/api/public/auth/github/callback'
@@ -550,15 +587,18 @@ export interface RootRouteChildren {
   ApiSharesIndexRoute: typeof ApiSharesIndexRoute
   ApiPublicAuthGithubRoute: typeof ApiPublicAuthGithubRouteWithChildren
   ApiPublicBuilderChatRoute: typeof ApiPublicBuilderChatRoute
+  ApiPublicBuilderEngineRoute: typeof ApiPublicBuilderEngineRoute
   ApiPublicBuilderPowershellRoute: typeof ApiPublicBuilderPowershellRoute
   ApiPublicBuilderPublishRoute: typeof ApiPublicBuilderPublishRoute
   ApiPublicBuilderSearchRoute: typeof ApiPublicBuilderSearchRoute
   ApiPublicBuilderSitesRoute: typeof ApiPublicBuilderSitesRoute
   ApiPublicDownloadPlatformRoute: typeof ApiPublicDownloadPlatformRoute
   ApiPublicGithubPublishRoute: typeof ApiPublicGithubPublishRoute
+  ApiPublicProvidersProviderRoute: typeof ApiPublicProvidersProviderRoute
   ApiPublicZyraxonSearchRoute: typeof ApiPublicZyraxonSearchRoute
   ApiSharesIdDataRoute: typeof ApiSharesIdDataRoute
   ApiSharesIdSyncRoute: typeof ApiSharesIdSyncRoute
+  ApiPublicProvidersIndexRoute: typeof ApiPublicProvidersIndexRoute
   ApiPublicSharesIndexRoute: typeof ApiPublicSharesIndexRoute
   ApiSharesIdIndexRoute: typeof ApiSharesIdIndexRoute
   ApiPublicSharesIdDataRoute: typeof ApiPublicSharesIdDataRoute
@@ -717,6 +757,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSharesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/providers/': {
+      id: '/api/public/providers/'
+      path: '/api/public/providers'
+      fullPath: '/api/public/providers/'
+      preLoaderRoute: typeof ApiPublicProvidersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/shares/$id/sync': {
       id: '/api/shares/$id/sync'
       path: '/api/shares/$id/sync'
@@ -736,6 +783,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/zyraxon/search'
       fullPath: '/api/public/zyraxon/search'
       preLoaderRoute: typeof ApiPublicZyraxonSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/providers/$provider': {
+      id: '/api/public/providers/$provider'
+      path: '/api/public/providers/$provider'
+      fullPath: '/api/public/providers/$provider'
+      preLoaderRoute: typeof ApiPublicProvidersProviderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/github/publish': {
@@ -778,6 +832,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/builder/powershell'
       fullPath: '/api/public/builder/powershell'
       preLoaderRoute: typeof ApiPublicBuilderPowershellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/builder/engine': {
+      id: '/api/public/builder/engine'
+      path: '/api/public/builder/engine'
+      fullPath: '/api/public/builder/engine'
+      preLoaderRoute: typeof ApiPublicBuilderEngineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/builder/chat': {
@@ -909,15 +970,18 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSharesIndexRoute: ApiSharesIndexRoute,
   ApiPublicAuthGithubRoute: ApiPublicAuthGithubRouteWithChildren,
   ApiPublicBuilderChatRoute: ApiPublicBuilderChatRoute,
+  ApiPublicBuilderEngineRoute: ApiPublicBuilderEngineRoute,
   ApiPublicBuilderPowershellRoute: ApiPublicBuilderPowershellRoute,
   ApiPublicBuilderPublishRoute: ApiPublicBuilderPublishRoute,
   ApiPublicBuilderSearchRoute: ApiPublicBuilderSearchRoute,
   ApiPublicBuilderSitesRoute: ApiPublicBuilderSitesRoute,
   ApiPublicDownloadPlatformRoute: ApiPublicDownloadPlatformRoute,
   ApiPublicGithubPublishRoute: ApiPublicGithubPublishRoute,
+  ApiPublicProvidersProviderRoute: ApiPublicProvidersProviderRoute,
   ApiPublicZyraxonSearchRoute: ApiPublicZyraxonSearchRoute,
   ApiSharesIdDataRoute: ApiSharesIdDataRoute,
   ApiSharesIdSyncRoute: ApiSharesIdSyncRoute,
+  ApiPublicProvidersIndexRoute: ApiPublicProvidersIndexRoute,
   ApiPublicSharesIndexRoute: ApiPublicSharesIndexRoute,
   ApiSharesIdIndexRoute: ApiSharesIdIndexRoute,
   ApiPublicSharesIdDataRoute: ApiPublicSharesIdDataRoute,

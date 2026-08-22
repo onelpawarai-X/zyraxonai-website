@@ -16,9 +16,15 @@ export function getAuthState(): AuthState {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { user: parsed.user, token: parsed.token, isAuthenticated: !!parsed.user && !!parsed.token };
+      return {
+        user: parsed.user,
+        token: parsed.token,
+        isAuthenticated: !!parsed.user && !!parsed.token,
+      };
     }
-  } catch {}
+  } catch {
+    /* ignored */
+  }
   return { user: null, token: null, isAuthenticated: false };
 }
 

@@ -48,7 +48,13 @@ type GalleryExtension = {
   flags?: string;
   categories?: string[];
   tags?: string[];
-  publisher: { publisherName: string; displayName: string; flags?: string; domain?: string; isDomainVerified?: boolean };
+  publisher: {
+    publisherName: string;
+    displayName: string;
+    flags?: string;
+    domain?: string;
+    isDomainVerified?: boolean;
+  };
   versions?: GalleryVersion[];
   statistics?: { statisticName: string; value: number }[];
 };
@@ -79,7 +85,8 @@ function normalize(e: GalleryExtension) {
     publisher: {
       name: e.publisher.publisherName,
       displayName: e.publisher.displayName,
-      verified: e.publisher.isDomainVerified === true || (e.publisher.flags ?? "").includes("verified"),
+      verified:
+        e.publisher.isDomainVerified === true || (e.publisher.flags ?? "").includes("verified"),
       domain: e.publisher.domain ?? null,
     },
     icon: asset(v, "Microsoft.VisualStudio.Services.Icons.Default"),
@@ -93,7 +100,9 @@ function normalize(e: GalleryExtension) {
     lastUpdated: e.lastUpdated,
     publishedDate: e.publishedDate,
     preview: (e.flags ?? "").includes("preview"),
-    repository: prop(v, "Microsoft.VisualStudio.Services.Links.Source") ?? prop(v, "Microsoft.VisualStudio.Services.Links.GitHub"),
+    repository:
+      prop(v, "Microsoft.VisualStudio.Services.Links.Source") ??
+      prop(v, "Microsoft.VisualStudio.Services.Links.GitHub"),
     homepage: prop(v, "Microsoft.VisualStudio.Services.Links.Learn"),
     license: asset(v, "Microsoft.VisualStudio.Services.Content.License"),
     changelog: asset(v, "Microsoft.VisualStudio.Services.Content.Changelog"),
@@ -121,7 +130,10 @@ async function query(body: unknown) {
   });
   if (!res.ok) throw new Error(`Gallery ${res.status}`);
   return (await res.json()) as {
-    results: { extensions: GalleryExtension[]; resultMetadata?: { metadataType: string; metadataItems: { name: string; count: number }[] }[] }[];
+    results: {
+      extensions: GalleryExtension[];
+      resultMetadata?: { metadataType: string; metadataItems: { name: string; count: number }[] }[];
+    }[];
   };
 }
 
@@ -138,16 +150,31 @@ export const Route = createFileRoute("/api/public/vscode-marketplace")({
         try {
           if (ext) {
             const data = await query({
-              filters: [{ criteria: [{ filterType: 8, value: "Microsoft.VisualStudio.Code" }, { filterType: 7, value: ext }], pageNumber: 1, pageSize: 1 }],
+              filters: [
+                {
+                  criteria: [
+                    { filterType: 8, value: "Microsoft.VisualStudio.Code" },
+                    { filterType: 7, value: ext },
+                  ],
+                  pageNumber: 1,
+                  pageSize: 1,
+                },
+              ],
               flags: 950,
             });
             const raw = data.results?.[0]?.extensions?.[0];
-            if (!raw) return Response.json({ message: "Extension not found" }, { status: 404, headers: HEADERS });
+            if (!raw)
+              return Response.json(
+                { message: "Extension not found" },
+                { status: 404, headers: HEADERS },
+              );
             const item = normalize(raw);
 
             let readme: string | null = null;
             if (url.searchParams.get("readme") === "1" && item.readmeUrl) {
-              const r = await fetch(item.readmeUrl, { headers: { "User-Agent": "zyraxon-ecosystem" } });
+              const r = await fetch(item.readmeUrl, {
+                headers: { "User-Agent": "zyraxon-ecosystem" },
+              });
               if (r.ok) readme = (await r.text()).slice(0, 400_000);
             }
             return Response.json({ item, readme }, { headers: cache });
@@ -156,7 +183,10 @@ export const Route = createFileRoute("/api/public/vscode-marketplace")({
           const q = (url.searchParams.get("q") ?? "").trim();
           const category = url.searchParams.get("category");
           const page = Math.max(1, Number(url.searchParams.get("page") ?? 1));
-          const pageSize = Math.min(54, Math.max(1, Number(url.searchParams.get("pageSize") ?? 24)));
+          const pageSize = Math.min(
+            54,
+            Math.max(1, Number(url.searchParams.get("pageSize") ?? 24)),
+          );
           const sortBy = SORT_BY[url.searchParams.get("sort") ?? "installs"] ?? 4;
 
           const criteria: { filterType: number; value: string }[] = [
@@ -172,13 +202,18 @@ export const Route = createFileRoute("/api/public/vscode-marketplace")({
           });
 
           const result = data.results?.[0];
-          const total = result?.resultMetadata?.[0]?.metadataItems?.find((m) => m.name === "TotalCount")?.count ?? 0;
+          const total =
+            result?.resultMetadata?.[0]?.metadataItems?.find((m) => m.name === "TotalCount")
+              ?.count ?? 0;
           return Response.json(
             { items: (result?.extensions ?? []).map(normalize), total, page, pageSize },
             { headers: cache },
           );
         } catch (err) {
-          return Response.json({ message: `Marketplace request failed`, detail: String(err) }, { status: 502, headers: HEADERS });
+          return Response.json(
+            { message: `Marketplace request failed`, detail: String(err) },
+            { status: 502, headers: HEADERS },
+          );
         }
       },
     },

@@ -35,7 +35,10 @@ export const Route = createFileRoute("/api/public/community")({
         const url = process.env["SUPABASE_URL"];
         const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
         if (!url || !key) {
-          return Response.json({ message: "Realtime is not configured" }, { status: 500, headers: HEADERS });
+          return Response.json(
+            { message: "Realtime is not configured" },
+            { status: 500, headers: HEADERS },
+          );
         }
 
         let input: { event?: string; message?: unknown; payload?: unknown };
@@ -46,11 +49,16 @@ export const Route = createFileRoute("/api/public/community")({
         }
 
         const event = input.event === "signal" ? "signal" : "chat";
-        const payload = event === "chat" ? { message: input.message ?? input.payload } : (input.payload ?? {});
+        const payload =
+          event === "chat" ? { message: input.message ?? input.payload } : (input.payload ?? {});
 
         const res = await fetch(`${url}/realtime/v1/api/broadcast`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${key}` },
+          headers: {
+            "Content-Type": "application/json",
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+          },
           body: JSON.stringify({ messages: [{ topic: CHANNEL, event, payload }] }),
         });
 

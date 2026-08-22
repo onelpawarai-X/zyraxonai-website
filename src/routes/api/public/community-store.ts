@@ -26,14 +26,15 @@ function isAllowed(file: string): boolean {
     file === "community_chat.json" ||
     file === "active_rooms.json" ||
     file === "online_users.json"
-  ) return true
+  )
+    return true;
   // Channel chat: chat_{channelId}.json
-  if (/^chat_[a-z0-9_-]+\.json$/.test(file)) return true
+  if (/^chat_[a-z0-9_-]+\.json$/.test(file)) return true;
   // File uploads: chat_files/{channelId}/{fileId}.json
-  if (/^chat_files\/[a-z0-9_-]+\/file-[a-z0-9]+\.json$/.test(file)) return true
+  if (/^chat_files\/[a-z0-9_-]+\/file-[a-z0-9]+\.json$/.test(file)) return true;
   // Marketplace data files
-  if (/^marketplace\/data\/[a-z_]+\.json$/.test(file)) return true
-  return false
+  if (/^marketplace\/data\/[a-z_]+\.json$/.test(file)) return true;
+  return false;
 }
 
 const HEADERS = {
@@ -65,7 +66,9 @@ function b64decode(b64: string) {
 }
 
 async function readFile(file: string, token?: string) {
-  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${file}`, { headers: gh(token) });
+  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${file}`, {
+    headers: gh(token),
+  });
   if (res.status === 404) return { content: null as unknown, sha: undefined as string | undefined };
   if (!res.ok) throw new Error(`GitHub read ${res.status}`);
   const data = (await res.json()) as { content?: string; sha?: string };
@@ -93,7 +96,10 @@ export const Route = createFileRoute("/api/public/community-store")({
         const token = process.env["GITHUB_PERSONAL_ACCESS_TOKEN"];
         try {
           const { content, sha } = await readFile(file, token);
-          return Response.json({ content, sha }, { headers: { ...HEADERS, "Cache-Control": "no-store" } });
+          return Response.json(
+            { content, sha },
+            { headers: { ...HEADERS, "Cache-Control": "no-store" } },
+          );
         } catch (err) {
           return Response.json({ content: null, error: String(err) }, { headers: HEADERS });
         }
@@ -102,7 +108,10 @@ export const Route = createFileRoute("/api/public/community-store")({
       POST: async ({ request }) => {
         const token = process.env["GITHUB_PERSONAL_ACCESS_TOKEN"];
         if (!token) {
-          return Response.json({ message: "Storage token is not configured" }, { status: 503, headers: HEADERS });
+          return Response.json(
+            { message: "Storage token is not configured" },
+            { status: 503, headers: HEADERS },
+          );
         }
 
         let input: { file?: string; content?: unknown; message?: string };
@@ -124,7 +133,7 @@ export const Route = createFileRoute("/api/public/community-store")({
         let finalContent = input.content;
         if (/^chat_[a-z0-9_-]+\.json$/.test(file) && Array.isArray(input.content)) {
           const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-          finalContent = input.content.filter((msg: any) => {
+          finalContent = input.content.filter((msg: unknown) => {
             if (!msg || !msg.timestamp) return true;
             return new Date(msg.timestamp).getTime() > cutoff;
           });
@@ -150,10 +159,16 @@ export const Route = createFileRoute("/api/public/community-store")({
           if (res.ok) return Response.json({ ok: true }, { headers: HEADERS });
           if (res.status !== 409) {
             const body = await res.text();
-            return Response.json({ message: `GitHub write failed (${res.status})`, detail: body }, { status: 502, headers: HEADERS });
+            return Response.json(
+              { message: `GitHub write failed (${res.status})`, detail: body },
+              { status: 502, headers: HEADERS },
+            );
           }
         }
-        return Response.json({ message: "GitHub write conflict" }, { status: 409, headers: HEADERS });
+        return Response.json(
+          { message: "GitHub write conflict" },
+          { status: 409, headers: HEADERS },
+        );
       },
     },
   },
