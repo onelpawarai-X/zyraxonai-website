@@ -13,7 +13,9 @@ import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EcosystemIndexRouteImport } from './routes/ecosystem/index'
+import { Route as DocsIndexRouteImport } from './routes/docs.index'
 import { Route as ShareIdRouteImport } from './routes/share/$id'
+import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as ApiMarketplaceSearchRouteImport } from './routes/api/marketplace-search'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
@@ -74,9 +76,19 @@ const EcosystemIndexRoute = EcosystemIndexRouteImport.update({
   path: '/ecosystem/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsIndexRoute = DocsIndexRouteImport.update({
+  id: '/docs/',
+  path: '/docs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShareIdRoute = ShareIdRouteImport.update({
   id: '/share/$id',
   path: '/share/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsSlugRoute = DocsSlugRouteImport.update({
+  id: '/docs/$slug',
+  path: '/docs/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMarketplaceSearchRoute = ApiMarketplaceSearchRouteImport.update({
@@ -291,7 +303,9 @@ export interface FileRoutesByFullPath {
   '/builder': typeof BuilderRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/docs/$slug': typeof DocsSlugRoute
   '/share/$id': typeof ShareIdRoute
+  '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/$': typeof ApiPublicSplatRoute
@@ -337,7 +351,9 @@ export interface FileRoutesByTo {
   '/builder': typeof BuilderRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/docs/$slug': typeof DocsSlugRoute
   '/share/$id': typeof ShareIdRoute
+  '/docs': typeof DocsIndexRoute
   '/ecosystem': typeof EcosystemIndexRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/$': typeof ApiPublicSplatRoute
@@ -384,7 +400,9 @@ export interface FileRoutesById {
   '/builder': typeof BuilderRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/docs/$slug': typeof DocsSlugRoute
   '/share/$id': typeof ShareIdRoute
+  '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/$': typeof ApiPublicSplatRoute
@@ -432,7 +450,9 @@ export interface FileRouteTypes {
     | '/builder'
     | '/api/$'
     | '/api/marketplace-search'
+    | '/docs/$slug'
     | '/share/$id'
+    | '/docs/'
     | '/ecosystem/'
     | '/api/github/repos'
     | '/api/public/$'
@@ -478,7 +498,9 @@ export interface FileRouteTypes {
     | '/builder'
     | '/api/$'
     | '/api/marketplace-search'
+    | '/docs/$slug'
     | '/share/$id'
+    | '/docs'
     | '/ecosystem'
     | '/api/github/repos'
     | '/api/public/$'
@@ -524,7 +546,9 @@ export interface FileRouteTypes {
     | '/builder'
     | '/api/$'
     | '/api/marketplace-search'
+    | '/docs/$slug'
     | '/share/$id'
+    | '/docs/'
     | '/ecosystem/'
     | '/api/github/repos'
     | '/api/public/$'
@@ -571,7 +595,9 @@ export interface RootRouteChildren {
   BuilderRoute: typeof BuilderRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiMarketplaceSearchRoute: typeof ApiMarketplaceSearchRoute
+  DocsSlugRoute: typeof DocsSlugRoute
   ShareIdRoute: typeof ShareIdRoute
+  DocsIndexRoute: typeof DocsIndexRoute
   EcosystemIndexRoute: typeof EcosystemIndexRoute
   ApiGithubReposRoute: typeof ApiGithubReposRouteWithChildren
   ApiPublicSplatRoute: typeof ApiPublicSplatRoute
@@ -638,11 +664,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EcosystemIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/': {
+      id: '/docs/'
+      path: '/docs'
+      fullPath: '/docs/'
+      preLoaderRoute: typeof DocsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/share/$id': {
       id: '/share/$id'
       path: '/share/$id'
       fullPath: '/share/$id'
       preLoaderRoute: typeof ShareIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/$slug': {
+      id: '/docs/$slug'
+      path: '/docs/$slug'
+      fullPath: '/docs/$slug'
+      preLoaderRoute: typeof DocsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/marketplace-search': {
@@ -954,7 +994,9 @@ const rootRouteChildren: RootRouteChildren = {
   BuilderRoute: BuilderRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiMarketplaceSearchRoute: ApiMarketplaceSearchRoute,
+  DocsSlugRoute: DocsSlugRoute,
   ShareIdRoute: ShareIdRoute,
+  DocsIndexRoute: DocsIndexRoute,
   EcosystemIndexRoute: EcosystemIndexRoute,
   ApiGithubReposRoute: ApiGithubReposRouteWithChildren,
   ApiPublicSplatRoute: ApiPublicSplatRoute,
