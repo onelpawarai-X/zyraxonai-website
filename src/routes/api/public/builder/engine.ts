@@ -18,7 +18,7 @@ const MAX_COMMAND_CHARS = 2000;
 const MAX_FILES = 80;
 const MAX_TOTAL_BYTES = 8 * 1024 * 1024;
 
-type Runner = { exe: string; kind: "powershell" | "posix"; baseArgs: string[] };
+type Runner = { exe: string; kind: "powershell" | "posix" | "node"; baseArgs: string[] };
 
 async function run(exe: string, args: string[], cwd: string, timeoutMs = TIMEOUT_MS) {
   return new Promise<{ started: boolean; code: number | null; stdout: string; stderr: string }>(
@@ -74,6 +74,17 @@ async function run(exe: string, args: string[], cwd: string, timeoutMs = TIMEOUT
 
 function argsFor(runner: Runner, command: string): string[] {
   if (runner.kind === "powershell") return [...runner.baseArgs, "-Command", command];
+  if (runner.kind === "node") {
+    // Encode command as base64 to safely pass through shell escaping.
+    // Node.js binary IS always available since the server itself runs on Node.
+    const b64 = Buffer.from(command).toString("base64");
+    return [
+      "-e",
+      `const{execSync:s}=require('child_process');try{console.log(s(Buffer.from(process.argv[1],'base64').toString()).toString())}catch(e){const m=e.stderr?.toString()||e.message;console.error(m);process.exit(1)}`,
+      "--",
+      b64,
+    ];
+  }
   return [...runner.baseArgs, command];
 }
 
@@ -102,6 +113,14 @@ async function findRunner(): Promise<Runner | null> {
   for (const exe of ["bash", "sh"]) {
     const r = await run(exe, ["-c", "echo ok"], process.cwd(), 8_000).catch(() => null);
     if (r?.started && r.code === 0) return { exe, kind: "posix", baseArgs: ["-c"] };
+  }
+  // Node.js is ALWAYS available since the server itself runs on Node.
+  // Use it as a shell fallback: child_process.execSync runs any command.
+  {
+    const r = await run("node", ["-e", "console.log('ok')"], process.cwd(), 8_000).catch(
+      () => null,
+    );
+    if (r?.started && r.code === 0) return { exe: "node", kind: "node", baseArgs: ["-e"] };
   }
   return null;
 }
@@ -145,7 +164,7 @@ export const Route = createFileRoute("/api/public/builder/engine")({
             host: "deployment-runner",
             capability:
               "ZYRAXON Agent Engine — real commands on the computer that serves this website",
-            note: "Set nothing up manually. On Windows-capable runners you can also preinstall PowerShell with: npm run engine:setup",
+            note: "Node.js runtime is always available. PowerShell requires: npm run engine:setup && npm run engine:start on Windows runners.",
           },
           { headers: CORS },
         );
@@ -177,9 +196,8 @@ export const Route = createFileRoute("/api/public/builder/engine")({
         if (!runner)
           return Response.json(
             {
-              error: "No shell runtime found on this deployment runner.",
-              setup:
-                "Windows runners: npm run engine:setup && npm run engine:start · Linux/macOS runners already provide bash.",
+              error: "No runtime found on this deployment runner.",
+              setup: "Node.js should always be available. If not, contact support.",
             },
             { status: 503, headers: CORS },
           );
