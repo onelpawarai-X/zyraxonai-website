@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/public/builder/chat")({
         if (healthModel) {
           const result = await testZenModel(healthModel, apiKey);
           return Response.json(
-            { ...result, provider: "opencode-zen", userApiKeyRequired: !resolveApiKey(apiKey) },
+            { ...result, provider: "opencode-zen", keyless: !resolveApiKey(apiKey) },
             {
               status: result.ok ? 200 : result.status >= 400 ? result.status : 502,
               headers: CORS,
@@ -63,7 +63,7 @@ export const Route = createFileRoute("/api/public/builder/chat")({
             models: freeModels,
             defaultModel: DEFAULT_ZEN_MODEL,
             gateway: ZEN_CHAT_URL,
-            userApiKeyRequired: !resolveApiKey(apiKey),
+            keyless: !resolveApiKey(apiKey),
             serverKeyConfigured: Boolean(resolveApiKey()),
             discoveredModelIds: discovery.ids,
             discoveryOk: discovery.ok,

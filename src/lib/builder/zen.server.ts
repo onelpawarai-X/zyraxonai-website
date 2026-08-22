@@ -61,6 +61,15 @@ export function resolveApiKey(userKey?: string): string | undefined {
   return userKey?.trim() || configuredServerKey();
 }
 
+/** Zen throttles anonymous requests with generic/missing User-Agents (undici default → HTTP 429).
+ *  Every outbound call MUST carry a client UA it accepts; keyless free-pool access then just works. */
+const ZEN_UA = "opencode/1.0";
+export function zenFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers || {});
+  if (!headers.has("User-Agent")) headers.set("User-Agent", ZEN_UA);
+  return fetch(input, { ...init, headers });
+}
+
 /* ────────────────────────── LIVE FREE POOL (models.dev) ────────────────────────── */
 
 let poolCache: { at: number; models: ZenModel[] } | null = null;
@@ -101,11 +110,33 @@ export async function zenFreeModels(): Promise<ZenModel[]> {
           ? 1
           : a.name.localeCompare(b.name),
     );
-    if (!sorted.length) throw new Error("empty pool");
-    poolCache = { at: Date.now(), models: sorted };
-    return sorted;
+    // models.dev can lag behind the live console — drop ids Zen no longer serves.
+    const live = await zenLiveIds();
+    const usable = live ? sorted.filter((m) => live.has(m.id)) : sorted;
+    const finalPool = usable.length ? usable : sorted;
+    if (!finalPool.length) throw new Error("empty pool");
+    poolCache = { at: Date.now(), models: finalPool };
+    return finalPool;
   } catch {
     return EMERGENCY_POOL;
+  }
+}
+
+/** Ids the live Zen console currently serves (keyless). null = unknown, never block on it. */
+let liveCache: { at: number; ids: Set<string> | null } | null = null;
+export async function zenLiveIds(): Promise<Set<string> | null> {
+  if (liveCache && Date.now() - liveCache.at < POOL_TTL) return liveCache.ids;
+  try {
+    const r = await zenFetch(ZEN_MODELS_URL, { headers: { Accept: "application/json" } });
+    if (!r.ok) throw new Error(`console ${r.status}`);
+    const d = (await r.json()) as { data?: Array<{ id?: string }> };
+    const ids = new Set((d?.data || []).map((x) => String(x?.id || "")).filter(Boolean));
+    if (!ids.size) throw new Error("empty catalog");
+    liveCache = { at: Date.now(), ids };
+    return ids;
+  } catch {
+    liveCache = { at: Date.now(), ids: null };
+    return null;
   }
 }
 
@@ -212,8 +243,15 @@ export function classify(error: unknown) {
 
 /* ────────────────────────── streaming ────────────────────────── */
 
-function provider(key: string) {
-  return createOpenAICompatible({ name: "opencode-zen", baseURL: ZEN_BASE, apiKey: key });
+function provider(key: string | undefined) {
+  return createOpenAICompatible({
+    name: "opencode-zen",
+    baseURL: ZEN_BASE,
+    // Empty string ⇒ the SDK omits the Authorization header entirely.
+    // A placeholder like "anonymous" would be forwarded as a bad Bearer token → 401.
+    apiKey: key || "",
+    fetch: zenFetch,
+  });
 }
 
 function frame(enc: TextEncoder, delta: unknown, finish: string | null, upstream: string) {
@@ -251,7 +289,7 @@ function sse(first: string | undefined, iterator: AsyncIterator<string>, upstrea
 
 /** Stream one Zen model. Returns the streaming Response or null (with failure pushed). */
 async function streamOne(
-  key: string,
+  key: string | undefined,
   upstream: string,
   multimodal: boolean,
   messages: ChatMessage[],
@@ -285,7 +323,8 @@ async function streamOne(
   }
 }
 
-/** ZYRAXON Zen chat: tries the requested free model first, then falls back through the live free pool. */
+/** ZYRAXON Zen chat: keyless by default (free pool), user/server key boosts capacity when present.
+ *  Tries the requested model first, then falls back through the live-validated free pool. */
 export async function zenChatStream(
   model: string,
   messages: ChatMessage[],
@@ -293,26 +332,25 @@ export async function zenChatStream(
   attachments: BuilderAttachment[] = [],
 ): Promise<Response> {
   const key = resolveApiKey(apiKey);
-  if (!key) {
-    return Response.json(
-      {
-        error: "OpenCode Zen API key required.",
-        detail:
-          "Add your OpenCode Zen key in Settings or configure OPENCODE_ZEN_API_KEY on the server.",
-        provider: "opencode-zen",
-        endpoint: ZEN_CHAT_URL,
-      },
-      { status: 401, headers: { "Access-Control-Allow-Origin": "*" } },
-    );
-  }
 
-  const pool = await zenFreeModels();
+  const [pool, live] = await Promise.all([zenFreeModels(), zenLiveIds()]);
   const requestedId = normalizeZenModel(model) || DEFAULT_ZEN_MODEL;
-  const requested = pool.find((m) => m.id === requestedId) || pool[0]!;
-  const chain: ZenModel[] = [requested, ...pool.filter((m) => m.id !== requested.id)];
+  let chain: ZenModel[] = [
+    ...(pool.some((m) => m.id === requestedId) ? [pool.find((m) => m.id === requestedId)!] : []),
+    ...pool.filter((m) => m.id !== requestedId),
+  ];
+  if (chain.length && !chain.some((m) => m.id === requestedId)) {
+    chain = [{ ...(chain[0] || EMERGENCY_POOL[0]), id: requestedId }, ...chain];
+  }
+  if (live) {
+    const served = chain.filter((m) => live.has(m.id));
+    // A dead id still gets ONE attempt slot at the front so the real upstream
+    // error surfaces, then we fall through to models the console actually serves.
+    chain = [...chain.filter((m) => !live.has(m.id)).slice(0, 1), ...served];
+  }
   const failures: unknown[] = [];
 
-  for (const candidate of chain.slice(0, 5)) {
+  for (const candidate of chain.slice(0, 6)) {
     const out = await streamOne(
       key,
       candidate.id,
@@ -324,7 +362,7 @@ export async function zenChatStream(
     if ("failed" in out) {
       failures.push({ ...out.failed, model: candidate.id });
       if (out.failed.status === 401 || out.failed.status === 403) break;
-      continue; // 429 / empty → try next free model
+      continue; // 429 / empty / unsupported → try next free model
     }
     return out;
   }
@@ -332,10 +370,10 @@ export async function zenChatStream(
   const last = failures[failures.length - 1];
   const status = last?.status || 502;
   let error = "OpenCode request failed.";
-  if (status === 401 || status === 403)
+  if (failures.some((f) => f.status === 401 || f.status === 403))
     error =
-      "OpenCode Zen requires a valid API key. Add your Zen key in Settings or configure OPENCODE_ZEN_API_KEY on the server.";
-  else if (status === 429)
+      "OpenCode rejected the configured API key. Check your Zen key in Settings or unset OPENCODE_ZEN_API_KEY on the server.";
+  else if (failures.every((f) => f.status === 429))
     error =
       "All OpenCode Zen free models are rate-limited right now. Add your own Zen API key in Settings for full capacity.";
   return Response.json(
@@ -355,7 +393,6 @@ export async function zenChatStream(
 export async function testZenModel(model: string, apiKey?: string) {
   const key = resolveApiKey(apiKey);
   const upstream = normalizeZenModel(model) || DEFAULT_ZEN_MODEL;
-  if (!key) return { ok: false, status: 401, model: upstream, detail: "API key required" };
   try {
     const r = await generateText({
       model: provider(key).chatModel(upstream),
@@ -372,10 +409,12 @@ export async function testZenModel(model: string, apiKey?: string) {
 
 export async function discoverConsoleModels(apiKey?: string) {
   const key = resolveApiKey(apiKey);
-  if (!key) return { ok: false, status: 401, ids: [], detail: "API key required" };
   try {
-    const r = await fetch(ZEN_MODELS_URL, {
-      headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
+    const r = await zenFetch(ZEN_MODELS_URL, {
+      headers: {
+        Accept: "application/json",
+        ...(key ? { Authorization: `Bearer ${key}` } : {}),
+      },
     });
     const d = await r.json().catch(() => null);
     const ids = Array.isArray(d?.data)
