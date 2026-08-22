@@ -61,14 +61,24 @@ export function resolveApiKey(userKey?: string): string | undefined {
   return userKey?.trim() || configuredServerKey();
 }
 
-/** Zen throttles anonymous requests with generic/missing User-Agents (undici default → HTTP 429).
- *  Every outbound call MUST carry a client UA it accepts; keyless free-pool access then just works. */
+/** Zen throttles anonymous requests by User-Agent AND egress IP reputation.
+ *  Generic SDK UAs (undici / ai-sdk) get soft-blocked with 200-but-empty streams,
+ *  so we FORCE the genuine client UA on every outbound call — never inherit one. */
 const ZEN_UA = "opencode/1.0";
 export function zenFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers || {});
-  if (!headers.has("User-Agent")) headers.set("User-Agent", ZEN_UA);
+  headers.set("User-Agent", ZEN_UA);
   return fetch(input, { ...init, headers });
 }
+
+/** Free models VERIFIED (2026-08 live probe) to accept image_url parts without
+ *  "No endpoints found that support ..." errors. Everything else is text-only. */
+export const VISION_FREE_MODELS = new Set([
+  "big-pickle",
+  "hy3-free",
+  "mimo-v2.5-free",
+  "x-preview-f-free",
+]);
 
 /* ────────────────────────── LIVE FREE POOL (models.dev) ────────────────────────── */
 
@@ -97,7 +107,8 @@ export async function zenFreeModels(): Promise<ZenModel[]> {
       .map((m) => ({
         id: m.id,
         name: m.name,
-        multimodal: m.multimodal,
+        // The catalog ships no capability flags — use our live-probed vision set.
+        multimodal: VISION_FREE_MODELS.has(m.id),
         reasoning: m.reasoning,
         context: m.context,
         output: m.output,
@@ -168,9 +179,15 @@ export function attachMedia(
   const target = next.length - 1 - i;
   const base = textOf(next[target]!.content);
   if (!model.multimodal) {
+    // Neutral phrasing — the old "Attached media:" bait made models apologise
+    // ("I cannot read image.png ... Inform the user") instead of helping.
     next[target] = {
       role: "user",
-      content: `${base}\n\nAttached media: ${attachments.map((a) => `${a.name} (${a.mime})`).join(", ")}.`,
+      content: `${base}\n\n[System note: the user attached ${attachments
+        .map((a) => a.name)
+        .join(
+          ", ",
+        )}. This model cannot open files; work from the conversation text, and if a file is essential tell the user to retry with a vision-capable model such as Big Pickle.]`,
     };
     return next;
   }
@@ -287,7 +304,11 @@ function sse(first: string | undefined, iterator: AsyncIterator<string>, upstrea
   });
 }
 
-/** Stream one Zen model. Returns the streaming Response or null (with failure pushed). */
+/** Stream one Zen model. Returns the streaming Response or { failed }.
+ *  Reasoning models may emit reasoning deltas for a long while before visible
+ *  text — those count as healthy activity, NOT an empty stream (textStream
+ *  alone would misreport them). A truly silent response retries once, then
+ *  fails fast so the fallback chain moves on. */
 async function streamOne(
   key: string | undefined,
   upstream: string,
@@ -296,31 +317,80 @@ async function streamOne(
   attachments: BuilderAttachment[],
   maxOutputTokens: number,
 ): Promise<Response | { failed: unknown }> {
-  try {
-    const result = streamText({
-      model: provider(key).chatModel(upstream),
-      messages: sdkMessages(messages, attachments, { multimodal }),
-      maxOutputTokens,
-      temperature: 0.2,
-    });
-    const iterator = result.textStream[Symbol.asyncIterator]();
-    const first = await iterator.next();
-    if (first.done)
-      return { failed: { upstream, status: 502, detail: "OpenCode returned an empty stream" } };
-    return new Response(sse(first.value, iterator, upstream), {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no",
-        "Access-Control-Allow-Origin": "*",
-        "X-ZYRAXON-Upstream": upstream,
-      },
-    });
-  } catch (e) {
-    const c = classify(e);
-    return { failed: { upstream, status: c.status, detail: c.detail } };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const result = streamText({
+        model: provider(key).chatModel(upstream),
+        messages: sdkMessages(messages, attachments, { multimodal }),
+        maxOutputTokens,
+        temperature: 0.2,
+      });
+      const iterator = result.fullStream[Symbol.asyncIterator]();
+      let sawActivity = false;
+      let firstText = "";
+      for (;;) {
+        const n = await iterator.next();
+        if (n.done) break;
+        const p = n.value as unknown as {
+          type?: string;
+          textDelta?: string;
+          text?: string;
+          error?: unknown;
+        };
+        if (p.type === "text-delta") {
+          const t = p.textDelta ?? p.text ?? "";
+          if (!t) continue;
+          firstText = t;
+          sawActivity = true;
+          break;
+        }
+        if (p.type === "reasoning" || p.type === "reasoning-delta") sawActivity = true;
+        else if (p.type === "error") throw p.error ?? new Error("upstream stream error");
+      }
+      if (!sawActivity) {
+        // Silent soft-block — one quick same-model retry rescues many of these.
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 900));
+          continue;
+        }
+        return { failed: { upstream, status: 502, detail: "OpenCode returned an empty stream" } };
+      }
+      if (!firstText)
+        return {
+          failed: {
+            upstream,
+            status: 502,
+            detail:
+              "model produced reasoning only and hit its output budget before any answer — try another model",
+          },
+        };
+      const restText = async function* (): AsyncGenerator<string> {
+        yield firstText;
+        for (;;) {
+          const n = await iterator.next();
+          if (n.done) break;
+          const p = n.value as unknown as { type?: string; textDelta?: string; text?: string };
+          if (p.type !== "text-delta") continue;
+          const t = p.textDelta ?? p.text ?? "";
+          if (t) yield t;
+        }
+      };
+      return new Response(sse(firstText, restText(), upstream), {
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive",
+          "X-Accel-Buffering": "no",
+          "Access-Control-Allow-Origin": "*",
+          "X-ZYRAXON-Upstream": upstream,
+        },
+      });
+    } catch (e) {
+      const c = classify(e);
+      return { failed: { upstream, status: c.status, detail: c.detail } };
+    }
   }
+  return { failed: { upstream, status: 502, detail: "unreachable" } };
 }
 
 /** ZYRAXON Zen chat: keyless by default (free pool), user/server key boosts capacity when present.
@@ -348,9 +418,22 @@ export async function zenChatStream(
     // error surfaces, then we fall through to models the console actually serves.
     chain = [...chain.filter((m) => !live.has(m.id)).slice(0, 1), ...served];
   }
+  // Attached media must reach a model that can actually SEE it — put
+  // verified-vision models right after the explicit pick (or first if none).
+  const hasMedia = attachments.length > 0;
+  if (hasMedia && chain.some((m) => !m.multimodal)) {
+    const head = chain[0];
+    const rest = chain.slice(1);
+    const ordered = [
+      head,
+      ...rest.filter((m) => m.multimodal),
+      ...rest.filter((m) => !m.multimodal),
+    ];
+    chain = ordered;
+  }
   const failures: unknown[] = [];
 
-  for (const candidate of chain.slice(0, 6)) {
+  for (const candidate of chain.slice(0, 12)) {
     const out = await streamOne(
       key,
       candidate.id,
@@ -376,6 +459,9 @@ export async function zenChatStream(
   else if (failures.every((f) => f.status === 429))
     error =
       "All OpenCode Zen free models are rate-limited right now. Add your own Zen API key in Settings for full capacity.";
+  else if (failures.length >= 2 && failures.every((f) => f.status === 502))
+    error =
+      "OpenCode's free pool is temporarily not returning content from this server. Retrying in a moment usually works — or add a free OpenCode key in Settings → Providers for dedicated capacity.";
   return Response.json(
     {
       error,

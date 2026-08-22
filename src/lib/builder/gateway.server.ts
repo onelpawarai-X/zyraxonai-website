@@ -98,7 +98,10 @@ export async function providerChatStream(opts: {
       apiKey: opts.apiKey.trim(),
     });
     const messages = sdkMessages(opts.messages.slice(-32), opts.attachments || [], {
-      multimodal: opts.multimodal !== false,
+      // Safe default: only forward media when the catalog CONFIRMS vision
+      // support; unknown models get media stripped with a clear note instead
+      // of an upstream "I cannot read image.png" refusal.
+      multimodal: opts.multimodal === true,
     });
     const result = streamText({
       model: p.chatModel(model),
