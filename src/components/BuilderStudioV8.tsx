@@ -602,7 +602,9 @@ export default function BuilderStudioV8() {
           model: sel.model,
           providerId: sel.provider,
           apiKey:
-            sel.provider === "zyraxon" ? undefined : connected[sel.provider]?.apiKey || undefined,
+            sel.provider === "zyraxon" || sel.provider === "opencode"
+              ? connected["opencode"]?.apiKey || undefined
+              : connected[sel.provider]?.apiKey || undefined,
           messages: next.map((m) => ({ role: m.role, content: m.content })),
           attachments: userAttachments.map((a) => ({ name: a.name, mime: a.mime, data: a.data })),
         }),
