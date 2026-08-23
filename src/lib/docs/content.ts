@@ -205,6 +205,12 @@ export const DOCS: DocPage[] = [
     desc: "Every tool category: MCP, ULTRA, vision, and built-in tools.",
     blocks: [
       {
+        t: "note",
+        kind: "tip",
+        title: "ZYRAXON X Tool Catalog",
+        text: "This page covers the agent tool families. For the full physical-world catalog — 260+ vehicle, drone, rocket, robot, and IoT tools — see [ZYRAXON X Tools](/docs/x-tools).",
+      },
+      {
         t: "p",
         text: "ZYRAXON includes **136+ tools** out of the box across four families.",
       },
@@ -259,6 +265,13 @@ export const DOCS: DocPage[] = [
         text: "The strike-security server bundles a full recon → scanning → exploitation → analysis pipeline: DNS enumeration, WHOIS, SSL checks, port scanning, HTTP header analysis, JS endpoint extraction, directory brute-force, CORS checks, technology detection, URL fuzzing, robots.txt analysis, form analysis, open-redirect checks, JWT inspection, IDOR response comparison, rate-limit testing, and subdomain scanning.",
       },
     ],
+  },
+  {
+    slug: "x-tools",
+    title: "ZYRAXON X Tools (260+)",
+    group: "Core",
+    desc: "The complete physical-world tool catalog: aviation, automotive, drones, rockets, marine, robotics, IoT.",
+    blocks: [],
   },
   {
     slug: "vision-system",

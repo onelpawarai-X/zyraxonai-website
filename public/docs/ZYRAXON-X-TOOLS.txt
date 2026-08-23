@@ -1,0 +1,796 @@
+================================================================================
+  ZYRAXON-AI // ZYRAXON X - COMPLETE TOOL CATALOG (FULL DETAILS)
+  All in one. Anything. Nothing is impossible.
+================================================================================
+
+Generated : 2026-08-23
+Source    : packages/zyraxon/src/x/  (54 tool files)
+Website   : zyraxonai.lovable.app/docs/x-tools
+Download  : zyraxonai.lovable.app/docs/ZYRAXON-X-TOOLS.txt
+
+TOTALS
+  X Tool Classes ............. 353   (exported classes across 54 files)
+  MCP Server Tools ........... 156   (9 MCP servers)
+  Built-in Agent Tools ....... 30    (agent runtime core)
+  ----------------------------------------------------
+  GRAND TOTAL ................ 539 TOOLS
+
+
+================================================================================
+  [01] AIRCRAFT & AVIATION - 51+ TOOLS
+  Full fly-by-wire stack: autopilot, flight control systems, safety avionics,
+  helicopter rotor control. Source: aviation-tools.ts, aircraft-fcs.ts,
+  aircraft-autonomy.ts, flight-control.ts, helicopter-tools.ts
+================================================================================
+
+  AircraftFCS            Master fly-by-wire flight control system coordinating
+                         every control surface on the aircraft.
+  FlightDirector         Computes steering guidance commands for pilot or
+                         autopilot following the active flight plan.
+  AutopilotManager       Engage/disengage autopilot and manage all flight modes.
+  PID                    Proportional-integral-derivative control loop for
+                         smooth axis control.
+  RateController         Damps angular rotation rates on pitch, roll, and yaw.
+  AttitudeController     Holds commanded bank and pitch attitudes precisely.
+  NavigationController   Tracks courses and provides lateral guidance.
+  TrajectoryTracker      Follows complete 4D trajectory profiles.
+  WaypointNavigator      Sequences GPS waypoints automatically en-route.
+  AltitudeHold           Maintains the selected altitude hands-free.
+  SpeedHold              Holds indicated airspeed via throttle control.
+  HeadingHold            Locks current or commanded magnetic heading.
+  AircraftSensors        Aggregates airspeed, altitude, AoA, and air data.
+  AircraftFlightControl  Unified interface binding all FCS subsystems.
+  EngineHealthMonitor    Tracks temperature, vibration, and wear trends to
+                         predict failures before they happen.
+  HydraulicSystem        Hydraulic pressure monitoring for flight controls
+                         and landing gear.
+  FuelOptimizer          Computes most fuel-efficient route, altitude, and
+                         throttle profile.
+  FireDetectionSystem    Engine and cargo fire detection with extinguisher
+                         control.
+  FlightDataRecorder     Records every flight parameter for post-flight
+                         analysis (black box).
+  PressurizationTool     Cabin pressurization and outflow valve control.
+  AntiIceTool            Wing/engine anti-ice and de-ice system management.
+  LandingGearTool        Gear extension/retraction sequencing with safety
+                         interlocks.
+  AutoBrakeTool          Automated runway braking after touchdown.
+  TCASTool               Traffic Collision Avoidance System with resolution
+                         advisories.
+  WeatherRadarTool       Airborne weather radar with turbulence detection.
+  GPWSTool               Ground Proximity Warning System (terrain alerts).
+  RadioAltimeterTool     Precise height-above-terrain measurement.
+  ElectricalTool         Aircraft electrical bus and generator management.
+  HydraulicsTool         Triple hydraulic system pressure management.
+  EngineMonitorTool      Real-time engine parameter monitoring.
+  NavigationDisplayTool  Primary flight / navigation display data feeds.
+  HelicopterAutopilot   Helicopter-specific autopilot modes (hover, SAS).
+  RotorControl           Main rotor RPM and tip-path-plane management.
+  TailRotorControl       Anti-torque tail rotor control.
+  CollectiveControl      Collective pitch control for vertical movement.
+  CyclicControl          Cyclic pitch control for directional flight.
+  AutorotationManager    Safe autorotation entry and landing profiles.
+  HoverAssist            Position hold during helicopter hover.
+  SlingLoadMonitor       External sling load stability monitoring.
+  TerrainFollowSystem    Low-level terrain-following flight automation.
+  FormationFlight        Multi-aircraft formation position keeping.
+  AirRefuelingManager    Aerial refueling boom/drogue approach assistance.
+  CombatManeuverSystem   High-G combat maneuver envelope protection.
+  CarrierLandingSystem   Precision approach and carrier deck landing aid.
+  STOLAssist             Short takeoff and landing performance assistant.
+  WakeTurbulenceAvoid    Wake vortex detection and avoidance routing.
+  BirdStrikeAvoidance    Bird activity radar advisory integration.
+  ETOPSMonitor           Extended twin-engine operations route monitoring.
+  CabinPressureGuard     Emergency cabin descent automation.
+  OxygenSystemControl    Passenger and crew oxygen deployment.
+  EvacuationSystem       Emergency evacuation slide/beacon activation.
+
+
+================================================================================
+  [02] AUTOMOTIVE & GROUND VEHICLES - 24 TOOLS
+  Complete vehicle autonomy stack plus deep ECU access.
+  Source: car-ecu.ts, car-autonomy.ts, ground-tools.ts, vehicles.ts
+================================================================================
+
+  TransmissionTool       Transmission gear selection and shift mapping.
+  BrakeSystemTool        ABS/EBD brake system monitoring and control.
+  SteeringTool           Electric power steering assist management.
+  SuspensionTool         Adaptive damper and air suspension control.
+  TireMonitorTool        TPMS tire pressure and temperature tracking.
+  ClimateControlTool     Dual-zone HVAC automation inside the cabin.
+  LightingTool           Adaptive headlight and interior lighting control.
+  SeatControlTool        Powered seat memory and comfort adjustment.
+  MirrorControlTool      Power mirror positioning and auto-fold.
+  WindowControlTool      Window lift module control with anti-pinch.
+  WiperControlTool       Rain-sensing automatic wiper control.
+  CruiseControlTool      Adaptive cruise with stop-and-go support.
+  StabilityControlTool   Electronic stability program (ESP) intervention.
+  EmissionMonitorTool    Exhaust emission compliance monitoring.
+  OBDTool                On-board diagnostics port reading and clearing.
+  PIDControllerTool      Generic PID loop for any automotive actuator.
+  KalmanFilterTool       Sensor fusion state estimation.
+  AStarPathfinderTool    Grid-based optimal path planning.
+  SignalProcessingTool   Real-time signal conditioning pipeline.
+  FFTTool                Fast Fourier transform for vibration analysis.
+  EncryptionTool         In-vehicle bus message encryption.
+  GraphTool              Road-network graph operations.
+  LRUCacheTool           Fast lookup caching for maps/telemetry.
+  MatrixTool             Matrix math for control algorithms.
+
+
+================================================================================
+  [03] GROUND INTELLIGENCE - 6 TOOLS
+  Next-level road awareness beyond basic driving.
+  Source: ground-tools.ts
+================================================================================
+
+  V2XCommunication       Vehicle-to-everything communication with other cars
+                         and infrastructure.
+  PedestrianPrediction   Predicts pedestrian crossing intent seconds ahead.
+  TrafficLightRecognition  Camera-based traffic light state detection.
+  DriverMonitoringSystem  Driver drowsiness and attention monitoring.
+  RoadConditionSystem    Wet/icy/gravel road surface classification.
+  CollisionImminenceSystem  Last-second collision probability computation.
+
+
+================================================================================
+  [04] DRONES & UAV - 22 TOOLS
+  Everything quadcopter through fixed-wing UAV.
+  Source: drone-fc.ts, drone-autonomy.ts, drone-tools.ts
+================================================================================
+
+  DroneFCS               Core drone flight controller (attitude/rate loops).
+  MotorMixer             Per-motor thrust mixing matrix engine.
+  BatteryMonitor         Cell voltage, current draw, and remaining capacity.
+  RCFallbackControl      RC-link-loss failsafe behaviors.
+  DroneSensors           Baro/mag/GNSS sensor fusion for drones.
+  DroneTelemetry         Live telemetry streaming to ground control.
+  DroneMissionPlanner    Autonomous waypoint mission planning engine.
+  OrbitMode              Circle an object of interest autonomously.
+  FollowMe               GPS-leash follow-me tracking mode.
+  ReturnToHome           Smart RTH with obstacle-aware pathing.
+  WaypointMissionRunner  Executes multi-waypoint autonomous missions.
+  GeofenceManager        No-fly zone and altitude fence enforcement.
+  SwarmCoordinator       Multi-drone swarm formation coordination.
+  PayloadDeliveryManager  Package pick-up and precision drop-off.
+  AerialMappingEngine    Photogrammetry-ready aerial survey capture.
+  PrecisionAgricultureDrone  NDVI crop-sensing flight automation.
+  SearchAndRescueDrone   SAR grid-search pattern automation.
+  InspectionDrone        Infrastructure close-up inspection paths.
+  IndoorNavigation       GPS-denied indoor visual navigation.
+  DroneCollisionAvoidance  Omnidirectional obstacle avoidance.
+  DroneCameraGimbal      3-axis gimbal stabilization and targeting.
+  FPVLowLatencyStream    Low-latency first-person-view video link.
+
+
+================================================================================
+  [05] MARINE & BOATS - 24 TOOLS
+  Boats, ships, and underwater systems.
+  Source: boat-mcs.ts, boat-autonomy.ts, marine-tools.ts
+================================================================================
+
+  BoatMCS                Marine control system core (throttle/trim/helm).
+  EngineManagement       Marine engine health and RPM management.
+  BilgeMonitor           Bilge water level monitoring and pump control.
+  AnchorDriftAlarm       Anchor dragging detection with GPS watch circle.
+  MarineNavigation       Chartplotter course steering and ETA.
+  AISReceiver            Automatic Identification System ship traffic feed.
+  DepthSounder           Sonar depth sounding with alarm shallows.
+  AutopilotSeaKeeper     Gyro-stabilized course keeping in waves.
+  DockingAssist          Low-speed precision docking thruster control.
+  WeatherRouting         Ocean weather-optimized route planning.
+  FuelRangePlanner       Marine fuel range and reserve planning.
+  ManOverboardSystem     MOB mark, track, and recovery procedures.
+  CollisionAtSeaAvoid    COLREGS-compliant collision avoidance.
+  MarineWeather          Sea-state and marine weather forecasting.
+  SonarSystem            Underwater sonar scanning and echo analysis.
+  NavigationChart        Electronic nautical chart handling.
+  HullMonitor            Hull stress and integrity monitoring.
+  BallastController      Ballast tank filling and stability trim.
+  FishingSpotFinder      Thermocline and fish-finder hotspot analysis.
+  RegattaRacer           Sail racing start-line and windward tactics.
+  SailTrimController     Automated sail sheet and trim tab adjustment.
+  SubmarineBallast       Submersible dive/surface ballast control.
+  ROVControl             Remotely operated underwater vehicle piloting.
+  MaritimeEmergency      Distress beacon (EPIRB/DSC) emergency handling.
+
+
+================================================================================
+  [06] ROCKETS & SPACE - 27 TOOLS
+  From launch pad to orbit to deep space.
+  Source: rocket-gnc.ts, rocket-autonomy.ts, space-tools.ts
+================================================================================
+
+  RocketGNC              Guidance, navigation, and control core.
+  ThrustVectorControl    Engine gimbal TVC actuation control.
+  StageSeparation        Staging event sequencing with confirmation.
+  LaunchAbortSystem      Pad and in-flight abort trigger logic.
+  TelemetryDownlink      Rocket telemetry encoding and transmission.
+  MaxQAeroPressure       Max-Q throttle bucket automation.
+  FairingDeployment      Payload fairing separation control.
+  OrbitalInsertion       Target-orbit insertion burn guidance.
+  ReentryGuidance        Atmospheric re-entry corridor guidance.
+  PropellantManagement   Tank pressurization and propellant settling.
+  LaunchWindowCalculator Optimal orbital launch window computation.
+  GroundStationScheduler Ground station downlink pass scheduling.
+  StageRecovery          Booster landing and recovery operations.
+  PayloadDeployment      Satellite deployment sequencing.
+  DeorbitPlanning        Controlled atmospheric deorbit planning.
+  ConstellationManagement Multi-satellite constellation coordination.
+  EclipsePrediction      Orbital eclipse window forecasting.
+  ThermalProtection      Re-entry heat shield management.
+  ReactionWheelArray     Satellite attitude control reaction wheels.
+  StarTracker            Celestial attitude determination.
+  DeepSpaceNetwork       DSN communication window planning.
+  RendezvousDocking      Orbital rendezvous and docking approach.
+  SampleReturnCapsule    Re-entry capsule descent targeting.
+  LunarLandingGuidance   Powered lunar descent and touchdown.
+  MarsEDLSystem          Mars entry-descent-landing sequence.
+  RadiationShieldingMon  Space radiation dose monitoring.
+  LifeSupportSystem      Crewed mission life-support loop control.
+
+
+================================================================================
+  [07] HARDWARE & PHYSICAL I/O - 18 TOOLS
+  Direct physical-world interfaces.
+  Source: physical.ts, physical-interface.ts, iot.ts
+================================================================================
+
+  GPIOTool               General-purpose input/output pin control.
+  PWMTool                Pulse-width modulation output channels.
+  ServoTool              Hobby/industrial servo actuation.
+  RelayTool              Relay switching for high-power loads.
+  ADC                    Analog-to-digital converter reads.
+  DAC                    Digital-to-analog converter outputs.
+  I2CBus                 I2C peripheral bus communication.
+  SPIBus                 SPI high-speed peripheral bus.
+  UARTSerial             Serial port communication links.
+  CANBusTool             Automotive/industrial CAN network frames.
+  MQTTController         IoT MQTT pub/sub messaging.
+  HTTPController         REST-based IoT device control.
+  WSController           WebSocket live device streams.
+  ModbusController       Industrial Modbus RTU/TCP protocol.
+  HomeAssistantController  Home Assistant smart-home bridge.
+  ZyraxonIoT             Native ZYRAXON IoT device mesh.
+  SensorHub              Multi-sensor aggregation hub.
+  ActuatorHub            Multi-actuator coordination hub.
+
+
+================================================================================
+  [08] ROBOTICS - 10 TOOLS
+  Robot arms, rovers, and humanoids.
+  Source: robot-controller.ts, robot-autonomy.ts
+================================================================================
+
+  RobotArmController     Multi-joint robotic arm kinematics and motion.
+  GripperControl         End-effector gripper open/close force control.
+  InverseKinematics      Joint-angle solving for target poses.
+  PathPlanner3D          Collision-free 3D motion path planning.
+  SLAM                   Simultaneous localization and mapping.
+  ObstacleDetection      Real-time obstacle field mapping.
+  MobileRobotNav         Wheeled/tracked robot autonomous navigation.
+  HumanoidBalance        Bipedal balance and gait stabilization.
+  RobotVisionPick        Vision-guided pick-and-place automation.
+  SwarmRobotics          Decentralized multi-robot task allocation.
+
+
+================================================================================
+================================================================================
+  [09] BEHAVIOR ENGINE - 8 TOOLS
+  High-level autonomous behavior composition.
+  Source: behavior.ts
+================================================================================
+
+  BehaviorEngine         Finite-state behavior composition and execution.
+  MissionExecutor        Multi-phase mission plan execution engine.
+  TaskScheduler          Priority-based task queue with dependencies.
+  ConditionMonitor       Event-condition-action rule evaluation.
+  StateMachine           Generic hierarchical state machine builder.
+  DecisionTree           Branching decision logic for autonomy.
+  GoalPlanner            Goal decomposition into executable plans.
+  ReactiveLayer          Sub-millisecond reactive reflex layer.
+
+
+================================================================================
+  [10] X CORE SYSTEMS - 10 TOOLS
+  The living subsystems that make ZYRAXON X alive.
+  Source: core.ts, voice.ts, learn.ts, heal.ts, evolve.ts,
+          memory.ts, graph.ts, predict.ts, quantum.ts
+================================================================================
+
+  ZyraxonX               Central orchestrator wiring every X subsystem.
+  ZyraxonVoice           Speech recognition and voice command intake.
+  ZyraxonTTS             Text-to-speech voice output.
+  ZyraxonPredict         Predictive analytics engine.
+  ZyraxonLearn           Online learning from outcomes.
+  ZyraxonHeal            Automatic fault detection and repair.
+  ZyraxonEvolve          Runtime capability self-expansion.
+  ZyraxonGraph           Knowledge-graph relationship engine.
+  ZyraxonMemory          Persistent cross-session memory.
+  ZyraxonQuantum         Quantum-inspired optimization routines.
+
+
+================================================================================
+  [11] VEHICLE INTELLIGENCE HUB - 7 TOOLS
+  Cross-domain vehicle coordination layer.
+  Source: vehicle-intelligence.ts, vehicles.ts
+================================================================================
+
+  VehicleIntelligenceHub  Unified hub binding air/ground/sea/space vehicles.
+  FleetManager            Multi-vehicle fleet status and task assignment.
+  VehicleHealthScorer     Overall health scoring across subsystems.
+  PredictiveMaintenance   Failure prediction driving maintenance schedules.
+  EnergyOptimizer         Battery/fuel energy budget optimization.
+  RemoteTeleoperation     Human remote takeover channel management.
+  VehicleEventRecorder    Unified black-box across all vehicle types.
+
+
+================================================================================
+  [12] AGRICULTURE - 5 TOOLS
+  Precision farming: soil analysis, crop monitoring, irrigation, harvest.
+  Source: agriculture-tools.ts
+================================================================================
+
+  SoilAnalyzer           Analyzes soil composition, moisture, and nutrients.
+  CropMonitor            Tracks crop health and growth stages from field data.
+  IrrigationController   Automated watering based on soil and weather.
+  PestDetector           Detects pest infestations before they spread.
+  HarvestPlanner         Optimal harvest timing and logistics planning.
+
+
+================================================================================
+  [13] CONSTRUCTION - 5 TOOLS
+  Heavy machinery autonomy on the job site.
+  Source: construction-tools.ts
+================================================================================
+
+  ExcavatorController    Autonomous digging and trenching operations.
+  CraneController        Load-lift sequencing with anti-sway control.
+  ConcreteMixer          Mix ratio control and pour scheduling.
+  SurveyDrone            Aerial site surveying and progress tracking.
+  BulldozerController    Autonomous grading and land-clearing passes.
+
+
+================================================================================
+  [14] INDUSTRIAL AUTOMATION - 5 TOOLS
+  Factory floor: PLC, SCADA, CNC, robotic arms, conveyor lines.
+  Source: industrial-tools.ts
+================================================================================
+
+  PLCController          Programmable logic controller programming/monitor.
+  SCADAMonitor           Supervisory control and data acquisition views.
+  CNCController          CNC machine G-code execution and toolpaths.
+  RoboticArmController   Factory robotic-arm cell coordination.
+  ConveyorController     Conveyor speed, routing, and jam detection.
+
+
+================================================================================
+  [15] INFRASTRUCTURE - 5 TOOLS
+  City-scale systems control.
+  Source: infrastructure-tools.ts
+================================================================================
+
+  PowerGridController    Electrical grid load balancing and switching.
+  WaterTreatmentSystem   Water quality monitoring and treatment cycles.
+  HVACController         Building-wide climate and ventilation automation.
+  FireSuppressionSystem  Fire detection and suppression agent release.
+  RailwayController      Rail signaling and interlocking control.
+
+
+================================================================================
+  [16] SECURITY & DEFENSE - 5 TOOLS
+  Physical and cyber security operations.
+  Source: security-tools.ts
+================================================================================
+
+  SurveillanceSystem     Multi-camera monitoring with motion detection.
+  AccessControlSystem    Door, gate, and credential management.
+  IntrusionDetector      Perimeter breach detection and alerting.
+  CyberSecurityMonitor   Network threat detection and response.
+  EncryptionEngine       At-rest and in-transit data encryption.
+
+
+================================================================================
+  [17] SURVEYING & MAPPING - 5 TOOLS
+  Centimeter-precision measurement systems.
+  Source: survey-tools.ts
+================================================================================
+
+  LiDARScanner           High-density 3D point-cloud terrain capture.
+  GPSRTK                 Real-time kinematic centimeter-level positioning.
+  TotalStation           Angle/distance measurement for surveying.
+  DroneMapper            Photogrammetry mapping from drone imagery.
+  SeismicMonitor         Ground vibration and seismic event detection.
+
+
+================================================================================
+  [18] MEDICAL & HEALTHCARE - 3 TOOLS
+  Patient safety systems.
+  Source: medical-tools.ts
+================================================================================
+
+  VitalSignsMonitor      Heart rate, blood pressure, SpO2 tracking+alarms.
+  DrugInteractionChecker Flags dangerous medication combinations.
+  PatientMonitor         Continuous multi-parameter patient surveillance.
+
+
+================================================================================
+  [19] ALERTS & NOTIFICATIONS - 4 TOOLS  (NEW!)
+  Alert lifecycle: creation, delivery channels, escalation, anomalies.
+  Source: alert-tools.ts
+================================================================================
+
+  AlertManager           Create/enable/disable/acknowledge alerts with
+                         severity levels and full acknowledgment history.
+  NotificationEngine     Delivers messages over multiple channels (email,
+                         SMS, webhook) with retry policies per message.
+  EscalationPolicy       Time-based multi-level escalation ladders; supports
+                         acknowledge and snooze; tracks active escalations.
+  AnomalyAlerter         Learns metric baselines, flags threshold deviations,
+                         computes statistics and predicts next values via
+                         linear regression.
+
+
+================================================================================
+  [20] DASHBOARDS & VISUALIZATION - 5 TOOLS  (NEW!)
+  Real-time operational dashboards.
+  Source: dashboard-tools.ts
+================================================================================
+
+  DashboardManager       Create/remove panels, bind live data, save and
+                         restore full panel layouts.
+  ChartEngine            Charts of any type with dynamic data updates,
+                         multi-series add/remove, and runtime options.
+  StatusMonitor          Named metrics with units and ranges; threshold
+                         breaches raise alerts automatically.
+  RealTimeStream         Pub/sub streams with subscriber callbacks and a
+                         1000-entry rolling buffer for replay.
+  WidgetFactory          Themed widgets with create/update lifecycle and
+                         global theme (primary/secondary colors).
+
+
+================================================================================
+  [21] DATA LOGGING & STORAGE - 5 TOOLS  (NEW!)
+  Persistence, auditability, and export pipelines.
+  Source: data-logger.ts
+================================================================================
+
+  TimeSeriesDB           Measurements with tags, retention windows, range
+                         queries, bucket aggregation (avg/sum/min/max/count),
+                         and automatic downsampling.
+  EventLogger            Leveled event log with source/level/time filtering,
+                         stats, recent-N reads, and CSV/JSON export.
+  AuditTrail             Who-did-what records queryable by user or resource,
+                         with usage statistics and CSV/JSON export.
+  DataExporter           CSV/JSON/Parquet-style export plus CSV/JSON import
+                         round-trips.
+  StorageManager         Named allocations with quota tracking, usage stats,
+                         and compress/decompress (60% ratio) support.
+
+
+================================================================================
+  [22] DIGITAL TWIN & SIMULATION - 5 TOOLS  (NEW!)
+  Virtual replicas synchronized with real assets.
+  Source: digital-twin.ts
+================================================================================
+
+  TwinManager            Twin lifecycle with typed state, full state history,
+                         real-state syncing with delta reports, and initial-
+                         vs-current diffing.
+  PhysicsEngine          Rigid bodies with mass/position/velocity, force
+                         accumulation, gravity, and Euler stepping.
+  ScenarioRunner         Runs what-if scenarios against twins safely.
+  StateSynchronizer      Two-way twin-to-physical state synchronization.
+  SimulationScheduler    Scheduled/stepped simulation run management.
+
+
+================================================================================
+  [23] MACHINE LEARNING - 6 TOOLS  (NEW!)
+  Onboard AI models for perception and decision-making.
+  Source: ml-tools.ts
+================================================================================
+
+  VisionModel            Image classification and object detection inference.
+  NLPModel               Text understanding: intent, entities, sentiment.
+  PredictionEngine       Time-series forecasting from historical patterns.
+  ClassifierEngine       Multi-class labeling of structured data.
+  AnomalyDetector        Statistical outlier detection over data streams.
+  ReinforcementLearner   Reward-driven policy learning agent training.
+
+
+================================================================================
+  [24] SAFETY SYSTEMS - 7 TOOLS  (NEW!)
+  Mission-critical protection layers.
+  Source: safety-tools.ts
+================================================================================
+
+  FailSafeSystem         Automatic transition to predefined safe states when
+                         faults are detected.
+  WatchdogTimer          Heartbeat monitoring; triggers recovery on hangs.
+  EmergencyShutdown      Immediate controlled halt of all actuators.
+  RedundancyManager      Hot-standby failover between duplicated systems.
+  FMEAAnalyzer           Failure mode and effects analysis with risk
+                         priority numbers.
+  SafetyInterlock        Hardware-style interlock condition enforcement.
+  CircuitBreaker         Trip on repeated failures to prevent cascades;
+                         automatic reset after cool-down.
+
+
+================================================================================
+  [25] RADIO & SDR - 7 TOOLS  (NEW!)
+  Software-defined radio and wireless spectrum tools.
+  Source: sdr-tools.ts
+================================================================================
+
+  SDRReceiver            Wideband software-defined radio signal reception.
+  FMTransmitter          FM band audio/data transmission.
+  WiFiAnalyzer           WiFi network scanning and channel spectrum analysis.
+  BluetoothScanner       Bluetooth device discovery and signal monitoring.
+  LoRaTransceiver        Long-range low-power LoRa mesh communication.
+  GPSReceiver            GNSS satellite signal processing and positioning.
+  SignalAnalyzer         Frequency-domain FFT signal analysis.
+
+
+================================================================================
+  [26] SENSOR SUITE - 8 TOOLS  (NEW!)
+  Full perception hardware abstraction.
+  Source: sensor-tools.ts
+================================================================================
+
+  LiDARSensor            Spinning/solid-state LiDAR point-cloud capture.
+  CameraSensor           Image capture with exposure/gain control.
+  RadarSensor            Object range and velocity via radio reflection.
+  IMUSensor              9-axis inertial orientation and motion tracking.
+  UltrasonicSensor       Short-range proximity echo measurement.
+  ThermalSensor          Infrared heat-map imaging.
+  AccelerometerSensor    Vibration and impact acceleration sensing.
+  PressureSensor         Barometric and fluid pressure measurement.
+
+
+================================================================================
+  [27] SPACE OPERATIONS - 8 TOOLS  (NEW!)
+  End-to-end space mission operations.
+  Source: space-tools.ts
+================================================================================
+
+  LaunchWindowCalculator Computes optimal launch windows to target orbits.
+  GroundStationScheduler Schedules downlink passes across ground stations.
+  StageRecovery          Booster landing burn and recovery ship ops.
+  PayloadDeployment      Satellite separation sequencing and confirmation.
+  DeorbitPlanning        Controlled re-entry corridor and splashdown plan.
+  ConstellationManagement Multi-satellite phasing and station-keeping.
+  EclipsePrediction      Forecast orbital eclipse windows for power budgets.
+  ThermalProtection      Heat-shield temperature management during re-entry.
+
+
+================================================================================
+  [28] MCP SERVER TOOLS - 156 FUNCTIONS ACROSS 9 SERVERS
+  The AI's hands for code, web, data, AI media, and security.
+  Source: packages/zyraxon/src/mcp/
+================================================================================
+
+  --- DARK EMPEROR ULTRA TOOLS (8) - mcp/ultra-tools.ts ---
+  ultraCodeGen           Generates entire applications from a description.
+  ultraAutoDeploy        One-command deployment to any cloud target.
+  ultraSecuritySweep     Complete security audit of a codebase.
+  ultraPerformance       Performance analysis and optimization engine.
+  ultraRefactor          AI-powered large-scale refactoring.
+  ultraTestGen           Comprehensive test suite generation.
+  ultraDocGen            Automatic documentation generation.
+  ultraDebug             Advanced debugging engine.
+
+  --- SECURITY TOOLS (20) - mcp/security-tools.ts ---
+  portScan               TCP port scanning on any host.
+  sslCheck               SSL/TLS certificate validation.
+  httpHeaders            HTTP response header inspection.
+  whoisLookup            Domain WHOIS registration lookup.
+  subdomainScan          Subdomain enumeration.
+  dirBruteForce          Hidden directory and file discovery.
+  techDetect             Website technology fingerprinting.
+  validateEmail          Email deliverability validation.
+  passwordStrength       Password strength scoring.
+  ipGeo                  IP address geolocation.
+  dnsEnum                Full DNS record enumeration.
+  traceroute             Network path tracing hop by hop.
+  macLookup              MAC address vendor lookup.
+  urlSafety              URL reputation and safety check.
+  filePerms              File permission auditing.
+  networkConnections     Active network connection inspection.
+  firewallStatus         Firewall rule status reporting.
+  serviceStatus          System service health checks.
+  userAccounts           Local user account audit.
+  scheduledTasks         Scheduled task inventory.
+
+  --- WEB TOOLS (20) - mcp/web-tools.ts ---
+  httpGet                HTTP GET requests with full header control.
+  httpPost               HTTP POST requests with payloads.
+  urlStatus              URL availability checking.
+  dnsLookup              DNS record resolution.
+  ping                   Host reachability testing.
+  portCheck              Single-port open checking.
+  downloadFile           File downloads from any URL.
+  webScrape              Webpage content extraction.
+  jsonParse              JSON parsing and querying.
+  jsonValidate           JSON syntax validation.
+  base64Encode           Base64 encoding.
+  base64Decode           Base64 decoding.
+  urlEncode              Percent-encoding strings.
+  urlDecode              Percent-decoding strings.
+  md5Hash                MD5 hashing (legacy checksums).
+  sha256Hash             SHA-256 secure hashing.
+  timestamp              Unix timestamp utilities.
+  generateUUID           UUID v4 generation.
+  randomString           Secure random string generation.
+  webhookTest            Webhook endpoint testing.
+
+  --- DATA TOOLS (20) - mcp/data-tools.ts ---
+  jsonToCsv              JSON arrays to CSV conversion.
+  csvToJson              CSV rows to JSON conversion.
+  xmlToJson              XML documents to JSON conversion.
+  textStats              Character/word/sentence statistics.
+  textDiff               Line-level text comparison.
+  sortLines              Alphabetical/numeric line sorting.
+  removeDuplicates       Duplicate line removal.
+  findReplace            Bulk find-and-replace operations.
+  extractEmails          Email address extraction from text.
+  extractUrls            URL extraction from text.
+  extractNumbers         Numeric value extraction.
+  wordFrequency          Word frequency counting.
+  generatePassword       Strong password generation.
+  regexMatch             Regular expression matching.
+  textSummary            Automatic text summarization.
+  convertCase            UPPER/lower/Title/camelCase transforms.
+  trimText               Whitespace trimming utilities.
+  padText                String padding to fixed width.
+  truncateText           Length-limited truncation with suffix.
+  wordCount              Simple word counting.
+
+  --- AI / SYSTEM INTERACTION TOOLS (20) - mcp/ai-tools.ts ---
+  textToSpeech           Spoken audio synthesis from text.
+  takeScreenshot         Screen capture on demand.
+  clipboard              Clipboard read/write access.
+  openApp                Launch applications.
+  closeApp               Terminate running applications.
+  volumeControl          System volume adjustment.
+  takeNote               Persistent note capture.
+  readNotes              Read stored notes back.
+  generateReport         Formatted report generation.
+  calculator             Mathematical expression evaluation.
+  setTimer               Countdown timers with alerts.
+  wakeWordDetection      Hands-free voice activation listening.
+  imageInfo              Image file metadata inspection.
+  pdfInfo                PDF document metadata inspection.
+  audioInfo              Audio file metadata inspection.
+  videoInfo              Video file metadata inspection.
+  imageResize            Image resizing to target dimensions.
+  convertFormat          Media format conversion.
+  backupFiles            Scheduled file backup snapshots.
+  systemCleanup          Temp/cache cleanup maintenance.
+
+  --- OMNI TOOLS (15) - mcp/omni-tools.ts ---
+  omniMultiFileCompose   Compose edits across many files atomically.
+  omniTerminalAutonomy   Autonomous terminal command chains.
+  omniBackgroundLoop     Persistent background task loops.
+  omniBehaviorCascade    Cascading behavior triggers between agents.
+  omniGitPair            AI git pair-programming sessions.
+  omniSandboxRuntime     Isolated sandbox execution environment.
+  omniIdeaToDeploy       Idea-to-production full pipeline.
+  omniCostRouter         Cost-aware model routing across providers.
+  omniLiveObservability  Realtime system observability feeds.
+  omniKnowledgeGraph     Persistent knowledge graph storage.
+  omniSecurityScan       Continuous security scanning loops.
+  omniSilentPrecompile   Background precompilation warming.
+  omniVisualContextSync  Screen visual context synchronization.
+  omniSelfEvolvingPrompt Self-improving prompt optimization.
+  omniZeroTrustStrip     Zero-trust execution environment stripping.
+
+  --- PRO BUILDER TOOLS (8) - mcp/pro-builder-tools.ts ---
+  siteCreate             Create complete websites from prompts.
+  sitePublish            Publish sites to GitHub Pages hosting.
+  siteList               List published site projects.
+  githubConnect          GitHub account linking.
+  mediaFetch             Fetch media assets for site builds.
+  svgGenerate            SVG vector graphics generation.
+  siteDomain             Custom domain management.
+  autoStartSites         Auto-start site preview services.
+
+  --- PRODUCTIVITY TOOLS (20) - mcp/productivity-tools.ts ---
+  createReminder         Time-based reminder creation.
+  listReminders          List pending reminders.
+  addTodo                Todo item creation.
+  listTodos              List all todo items.
+  completeTodo           Mark todos complete.
+  createEvent            Calendar event creation.
+  listEvents             List upcoming events.
+  quickNote              Fast note capture.
+  readQuickNotes         Read captured notes.
+  addBookmark            URL bookmark saving.
+  listBookmarks          List saved bookmarks.
+  quickMath              Inline math evaluation.
+  unitConvert            Unit-to-unit conversions.
+  colorConvert           Color format conversion (HEX/RGB/HSL).
+  textEncrypt            Text encryption with passphrase.
+  textDecrypt            Text decryption.
+  jsonFormatter          Pretty-print JSON documents.
+  markdownToHtml         Markdown rendering to HTML.
+  summarizeText          Quick text summarization.
+  trackHabit             Habit streak tracking.
+
+  --- SYSTEM TOOLS (20) - mcp/system-tools.ts ---
+  systemInfo             Full OS/hardware information report.
+  cpuUsage               Live CPU utilization sampling.
+  memoryUsage            RAM usage breakdown.
+  diskUsage              Per-drive disk usage stats.
+  runningProcesses       Process table listing.
+  killProcess            Terminate processes by PID/name.
+  networkInterfaces      Network adapter enumeration.
+  envVars                Environment variable access.
+  systemUptime           System uptime reporting.
+  watchFile              File change watching.
+  listDir                Directory listing with metadata.
+  searchFiles            Filename/content file searching.
+  readFile               Read any file's content.
+  writeFile              Write or overwrite files.
+  deleteFile             Safe file deletion.
+  copyFile               File copying.
+  moveFile               Move/rename files.
+  createDir              Directory creation.
+  fileHash               File checksum computation.
+  quickCommand           Fast one-shot shell commands.
+
+
+================================================================================
+  [29] BUILT-IN AGENT TOOLS - 30 CORE TOOLS
+  Wired directly into the agent runtime.
+  Source: packages/zyraxon/src/tool/
+================================================================================
+
+  read                   Read files or directories from the filesystem.
+  write                  Create or overwrite files with exact content.
+  edit                   Exact string replacements inside existing files.
+  apply_patch            Safe multi-file patch application.
+  shell                  Run terminal/shell commands.
+  glob                   Find files by name patterns anywhere.
+  grep                   Ripgrep-powered content search.
+  webfetch               Fetch web pages/APIs as markdown/text/html.
+  websearch              Real-time internet-wide search.
+  memory                 Persistent memory store/recall across sessions.
+  self_evolve            Install new MCP servers/capabilities autonomously.
+  screen_vision          Real-time screen capture and vision analysis.
+  api_tester             Full-control HTTP API endpoint testing.
+  code_analyzer          Code structure, complexity, quality analysis.
+  system_info            Live system health and resource monitoring.
+  task                   Launch subagents for complex multistep work.
+  todowrite              Structured session task lists.
+  question               Ask the user clarifying questions mid-task.
+  skill                  Inject specialized skills into context.
+  plan-enter             Enter strategic planning mode.
+  plan-exit               Exit planning mode back to execution.
+  lsp                    Language-server intelligence features.
+  media_fetch            Fetch images and media assets for context.
+  svg_generate           Generate SVG vector graphics.
+  github_connect         GitHub account integration.
+  site_create            Website project creation.
+  site_publish           Publish websites to live hosting.
+  site_unpublish         Take published sites offline.
+  site_preview           Live preview link generation.
+  site_domain            Custom domain attachment.
+
+
+================================================================================
+  HOW IT ALL CONNECTS
+================================================================================
+
+  The agent runtime loads the 30 built-in tools first. Through self_evolve it
+  attaches the 9 MCP servers (156 functions). When ZYRAXON X boots, the x-tool
+  registry registers all 353 vehicle/world tool classes. Every layer shares
+  ZyraxonMemory and ZyraxonGraph so skills learned in one domain transfer to
+  every other domain.
+
+  AIR + GROUND + SEA + SPACE + FACTORY + FARM + CITY + HOSPITAL + RADIO
+  = ONE BRAIN. NOTHING IS IMPOSSIBLE.
+
+--------------------------------------------------------------------------------
+  END OF CATALOG - zyraxonai.lovable.app/docs/x-tools
+  (c) 2026 ZYRAXON-AI. BSL-1.1 Licensed.
+--------------------------------------------------------------------------------

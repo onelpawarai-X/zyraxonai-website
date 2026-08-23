@@ -1,6 +1,101 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import { DOCS, DOC_GROUPS, type DocBlock } from "@/lib/docs/content";
+import { X_TOOL_CATEGORIES, X_TOOL_TOTALS } from "@/lib/docs/x-tools";
+
+function XToolsCatalog({ search }: { search: string }) {
+  const q = search.trim().toLowerCase();
+  const cats = X_TOOL_CATEGORIES.map((c) => ({
+    ...c,
+    tools: q
+      ? c.tools.filter((t) => t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q))
+      : c.tools,
+  })).filter((c) => !q || c.tools.length > 0);
+  const shown = cats.reduce((n, c) => n + c.tools.length, 0);
+  return (
+    <article className="mx-auto max-w-5xl pb-20">
+      <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-400">
+        ZYRAXON-AI // X Tool Catalog
+      </div>
+      <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">
+        ZYRAXON X — Complete Tool Catalog
+      </h1>
+      <p className="mt-3 max-w-3xl leading-relaxed text-zinc-400">
+        Every tool inside the ZYRAXON X engine, organized by category. The X engine gives the agent
+        direct control over aircraft, cars, drones, rockets, boats, robots, factories, farms,
+        hospitals, and entire city infrastructure — plus its MCP servers and built-in agent tools.
+      </p>
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          ["X Tool Classes", String(X_TOOL_TOTALS.classes)],
+          ["MCP Tools", String(X_TOOL_TOTALS.mcp)],
+          ["Built-in Tools", String(X_TOOL_TOTALS.builtin)],
+          ["Source Files", String(X_TOOL_TOTALS.files)],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center"
+          >
+            <div className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text font-mono text-2xl font-black text-transparent sm:text-3xl">
+              {value}
+            </div>
+            <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-500">
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+        {q ? `${shown} tools matching "${search}"` : `Showing all ${shown} tools`}
+      </p>
+      <a
+        href="/docs/ZYRAXON-X-TOOLS.txt"
+        target="_top"
+        className="mt-4 inline-flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-emerald-400 transition-colors hover:bg-emerald-500/20"
+      >
+        ⬇ Download Full TXT Catalog
+      </a>
+      {cats.map((c) => (
+        <section key={c.id} className="mt-10">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-2xl">{c.icon}</span>
+            <h2 className="text-lg font-bold text-white sm:text-xl">{c.title}</h2>
+            <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-cyan-400">
+              {c.tools.length}
+            </span>
+          </div>
+          <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{c.blurb}</p>
+          <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead>
+                <tr className="bg-white/[0.05]">
+                  <th className="px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-400">
+                    Tool
+                  </th>
+                  <th className="px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-400">
+                    What it does
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {c.tools.map((t, i) => (
+                  <tr key={t.name} className={i % 2 ? "bg-white/[0.02]" : ""}>
+                    <td className="w-1/3 whitespace-nowrap border-t border-white/[0.06] px-4 py-2 align-top font-mono text-[12px] font-semibold text-emerald-300">
+                      {t.name}
+                    </td>
+                    <td className="border-t border-white/[0.06] px-4 py-2 align-top text-zinc-300/90">
+                      {t.desc}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))}
+    </article>
+  );
+}
 
 function inline(text: string): ReactNode[] {
   const out: ReactNode[] = [];
@@ -215,48 +310,52 @@ export default function DocsShell({ slug }: { slug?: string }) {
 
   return (
     <DocsShellFrame search={q} setSearch={setQ} filtered={filtered}>
-      <article className="mx-auto max-w-3xl pb-20">
-        <nav className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-          <a href="/docs" target="_top" className="hover:text-cyan-400">
-            Docs
-          </a>
-          <span>/</span>
-          <span className="text-cyan-400">{doc.group}</span>
-        </nav>
-        <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">
-          {doc.title}
-        </h1>
-        <p className="mt-3 leading-relaxed text-zinc-400">{doc.desc}</p>
-        {doc.blocks.map((b, i) => (
-          <Block key={i} b={b} />
-        ))}
-        <div className="mt-16 grid gap-3 border-t border-white/10 pt-8 sm:grid-cols-2">
-          {prev ? (
-            <Link
-              href={`/docs/${prev.slug}`}
-              className="rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-cyan-500/40"
-            >
-              <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-zinc-500">
-                ← Previous
-              </div>
-              <div className="mt-1 font-semibold text-white">{prev.title}</div>
-            </Link>
-          ) : (
-            <span />
-          )}
-          {next ? (
-            <Link
-              href={`/docs/${next.slug}`}
-              className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-right transition-colors hover:border-cyan-500/40"
-            >
-              <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-zinc-500">
-                Next →
-              </div>
-              <div className="mt-1 font-semibold text-white">{next.title}</div>
-            </Link>
-          ) : null}
-        </div>
-      </article>
+      {doc.slug === "x-tools" ? (
+        <XToolsCatalog search={q} />
+      ) : (
+        <article className="mx-auto max-w-3xl pb-20">
+          <nav className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+            <a href="/docs" target="_top" className="hover:text-cyan-400">
+              Docs
+            </a>
+            <span>/</span>
+            <span className="text-cyan-400">{doc.group}</span>
+          </nav>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">
+            {doc.title}
+          </h1>
+          <p className="mt-3 leading-relaxed text-zinc-400">{doc.desc}</p>
+          {doc.blocks.map((b, i) => (
+            <Block key={i} b={b} />
+          ))}
+          <div className="mt-16 grid gap-3 border-t border-white/10 pt-8 sm:grid-cols-2">
+            {prev ? (
+              <Link
+                href={`/docs/${prev.slug}`}
+                className="rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-cyan-500/40"
+              >
+                <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-zinc-500">
+                  ← Previous
+                </div>
+                <div className="mt-1 font-semibold text-white">{prev.title}</div>
+              </Link>
+            ) : (
+              <span />
+            )}
+            {next ? (
+              <Link
+                href={`/docs/${next.slug}`}
+                className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-right transition-colors hover:border-cyan-500/40"
+              >
+                <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-zinc-500">
+                  Next →
+                </div>
+                <div className="mt-1 font-semibold text-white">{next.title}</div>
+              </Link>
+            ) : null}
+          </div>
+        </article>
+      )}
     </DocsShellFrame>
   );
 }
