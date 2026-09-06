@@ -9,7 +9,7 @@ function keyBytes(): Uint8Array {
 }
 
 export async function encryptGitHubToken(token: string): Promise<string> {
-  const key = await crypto.subtle.importKey("raw", keyBytes(), "AES-GCM", false, ["encrypt"]);
+  const key = await crypto.subtle.importKey("raw", keyBytes() as unknown as BufferSource, "AES-GCM", false, ["encrypt"]);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = new Uint8Array(
     await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoder.encode(token)),
@@ -20,7 +20,7 @@ export async function encryptGitHubToken(token: string): Promise<string> {
 export async function decryptGitHubToken(value: string): Promise<string> {
   const [ivPart, ciphertextPart] = value.split(".");
   if (!ivPart || !ciphertextPart) throw new Error("Invalid encrypted GitHub token");
-  const key = await crypto.subtle.importKey("raw", keyBytes(), "AES-GCM", false, ["decrypt"]);
+  const key = await crypto.subtle.importKey("raw", keyBytes() as unknown as BufferSource, "AES-GCM", false, ["decrypt"]);
   const plaintext = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: Uint8Array.from(Buffer.from(ivPart, "base64url")) },
     key,

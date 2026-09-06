@@ -40,7 +40,7 @@ export const Route = createFileRoute("/api/public/builder/sites")({
             .limit(limit);
           if (error) throw error;
           return Response.json({ ok: true, sites: data || [] }, { headers: CORS });
-        } catch (e: unknown) {
+        } catch (e: any) {
           return Response.json(
             { ok: false, error: e?.message || "Could not load sites" },
             { status: 500, headers: CORS },
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/api/public/builder/sites")({
         try {
           const ctx = await buildContext(request, new URL(request.url), {});
           const userId = ctx.requireUser();
-          const body: unknown = await request.json();
+          const body: any = await request.json();
           const title = String(body?.title || "Untitled website")
             .trim()
             .slice(0, 160);
@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/public/builder/sites")({
             .single();
           if (error) throw error;
           return Response.json({ ok: true, site: data }, { headers: CORS });
-        } catch (e: unknown) {
+        } catch (e: any) {
           return Response.json(
             { ok: false, error: e?.message || "Could not save site" },
             { status: Number(e?.status || 500), headers: CORS },

@@ -118,7 +118,7 @@ function normalize(e: GalleryExtension) {
   };
 }
 
-async function query(body: unknown) {
+async function query(body: any) {
   const res = await fetch(GALLERY, {
     method: "POST",
     headers: {

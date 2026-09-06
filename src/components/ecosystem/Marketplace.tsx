@@ -172,7 +172,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const authorName =
-          typeof item.author === "string" ? item.author : (item.author as unknown)?.name || "";
+          typeof item.author === "string" ? item.author : (item.author as any)?.name || "";
         return (
           item.name.toLowerCase().includes(q) ||
           item.description.toLowerCase().includes(q) ||
@@ -589,7 +589,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                             alt={
                               typeof item.author === "string"
                                 ? item.author
-                                : (item.author as unknown)?.name || ""
+                                : (item.author as any)?.name || ""
                             }
                             style={{ width: "100%", height: "100%", objectFit: "cover" }}
                           />
@@ -608,7 +608,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           >
                             {typeof item.author === "string"
                               ? item.author.charAt(0).toUpperCase()
-                              : ((item.author as unknown)?.name || "?").charAt(0).toUpperCase()}
+                              : ((item.author as any)?.name || "?").charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
@@ -618,7 +618,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           onUserClick?.(
                             typeof item.author === "string"
                               ? item.author
-                              : (item.author as unknown)?.name || "",
+                              : (item.author as any)?.name || "",
                           );
                         }}
                         style={{
@@ -634,7 +634,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                       >
                         {typeof item.author === "string"
                           ? item.author
-                          : (item.author as unknown)?.name || "Unknown"}{" "}
+                          : (item.author as any)?.name || "Unknown"}{" "}
                       </button>
                     </div>
 

@@ -91,7 +91,7 @@ export function getAIConnection() {
         window.removeEventListener("offline", offline);
       };
     },
-    trackEvent(event: string, payload: unknown) {
+    trackEvent(event: string, payload: any) {
       window.dispatchEvent(
         new CustomEvent("zyraxon:ecosystem-event", { detail: { event, payload } }),
       );

@@ -285,7 +285,7 @@ export default function DocsShell({ slug }: { slug?: string }) {
                   {pages.map((p) => (
                     <Link
                       key={p.slug}
-                      href={`/docs/${p.slug}`}
+                      to="/docs/$slug" params={{ slug: p.slug }}
                       className="group rounded-xl border border-white/10 bg-white/[0.03] p-5 transition-all hover:border-cyan-500/50 hover:bg-cyan-500/[0.06]"
                     >
                       <div className="flex items-center justify-between">
@@ -331,7 +331,7 @@ export default function DocsShell({ slug }: { slug?: string }) {
           <div className="mt-16 grid gap-3 border-t border-white/10 pt-8 sm:grid-cols-2">
             {prev ? (
               <Link
-                href={`/docs/${prev.slug}`}
+                to="/docs/$slug" params={{ slug: prev.slug }}
                 className="rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-cyan-500/40"
               >
                 <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-zinc-500">
@@ -344,7 +344,7 @@ export default function DocsShell({ slug }: { slug?: string }) {
             )}
             {next ? (
               <Link
-                href={`/docs/${next.slug}`}
+                to="/docs/$slug" params={{ slug: next.slug }}
                 className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-right transition-colors hover:border-cyan-500/40"
               >
                 <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-zinc-500">
@@ -459,7 +459,7 @@ function DocsShellFrame({
                       return (
                         <Link
                           key={p.slug}
-                          href={`/docs/${p.slug}`}
+                          to="/docs/$slug" params={{ slug: p.slug }}
                           onClick={() => setOpen(false)}
                           className={`block rounded-md px-2 py-1.5 text-[13px] no-underline transition-colors ${
                             active

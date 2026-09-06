@@ -35,7 +35,7 @@ function getHeaders(): Record<string, string> {
   return headers;
 }
 
-async function fetchFromGitHub(path: string): Promise<unknown> {
+async function fetchFromGitHub(path: string): Promise<any> {
   const res = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents${path}`, {
     headers: getHeaders(),
   });
@@ -45,7 +45,7 @@ async function fetchFromGitHub(path: string): Promise<unknown> {
   return data;
 }
 
-function normalizeItem(item: unknown): EcosystemItem {
+function normalizeItem(item: any): EcosystemItem {
   let author = item.author;
   let authorAvatar = item.authorAvatar;
   let authorId = item.authorId;
@@ -86,8 +86,8 @@ function normalizeItem(item: unknown): EcosystemItem {
     author,
     authorAvatar,
     authorId: authorId || author,
-    category: category as unknown,
-    type: type as unknown,
+    category: category as any,
+    type: type as any,
     tags: Array.isArray(item.tags)
       ? item.tags
       : typeof item.tags === "string" && item.tags.trim()

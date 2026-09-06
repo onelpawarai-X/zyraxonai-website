@@ -41,7 +41,7 @@ export const Route = createFileRoute("/api/public/community")({
           );
         }
 
-        let input: { event?: string; message?: unknown; payload?: unknown };
+        let input: { event?: string; message?: any; payload?: any };
         try {
           input = (await request.json()) as typeof input;
         } catch {

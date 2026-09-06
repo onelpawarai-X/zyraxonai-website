@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/builder/search")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
 
       POST: async ({ request }) => {
-        let body: unknown;
+        let body: any;
         try {
           body = await request.json();
         } catch {
@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/builder/search")({
           }
           if (wikiImgs.status === "fulfilled" && wikiImgs.value.ok) {
             const data = await wikiImgs.value.json();
-            for (const page of Object.values<unknown>(data?.query?.pages || {})) {
+            for (const page of Object.values<any>(data?.query?.pages || {})) {
               const info = page?.imageinfo?.[0];
               if (!info?.url) continue;
               results.push({

@@ -33,7 +33,7 @@ async function run(exe: string, args: string[], cwd: string, timeoutMs = TIMEOUT
         env: { ...process.env, CI: "1" },
         stdio: ["ignore", "pipe", "pipe"],
       });
-      const finish = (v: unknown) => {
+      const finish = (v: any) => {
         if (!settled) {
           settled = true;
           done(v);
@@ -104,11 +104,11 @@ async function findRunner(): Promise<Runner | null> {
     ["pwsh", ["-NoLogo", "-NoProfile", "-NonInteractive"]],
     ["powershell", ["-NoLogo", "-NoProfile", "-NonInteractive"]],
   ] as const) {
-    const r = await probe(exe as string, baseArgs as unknown as string[], "powershell").catch(
+    const r = await probe(exe as string, baseArgs as any as string[], "powershell").catch(
       () => null,
     );
     if (r?.started && r.code === 0)
-      return { exe, kind: "powershell", baseArgs: baseArgs as unknown as string[] };
+      return { exe, kind: "powershell", baseArgs: baseArgs as any as string[] };
   }
   for (const exe of ["bash", "sh"]) {
     const r = await run(exe, ["-c", "echo ok"], process.cwd(), 8_000).catch(() => null);
@@ -171,7 +171,7 @@ export const Route = createFileRoute("/api/public/builder/engine")({
       },
 
       POST: async ({ request }) => {
-        let body: unknown;
+        let body: any;
         try {
           body = await request.json();
         } catch {

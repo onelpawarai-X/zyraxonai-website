@@ -8,9 +8,9 @@
 
 const GH = "https://api.github.com";
 
-type GhInit = { token: string; method?: string; body?: unknown };
+type GhInit = { token: string; method?: string; body?: any };
 
-async function gh<T = unknown>(
+async function gh<T = any>(
   path: string,
   { token, method = "GET", body }: GhInit,
 ): Promise<{ ok: boolean; status: number; data: T }> {
@@ -26,7 +26,7 @@ async function gh<T = unknown>(
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const text = await res.text();
-  let data: unknown = null;
+  let data: any = null;
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
@@ -62,7 +62,7 @@ async function putFile(
   message: string,
 ) {
   const encoded = path.split("/").map(encodeURIComponent).join("/");
-  const existing = await gh<unknown>(`/repos/${owner}/${repo}/contents/${encoded}`, { token });
+  const existing = await gh<any>(`/repos/${owner}/${repo}/contents/${encoded}`, { token });
   const sha = existing.ok ? existing.data?.sha : undefined;
   return gh(`/repos/${owner}/${repo}/contents/${encoded}`, {
     token,
@@ -130,9 +130,9 @@ export async function publishSite(input: PublishInput): Promise<PublishResult> {
   }
   const owner = me.data.login;
 
-  let repoInfo = await gh<unknown>(`/repos/${owner}/${repo}`, { token });
+  let repoInfo = await gh<any>(`/repos/${owner}/${repo}`, { token });
   if (!repoInfo.ok) {
-    const created = await gh<unknown>("/user/repos", {
+    const created = await gh<any>("/user/repos", {
       token,
       method: "POST",
       body: {
@@ -174,9 +174,9 @@ export async function publishSite(input: PublishInput): Promise<PublishResult> {
   }
 
   const branch = repoInfo.data?.default_branch || "main";
-  let pages = await gh<unknown>(`/repos/${owner}/${repo}/pages`, { token });
+  let pages = await gh<any>(`/repos/${owner}/${repo}/pages`, { token });
   if (!pages.ok) {
-    pages = await gh<unknown>(`/repos/${owner}/${repo}/pages`, {
+    pages = await gh<any>(`/repos/${owner}/${repo}/pages`, {
       token,
       method: "POST",
       body: { source: { branch, path: "/" } },
@@ -190,7 +190,7 @@ export async function publishSite(input: PublishInput): Promise<PublishResult> {
   }
 
   if (customDomain) {
-    const domainResult = await gh<unknown>(`/repos/${owner}/${repo}/pages`, {
+    const domainResult = await gh<any>(`/repos/${owner}/${repo}/pages`, {
       token,
       method: "PUT",
       body: { cname: customDomain, https_enforced: true },
@@ -203,7 +203,7 @@ export async function publishSite(input: PublishInput): Promise<PublishResult> {
     }
   }
 
-  const final = await gh<unknown>(`/repos/${owner}/${repo}/pages`, { token });
+  const final = await gh<any>(`/repos/${owner}/${repo}/pages`, { token });
   const pagesUrl =
     final.ok && final.data?.html_url ? final.data.html_url : `https://${owner}.github.io/${repo}/`;
   const apex = customDomain ? customDomain.split(".").length === 2 : false;
