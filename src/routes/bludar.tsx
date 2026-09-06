@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import BuilderStudioV8 from "@/components/BuilderStudioV8";
-import BuilderMicEnhancer from "@/components/BuilderMicEnhancer";
-import BuilderControlsGuard from "@/components/BuilderControlsGuard";
-import "../styles/builder-controls.css";
+
+const BUILDER_URL = "https://zyraxon-pro.ai.studio/";
 
 export const Route = createFileRoute("/bludar")({
   head: () => ({
@@ -11,29 +8,30 @@ export const Route = createFileRoute("/bludar")({
       { title: "ZYRAXON AI Bludar — Build Without Limits" },
       {
         name: "description",
-        content: "Build, preview, edit, export and sync websites with ZYRAXON AI.",
+        content: "Build, preview, edit, export and publish websites with ZYRAXON AI.",
       },
       { property: "og:title", content: "ZYRAXON AI Bludar" },
       {
         property: "og:description",
-        content:
-          "Fast AI builder with live Monaco editing, PDF/project exports and GitHub workspace.",
+        content: "Build, preview, edit, export and publish websites with ZYRAXON AI.",
       },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: BuilderRoute,
+  component: BludarRoute,
 });
 
-function BuilderRoute() {
-  const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
-  if (!ready) return null;
+function BludarRoute() {
   return (
-    <>
-      <BuilderStudioV8 />
-      <BuilderMicEnhancer />
-      <BuilderControlsGuard />
-    </>
+    <div className="fixed inset-0 w-screen h-screen bg-background">
+      <iframe
+        src={BUILDER_URL}
+        title="ZYRAXON AI Bludar"
+        className="w-full h-full border-0"
+        allow="clipboard-read; clipboard-write; microphone; camera; fullscreen; cross-origin-isolated"
+        referrerPolicy="no-referrer-when-downgrade"
+      />
+    </div>
   );
 }
