@@ -115,7 +115,7 @@ class GitHubDataStorage {
     return JSON.parse(raw);
   }
 
-  async updateFile(path: string, content: unknown, message: string): Promise<void> {
+  async updateFile(path: string, content: any, message: string): Promise<void> {
     const res = await fetch(
       `${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`,
       {
@@ -147,7 +147,7 @@ class GitHubDataStorage {
     );
   }
 
-  async updateProfile(profile: unknown): Promise<void> {
+  async updateProfile(profile: any): Promise<void> {
     await this.updateFile("profile.json", profile, "Update profile");
   }
 
@@ -178,7 +178,7 @@ class GitHubDataStorage {
     return (await this.getFile("comments.json")) || [];
   }
 
-  async addComment(itemIdOrComment: string | unknown, possibleComment?: unknown): Promise<void> {
+  async addComment(itemIdOrComment: string | unknown, possibleComment?: any): Promise<void> {
     const comments = await this.getComments();
     const comment = possibleComment
       ? { ...possibleComment, itemId: itemIdOrComment }
@@ -219,7 +219,7 @@ class GitHubDataStorage {
     return (await this.getFile("published.json")) || [];
   }
 
-  async addPublishedItem(item: unknown): Promise<void> {
+  async addPublishedItem(item: any): Promise<void> {
     const items = await this.getPublishedItems();
     items.push({
       ...item,
@@ -234,7 +234,7 @@ class GitHubDataStorage {
     return (await this.getFile("ai-connection.json")) || { connected: false, sessions: [] };
   }
 
-  async updateAIConnection(connection: unknown): Promise<void> {
+  async updateAIConnection(connection: any): Promise<void> {
     await this.updateFile("ai-connection.json", connection, "Update AI connection");
   }
 
@@ -254,7 +254,7 @@ class GitHubDataStorage {
     return (await this.getFile("community_chat.json")) || [];
   }
 
-  async addChatMessage(message: unknown): Promise<void> {
+  async addChatMessage(message: any): Promise<void> {
     const messages = await this.getChatMessages();
     messages.push(message);
     await this.updateFile("community_chat.json", messages, `Chat message from ${message.username}`);
@@ -262,7 +262,7 @@ class GitHubDataStorage {
 
   async likeChatMessage(messageId: string, userId: string): Promise<void> {
     const messages = await this.getChatMessages();
-    const msg = messages.find((m: unknown) => m.id === messageId);
+    const msg = messages.find((m: any) => m.id === messageId);
     if (msg) {
       if (!msg.likes) msg.likes = [];
       if (!msg.likes.includes(userId)) {
@@ -276,7 +276,7 @@ class GitHubDataStorage {
     return (await this.getFile("marketplace.json")) || [];
   }
 
-  async addMarketplaceItem(item: unknown): Promise<void> {
+  async addMarketplaceItem(item: any): Promise<void> {
     const items = await this.getMarketplaceItems();
     items.push({
       ...item,
@@ -291,7 +291,7 @@ class GitHubDataStorage {
     return this.getFile(`${key}.json`);
   }
 
-  async set(key: string, value: unknown): Promise<void> {
+  async set(key: string, value: any): Promise<void> {
     const path = `${key}.json`;
     const current = await fetch(
       `${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`,

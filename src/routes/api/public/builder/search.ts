@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/builder/search")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
 
       POST: async ({ request }) => {
-        let body: unknown;
+        let body: any;
         try {
           body = await request.json();
         } catch {

@@ -41,7 +41,7 @@ const JSON_HEADERS = {
 const DEFAULT_MODEL = "openai/gpt-4o-mini-transcribe";
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MiB (gateway cap)
 
-function jsonResponse(body: unknown, status = 200) {
+function jsonResponse(body: any, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
 }
 

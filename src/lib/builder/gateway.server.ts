@@ -19,7 +19,7 @@ const STREAM_HEADERS = {
 
 function sse(first: string | undefined, iterator: AsyncIterator<string>, model: string) {
   const enc = new TextEncoder();
-  const frame = (delta: unknown, finish: string | null) =>
+  const frame = (delta: any, finish: string | null) =>
     enc.encode(
       `data: ${JSON.stringify({ id: `zyraxon-gw-${Date.now()}`, object: "chat.completion.chunk", choices: [{ index: 0, delta, finish_reason: finish }], model })}\n\n`,
     );

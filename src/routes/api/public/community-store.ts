@@ -72,7 +72,7 @@ async function readFile(file: string, token?: string) {
   if (res.status === 404) return { content: null as unknown, sha: undefined as string | undefined };
   if (!res.ok) throw new Error(`GitHub read ${res.status}`);
   const data = (await res.json()) as { content?: string; sha?: string };
-  let parsed: unknown = null;
+  let parsed: any = null;
   if (data.content) {
     try {
       parsed = JSON.parse(b64decode(data.content));
@@ -114,7 +114,7 @@ export const Route = createFileRoute("/api/public/community-store")({
           );
         }
 
-        let input: { file?: string; content?: unknown; message?: string };
+        let input: { file?: string; content?: any; message?: string };
         try {
           input = (await request.json()) as typeof input;
         } catch {
@@ -133,7 +133,7 @@ export const Route = createFileRoute("/api/public/community-store")({
         let finalContent = input.content;
         if (/^chat_[a-z0-9_-]+\.json$/.test(file) && Array.isArray(input.content)) {
           const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-          finalContent = input.content.filter((msg: unknown) => {
+          finalContent = input.content.filter((msg: any) => {
             if (!msg || !msg.timestamp) return true;
             return new Date(msg.timestamp).getTime() > cutoff;
           });

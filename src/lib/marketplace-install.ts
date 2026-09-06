@@ -56,7 +56,7 @@ const SCHEME = "zyraxon://";
 /* ------------------------------------------------------------------ */
 
 interface ZyraxonBridge {
-  installExtension?: (payload: unknown) => Promise<unknown> | unknown;
+  installExtension?: (payload: any) => Promise<unknown> | unknown;
   uninstallExtension?: (id: string) => Promise<unknown> | unknown;
   setExtensionEnabled?: (id: string, enabled: boolean) => Promise<unknown> | unknown;
   listExtensions?: () => Promise<InstalledRecord[]> | InstalledRecord[];
@@ -286,7 +286,7 @@ export async function fetchVSIXUrl(extensionId: string): Promise<string | null> 
     if (!version) return null;
 
     const asset = version.files?.find(
-      (f: unknown) => f.assetType === "Microsoft.VisualStudio.Services.VSIXPackage",
+      (f: any) => f.assetType === "Microsoft.VisualStudio.Services.VSIXPackage",
     );
     return asset?.source || null;
   } catch {

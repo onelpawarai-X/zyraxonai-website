@@ -8,7 +8,7 @@
 
 const GH = "https://api.github.com";
 
-type GhInit = { token: string; method?: string; body?: unknown };
+type GhInit = { token: string; method?: string; body?: any };
 
 async function gh<T = unknown>(
   path: string,
@@ -26,7 +26,7 @@ async function gh<T = unknown>(
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const text = await res.text();
-  let data: unknown = null;
+  let data: any = null;
   try {
     data = text ? JSON.parse(text) : null;
   } catch {

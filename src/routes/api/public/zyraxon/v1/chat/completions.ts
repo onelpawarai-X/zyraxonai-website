@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")(
           );
         }
 
-        let body: unknown;
+        let body: any;
         try {
           body = await request.json();
         } catch {
@@ -53,13 +53,13 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")(
         const messages: ChatMessage[] = Array.isArray(body?.messages)
           ? body.messages
               .filter(
-                (m: unknown) =>
+                (m: any) =>
                   m &&
                   typeof m.content === "string" &&
                   ["system", "user", "assistant"].includes(m.role),
               )
               .slice(-32)
-              .map((m: unknown) => ({ role: m.role, content: String(m.content).slice(0, 60000) }))
+              .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 60000) }))
           : [];
 
         if (!messages.length) {

@@ -45,7 +45,7 @@ async function fetchFromGitHub(path: string): Promise<unknown> {
   return data;
 }
 
-function normalizeItem(item: unknown): EcosystemItem {
+function normalizeItem(item: any): EcosystemItem {
   let author = item.author;
   let authorAvatar = item.authorAvatar;
   let authorId = item.authorId;

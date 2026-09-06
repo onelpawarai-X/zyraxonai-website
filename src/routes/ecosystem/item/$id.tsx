@@ -19,7 +19,7 @@ type EcosystemItem = {
   slug: string;
   category: string;
   description: string | null;
-  content: unknown;
+  content: any;
   tags: string[];
   github_url: string | null;
   demo_url: string | null;
@@ -169,7 +169,7 @@ function EcosystemItemPage() {
           if (data && data.id) return [data];
           return [];
         };
-        const ensureArray = (val: unknown): string[] => {
+        const ensureArray = (val: any): string[] => {
           if (Array.isArray(val)) return val;
           if (typeof val === "string" && val.trim())
             return val
@@ -178,7 +178,7 @@ function EcosystemItemPage() {
               .filter(Boolean);
           return [];
         };
-        const normalizeAuthor = (item: unknown) => {
+        const normalizeAuthor = (item: any) => {
           if (item.author && typeof item.author === "object") {
             return {
               id: item.authorId || item.author.name || "",
@@ -198,7 +198,7 @@ function EcosystemItemPage() {
         };
         const published = await fetchJson("/marketplace/published/index.json");
         const all = [...published];
-        const found = all.find((i: unknown) => i.id === id);
+        const found = all.find((i: any) => i.id === id);
         if (found && alive) {
           const itemTags = ensureArray(found.tags);
           const itemPlatforms = ensureArray(found.platforms);

@@ -58,7 +58,7 @@ export const Route = createFileRoute("/api/public/github/publish")({
             { status: 401, headers: CORS },
           );
 
-        let body: unknown;
+        let body: any;
         try {
           body = await request.json();
         } catch {
@@ -70,7 +70,7 @@ export const Route = createFileRoute("/api/public/github/publish")({
         const files: ProjectFile[] = Array.isArray(body?.files)
           ? body.files
               .filter(
-                (file: unknown) =>
+                (file: any) =>
                   file && typeof file.path === "string" && typeof file.content === "string",
               )
               .slice(0, 500)
@@ -88,13 +88,13 @@ export const Route = createFileRoute("/api/public/github/publish")({
             { error: "GitHub authentication failed" },
             { status: 401, headers: CORS },
           );
-        const user: unknown = await userResponse.json();
+        const user: any = await userResponse.json();
 
         let repoResponse = await github(
           `/repos/${encodeURIComponent(user.login)}/${encodeURIComponent(repoName)}`,
           token,
         );
-        let repo: unknown;
+        let repo: any;
 
         if (repoResponse.ok) {
           repo = await repoResponse.json();
@@ -138,7 +138,7 @@ export const Route = createFileRoute("/api/public/github/publish")({
             `/repos/${encodeURIComponent(user.login)}/${encodeURIComponent(repoName)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`,
             token,
           );
-          const existingData: unknown = existing.ok ? await existing.json() : null;
+          const existingData: any = existing.ok ? await existing.json() : null;
 
           const payload: Record<string, unknown> = {
             message: `ZYRAXON AI: update ${file.path}`,

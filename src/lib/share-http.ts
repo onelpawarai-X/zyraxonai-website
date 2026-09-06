@@ -5,7 +5,7 @@ export const SHARE_CORS = {
   "Access-Control-Max-Age": "86400",
 } as const;
 
-export function json(body: unknown, status = 200): Response {
+export function json(body: any, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...SHARE_CORS },
@@ -16,7 +16,7 @@ export function preflight(): Response {
   return new Response(null, { status: 204, headers: SHARE_CORS });
 }
 
-export function errorResponse(error: unknown): Response {
+export function errorResponse(error: any): Response {
   const status = (error as { status?: number }).status ?? 500;
   const message = error instanceof Error ? error.message : "Unexpected error";
   console.error("[shares]", status, message);

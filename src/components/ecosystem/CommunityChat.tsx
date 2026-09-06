@@ -351,13 +351,13 @@ async function storeRead<T>(file: string, fallback: T): Promise<T> {
   try {
     const res = await fetch(`${STORE}?file=${encodeURIComponent(file)}`);
     if (!res.ok) return fallback;
-    const data = (await res.json()) as { content?: unknown };
+    const data = (await res.json()) as { content?: any };
     return (data.content ?? fallback) as T;
   } catch {
     return fallback;
   }
 }
-async function storeWrite(file: string, content: unknown, message: string): Promise<boolean> {
+async function storeWrite(file: string, content: any, message: string): Promise<boolean> {
   try {
     const res = await fetch(STORE, {
       method: "POST",
@@ -651,7 +651,7 @@ export default function CommunityChat() {
     rtRef.current = new CommunityRealtime(
       { userId: user.id, username: user.username, avatarUrl: user.avatarUrl || "" },
       {
-        onChat: (msg: unknown) => {
+        onChat: (msg: any) => {
           if (!msg?.id) return;
           setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
         },
@@ -849,18 +849,18 @@ export default function CommunityChat() {
     return `${ROOM_PREFIX}-${Date.now()}`;
   }, [loadRoomsFromGitHub]);
 
-  const broadcastToPeers = useCallback((data: unknown) => {
+  const broadcastToPeers = useCallback((data: any) => {
     const json = JSON.stringify(data);
     dataChannels.current.forEach((ch) => {
       if (ch.readyState === "open") ch.send(json);
     });
   }, []);
 
-  const setupDataChannelHandlers = useCallback((conn: unknown) => {
+  const setupDataChannelHandlers = useCallback((conn: any) => {
     conn.on("open", () => {
       dataChannels.current.set(conn.peer, conn);
     });
-    conn.on("data", (data: unknown) => {
+    conn.on("data", (data: any) => {
       if (typeof data !== "string") return;
       try {
         const parsed = JSON.parse(data);
@@ -926,7 +926,7 @@ export default function CommunityChat() {
         const peer = new PeerJS(`${roomId}-peer-${count}`, { debug: 0 });
         peerJsRef.current = peer;
         peer.on("open", () => connectToExistingPeers());
-        peer.on("call", (call: unknown) => {
+        peer.on("call", (call: any) => {
           if (localStream.current) {
             call.answer(localStream.current);
             call.on("stream", (remoteStream: MediaStream) => {
@@ -939,7 +939,7 @@ export default function CommunityChat() {
             });
           }
         });
-        peer.on("connection", (conn: unknown) => setupDataChannelHandlers(conn));
+        peer.on("connection", (conn: any) => setupDataChannelHandlers(conn));
       } catch {
         /* ignored */
       }
@@ -1533,7 +1533,7 @@ export default function CommunityChat() {
               <div className="mb-2 rounded-xl overflow-hidden border border-[#21262d]">
                 <Picker
                   data={data}
-                  onEmojiSelect={(emoji: unknown) => {
+                  onEmojiSelect={(emoji: any) => {
                     setInput((prev) => prev + emoji.native);
                     setShowEmojiPicker(false);
                   }}

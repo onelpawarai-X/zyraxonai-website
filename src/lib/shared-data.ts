@@ -14,7 +14,7 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) return fallback;
-    const data = (await res.json()) as { content?: unknown };
+    const data = (await res.json()) as { content?: any };
     if (data.content == null) return fallback;
     return data.content as T;
   } catch {
@@ -22,7 +22,7 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
   }
 }
 
-async function writeJson(file: string, content: unknown, message: string): Promise<boolean> {
+async function writeJson(file: string, content: any, message: string): Promise<boolean> {
   try {
     const res = await fetch(STORE, {
       method: "POST",
@@ -72,7 +72,7 @@ export interface SharedComment {
   username?: string;
   content: string;
   createdAt?: string;
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 export async function getComments(itemId: string): Promise<SharedComment[]> {

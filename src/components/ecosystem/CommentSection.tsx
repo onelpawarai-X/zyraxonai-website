@@ -4,8 +4,8 @@ import { getComments, addComment } from "../../lib/shared-data";
 
 interface CommentSectionProps {
   itemId: string;
-  comments: unknown[];
-  onCommentAdded?: (comment: unknown) => void;
+  comments: any[];
+  onCommentAdded?: (comment: any) => void;
 }
 
 function timeAgo(dateString: string): string {

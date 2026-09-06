@@ -39,7 +39,7 @@ export const Route = createFileRoute("/api/public/providers/$provider")({
 
       POST: async ({ request, params }) => {
         const providerId = decodeURIComponent(params.provider).trim();
-        let body: unknown = null;
+        let body: any = null;
         try {
           body = await request.json();
         } catch {

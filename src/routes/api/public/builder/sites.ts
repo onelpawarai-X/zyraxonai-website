@@ -51,7 +51,7 @@ export const Route = createFileRoute("/api/public/builder/sites")({
         try {
           const ctx = await buildContext(request, new URL(request.url), {});
           const userId = ctx.requireUser();
-          const body: unknown = await request.json();
+          const body: any = await request.json();
           const title = String(body?.title || "Untitled website")
             .trim()
             .slice(0, 160);

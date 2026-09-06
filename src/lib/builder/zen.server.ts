@@ -219,7 +219,7 @@ export function sdkMessages(
   ] as unknown;
 }
 
-export function classify(error: unknown) {
+export function classify(error: any) {
   const s = error instanceof Error ? error.message : "SDK request failed";
   return {
     detail: s,
@@ -248,7 +248,7 @@ function provider(key: string | undefined) {
   });
 }
 
-function frame(enc: TextEncoder, delta: unknown, finish: string | null, upstream: string) {
+function frame(enc: TextEncoder, delta: any, finish: string | null, upstream: string) {
   return enc.encode(
     `data: ${JSON.stringify({ id: `zyraxon-${Date.now()}`, object: "chat.completion.chunk", choices: [{ index: 0, delta, finish_reason: finish }], model: upstream })}\n\n`,
   );
@@ -293,7 +293,7 @@ async function streamOne(
   messages: ChatMessage[],
   attachments: BuilderAttachment[],
   maxOutputTokens: number,
-): Promise<Response | { failed: unknown }> {
+): Promise<Response | { failed: any }> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const result = streamText({
@@ -312,7 +312,7 @@ async function streamOne(
           type?: string;
           textDelta?: string;
           text?: string;
-          error?: unknown;
+          error?: any;
         };
         if (p.type === "text-delta") {
           const t = p.textDelta ?? p.text ?? "";
@@ -408,7 +408,7 @@ export async function zenChatStream(
     ];
     chain = ordered;
   }
-  const failures: unknown[] = [];
+  const failures: any[] = [];
 
   for (const candidate of chain.slice(0, 12)) {
     const out = await streamOne(
@@ -481,7 +481,7 @@ export async function discoverConsoleModels(apiKey?: string) {
     });
     const d = await r.json().catch(() => null);
     const ids = Array.isArray(d?.data)
-      ? d.data.map((x: unknown) => String(x?.id || "")).filter(Boolean)
+      ? d.data.map((x: any) => String(x?.id || "")).filter(Boolean)
       : [];
     return { ok: r.ok, status: r.status, ids };
   } catch (e) {

@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/public/builder/publish")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
         try {
-          const body: unknown = await request.json();
+          const body: any = await request.json();
           const token = String(body?.token || "").trim();
           const repo = String(body?.repo || body?.repository || "").trim();
           const files =

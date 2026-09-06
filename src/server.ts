@@ -4,7 +4,7 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
 type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
+  fetch: (request: Request, env: any, ctx: any) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -37,7 +37,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 
 function isH3SwallowedErrorBody(body: string): boolean {
   try {
-    const payload = JSON.parse(body) as { unhandled?: unknown; message?: unknown };
+    const payload = JSON.parse(body) as { unhandled?: any; message?: any };
     return payload.unhandled === true && payload.message === "HTTPError";
   } catch {
     return false;
@@ -45,7 +45,7 @@ function isH3SwallowedErrorBody(body: string): boolean {
 }
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
+  async fetch(request: Request, env: any, ctx: any) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

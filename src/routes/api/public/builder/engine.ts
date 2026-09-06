@@ -33,7 +33,7 @@ async function run(exe: string, args: string[], cwd: string, timeoutMs = TIMEOUT
         env: { ...process.env, CI: "1" },
         stdio: ["ignore", "pipe", "pipe"],
       });
-      const finish = (v: unknown) => {
+      const finish = (v: any) => {
         if (!settled) {
           settled = true;
           done(v);
@@ -171,7 +171,7 @@ export const Route = createFileRoute("/api/public/builder/engine")({
       },
 
       POST: async ({ request }) => {
-        let body: unknown;
+        let body: any;
         try {
           body = await request.json();
         } catch {

@@ -20,7 +20,7 @@ export type CommunityIdentity = {
 };
 
 type Handlers = {
-  onChat?: (message: unknown) => void;
+  onChat?: (message: any) => void;
   onPeers?: (peers: { id: string; username: string; stream: MediaStream }[]) => void;
   onPresence?: (users: string[]) => void;
   onCallers?: (users: string[]) => void;
@@ -89,11 +89,11 @@ export class CommunityRealtime {
     });
   }
 
-  private send(event: string, payload: unknown) {
+  private send(event: string, payload: any) {
     this.channel?.send({ type: "broadcast", event, payload });
   }
 
-  sendChat(message: unknown) {
+  sendChat(message: any) {
     this.send("chat", { message, from: this.peerId });
   }
 
@@ -148,7 +148,7 @@ export class CommunityRealtime {
     this.emitPeers();
   }
 
-  private async onSignal(payload: unknown) {
+  private async onSignal(payload: any) {
     if (!payload || payload.from === this.peerId) return;
     const from = payload.from as string;
 
