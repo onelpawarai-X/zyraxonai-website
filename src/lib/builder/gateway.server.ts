@@ -63,7 +63,7 @@ export async function providerChatStream(opts: {
   try {
     const detail = await getProviderDetail(providerId);
     if (detail) {
-      api = resolveProviderApi(providerId, detail as unknown);
+      api = resolveProviderApi(providerId, detail as any);
       name = detail.name;
       const known = detail.models.find((m) => m.id === model);
       if (known && opts.multimodal === undefined) opts.multimodal = known.multimodal;
@@ -105,7 +105,7 @@ export async function providerChatStream(opts: {
     });
     const result = streamText({
       model: p.chatModel(model),
-      messages: messages as unknown,
+      messages: messages as any,
       maxOutputTokens: Math.min(opts.maxOutputTokens || 16384, 32768),
       temperature: 0.2,
     });

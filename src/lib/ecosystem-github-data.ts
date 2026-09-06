@@ -102,7 +102,7 @@ class GitHubDataStorage {
     });
   }
 
-  private async getFile(path: string): Promise<unknown> {
+  private async getFile(path: string): Promise<any> {
     const res = await fetch(
       `${GITHUB_API}/repos/${this.username}/${this.repoName}/contents/${path}`,
       {
@@ -135,7 +135,7 @@ class GitHubDataStorage {
     });
   }
 
-  async getProfile(): Promise<unknown> {
+  async getProfile(): Promise<any> {
     return (
       (await this.getFile("profile.json")) || {
         username: this.username,
@@ -174,11 +174,11 @@ class GitHubDataStorage {
     return likes.includes(itemId);
   }
 
-  async getComments(): Promise<unknown[]> {
+  async getComments(): Promise<any[]> {
     return (await this.getFile("comments.json")) || [];
   }
 
-  async addComment(itemIdOrComment: string | unknown, possibleComment?: any): Promise<void> {
+  async addComment(itemIdOrComment: string | any, possibleComment?: any): Promise<void> {
     const comments = await this.getComments();
     const comment = possibleComment
       ? { ...possibleComment, itemId: itemIdOrComment }
@@ -215,7 +215,7 @@ class GitHubDataStorage {
     return follows.following.includes(userId);
   }
 
-  async getPublishedItems(): Promise<unknown[]> {
+  async getPublishedItems(): Promise<any[]> {
     return (await this.getFile("published.json")) || [];
   }
 
@@ -230,7 +230,7 @@ class GitHubDataStorage {
     await this.updateFile("published.json", items, "Publish item");
   }
 
-  async getAIConnection(): Promise<unknown> {
+  async getAIConnection(): Promise<any> {
     return (await this.getFile("ai-connection.json")) || { connected: false, sessions: [] };
   }
 
@@ -250,7 +250,7 @@ class GitHubDataStorage {
     await this.updateAIConnection(connection);
   }
 
-  async getChatMessages(): Promise<unknown[]> {
+  async getChatMessages(): Promise<any[]> {
     return (await this.getFile("community_chat.json")) || [];
   }
 
@@ -272,7 +272,7 @@ class GitHubDataStorage {
     }
   }
 
-  async getMarketplaceItems(): Promise<unknown[]> {
+  async getMarketplaceItems(): Promise<any[]> {
     return (await this.getFile("marketplace.json")) || [];
   }
 
@@ -287,7 +287,7 @@ class GitHubDataStorage {
     await this.updateFile("marketplace.json", items, "Add marketplace item");
   }
 
-  async get(key: string): Promise<unknown> {
+  async get(key: string): Promise<any> {
     return this.getFile(`${key}.json`);
   }
 

@@ -544,7 +544,7 @@ export default function CommunityChat() {
   const localStream = useRef<MediaStream | null>(null);
   const screenStream = useRef<MediaStream | null>(null);
   const peerConnections = useRef<Map<string, unknown>>(new Map());
-  const peerJsRef = useRef<unknown>(null);
+  const peerJsRef = useRef<any>(null);
   const dataChannels = useRef<Map<string, RTCDataChannel>>(new Map());
   const fileChunksRef = useRef<Map<string, { data: string[]; name: string; type: string }>>(
     new Map(),
@@ -576,7 +576,7 @@ export default function CommunityChat() {
             try {
               const fileData = await storeRead<{ name: string; type: string; data: string }>(
                 `chat_files/${activeChannel}/${msg.attachment.fileId}.json`,
-                null as unknown,
+                null as any,
               );
               if (fileData?.data) {
                 return {
@@ -753,7 +753,7 @@ export default function CommunityChat() {
             name: file.name,
             mimeType: file.type,
           };
-          rtRef.current?.sendChat(payload as unknown);
+          rtRef.current?.sendChat(payload as any);
           dataChannels.current.forEach((dc) => {
             try {
               dc.send(JSON.stringify(payload));
@@ -768,7 +768,7 @@ export default function CommunityChat() {
           fileName: file.name,
           mimeType: file.type,
         };
-        rtRef.current?.sendChat(complete as unknown);
+        rtRef.current?.sendChat(complete as any);
         dataChannels.current.forEach((dc) => {
           try {
             dc.send(JSON.stringify(complete));

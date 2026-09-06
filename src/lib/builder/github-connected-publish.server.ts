@@ -34,11 +34,11 @@ export async function publishConnectedSite(ctx: ApiContext, input: PublishInput)
   if (total > 20_000_000)
     throw new HttpError(413, "SITE_TOO_LARGE", "Website source is too large (20MB limit).");
 
-  let repoInfo = await githubRequest<unknown>(`/repos/${githubLogin}/${repo}`, token).catch(
+  let repoInfo = await githubRequest<any>(`/repos/${githubLogin}/${repo}`, token).catch(
     () => null,
   );
   if (!repoInfo) {
-    repoInfo = await githubRequest<unknown>("/user/repos", token, {
+    repoInfo = await githubRequest<any>("/user/repos", token, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -54,11 +54,11 @@ export async function publishConnectedSite(ctx: ApiContext, input: PublishInput)
   for (const [path, content] of entries) {
     const safePath = path.replace(/^\/+/, "").replace(/\.\.\//g, "");
     if (!safePath || safePath.startsWith(".git/")) continue;
-    const existing = await githubRequest<unknown>(
+    const existing = await githubRequest<any>(
       `/repos/${githubLogin}/${repo}/contents/${encodeURIComponent(safePath)}`,
       token,
     ).catch(() => null);
-    await githubRequest<unknown>(`/repos/${githubLogin}/${repo}/contents/${safePath}`, token, {
+    await githubRequest<any>(`/repos/${githubLogin}/${repo}/contents/${safePath}`, token, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -69,17 +69,17 @@ export async function publishConnectedSite(ctx: ApiContext, input: PublishInput)
     });
   }
 
-  const pages = await githubRequest<unknown>(`/repos/${githubLogin}/${repo}/pages`, token).catch(
+  const pages = await githubRequest<any>(`/repos/${githubLogin}/${repo}/pages`, token).catch(
     () => null,
   );
   if (!pages) {
-    await githubRequest<unknown>(`/repos/${githubLogin}/${repo}/pages`, token, {
+    await githubRequest<any>(`/repos/${githubLogin}/${repo}/pages`, token, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ source: { branch: repoInfo.default_branch || "main", path: "/" } }),
     }).catch(() => undefined);
   }
-  const finalPages = await githubRequest<unknown>(
+  const finalPages = await githubRequest<any>(
     `/repos/${githubLogin}/${repo}/pages`,
     token,
   ).catch(() => null);

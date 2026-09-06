@@ -56,15 +56,15 @@ const SCHEME = "zyraxon://";
 /* ------------------------------------------------------------------ */
 
 interface ZyraxonBridge {
-  installExtension?: (payload: any) => Promise<unknown> | unknown;
-  uninstallExtension?: (id: string) => Promise<unknown> | unknown;
-  setExtensionEnabled?: (id: string, enabled: boolean) => Promise<unknown> | unknown;
+  installExtension?: (payload: any) => Promise<any> | any;
+  uninstallExtension?: (id: string) => Promise<any> | any;
+  setExtensionEnabled?: (id: string, enabled: boolean) => Promise<any> | any;
   listExtensions?: () => Promise<InstalledRecord[]> | InstalledRecord[];
 }
 
 function bridge(): ZyraxonBridge | null {
   if (typeof window === "undefined") return null;
-  const w = window as unknown as { zyraxon?: ZyraxonBridge; zyraxonBridge?: ZyraxonBridge };
+  const w = window as any as { zyraxon?: ZyraxonBridge; zyraxonBridge?: ZyraxonBridge };
   return w.zyraxon ?? w.zyraxonBridge ?? null;
 }
 

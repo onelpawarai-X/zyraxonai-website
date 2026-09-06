@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/builder/search")({
           }
           if (wikiImgs.status === "fulfilled" && wikiImgs.value.ok) {
             const data = await wikiImgs.value.json();
-            for (const page of Object.values<unknown>(data?.query?.pages || {})) {
+            for (const page of Object.values<any>(data?.query?.pages || {})) {
               const info = page?.imageinfo?.[0];
               if (!info?.url) continue;
               results.push({

@@ -12,7 +12,7 @@ import * as admin from "./admin.server";
 import * as notifications from "./notifications.server";
 import type { ApiContext } from "./context.server";
 
-type Handler = (ctx: ApiContext) => Promise<unknown> | unknown;
+type Handler = (ctx: ApiContext) => Promise<any> | any;
 type Route = { method: string; pattern: string[]; handler: Handler; raw?: boolean };
 function r(method: string, path: string, handler: Handler, raw = false): Route {
   return { method, pattern: path.split("/").filter(Boolean), handler, raw };

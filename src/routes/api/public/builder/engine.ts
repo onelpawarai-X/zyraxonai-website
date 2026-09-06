@@ -104,11 +104,11 @@ async function findRunner(): Promise<Runner | null> {
     ["pwsh", ["-NoLogo", "-NoProfile", "-NonInteractive"]],
     ["powershell", ["-NoLogo", "-NoProfile", "-NonInteractive"]],
   ] as const) {
-    const r = await probe(exe as string, baseArgs as unknown as string[], "powershell").catch(
+    const r = await probe(exe as string, baseArgs as any as string[], "powershell").catch(
       () => null,
     );
     if (r?.started && r.code === 0)
-      return { exe, kind: "powershell", baseArgs: baseArgs as unknown as string[] };
+      return { exe, kind: "powershell", baseArgs: baseArgs as any as string[] };
   }
   for (const exe of ["bash", "sh"]) {
     const r = await run(exe, ["-c", "echo ok"], process.cwd(), 8_000).catch(() => null);

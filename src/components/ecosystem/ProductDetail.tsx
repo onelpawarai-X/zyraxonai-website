@@ -963,7 +963,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     publisher:
                       typeof item.author === "string"
                         ? item.author
-                        : String((item.author as unknown)?.name ?? ""),
+                        : String((item.author as any)?.name ?? ""),
                     icon: item.icon ?? item.logo ?? null,
                     source: "extension",
                   }}

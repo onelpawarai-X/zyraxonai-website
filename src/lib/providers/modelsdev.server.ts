@@ -147,7 +147,7 @@ export async function getProviderDetail(providerId: string): Promise<ProviderDet
   const entry = data[providerId];
   if (!entry) return null;
   const models: CatalogModel[] = [];
-  for (const [key, raw] of Object.entries<unknown>(entry.models || {})) {
+  for (const [key, raw] of Object.entries<any>(entry.models || {})) {
     const id = String(raw?.id || key);
     const input = Array.isArray(raw?.modalities?.input) ? raw.modalities.input : ["text"];
     models.push({

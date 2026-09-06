@@ -319,7 +319,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
         name: form.name,
         description: form.description,
         category: form.category,
-        type: (TYPE_MAP[form.category] as unknown) || "plugin",
+        type: (TYPE_MAP[form.category] as any) || "plugin",
         version: form.version,
         tags: form.tags
           .split(",")

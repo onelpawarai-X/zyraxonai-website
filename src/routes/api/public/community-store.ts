@@ -69,7 +69,7 @@ async function readFile(file: string, token?: string) {
   const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${file}`, {
     headers: gh(token),
   });
-  if (res.status === 404) return { content: null as unknown, sha: undefined as string | undefined };
+  if (res.status === 404) return { content: null as any, sha: undefined as string | undefined };
   if (!res.ok) throw new Error(`GitHub read ${res.status}`);
   const data = (await res.json()) as { content?: string; sha?: string };
   let parsed: any = null;

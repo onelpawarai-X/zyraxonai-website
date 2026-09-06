@@ -134,7 +134,7 @@ export async function zenFreeModels(): Promise<ZenModel[]> {
   }
 }
 
-/** Ids the live Zen console currently serves (keyless). null = unknown, never block on it. */
+/** Ids the live Zen console currently serves (keyless). null = any, never block on it. */
 let liveCache: { at: number; ids: Set<string> | null } | null = null;
 export async function zenLiveIds(): Promise<Set<string> | null> {
   if (liveCache && Date.now() - liveCache.at < POOL_TTL) return liveCache.ids;
@@ -216,7 +216,7 @@ export function sdkMessages(
       content: ZYRAXON_SYSTEM_PROMPT.trim(),
     },
     ...input,
-  ] as unknown;
+  ] as any;
 }
 
 export function classify(error: any) {
@@ -308,7 +308,7 @@ async function streamOne(
       for (;;) {
         const n = await iterator.next();
         if (n.done) break;
-        const p = n.value as unknown as {
+        const p = n.value as any as {
           type?: string;
           textDelta?: string;
           text?: string;
@@ -346,7 +346,7 @@ async function streamOne(
         for (;;) {
           const n = await iterator.next();
           if (n.done) break;
-          const p = n.value as unknown as { type?: string; textDelta?: string; text?: string };
+          const p = n.value as any as { type?: string; textDelta?: string; text?: string };
           if (p.type !== "text-delta") continue;
           const t = p.textDelta ?? p.text ?? "";
           if (t) yield t;

@@ -68,8 +68,8 @@ export class CommunityRealtime {
       void this.onSignal(payload);
     });
     channel.on("presence", { event: "sync" }, () => {
-      const state = channel.presenceState() as Record<string, unknown[]>;
-      const all = Object.values(state).flat() as unknown[];
+      const state = channel.presenceState() as Record<string, any[]>;
+      const all = Object.values(state).flat() as any[];
       this.handlers.onPresence?.(all.map((p) => p.username).filter(Boolean));
       this.handlers.onCallers?.(
         all

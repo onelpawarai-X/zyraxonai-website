@@ -251,7 +251,7 @@ export class AudioCaptureService {
       });
 
       // Create audio context
-      this.audioContext = new (window.AudioContext || (window as unknown).webkitAudioContext)();
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       this.audioContext.resume();
 
       const source = this.audioContext.createMediaStreamSource(this.mediaStream);
