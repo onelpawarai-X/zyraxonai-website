@@ -5,7 +5,7 @@ export type DocBlock =
   | { t: "code"; lang?: string; code: string }
   | { t: "list"; items: string[]; ordered?: boolean }
   | { t: "table"; head: string[]; rows: string[][] }
-  | { t: "note"; kind: "info" | "warn" | "tip"; title?: string; text: string };
+  | { t: "note"; kind: "info" | "warn" | "tip" | "success"; title?: string; text: string };
 
 export type DocPage = {
   slug: string;

@@ -73,7 +73,7 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")(
           request.headers.get("x-request-id") ||
           `api-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const apiKey = providerKey(request);
-        return zenChatStream(model, messages, apiKey, [], requestId);
+        return zenChatStream(model, messages, apiKey, []);
       },
     },
   },
