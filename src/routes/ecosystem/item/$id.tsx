@@ -237,7 +237,7 @@ function EcosystemItemPage() {
         } else if (alive) {
           setError("Item not found");
         }
-      } catch (e: unknown) {
+      } catch (e: any) {
         if (alive) setError(e.message);
       }
     }

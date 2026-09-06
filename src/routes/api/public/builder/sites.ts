@@ -40,7 +40,7 @@ export const Route = createFileRoute("/api/public/builder/sites")({
             .limit(limit);
           if (error) throw error;
           return Response.json({ ok: true, sites: data || [] }, { headers: CORS });
-        } catch (e: unknown) {
+        } catch (e: any) {
           return Response.json(
             { ok: false, error: e?.message || "Could not load sites" },
             { status: 500, headers: CORS },
@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/public/builder/sites")({
             .single();
           if (error) throw error;
           return Response.json({ ok: true, site: data }, { headers: CORS });
-        } catch (e: unknown) {
+        } catch (e: any) {
           return Response.json(
             { ok: false, error: e?.message || "Could not save site" },
             { status: Number(e?.status || 500), headers: CORS },

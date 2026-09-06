@@ -41,7 +41,7 @@ export const Route = createFileRoute("/api/public/builder/publish")({
             status: result.ok ? 200 : 400,
             headers: CORS,
           });
-        } catch (error: unknown) {
+        } catch (error: any) {
           return Response.json(
             {
               ok: false,

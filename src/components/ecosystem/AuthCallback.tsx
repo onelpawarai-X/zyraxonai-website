@@ -52,7 +52,7 @@ export default function AuthCallback({ code, state, onSuccess, onError }: AuthCa
         setMode("error");
         onError?.(result.error || "Authentication failed");
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
       setErrorMsg(err.message || "Callback failed");
       setMode("error");
       onError?.(err.message || "Callback failed");
@@ -66,7 +66,7 @@ export default function AuthCallback({ code, state, onSuccess, onError }: AuthCa
       setUserCode(flow.user_code);
       setVerificationUri(flow.verification_uri);
       setMode("polling");
-    } catch (err: unknown) {
+    } catch (err: any) {
       setErrorMsg(err.message || "Failed to start login");
       setMode("error");
       onError?.(err.message || "Failed to start login");

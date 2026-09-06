@@ -1039,7 +1039,7 @@ export default function CommunityChat() {
         const roomId = await findAvailableRoom();
         roomIdRef.current = roomId;
         await joinOrCreateRoom(roomId);
-      } catch (err: unknown) {
+      } catch (err: any) {
         setCallError(err?.message || "Failed to start call");
         setCallMode(null);
       }
