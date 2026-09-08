@@ -7,6 +7,8 @@ import { createFileRoute } from "@tanstack/react-router";
  * the Windows / macOS / Linux buttons hand out an .apk.
  */
 export const REPO = "onelpawarai/ZYRAXON-AI";
+/** Primary account first, mirror/fallback account second. */
+export const REPOS = ["onelpawarai/ZYRAXON-AI", "onelpawarai-X/ZYRAXON-AI"];
 
 const HEADERS = {
   "Access-Control-Allow-Origin": "*",
