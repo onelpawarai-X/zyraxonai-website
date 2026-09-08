@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as IndexRouteImport } from './routes/index'
@@ -57,6 +58,11 @@ import { Route as ApiPublicAuthGithubCallbackRouteImport } from './routes/api/pu
 import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/api/public/zyraxon/v1/chat/completions'
 import { Route as ApiGithubReposOwnerRepoPublishRouteImport } from './routes/api/github/repos/$owner/$repo/publish'
 
+const NebulaCoreRoute = NebulaCoreRouteImport.update({
+  id: '/nebula-core',
+  path: '/nebula-core',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuilderRoute = BuilderRouteImport.update({
   id: '/builder',
   path: '/builder',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula-core': typeof NebulaCoreRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula-core': typeof NebulaCoreRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
@@ -406,6 +414,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula-core': typeof NebulaCoreRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
@@ -457,6 +466,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula-core'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula-core'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
@@ -555,6 +566,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula-core'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
@@ -605,6 +617,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
+  NebulaCoreRoute: typeof NebulaCoreRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiMarketplaceSearchRoute: typeof ApiMarketplaceSearchRoute
   DocsSlugRoute: typeof DocsSlugRoute
@@ -649,6 +662,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/nebula-core': {
+      id: '/nebula-core'
+      path: '/nebula-core'
+      fullPath: '/nebula-core'
+      preLoaderRoute: typeof NebulaCoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/builder': {
       id: '/builder'
       path: '/builder'
@@ -1012,6 +1032,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
+  NebulaCoreRoute: NebulaCoreRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiMarketplaceSearchRoute: ApiMarketplaceSearchRoute,
   DocsSlugRoute: DocsSlugRoute,
