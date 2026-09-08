@@ -117,7 +117,9 @@ export async function resolveReleases() {
     }
   }
 
-  const latest = releases[0];
+  const latest = [...releases].sort(
+    (a, b) => Date.parse(b.published_at || "0") - Date.parse(a.published_at || "0"),
+  )[0];
   return {
     latest: latest
       ? {
@@ -125,9 +127,16 @@ export async function resolveReleases() {
           name: latest.name || latest.tag_name,
           url: latest.html_url,
           publishedAt: latest.published_at,
+          repo: latest.repo,
         }
       : null,
     platforms,
+    sources: REPOS.map((repo, i) => ({
+      repo,
+      role: i === 0 ? "primary" : "fallback",
+      releases: perRepo[i].length,
+      releasesUrl: `https://github.com/${repo}/releases`,
+    })),
     releasesUrl: `https://github.com/${REPO}/releases`,
   };
 }
