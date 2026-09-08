@@ -69,17 +69,31 @@ type GhRelease = {
   assets: GhAsset[];
 };
 
-export async function resolveReleases() {
+async function fetchRepoReleases(repo: string): Promise<(GhRelease & { repo: string })[]> {
   const token = process.env["GITHUB_PERSONAL_ACCESS_TOKEN"];
-  const res = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=50`, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "zyraxon-website",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-  const releases = ((await res.json()) as GhRelease[]).filter((r) => !r.draft);
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=50`, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "zyraxon-website",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) return [];
+    const list = (await res.json()) as GhRelease[];
+    return (Array.isArray(list) ? list : [])
+      .filter((r) => !r.draft)
+      .map((r) => ({ ...r, repo }));
+  } catch {
+    return [];
+  }
+}
+
+export async function resolveReleases() {
+  const perRepo = await Promise.all(REPOS.map(fetchRepoReleases));
+  // Primary repo first; inside each account newest release first.
+  const releases = perRepo.flat();
+  if (releases.length === 0) throw new Error("No releases reachable from either account");
 
   const platforms: Record<string, ResolvedAsset | null> = {};
   for (const key of Object.keys(PLATFORM_PATTERNS)) {
