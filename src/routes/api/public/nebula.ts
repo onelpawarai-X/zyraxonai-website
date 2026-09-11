@@ -148,8 +148,102 @@ async function handleGet(request: Request) {
   return Response.json({ error: "Unknown action" }, { status: 400, headers: HEADERS });
 }
 
+/* ---------------- Feature Studio (Lovable Cloud content) ---------------- */
+
+async function admin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
+async function contentList() {
+  const db = await admin();
+  const { data, error } = await db
+    .from("site_content" as any)
+    .select("*")
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(300);
+  if (error) return { items: [], error: error.message };
+  const items = await Promise.all(
+    ((data ?? []) as any[]).map(async (row) => {
+      let preview = row.image_url as string | null;
+      if (preview && !/^https?:\/\//.test(preview)) {
+        const s = await db.storage.from("site-content").createSignedUrl(preview, 3600);
+        preview = s.data?.signedUrl ?? null;
+      }
+      return { ...row, previewUrl: preview };
+    }),
+  );
+  return { items };
+}
+
+async function contentSave(body: any) {
+  const db = await admin();
+  const row = {
+    kind: body.kind || "feature",
+    title: String(body.title || "").slice(0, 200),
+    subtitle: body.subtitle ?? null,
+    body: body.body ?? null,
+    image_url: body.imageUrl ?? null,
+    link_url: body.linkUrl ?? null,
+    badge: body.badge ?? null,
+    accent: body.accent ?? null,
+    position: Number(body.position ?? 0),
+    published: body.published !== false,
+  };
+  if (!row.title) return { error: "Title is required" };
+  const q = body.id
+    ? db
+        .from("site_content" as any)
+        .update(row)
+        .eq("id", body.id)
+        .select()
+        .single()
+    : db
+        .from("site_content" as any)
+        .insert(row)
+        .select()
+        .single();
+  const { data, error } = await q;
+  return error ? { error: error.message } : { ok: true, item: data };
+}
+
+async function contentDelete(body: any) {
+  const db = await admin();
+  const { error } = await db
+    .from("site_content" as any)
+    .delete()
+    .eq("id", body.id);
+  return error ? { error: error.message } : { ok: true };
+}
+
+async function contentUpload(body: any) {
+  const db = await admin();
+  const raw = String(body.dataUrl || "");
+  const m = /^data:([^;]+);base64,(.+)$/.exec(raw);
+  if (!m) return { error: "Expected a base64 data URL" };
+  const mime = m[1]!;
+  const bin = atob(m[2]!);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const ext = (mime.split("/")[1] || "bin").replace(/[^a-z0-9]/gi, "");
+  const key = `uploads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await db.storage
+    .from("site-content")
+    .upload(key, bytes, { contentType: mime, upsert: false });
+  if (error) return { error: error.message };
+  const signed = await db.storage.from("site-content").createSignedUrl(key, 3600);
+  return { ok: true, path: key, previewUrl: signed.data?.signedUrl ?? null };
+}
+
 async function handlePost(request: Request) {
   const body: any = await request.json().catch(() => ({}));
+
+  if (body.action === "content.list") return Response.json(await contentList(), { headers: HEADERS });
+  if (body.action === "content.save") return Response.json(await contentSave(body), { headers: HEADERS });
+  if (body.action === "content.delete") return Response.json(await contentDelete(body), { headers: HEADERS });
+  if (body.action === "content.upload") return Response.json(await contentUpload(body), { headers: HEADERS });
+
   if (body.action !== "save") {
     return Response.json({ error: "Unknown action" }, { status: 400, headers: HEADERS });
   }

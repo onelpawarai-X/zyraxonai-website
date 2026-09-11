@@ -404,6 +404,54 @@ export type Database = {
         }
         Relationships: []
       }
+      site_content: {
+        Row: {
+          accent: string | null
+          badge: string | null
+          body: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          kind: string
+          link_url: string | null
+          position: number
+          published: boolean
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          accent?: string | null
+          badge?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          kind?: string
+          link_url?: string | null
+          position?: number
+          published?: boolean
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          accent?: string | null
+          badge?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          kind?: string
+          link_url?: string | null
+          position?: number
+          published?: boolean
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
