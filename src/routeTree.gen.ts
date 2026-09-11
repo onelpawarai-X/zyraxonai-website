@@ -23,6 +23,7 @@ import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
 import { Route as EcosystemItemIdRouteImport } from './routes/ecosystem/item/$id'
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
+import { Route as ApiPublicSiteContentRouteImport } from './routes/api/public/site-content'
 import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mcp-registry'
 import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public/github-releases'
@@ -127,6 +128,11 @@ const ApiPublicVscodeMarketplaceRoute =
 const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
   id: '/api/public/stt',
   path: '/api/public/stt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSiteContentRoute = ApiPublicSiteContentRouteImport.update({
+  id: '/api/public/site-content',
+  path: '/api/public/site-content',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicNebulaRoute = ApiPublicNebulaRouteImport.update({
@@ -329,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -379,6 +386,7 @@ export interface FileRoutesByTo {
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -430,6 +438,7 @@ export interface FileRoutesById {
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -482,6 +491,7 @@ export interface FileRouteTypes {
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
+    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
@@ -532,6 +542,7 @@ export interface FileRouteTypes {
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
+    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
@@ -582,6 +593,7 @@ export interface FileRouteTypes {
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
+    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
@@ -633,6 +645,7 @@ export interface RootRouteChildren {
   ApiPublicGithubReleasesRoute: typeof ApiPublicGithubReleasesRoute
   ApiPublicMcpRegistryRoute: typeof ApiPublicMcpRegistryRoute
   ApiPublicNebulaRoute: typeof ApiPublicNebulaRoute
+  ApiPublicSiteContentRoute: typeof ApiPublicSiteContentRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
   EcosystemItemIdRoute: typeof EcosystemItemIdRoute
@@ -758,6 +771,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/stt'
       fullPath: '/api/public/stt'
       preLoaderRoute: typeof ApiPublicSttRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/site-content': {
+      id: '/api/public/site-content'
+      path: '/api/public/site-content'
+      fullPath: '/api/public/site-content'
+      preLoaderRoute: typeof ApiPublicSiteContentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/nebula': {
@@ -1048,6 +1068,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGithubReleasesRoute: ApiPublicGithubReleasesRoute,
   ApiPublicMcpRegistryRoute: ApiPublicMcpRegistryRoute,
   ApiPublicNebulaRoute: ApiPublicNebulaRoute,
+  ApiPublicSiteContentRoute: ApiPublicSiteContentRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
   EcosystemItemIdRoute: EcosystemItemIdRoute,
