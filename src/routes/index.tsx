@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { NebulaDeck } from "./nebula-core";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -172,6 +173,21 @@ function Index() {
       <div className="zyraxon-red-edge" aria-hidden="true" />
       <div className={`zyraxon-rage-veil ${rage ? "on" : ""}`} aria-hidden="true" />
       <div className={`zyraxon-rage-glow ${rage ? "on" : ""}`} aria-hidden="true" />
+      {nebula && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 60,
+            background: "rgba(2,4,12,.86)",
+            backdropFilter: "blur(10px)",
+            display: "flex",
+            overflow: "auto",
+          }}
+        >
+          <NebulaDeck onClose={() => setNebula(false)} />
+        </div>
+      )}
     </main>
   );
 }
