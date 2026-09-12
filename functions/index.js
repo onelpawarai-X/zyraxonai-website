@@ -17,7 +17,7 @@ const messaging = admin.messaging();
 // ═══════════════════════════════════════════════
 
 const GITHUB_API = "https://api.github.com";
-const MAIN_REPO = "onelpawarai/ZYRAXON-AI";
+const MAIN_REPO = "onelpawarai-X/ZYRAXON-AI";
 const MAIN_TOKEN = process.env.ZYRAXON_MAIN_TOKEN || "";
 
 let cachedItems = null;

@@ -6,9 +6,9 @@ import { createFileRoute } from "@tanstack/react-router";
  * that really matches each platform, so a mobile-only release can never make
  * the Windows / macOS / Linux buttons hand out an .apk.
  */
-export const REPO = "onelpawarai/ZYRAXON-AI";
+export const REPO = "onelpawarai-X/ZYRAXON-AI";
 /** Primary account first, mirror/fallback account second. */
-export const REPOS = ["onelpawarai/ZYRAXON-AI", "onelpawarai-X/ZYRAXON-AI"];
+export const REPOS = ["onelpawarai-X/ZYRAXON-AI", "onelpawarai/ZYRAXON-AI"];
 
 const HEADERS = {
   "Access-Control-Allow-Origin": "*",

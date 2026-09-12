@@ -7,7 +7,7 @@ import type {
 } from "./ecosystem-types";
 
 const GITHUB_API = "https://api.github.com";
-const GITHUB_REPO = "onelpawarai/ZYRAXON-AI";
+const GITHUB_REPO = "onelpawarai-X/ZYRAXON-AI";
 const MARKETPLACE_PATHS = ["/marketplace/published/index.json"];
 
 let cachedItems: EcosystemItem[] | null = null;

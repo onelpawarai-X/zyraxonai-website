@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { REPOS } from "../downloads";
+import { REPOS } from "./downloads";
 
 /**
  * NEBULA CORE — private control surface.
