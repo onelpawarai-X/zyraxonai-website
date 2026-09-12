@@ -23,9 +23,9 @@ export async function requireGitHubToken(
   }
 
   return {
-    token: await decryptGitHubToken(data.encrypted_access_token),
-    githubLogin: data.github_login,
-    githubId: data.github_id,
+    token: await decryptGitHubToken((data as any).encrypted_access_token),
+    githubLogin: (data as any).github_login,
+    githubId: (data as any).github_id,
   };
 }
 

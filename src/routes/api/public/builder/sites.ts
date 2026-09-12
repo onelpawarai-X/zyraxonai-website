@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/builder/sites")({
             Math.max(1, Number(new URL(request.url).searchParams.get("limit") || 20)),
           );
           const { data, error } = await ctx.db
-            .from("builder_sites")
+            .from("builder_sites" as any)
             .select(
               "id,user_id,title,slug,description,preview_html,is_public,repo_url,pages_url,created_at,updated_at",
             )
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/api/public/builder/sites")({
             );
           const slug = slugify(`${title}-${String(body?.slug || "")}`);
           const { data, error } = await ctx.db
-            .from("builder_sites")
+            .from("builder_sites" as any)
             .upsert(
               {
                 user_id: userId,
