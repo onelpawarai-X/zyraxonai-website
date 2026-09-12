@@ -169,7 +169,7 @@ async function completeGitHubLogin(ctx: ApiContext, code: string) {
     ? await encryptGitHubToken(github.refresh_token)
     : null;
   const now = Date.now();
-  await ctx.db.from("github_connections").upsert({
+  await ctx.db.from("github_connections" as any).upsert({
     user_id: session.user.id,
     github_id: ghUser.id,
     github_login: ghUser.login,

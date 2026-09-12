@@ -418,7 +418,7 @@ function DocsShellFrame({
               </span>
             </a>
             <a
-              href="https://github.com/onelpawarai/ZYRAXON-AI"
+              href="https://github.com/onelpawarai-X/ZYRAXON-AI"
               target="_blank"
               rel="noreferrer"
               className="no-underline"

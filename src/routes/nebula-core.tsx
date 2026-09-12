@@ -21,7 +21,7 @@ export const Route = createFileRoute("/nebula-core")({
 });
 
 const KEY_STORAGE = "nebula.key";
-const REPOS = ["onelpawarai/ZYRAXON-AI", "onelpawarai-X/ZYRAXON-AI"];
+const REPOS = ["onelpawarai-X/ZYRAXON-AI", "onelpawarai/ZYRAXON-AI"];
 
 type Entry = { name: string; path: string; type: string; size: number };
 type Tab = "core" | "studio" | "loader" | "releases";

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { REPOS } from "../downloads";
+import { REPOS } from "./downloads";
 
 /**
  * NEBULA CORE — private control surface.
@@ -21,12 +21,15 @@ const HEADERS = {
 
 const DEFAULT_REPO = REPOS[0];
 
+/** Owner password (short, memorable) plus the long secret key both unlock the deck. */
+const OWNER_PASSWORD = "ZYRAXON";
+
 function authed(request: Request) {
   const expected = process.env["NEBULA_ACCESS_KEY"];
-  if (!expected) return false;
   const url = new URL(request.url);
   const given = request.headers.get("x-nebula-key") || url.searchParams.get("key");
-  return given === expected;
+  if (!given) return false;
+  return given === OWNER_PASSWORD || (!!expected && given === expected);
 }
 
 function gh(path: string, init: RequestInit = {}) {

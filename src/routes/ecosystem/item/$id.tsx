@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 const GITHUB_API = "https://api.github.com";
-const GITHUB_REPO = "onelpawarai/ZYRAXON-AI";
+const GITHUB_REPO = "onelpawarai-X/ZYRAXON-AI";
 
 type ItemAuthor = {
   id: string;
