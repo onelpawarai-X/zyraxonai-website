@@ -6,10 +6,11 @@ export async function requireGitHubToken(
   ctx: ApiContext,
 ): Promise<{ token: string; githubLogin: string; githubId: number }> {
   const userId = ctx.requireUser();
-  const { data, error } = await ctx.db
-    .from("github_connections" as any)
+  const db = ctx.db as any;
+  const { data, error } = await db
+    .from("github_connections")
     .select("github_id, github_login, encrypted_access_token, token_expires_at")
-    .eq("user_id" as any, userId)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (error || !data)
