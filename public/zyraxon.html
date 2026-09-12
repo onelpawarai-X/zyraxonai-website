@@ -369,7 +369,8 @@ footer{padding:72px 0 48px;border-top:1px solid var(--border);text-align:center;
       
       <a href="/ecosystem" target="_top">Ecosystem</a>
       <a href="/docs" target="_top">📚 Documentation</a>
-      <a href="/builder/" target="_top" style="color:var(--cyan);font-weight:600">⚡ AI Builder</a>
+      <a href="/bludar" target="_top" style="color:var(--cyan);font-weight:600">⚡ AI Bludar</a>
+      <a href="#" id="nebulaBtn" style="color:#ff5ecb;font-weight:600">🛡 NEBULA</a>
       
     </div>
     <button class="nav-mobile-toggle" id="navToggle" aria-label="Menu">
@@ -402,6 +403,65 @@ footer{padding:72px 0 48px;border-top:1px solid var(--border);text-align:center;
 </header>
 
 <!-- FEATURES -->
+
+<!-- LIVE FEATURE SHOWCASE (managed from Nebula → Features) -->
+<style>
+.zx-live{padding:90px 0;position:relative}
+.zx-live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+.zx-live-card{border:1px solid var(--border);border-radius:20px;overflow:hidden;background:rgba(255,255,255,.03);backdrop-filter:blur(22px);transition:transform .35s,border-color .35s,box-shadow .35s;display:flex;flex-direction:column}
+.zx-live-card:hover{transform:translateY(-6px);border-color:rgba(0,245,255,.45);box-shadow:0 24px 60px rgba(0,245,255,.14)}
+.zx-live-card img{width:100%;height:190px;object-fit:cover;display:block;background:#0b0b18}
+.zx-live-body{padding:18px 20px 22px;display:flex;flex-direction:column;gap:8px}
+.zx-live-badge{align-self:flex-start;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid rgba(0,245,255,.35);color:var(--cyan)}
+.zx-live-title{font-size:19px;font-weight:700}
+.zx-live-sub{font-size:13px;color:var(--muted)}
+.zx-live-text{font-size:14px;color:var(--muted);line-height:1.65;white-space:pre-wrap}
+.zx-live-link{margin-top:6px;font-size:13px;font-weight:600;color:var(--cyan)}
+</style>
+<section id="live-features" class="zx-live" style="display:none">
+  <div class="container">
+    <div class="section-head reveal">
+      <h2>Latest from <span class="gradient-text">ZYRAXON</span></h2>
+      <p>Fresh features, screenshots and announcements — published live by the team.</p>
+    </div>
+    <div class="zx-live-grid" id="zxLiveGrid"></div>
+  </div>
+</section>
+<script>
+(async function(){
+  try{
+    const r=await fetch('/api/public/site-content');
+    const d=await r.json();
+    const items=(d&&d.items)||[];
+    if(!items.length) return;
+    const grid=document.getElementById('zxLiveGrid');
+    grid.innerHTML=items.map(function(it){
+      const accent=it.accent?('style="border-color:'+it.accent+';color:'+it.accent+'"'):'';
+      return '<article class="zx-live-card reveal">'
+        +(it.imageUrl?('<img src="'+it.imageUrl+'" alt="'+(it.title||'')+'" loading="lazy">'):'')
+        +'<div class="zx-live-body">'
+        +(it.badge?('<span class="zx-live-badge" '+accent+'>'+it.badge+'</span>'):'')
+        +'<div class="zx-live-title">'+(it.title||'')+'</div>'
+        +(it.subtitle?('<div class="zx-live-sub">'+it.subtitle+'</div>'):'')
+        +(it.body?('<div class="zx-live-text">'+it.body+'</div>'):'')
+        +(it.linkUrl?('<a class="zx-live-link" href="'+it.linkUrl+'" target="_blank" rel="noopener">Learn more \u2197</a>'):'')
+        +'</div></article>';
+    }).join('');
+    document.getElementById('live-features').style.display='block';
+  }catch(e){}
+})();
+// NEBULA control deck — opens inside this page (URL never changes)
+(function(){
+  var btn=document.getElementById('nebulaBtn');
+  if(!btn) return;
+  btn.addEventListener('click',function(e){
+    e.preventDefault();
+    try{ window.parent.postMessage({type:'zyraxon:nebula'},'*'); }catch(err){}
+    if(window.parent===window) window.location.href='/nebula-core';
+  });
+})();
+</script>
+
 <!-- MYRA SHOWCASE START -->
 <section id="myra-showcase" class="myra-showcase"><div class="container"><div class="myra-shell"><div class="myra-layout"><div class="myra-copy"><span class="myra-kicker"><i></i> Featured AI Assistant</span><div class="myra-title">MYRA</div><div class="myra-brand">All-in-one powerful mobile agent</div><p>Meet MYRA — a full-featured Android voice assistant that listens, speaks, and acts. It combines multi-personality conversational AI with real-time voice, smart chat, auto-reply, gaming assistance, and premium features powered by free AI models.</p><div class="myra-tags"><span class="myra-tag">Real-time Voice</span><span class="myra-tag">Multi-Personality</span><span class="myra-tag">Smart Chat</span><span class="myra-tag">Gaming Vision</span><span class="myra-tag">Free AI Models</span></div><div class="myra-actions"><a class="myra-btn primary" href="https://github.com/onelpawarai/Myra-Assistant" target="_blank" rel="noopener">View MYRA project ↗</a><a class="myra-btn" href="https://www.youtube.com/watch?v=LIF4xv4IPK0" target="_blank" rel="noopener">Open demo on YouTube</a></div></div><div class="myra-media"><div class="myra-video"><iframe src="https://www.youtube.com/embed/LIF4xv4IPK0?rel=0&modestbranding=1" title="MYRA Assistant demo" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="myra-gallery"><a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-1.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-1.jpg" alt="MYRA Assistant preview 1" loading="lazy"></a><a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-2.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-2.jpg" alt="MYRA Assistant preview 2" loading="lazy"></a><a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-3.jpg" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-3.jpg" alt="MYRA Assistant preview 3" loading="lazy"></a><a class="myra-shot" href="https://github.com/onelpawarai/Myra-Assistant/blob/main/assets/promo/myra-4.png" target="_blank" rel="noopener"><img src="https://github.com/onelpawarai/Myra-Assistant/raw/main/assets/promo/myra-4.png" alt="MYRA Assistant preview 4" loading="lazy"></a></div></div></div><div class="myra-bottom"><span>MYRA Assistant · integrated from the original project</span><span class="myra-source">Source: <strong>onelpawarai/Myra-Assistant</strong></span></div></div></div></section>
 <!-- MYRA SHOWCASE END -->
