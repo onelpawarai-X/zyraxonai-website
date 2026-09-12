@@ -101,10 +101,20 @@ function armGreeting() {
 
 function Index() {
   const [rage, setRage] = useState(false);
+  const [nebula, setNebula] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(armGreeting, 350);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  /** The landing page (inside the iframe) asks us to open the private control deck in place. */
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if ((e.data as any)?.type === "zyraxon:nebula") setNebula(true);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
   }, []);
 
   /** Every ~22s the ENTIRE site transforms into its terrifying blood-red form for a few seconds, then returns to blue. */
