@@ -4,10 +4,10 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ZYRAXON AI — All in One. Anything. Nothing is Impossible.</title>
-<meta name="description" content="ZYRAXON-AI: Desktop AI agent with 9 agent modes, 136+ tools, eternal memory, self-healing and screen vision. For Windows, Linux and Android."/>
+<meta name="description" content="ZYRAXON-AI: Desktop AI agent with 9 agent modes, 552+ tools, eternal memory, self-healing and screen vision. For Windows, Linux and Android."/>
 <meta name="author" content="Sayid Ilxs"/>
 <meta property="og:title" content="ZYRAXON AI — Free Desktop AI Coding Agent"/>
-<meta property="og:description" content="9 agent modes, 136+ tools, eternal memory, self-healing and screen vision."/>
+<meta property="og:description" content="9 agent modes, 552+ tools, eternal memory, self-healing and screen vision."/>
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://zyraxonai.lovable.app"/>
 <meta name="twitter:card" content="summary_large_image"/>
@@ -280,6 +280,28 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
 /* SCAN LINE */
 @keyframes scanline{0%{top:-2px}100%{top:100%}}
 .scanline{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,.08),transparent);pointer-events:none;z-index:1}
+
+/* RED AURA PULSE — triggers every 20 seconds */
+@keyframes redAuraPulse{
+  0%{box-shadow:0 0 0 0 rgba(220,38,38,0)}
+  5%{box-shadow:0 0 60px 20px rgba(220,38,38,0.15),inset 0 0 60px rgba(220,38,38,0.05)}
+  15%{box-shadow:0 0 80px 30px rgba(220,38,38,0.2),inset 0 0 80px rgba(220,38,38,0.08)}
+  50%{box-shadow:0 0 60px 20px rgba(220,38,38,0.15),inset 0 0 60px rgba(220,38,38,0.05)}
+  100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}
+}
+body.red-aura-active{
+  animation:redAuraPulse 3s ease-in-out;
+}
+body.red-aura-active .hero{
+  text-shadow:0 0 20px rgba(220,38,38,0.15);
+}
+body.red-aura-active .btn-primary{
+  box-shadow:0 0 30px rgba(220,38,38,0.3),0 2px 8px rgba(220,38,38,0.2);
+}
+body.red-aura-active .logo-mark svg{
+  stroke:#dc2626;
+  filter:drop-shadow(0 0 8px rgba(220,38,38,0.5));
+}
 </style>
 </head>
 <body>
@@ -322,7 +344,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
   <div class="container">
     <div class="badge" id="heroBadge"><span class="badge-dot"></span> <span id="heroBadgeText">Loading latest release...</span></div>
     <h1>ZYRAXON<br><span style="font-weight:400;font-size:.55em;color:var(--text-secondary);letter-spacing:0">All in One. Anything. Nothing is Impossible.</span></h1>
-    <p class="sub">Desktop AI agent that actually does things. Everything is possible with ZYRAXON if you guide it right. 9 agent modes, 136+ tools, eternal memory, self-healing and always-on screen vision.</p>
+    <p class="sub">A chatbot talks. ZYRAXON acts. Desktop AI agent that reads your files, writes your code, runs your commands, builds your projects, deploys your apps, and evolves itself. 9 agent modes, 552+ tools, eternal memory, self-healing and always-on screen vision.</p>
     <div class="hero-cta">
       <a class="btn btn-primary" id="heroDownload" href="#download">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0M10.949 1.949L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.851"/></svg>
@@ -1103,6 +1125,16 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
   else if(userOS==='linux'&&linux){heroDl.href=osRoutes[userOS];heroDlText.textContent='Download for '+osNames[userOS]+' -- '+linux.release.tag_name;heroFound=true;}
   else if(userOS==='android'&&apk){heroDl.href=osRoutes[userOS];heroDlText.textContent='Download for '+osNames[userOS]+' -- '+apk.release.tag_name;heroFound=true;}
   if(!heroFound){heroDl.href='#download';heroDlText.textContent='See downloads';}
+})();
+</script>
+
+<!-- RED AURA — triggers every 20 seconds -->
+<script>
+(function(){
+  setInterval(function(){
+    document.body.classList.add('red-aura-active');
+    setTimeout(function(){ document.body.classList.remove('red-aura-active'); }, 3000);
+  }, 20000);
 })();
 </script>
 
