@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+﻿import React, { useCallback, useState } from "react";
 import { EcosystemItem, getAuthState, getGitHubStorage } from "../../lib/ecosystem";
 import {
   IconStar,
@@ -34,7 +34,7 @@ const renderStars = (rating: number): React.ReactNode[] => {
     const filled = i <= Math.floor(rating);
     const half = !filled && i - 0.5 <= rating;
     stars.push(
-      <span key={i} style={{ color: filled || half ? "#e3b341" : "#30363d", fontSize: "12px" }}>
+      <span key={i} style={{ color: filled || half ? "#e3b341" : "#e5e7eb", fontSize: "12px" }}>
         <IconStar size={12} />
       </span>,
     );
@@ -54,7 +54,7 @@ const getActionInfo = (item: EcosystemItem): ActionInfo => {
   const type = item.type;
 
   if (category === "plugins" || type === "plugin") {
-    return { label: "Install", color: "#238636", hoverColor: "#2ea043", icon: IconRocket };
+    return { label: "Install", color: "#047857", hoverColor: "#059669", icon: IconRocket };
   }
   if (category === "ai-bots" || type === "bot") {
     return { label: "Add Bot", color: "#8957e5", hoverColor: "#a371f7", icon: IconRocket };
@@ -62,31 +62,31 @@ const getActionInfo = (item: EcosystemItem): ActionInfo => {
   if (category === "website-templates" || type === "template") {
     return {
       label: "Use Template",
-      color: "#1f6feb",
-      hoverColor: "#58a6ff",
+      color: "#4f46e5",
+      hoverColor: "#6366f1",
       icon: IconExternalLink,
     };
   }
   if (category === "ai-models" || type === "model") {
-    return { label: "Download", color: "#da3633", hoverColor: "#f85149", icon: IconDownload };
+    return { label: "Download", color: "#dc2626", hoverColor: "#ef4444", icon: IconDownload };
   }
   if (category === "tools" || type === "tool") {
-    return { label: "Download", color: "#238636", hoverColor: "#2ea043", icon: IconDownload };
+    return { label: "Download", color: "#047857", hoverColor: "#059669", icon: IconDownload };
   }
   if (category === "cli-tools" || type === "cli") {
-    return { label: "Install CLI", color: "#238636", hoverColor: "#2ea043", icon: IconRocket };
+    return { label: "Install CLI", color: "#047857", hoverColor: "#059669", icon: IconRocket };
   }
   if (category === "sdks" || type === "sdk") {
-    return { label: "Install", color: "#1f6feb", hoverColor: "#58a6ff", icon: IconRocket };
+    return { label: "Install", color: "#4f46e5", hoverColor: "#6366f1", icon: IconRocket };
   }
   if (category === "browser-extensions" || type === "extension") {
-    return { label: "Add Extension", color: "#da3633", hoverColor: "#f85149", icon: IconRocket };
+    return { label: "Add Extension", color: "#dc2626", hoverColor: "#ef4444", icon: IconRocket };
   }
   if (category === "mobile-apps" || type === "app") {
     return { label: "Get App", color: "#8957e5", hoverColor: "#a371f7", icon: IconExternalLink };
   }
   if (category === "desktop-apps" || type === "desktop-app") {
-    return { label: "Download", color: "#238636", hoverColor: "#2ea043", icon: IconDownload };
+    return { label: "Download", color: "#047857", hoverColor: "#059669", icon: IconDownload };
   }
   if (category === "themes" || type === "theme") {
     return {
@@ -97,15 +97,15 @@ const getActionInfo = (item: EcosystemItem): ActionInfo => {
     };
   }
   if (category === "workflows" || type === "workflow") {
-    return { label: "Import", color: "#1f6feb", hoverColor: "#58a6ff", icon: IconRocket };
+    return { label: "Import", color: "#4f46e5", hoverColor: "#6366f1", icon: IconRocket };
   }
   if (item.installCommand) {
-    return { label: "Install", color: "#238636", hoverColor: "#2ea043", icon: IconCopy };
+    return { label: "Install", color: "#047857", hoverColor: "#059669", icon: IconCopy };
   }
   if (item.liveDemo) {
-    return { label: "Live Demo", color: "#1f6feb", hoverColor: "#58a6ff", icon: IconExternalLink };
+    return { label: "Live Demo", color: "#4f46e5", hoverColor: "#6366f1", icon: IconExternalLink };
   }
-  return { label: "View", color: "#21262d", hoverColor: "#30363d", icon: IconExternalLink };
+  return { label: "View", color: "#f3f4f6", hoverColor: "#e5e7eb", icon: IconExternalLink };
 };
 
 export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, onUserClick }) => {
@@ -188,9 +188,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
     <div
       onClick={handleCardClick}
       style={{
-        background: "rgba(28,34,46,0.55)",
+        background: "rgba(243,244,246,0.55)",
         backdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: "1px solid rgba(0,0,0,0.06)",
         borderRadius: "12px",
         padding: "16px",
         cursor: onClick ? "pointer" : "default",
@@ -201,12 +201,12 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
         outline: "none",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "#58a6ff";
+        e.currentTarget.style.borderColor = "#6366f1";
         e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "#21262d";
+        e.currentTarget.style.borderColor = "#f3f4f6";
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
@@ -221,7 +221,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
                 borderRadius: "10px",
                 overflow: "hidden",
                 flexShrink: 0,
-                background: "rgba(48,54,61,0.45)",
+                background: "rgba(229,231,235,0.45)",
                 backdropFilter: "blur(14px)",
               }}
             >
@@ -244,7 +244,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
                 flexShrink: 0,
                 fontSize: "16px",
                 fontWeight: "700",
-                color: "#58a6ff",
+                color: "#6366f1",
               }}
             >
               {item.name.charAt(0)}
@@ -255,7 +255,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
               style={{
                 fontSize: "14px",
                 fontWeight: "600",
-                color: "#c9d1d9",
+                color: "#1f2937",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -273,7 +273,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
                 border: "none",
                 padding: 0,
                 fontSize: "12px",
-                color: "#8b949e",
+                color: "#6b7280",
                 cursor: "pointer",
                 fontFamily: "inherit",
                 outline: "none",
@@ -290,7 +290,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
             borderRadius: "12px",
             fontSize: "11px",
             fontWeight: "600",
-            color: "#58a6ff",
+            color: "#6366f1",
             textTransform: "capitalize",
             flexShrink: 0,
           }}
@@ -303,7 +303,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
       <div
         style={{
           fontSize: "13px",
-          color: "#8b949e",
+          color: "#6b7280",
           lineHeight: "1.5",
           display: "-webkit-box",
           WebkitLineClamp: 2,
@@ -320,12 +320,12 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
           alignItems: "center",
           gap: "12px",
           fontSize: "12px",
-          color: "#8b949e",
+          color: "#6b7280",
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <span style={{ display: "flex", gap: "1px" }}>{renderStars(item.rating)}</span>
-          <span style={{ color: "#c9d1d9", fontWeight: "500" }}>{item.rating.toFixed(1)}</span>
+          <span style={{ color: "#1f2937", fontWeight: "500" }}>{item.rating.toFixed(1)}</span>
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <IconDownload size={12} />
@@ -350,11 +350,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
               key={tag}
               style={{
                 padding: "2px 8px",
-                background: "rgba(48,54,61,0.45)",
+                background: "rgba(229,231,235,0.45)",
                 backdropFilter: "blur(14px)",
                 borderRadius: "10px",
                 fontSize: "11px",
-                color: "#8b949e",
+                color: "#6b7280",
               }}
             >
               {tag}
@@ -364,11 +364,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
             <span
               style={{
                 padding: "2px 8px",
-                background: "rgba(48,54,61,0.45)",
+                background: "rgba(229,231,235,0.45)",
                 backdropFilter: "blur(14px)",
                 borderRadius: "10px",
                 fontSize: "11px",
-                color: "#484f58",
+                color: "#9ca3af",
               }}
             >
               +{item.tags.length - 3}
@@ -411,9 +411,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
             gap: "4px",
             padding: "6px 10px",
             background: liked ? "rgba(248, 81, 73, 0.1)" : "transparent",
-            border: `1px solid ${liked ? "#f8514950" : "#21262d"}`,
+            border: `1px solid ${liked ? "#ef444450" : "#f3f4f6"}`,
             borderRadius: "6px",
-            color: liked ? "#f85149" : "#8b949e",
+            color: liked ? "#ef4444" : "#6b7280",
             cursor: "pointer",
             fontSize: "12px",
             fontWeight: "500",
@@ -448,7 +448,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
             alignItems: "center",
             gap: "6px",
             padding: "6px 14px",
-            background: actionDone ? "#238636" : actionInfo.color,
+            background: actionDone ? "#047857" : actionInfo.color,
             border: "none",
             borderRadius: "6px",
             color: "#ffffff",
@@ -466,7 +466,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onInstall, onClick, on
           }}
           onMouseLeave={(e) => {
             if (!actionDone) e.currentTarget.style.background = actionInfo.color;
-            else e.currentTarget.style.background = "#238636";
+            else e.currentTarget.style.background = "#047857";
           }}
         >
           {actionDone ? <IconCheck size={14} /> : <actionInfo.icon size={14} />}

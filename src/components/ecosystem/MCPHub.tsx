@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ZYRAXON AI — MCP Hub Component
  *
  * Displays connected MCP servers from major libraries and services.
@@ -180,7 +180,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
           <p
             style={{
               fontSize: "13px",
-              color: "#8b949e",
+              color: "#6b7280",
               margin: "4px 0 0",
             }}
           >
@@ -203,14 +203,14 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
               width: "8px",
               height: "8px",
               borderRadius: "50%",
-              background: "#3fb950",
+              background: "#10b981",
             }}
           />
           <span
             style={{
               fontSize: "12px",
               fontWeight: "600",
-              color: "#3fb950",
+              color: "#10b981",
             }}
           >
             {MAJOR_MCP_SERVERS.length} MCP Connected
@@ -235,12 +235,12 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
             style={{
               padding: "6px 12px",
               background:
-                activeCategory === cat ? "rgba(137, 87, 229, 0.2)" : "rgba(48,54,61,0.45)",
-              border: `1px solid ${activeCategory === cat ? "rgba(137, 87, 229, 0.4)" : "rgba(255,255,255,0.12)"}`,
+                activeCategory === cat ? "rgba(99,102,241, 0.2)" : "rgba(229,231,235,0.45)",
+              border: `1px solid ${activeCategory === cat ? "rgba(99,102,241, 0.4)" : "rgba(0,0,0,0.1)"}`,
               borderRadius: "8px",
               fontSize: "12px",
               fontWeight: "600",
-              color: activeCategory === cat ? "#8957e5" : "#8b949e",
+              color: activeCategory === cat ? "#8957e5" : "#6b7280",
               cursor: "pointer",
               textTransform: "capitalize",
               whiteSpace: "nowrap",
@@ -265,18 +265,18 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
           <div
             key={mcp.id}
             style={{
-              background: "rgba(28,34,46,0.55)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(243,244,246,0.55)",
+              border: "1px solid rgba(0,0,0,0.06)",
               borderRadius: "12px",
               padding: "16px",
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#58a6ff";
+              e.currentTarget.style.borderColor = "#6366f1";
               e.currentTarget.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+              e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -296,7 +296,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                     borderRadius: "10px",
                     background: mcp.icon
                       ? "transparent"
-                      : "linear-gradient(135deg, #8957e5, #1f6feb)",
+                      : "linear-gradient(135deg, #8957e5, #4f46e5)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -321,10 +321,10 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                   )}
                 </div>
                 <div>
-                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#c9d1d9" }}>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
                     {mcp.name}
                   </div>
-                  <div style={{ fontSize: "11px", color: "#8b949e" }}>{mcp.source}</div>
+                  <div style={{ fontSize: "11px", color: "#6b7280" }}>{mcp.source}</div>
                 </div>
               </div>
               {mcp.verified && (
@@ -339,7 +339,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                     borderRadius: "12px",
                     fontSize: "11px",
                     fontWeight: "600",
-                    color: "#3fb950",
+                    color: "#10b981",
                   }}
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -353,7 +353,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
             <p
               style={{
                 fontSize: "13px",
-                color: "#8b949e",
+                color: "#6b7280",
                 lineHeight: "1.5",
                 marginBottom: "12px",
                 display: "-webkit-box",
@@ -371,7 +371,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                 alignItems: "center",
                 gap: "12px",
                 fontSize: "12px",
-                color: "#8b949e",
+                color: "#6b7280",
                 marginBottom: "12px",
               }}
             >
@@ -405,21 +405,21 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                     alignItems: "center",
                     justifyContent: "center",
                     padding: "5px 12px",
-                    background: "rgba(48,54,61,0.45)",
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(229,231,235,0.45)",
+                    border: "1px solid rgba(0,0,0,0.1)",
                     borderRadius: "8px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     fontSize: "12px",
                     textDecoration: "none",
                     transition: "all 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#58a6ff";
-                    e.currentTarget.style.color = "#58a6ff";
+                    e.currentTarget.style.borderColor = "#6366f1";
+                    e.currentTarget.style.color = "#6366f1";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-                    e.currentTarget.style.color = "#8b949e";
+                    e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)";
+                    e.currentTarget.style.color = "#6b7280";
                   }}
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -438,18 +438,18 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
             <div
               key={ext.id}
               style={{
-                background: "rgba(28,34,46,0.55)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(243,244,246,0.55)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 borderRadius: "12px",
                 padding: "16px",
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#58a6ff";
+                e.currentTarget.style.borderColor = "#6366f1";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
@@ -486,16 +486,16 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                         }}
                       />
                     ) : (
-                      <span style={{ fontSize: "18px", color: "#58a6ff", fontWeight: "700" }}>
+                      <span style={{ fontSize: "18px", color: "#6366f1", fontWeight: "700" }}>
                         {ext.displayName.charAt(0)}
                       </span>
                     )}
                   </div>
                   <div>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#c9d1d9" }}>
+                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
                       {ext.displayName}
                     </div>
-                    <div style={{ fontSize: "11px", color: "#8b949e" }}>
+                    <div style={{ fontSize: "11px", color: "#6b7280" }}>
                       by {ext.publisher.displayName}
                     </div>
                   </div>
@@ -512,7 +512,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                       borderRadius: "12px",
                       fontSize: "11px",
                       fontWeight: "600",
-                      color: "#3fb950",
+                      color: "#10b981",
                     }}
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -526,7 +526,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
               <p
                 style={{
                   fontSize: "13px",
-                  color: "#8b949e",
+                  color: "#6b7280",
                   lineHeight: "1.5",
                   marginBottom: "12px",
                   display: "-webkit-box",
@@ -544,7 +544,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                   alignItems: "center",
                   gap: "12px",
                   fontSize: "12px",
-                  color: "#8b949e",
+                  color: "#6b7280",
                   marginBottom: "12px",
                 }}
               >
@@ -555,7 +555,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
                   {formatNumber(stats.installs)} installs
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="#e3b341">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="#f59e0b">
                     <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.751.751 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z" />
                   </svg>
                   {stats.rating.toFixed(1)}
@@ -599,7 +599,7 @@ export const MCPHub: React.FC<MCPHubProps> = ({ onInstall }) => {
             alignItems: "center",
             justifyContent: "center",
             padding: "40px",
-            color: "#8b949e",
+            color: "#6b7280",
             fontSize: "14px",
           }}
         >

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { IconSearch, IconX } from "./Icons";
 
 interface SearchBarProps {
@@ -49,9 +49,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           alignItems: "center",
           gap: "10px",
           padding: "10px 16px",
-          background: "rgba(28,34,46,0.55)",
+          background: "rgba(243,244,246,0.55)",
           backdropFilter: "blur(20px)",
-          border: `1px solid ${focused ? "#58a6ff" : "#21262d"}`,
+          border: `1px solid ${focused ? "#6366f1" : "#f3f4f6"}`,
           borderRadius: "10px",
           transition: "all 0.2s ease",
           boxShadow: focused ? "0 0 0 3px rgba(88, 166, 255, 0.1)" : "none",
@@ -71,7 +71,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             background: "transparent",
             border: "none",
             outline: "none",
-            color: "#c9d1d9",
+            color: "#1f2937",
             fontSize: "14px",
             fontFamily: "inherit",
           }}
@@ -88,7 +88,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               justifyContent: "center",
               background: "transparent",
               border: "none",
-              color: "#8b949e",
+              color: "#6b7280",
               cursor: "pointer",
               padding: "2px",
               borderRadius: "4px",
@@ -103,16 +103,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               alignItems: "center",
               gap: "4px",
               fontSize: "12px",
-              color: "#8b949e",
+              color: "#6b7280",
               flexShrink: 0,
             }}
           >
             <kbd
               style={{
                 padding: "2px 6px",
-                background: "rgba(48,54,61,0.45)",
+                background: "rgba(229,231,235,0.45)",
                 backdropFilter: "blur(14px)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                border: "1px solid rgba(0,0,0,0.1)",
                 borderRadius: "4px",
                 fontSize: "11px",
                 fontFamily: "inherit",
@@ -123,9 +123,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             <kbd
               style={{
                 padding: "2px 6px",
-                background: "rgba(48,54,61,0.45)",
+                background: "rgba(229,231,235,0.45)",
                 backdropFilter: "blur(14px)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                border: "1px solid rgba(0,0,0,0.1)",
                 borderRadius: "4px",
                 fontSize: "11px",
                 fontFamily: "inherit",

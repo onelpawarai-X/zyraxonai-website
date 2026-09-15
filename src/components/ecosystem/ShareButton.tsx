@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import {
   IconShare,
   IconCopy,
@@ -59,7 +59,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ itemId, itemName, item
       id: "copy",
       label: "Copy Link",
       icon: copied ? IconCheck : IconCopy,
-      color: copied ? "#3fb950" : "#8b949e",
+      color: copied ? "#10b981" : "#6b7280",
       action: () => copyToClipboard(),
     },
     {
@@ -149,7 +149,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ itemId, itemName, item
       id: "email",
       label: "Email",
       icon: IconEmail,
-      color: "#8b949e",
+      color: "#6b7280",
       action: (url, name) => {
         window.location.href = `mailto:?subject=${encodeURIComponent(name)}&body=${encodeURIComponent(url)}`;
       },
@@ -158,7 +158,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ itemId, itemName, item
       id: "native",
       label: "Native Share",
       icon: IconShare,
-      color: "#58a6ff",
+      color: "#6366f1",
       action: async (url, name) => {
         if (navigator.share) {
           try {
@@ -181,9 +181,9 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ itemId, itemName, item
           gap: "6px",
           padding: "6px 12px",
           background: "transparent",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: "1px solid rgba(0,0,0,0.06)",
           borderRadius: "8px",
-          color: "#8b949e",
+          color: "#6b7280",
           cursor: "pointer",
           fontSize: "13px",
           fontWeight: "500",
@@ -192,12 +192,12 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ itemId, itemName, item
           outline: "none",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "#58a6ff50";
-          e.currentTarget.style.color = "#58a6ff";
+          e.currentTarget.style.borderColor = "#6366f150";
+          e.currentTarget.style.color = "#6366f1";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "#21262d";
-          e.currentTarget.style.color = "#8b949e";
+          e.currentTarget.style.borderColor = "#f3f4f6";
+          e.currentTarget.style.color = "#6b7280";
         }}
       >
         <IconShare size={14} />
@@ -212,13 +212,13 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ itemId, itemName, item
             right: 0,
             marginTop: "4px",
             width: "220px",
-            background: "rgba(28,34,46,0.55)",
+            background: "rgba(243,244,246,0.55)",
             backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: "10px",
             padding: "6px",
             zIndex: 50,
-            boxShadow: "0 16px 32px rgba(0,0,0,0.4)",
+            boxShadow: "0 16px 32px rgba(0,0,0,0.06)",
           }}
         >
           {shareOptions.map((option) => (
@@ -247,7 +247,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ itemId, itemName, item
                 transition: "background 0.15s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#21262d";
+                e.currentTarget.style.background = "#f3f4f6";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "transparent";

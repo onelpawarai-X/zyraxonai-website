@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import { getAuthState } from "../../lib/ecosystem";
 import { getComments, addComment } from "../../lib/shared-data";
 
@@ -76,7 +76,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
   return (
     <div style={{ marginTop: 24 }}>
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#c9d1d9", marginBottom: 16 }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1f2937", marginBottom: 16 }}>
         Comments ({comments.length})
       </h3>
       {auth.isAuthenticated && auth.user ? (
@@ -88,7 +88,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
               width: 36,
               height: 36,
               borderRadius: "50%",
-              background: "rgba(48,54,61,0.45)",
+              background: "rgba(229,231,235,0.45)",
               backdropFilter: "blur(14px)",
             }}
           />
@@ -100,22 +100,22 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
               rows={3}
               style={{
                 width: "100%",
-                background: "rgba(13,17,23,0.55)",
+                background: "rgba(255,255,255,0.55)",
                 backdropFilter: "blur(24px)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                border: "1px solid rgba(0,0,0,0.1)",
                 borderRadius: 8,
                 padding: "10px 12px",
-                color: "#c9d1d9",
+                color: "#1f2937",
                 fontSize: 14,
                 fontFamily: "inherit",
                 resize: "vertical",
                 outline: "none",
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#58a6ff";
+                e.currentTarget.style.borderColor = "#6366f1";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#30363d";
+                e.currentTarget.style.borderColor = "#e5e7eb";
               }}
             />
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
@@ -124,10 +124,10 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 disabled={submitting || !newComment.trim()}
                 style={{
                   padding: "8px 16px",
-                  background: newComment.trim() ? "#238636" : "#21262d",
+                  background: newComment.trim() ? "#047857" : "#f3f4f6",
                   border: "none",
                   borderRadius: 6,
-                  color: newComment.trim() ? "#fff" : "#8b949e",
+                  color: newComment.trim() ? "#fff" : "#6b7280",
                   cursor: newComment.trim() ? "pointer" : "default",
                   fontSize: 13,
                   fontWeight: 500,
@@ -140,13 +140,13 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
           </div>
         </div>
       ) : (
-        <p style={{ color: "#8b949e", fontSize: 13, marginBottom: 16 }}>
+        <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 16 }}>
           Sign in to leave a comment
         </p>
       )}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {comments.length === 0 ? (
-          <p style={{ color: "#8b949e", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
+          <p style={{ color: "#6b7280", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
             No comments yet. Be the first!
           </p>
         ) : (
@@ -159,19 +159,19 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                   width: 32,
                   height: 32,
                   borderRadius: "50%",
-                  background: "rgba(48,54,61,0.45)",
+                  background: "rgba(229,231,235,0.45)",
                   backdropFilter: "blur(14px)",
                   flexShrink: 0,
                 }}
               />
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#c9d1d9" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1f2937" }}>
                     {c.username}
                   </span>
-                  <span style={{ fontSize: 11, color: "#8b949e" }}>{timeAgo(c.createdAt)}</span>
+                  <span style={{ fontSize: 11, color: "#6b7280" }}>{timeAgo(c.createdAt)}</span>
                 </div>
-                <p style={{ fontSize: 14, color: "#b1bac4", lineHeight: 1.5, margin: 0 }}>
+                <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5, margin: 0 }}>
                   {c.content}
                 </p>
               </div>

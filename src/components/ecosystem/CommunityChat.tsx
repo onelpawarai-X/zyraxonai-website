@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, type ReactElement } from "react";
+﻿import { useState, useEffect, useRef, useCallback, useMemo, type ReactElement } from "react";
 import type { ChatMessage } from "../../lib/ecosystem";
 import { getAuthState } from "../../lib/ecosystem";
 import { CommunityRealtime } from "../../lib/community-realtime";
@@ -416,13 +416,13 @@ function LinkPreview({ url }: { url: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block mt-1 mb-1 rounded-lg border border-[#21262d] bg-[#0d1117] hover:border-[#30363d] transition-colors overflow-hidden no-underline"
+      className="block mt-1 mb-1 rounded-lg border border-[#f3f4f6] bg-[#ffffff] hover:border-[#e5e7eb] transition-colors overflow-hidden no-underline"
       style={{ maxWidth: 420 }}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="px-3 py-2">
-        <div className="text-xs font-semibold text-[#58a6ff] truncate">{meta.title}</div>
-        <div className="text-[11px] text-[#8b949e] truncate mt-0.5">{meta.description}</div>
+        <div className="text-xs font-semibold text-[#6366f1] truncate">{meta.title}</div>
+        <div className="text-[11px] text-[#6b7280] truncate mt-0.5">{meta.description}</div>
       </div>
     </a>
   );
@@ -446,18 +446,18 @@ function MessageContent({
       {/* Attachment */}
       {attachment && (
         <div className="mt-1">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d1117] border border-[#21262d]">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#ffffff] border border-[#f3f4f6]">
             <span className="text-lg">{getFileIcon(attachment.name)}</span>
             <div className="flex-1 min-w-0">
               <a
                 href={attachment.url}
                 download={attachment.name}
-                className="text-sm text-[#58a6ff] hover:underline truncate block"
+                className="text-sm text-[#6366f1] hover:underline truncate block"
               >
                 {attachment.name}
               </a>
               {attachment.type && (
-                <span className="text-[10px] text-[#484f58]">{attachment.type}</span>
+                <span className="text-[10px] text-[#9ca3af]">{attachment.type}</span>
               )}
             </div>
           </div>
@@ -508,7 +508,7 @@ function PeerVideo({ stream, label }: { stream: MediaStream; label: string }) {
   return (
     <div className="relative min-w-[180px] h-[120px] rounded-xl overflow-hidden bg-black">
       <video ref={ref} autoPlay playsInline className="w-full h-full object-cover" />
-      <span className="absolute bottom-1.5 left-2 bg-black/70 backdrop-blur px-2 py-0.5 rounded-md text-[11px] text-[#c9d1d9] font-medium">
+      <span className="absolute bottom-1.5 left-2 bg-black/10 backdrop-blur px-2 py-0.5 rounded-md text-[11px] text-[#1f2937] font-medium">
         {label}
       </span>
     </div>
@@ -1071,23 +1071,23 @@ export default function CommunityChat() {
      RENDER
      ═══════════════════════════════════════════════════════════════════════════════ */
   return (
-    <div className="flex h-full bg-[#0d1117] text-[#c9d1d9] overflow-hidden">
+    <div className="flex h-full bg-[#ffffff] text-[#1f2937] overflow-hidden">
       {/* ═══ LEFT SIDEBAR ═══ */}
-      <div className="w-[260px] min-w-[260px] bg-[#161b22] border-r border-[#21262d] flex flex-col overflow-hidden max-md:hidden">
+      <div className="w-[260px] min-w-[260px] bg-[#f9fafb] border-r border-[#f3f4f6] flex flex-col overflow-hidden max-md:hidden">
         {/* Community header */}
         <div
-          className="px-3.5 py-3.5 border-b border-[#21262d]"
+          className="px-3.5 py-3.5 border-b border-[#f3f4f6]"
           style={{
-            background: "linear-gradient(135deg, rgba(31,111,235,0.1), rgba(137,87,229,0.08))",
+            background: "linear-gradient(135deg, rgba(31,111,235,0.1), rgba(99,102,241,0.08))",
           }}
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-[#1f6feb] to-[#8957e5] flex items-center justify-center text-white">
+            <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-[#4f46e5] to-[#8957e5] flex items-center justify-center text-white">
               <SvgGlobe />
             </div>
             <div>
-              <div className="font-bold text-sm text-[#e6edf3]">ZYRAXON Community</div>
-              <div className="text-[11px] text-[#8b949e]">
+              <div className="font-bold text-sm text-[#111827]">ZYRAXON Community</div>
+              <div className="text-[11px] text-[#6b7280]">
                 {onlineUsers.length || (auth.user ? 1 : 0)} online
               </div>
             </div>
@@ -1097,7 +1097,7 @@ export default function CommunityChat() {
         {/* Scrollable area */}
         <div className="flex-1 overflow-y-auto py-2 scrollbar-thin">
           {/* Channels */}
-          <div className="px-3.5 pb-1 text-[11px] font-bold text-[#8b949e] uppercase tracking-wider">
+          <div className="px-3.5 pb-1 text-[11px] font-bold text-[#6b7280] uppercase tracking-wider">
             Community
           </div>
           {CHANNELS.map((ch) => (
@@ -1106,8 +1106,8 @@ export default function CommunityChat() {
               onClick={() => setActiveChannel(ch.id)}
               className={`flex items-center gap-2 w-full px-3.5 py-[7px] border-none cursor-pointer text-left text-[13px] transition-all rounded-none ${
                 activeChannel === ch.id
-                  ? "bg-[rgba(88,166,255,0.12)] text-[#58a6ff]"
-                  : "bg-transparent text-[#8b949e] hover:bg-[rgba(88,166,255,0.06)]"
+                  ? "bg-[rgba(88,166,255,0.12)] text-[#6366f1]"
+                  : "bg-transparent text-[#6b7280] hover:bg-[rgba(88,166,255,0.06)]"
               }`}
             >
               <span className="text-[15px] flex-shrink-0">
@@ -1121,23 +1121,23 @@ export default function CommunityChat() {
           ))}
 
           {/* Voice Channels */}
-          <div className="px-3.5 pt-4 pb-1 text-[11px] font-bold text-[#8b949e] uppercase tracking-wider">
+          <div className="px-3.5 pt-4 pb-1 text-[11px] font-bold text-[#6b7280] uppercase tracking-wider">
             Voice Channels
           </div>
           <div className="px-3.5 py-2">
-            <div className="rounded-lg border border-[#21262d] bg-[#0d1117] p-2.5">
-              <div className="text-[12px] text-[#8b949e] mb-2 font-medium flex items-center gap-1.5">
+            <div className="rounded-lg border border-[#f3f4f6] bg-[#ffffff] p-2.5">
+              <div className="text-[12px] text-[#6b7280] mb-2 font-medium flex items-center gap-1.5">
                 <SvgVolume /> General Voice
               </div>
               {callMode && (
                 <div className="flex items-center gap-2 py-1">
-                  <div className="w-7 h-7 rounded-full bg-[#21262d] flex items-center justify-center text-[11px]">
+                  <div className="w-7 h-7 rounded-full bg-[#f3f4f6] flex items-center justify-center text-[11px]">
                     {auth.user?.username?.[0]?.toUpperCase() || "?"}
                   </div>
-                  <span className="text-[12px] text-[#c9d1d9]">{auth.user?.username || "You"}</span>
+                  <span className="text-[12px] text-[#1f2937]">{auth.user?.username || "You"}</span>
                   <div className="ml-auto flex gap-1">
                     {isMuted && (
-                      <span className="text-[#f85149]">
+                      <span className="text-[#ef4444]">
                         <SvgMute />
                       </span>
                     )}
@@ -1147,10 +1147,10 @@ export default function CommunityChat() {
               {peers.length > 0 &&
                 peers.map((p) => (
                   <div key={p.id} className="flex items-center gap-2 py-1">
-                    <div className="w-7 h-7 rounded-full bg-[#21262d] flex items-center justify-center text-[11px] text-[#8b949e]">
+                    <div className="w-7 h-7 rounded-full bg-[#f3f4f6] flex items-center justify-center text-[11px] text-[#6b7280]">
                       P
                     </div>
-                    <span className="text-[12px] text-[#c9d1d9]">
+                    <span className="text-[12px] text-[#1f2937]">
                       peer-{p.id.split("-").slice(-1)[0]}
                     </span>
                   </div>
@@ -1159,9 +1159,9 @@ export default function CommunityChat() {
           </div>
 
           {/* Direct Messages */}
-          <div className="px-3.5 pt-3 pb-1 text-[11px] font-bold text-[#8b949e] uppercase tracking-wider flex items-center justify-between">
+          <div className="px-3.5 pt-3 pb-1 text-[11px] font-bold text-[#6b7280] uppercase tracking-wider flex items-center justify-between">
             <span>Direct Messages</span>
-            <span className="cursor-pointer hover:text-[#c9d1d9]">
+            <span className="cursor-pointer hover:text-[#1f2937]">
               <SvgPlus />
             </span>
           </div>
@@ -1174,30 +1174,30 @@ export default function CommunityChat() {
                 <img
                   src={user.avatarUrl || getAvatarUrl(user.username)}
                   alt=""
-                  className="w-7 h-7 rounded-full bg-[#21262d]"
+                  className="w-7 h-7 rounded-full bg-[#f3f4f6]"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
                       `https://ui-avatars.com/api/?name=${user.username}&background=1f6feb&color=fff&size=56`;
                   }}
                 />
                 <div
-                  className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#161b22] ${
+                  className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#f9fafb] ${
                     user.status === "online"
-                      ? "bg-[#3fb950]"
+                      ? "bg-[#10b981]"
                       : user.status === "away"
                         ? "bg-[#d29922]"
-                        : "bg-[#484f58]"
+                        : "bg-[#9ca3af]"
                   }`}
                 />
               </div>
-              <span className="text-[#c9d1d9]">{user.username}</span>
+              <span className="text-[#1f2937]">{user.username}</span>
             </div>
           ))}
         </div>
 
         {/* Bottom: call controls */}
-        <div className="border-t border-[#21262d] p-3">
-          <div className="text-[11px] font-bold text-[#8b949e] uppercase tracking-wider mb-2">
+        <div className="border-t border-[#f3f4f6] p-3">
+          <div className="text-[11px] font-bold text-[#6b7280] uppercase tracking-wider mb-2">
             Call Controls
           </div>
           <div className="grid grid-cols-4 gap-1.5">
@@ -1206,8 +1206,8 @@ export default function CommunityChat() {
               title="Video Call"
               className={`flex flex-col items-center gap-0.5 py-2 rounded-lg border-none cursor-pointer text-[18px] transition-all ${
                 callMode === "video"
-                  ? "bg-[#3fb950] text-white"
-                  : "bg-[#21262d] text-[#8b949e] hover:bg-[#30363d] hover:text-[#c9d1d9]"
+                  ? "bg-[#10b981] text-white"
+                  : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#1f2937]"
               }`}
             >
               <SvgVideo />
@@ -1218,8 +1218,8 @@ export default function CommunityChat() {
               title="Audio Call (mic + speaker)"
               className={`flex flex-col items-center gap-0.5 py-2 rounded-lg border-none cursor-pointer text-[18px] transition-all ${
                 callMode === "audio"
-                  ? "bg-[#3fb950] text-white"
-                  : "bg-[#21262d] text-[#8b949e] hover:bg-[#30363d] hover:text-[#c9d1d9]"
+                  ? "bg-[#10b981] text-white"
+                  : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#1f2937]"
               }`}
             >
               <SvgHeadphones />
@@ -1230,8 +1230,8 @@ export default function CommunityChat() {
               title="Voice Call (PTT-style)"
               className={`flex flex-col items-center gap-0.5 py-2 rounded-lg border-none cursor-pointer text-[18px] transition-all ${
                 callMode === "voice"
-                  ? "bg-[#f85149] text-white"
-                  : "bg-[#21262d] text-[#8b949e] hover:bg-[#30363d] hover:text-[#c9d1d9]"
+                  ? "bg-[#ef4444] text-white"
+                  : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#1f2937]"
               }`}
             >
               <SvgMic />
@@ -1243,7 +1243,7 @@ export default function CommunityChat() {
               className={`flex flex-col items-center gap-0.5 py-2 rounded-lg border-none cursor-pointer text-[18px] transition-all ${
                 callMode === "screen"
                   ? "bg-[#8957e5] text-white"
-                  : "bg-[#21262d] text-[#8b949e] hover:bg-[#30363d] hover:text-[#c9d1d9]"
+                  : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#1f2937]"
               }`}
             >
               <SvgScreen />
@@ -1256,8 +1256,8 @@ export default function CommunityChat() {
                 onClick={toggleMute}
                 className={`flex-1 py-1.5 rounded-lg border-none cursor-pointer text-[12px] font-medium transition-all ${
                   isMuted
-                    ? "bg-[#f85149] text-white"
-                    : "bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"
+                    ? "bg-[#ef4444] text-white"
+                    : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
                 }`}
               >
                 {isMuted ? "Unmute" : "Mute"}
@@ -1267,8 +1267,8 @@ export default function CommunityChat() {
                   onClick={toggleVideo}
                   className={`flex-1 py-1.5 rounded-lg border-none cursor-pointer text-[12px] font-medium transition-all ${
                     isVideoOff
-                      ? "bg-[#f85149] text-white"
-                      : "bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"
+                      ? "bg-[#ef4444] text-white"
+                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
                   }`}
                 >
                   {isVideoOff ? "Cam On" : "Cam Off"}
@@ -1276,13 +1276,13 @@ export default function CommunityChat() {
               )}
               <button
                 onClick={leaveCall}
-                className="flex-1 py-1.5 rounded-lg border-none cursor-pointer text-[12px] font-medium bg-[#f85149] text-white hover:bg-[#da3633] transition-all"
+                className="flex-1 py-1.5 rounded-lg border-none cursor-pointer text-[12px] font-medium bg-[#ef4444] text-white hover:bg-[#dc2626] transition-all"
               >
                 Leave
               </button>
             </div>
           )}
-          <div className="mt-2 text-center text-[11px] text-[#484f58]">
+          <div className="mt-2 text-center text-[11px] text-[#9ca3af]">
             {callMode
               ? `${callMode.toUpperCase()} · ${peers.length + 1}/${MAX_PEERS_PER_ROOM}`
               : "No active call"}
@@ -1293,7 +1293,7 @@ export default function CommunityChat() {
       {/* ═══ MAIN CHAT ═══ */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* ─── Top bar ─── */}
-        <div className="px-4 py-2.5 bg-[#161b22] border-b border-[#21262d] flex items-center gap-3">
+        <div className="px-4 py-2.5 bg-[#f9fafb] border-b border-[#f3f4f6] flex items-center gap-3">
           <span className="text-lg flex-shrink-0">
             {(() => {
               const Icon = CHANNEL_ICON_MAP[activeChannel];
@@ -1301,19 +1301,19 @@ export default function CommunityChat() {
             })()}
           </span>
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-[14px] text-[#e6edf3]"># {currentChannel.name}</div>
-            <div className="text-[11px] text-[#8b949e]">{currentChannel.description}</div>
+            <div className="font-bold text-[14px] text-[#111827]"># {currentChannel.name}</div>
+            <div className="text-[11px] text-[#6b7280]">{currentChannel.description}</div>
           </div>
           {callMode && (
             <div className="flex items-center gap-2">
               <span
                 className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                   callMode === "video"
-                    ? "bg-[#3fb950] text-white"
+                    ? "bg-[#10b981] text-white"
                     : callMode === "audio"
-                      ? "bg-[#3fb950] text-white"
+                      ? "bg-[#10b981] text-white"
                       : callMode === "voice"
-                        ? "bg-[#f85149] text-white"
+                        ? "bg-[#ef4444] text-white"
                         : "bg-[#8957e5] text-white"
                 }`}
               >
@@ -1331,7 +1331,7 @@ export default function CommunityChat() {
           {/* Three-dot toggle for online panel */}
           <button
             onClick={() => setShowOnlinePanel((v) => !v)}
-            className="ml-2 p-1.5 rounded-lg bg-transparent border border-[#21262d] text-[#8b949e] cursor-pointer hover:bg-[#21262d] hover:text-[#c9d1d9] transition-colors"
+            className="ml-2 p-1.5 rounded-lg bg-transparent border border-[#f3f4f6] text-[#6b7280] cursor-pointer hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors"
             title={showOnlinePanel ? "Hide online members" : "Show online members"}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -1344,14 +1344,14 @@ export default function CommunityChat() {
 
         {/* ─── Call error ─── */}
         {callError && (
-          <div className="px-4 py-2 bg-[#f8514915] border-b border-[#f8514933] text-[12px] text-[#f85149]">
+          <div className="px-4 py-2 bg-[#ef444415] border-b border-[#ef444433] text-[12px] text-[#ef4444]">
             {callError}
           </div>
         )}
 
         {/* ─── Call video grid ─── */}
         {callMode && (callMode === "video" || callMode === "screen") && (
-          <div className="px-4 py-3 bg-[#0d1117] border-b border-[#21262d]">
+          <div className="px-4 py-3 bg-[#ffffff] border-b border-[#f3f4f6]">
             <div className="flex gap-2 overflow-x-auto pb-1">
               {callMode === "screen" && screenStream.current && (
                 <div className="relative min-w-[280px] h-[160px] rounded-xl overflow-hidden bg-black border-2 border-[#8957e5]">
@@ -1362,13 +1362,13 @@ export default function CommunityChat() {
                     muted
                     className="w-full h-full object-contain"
                   />
-                  <span className="absolute bottom-1.5 left-2 bg-black/70 backdrop-blur px-2 py-0.5 rounded-md text-[11px] text-[#c9d1d9] flex items-center gap-1">
+                  <span className="absolute bottom-1.5 left-2 bg-black/10 backdrop-blur px-2 py-0.5 rounded-md text-[11px] text-[#1f2937] flex items-center gap-1">
                     <SvgScreen /> Screen Share
                   </span>
                 </div>
               )}
               {callMode === "video" && (
-                <div className="relative min-w-[180px] h-[120px] rounded-xl overflow-hidden bg-black border-2 border-[#1f6feb]">
+                <div className="relative min-w-[180px] h-[120px] rounded-xl overflow-hidden bg-black border-2 border-[#4f46e5]">
                   <video
                     ref={localVideoRef}
                     autoPlay
@@ -1376,12 +1376,12 @@ export default function CommunityChat() {
                     playsInline
                     className="w-full h-full object-cover"
                   />
-                  <span className="absolute bottom-1.5 left-2 bg-black/70 backdrop-blur px-2 py-0.5 rounded-md text-[11px] text-[#c9d1d9]">
+                  <span className="absolute bottom-1.5 left-2 bg-black/10 backdrop-blur px-2 py-0.5 rounded-md text-[11px] text-[#1f2937]">
                     You {isMuted ? "(Muted)" : ""}
                   </span>
                   {isVideoOff && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-[#21262d]">
-                      <div className="w-12 h-12 rounded-full bg-[#30363d] flex items-center justify-center text-xl text-[#8b949e]">
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#f3f4f6]">
+                      <div className="w-12 h-12 rounded-full bg-[#e5e7eb] flex items-center justify-center text-xl text-[#6b7280]">
                         {(auth.user?.username || "?")[0].toUpperCase()}
                       </div>
                     </div>
@@ -1406,21 +1406,21 @@ export default function CommunityChat() {
         {!auth.isAuthenticated && (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center px-6">
-              <div className="w-12 h-12 rounded-full bg-[#21262d] flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-[#f3f4f6] flex items-center justify-center">
                 <svg
                   width="24"
                   height="24"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#8b949e"
+                  stroke="#6b7280"
                   strokeWidth="2"
                 >
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0110 0v4" />
                 </svg>
               </div>
-              <p className="text-[#8b949e] text-sm mb-2">Sign in to join the community chat</p>
-              <p className="text-[#484f58] text-xs">
+              <p className="text-[#6b7280] text-sm mb-2">Sign in to join the community chat</p>
+              <p className="text-[#9ca3af] text-xs">
                 Connect your GitHub account to start chatting
               </p>
             </div>
@@ -1432,16 +1432,16 @@ export default function CommunityChat() {
           <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-0.5">
             {messages.length === 0 && (
               <div className="flex-1 flex flex-col items-center justify-center text-center">
-                <div className="mb-3 text-[#1f6feb]">
+                <div className="mb-3 text-[#4f46e5]">
                   {(() => {
                     const Icon = CHANNEL_ICON_MAP[activeChannel];
                     return Icon ? <Icon /> : <SvgHash />;
                   })()}
                 </div>
-                <div className="text-lg font-bold text-[#e6edf3] mb-1">
+                <div className="text-lg font-bold text-[#111827] mb-1">
                   Welcome to #{currentChannel.name}!
                 </div>
-                <div className="text-[13px] text-[#8b949e]">
+                <div className="text-[13px] text-[#6b7280]">
                   This is the start of the conversation.
                 </div>
               </div>
@@ -1459,7 +1459,7 @@ export default function CommunityChat() {
                     <img
                       src={msg.avatarUrl || getAvatarUrl(msg.username)}
                       alt=""
-                      className="w-9 h-9 rounded-full bg-[#21262d] flex-shrink-0 mt-0.5 object-cover"
+                      className="w-9 h-9 rounded-full bg-[#f3f4f6] flex-shrink-0 mt-0.5 object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           `https://ui-avatars.com/api/?name=${msg.username}&background=1f6feb&color=fff&size=72`;
@@ -1476,11 +1476,11 @@ export default function CommunityChat() {
                         className={`flex items-baseline gap-2 mb-0.5 ${own ? "justify-end" : ""}`}
                       >
                         <span
-                          className={`text-[13px] font-semibold ${msg.username === "ZYRAXON" ? "text-[#58a6ff]" : own ? "text-[#a371f7]" : "text-[#e6edf3]"}`}
+                          className={`text-[13px] font-semibold ${msg.username === "ZYRAXON" ? "text-[#6366f1]" : own ? "text-[#a371f7]" : "text-[#111827]"}`}
                         >
                           {msg.username}
                         </span>
-                        <span className="text-[10px] text-[#484f58]">
+                        <span className="text-[10px] text-[#9ca3af]">
                           {formatTime(msg.timestamp)}
                         </span>
                       </div>
@@ -1488,8 +1488,8 @@ export default function CommunityChat() {
                     <div
                       className={`px-3.5 py-2 rounded-2xl text-[13.5px] leading-relaxed break-words inline-block text-left ${
                         own
-                          ? "bg-gradient-to-br from-[#1f6feb] to-[#1a60d4] text-white rounded-br-md"
-                          : "bg-[#161b22] text-[#c9d1d9] border border-[#21262d] rounded-bl-md"
+                          ? "bg-gradient-to-br from-[#4f46e5] to-[#1a60d4] text-white rounded-br-md"
+                          : "bg-[#f9fafb] text-[#1f2937] border border-[#f3f4f6] rounded-bl-md"
                       }`}
                     >
                       <MessageContent content={msg.content} attachment={msg.attachment} />
@@ -1512,7 +1512,7 @@ export default function CommunityChat() {
                             ),
                           );
                         }}
-                        className="bg-transparent border-none text-[#484f58] cursor-pointer flex items-center gap-0.5 hover:text-[#f85149] transition-colors text-[11px] py-0 px-1"
+                        className="bg-transparent border-none text-[#9ca3af] cursor-pointer flex items-center gap-0.5 hover:text-[#ef4444] transition-colors text-[11px] py-0 px-1"
                       >
                         <SvgHeart /> {msg.likes > 0 ? msg.likes : ""}
                       </button>
@@ -1527,10 +1527,10 @@ export default function CommunityChat() {
 
         {/* ─── Input area ─── */}
         {auth.isAuthenticated && (
-          <div className="px-4 py-3 bg-[#161b22] border-t border-[#21262d]">
+          <div className="px-4 py-3 bg-[#f9fafb] border-t border-[#f3f4f6]">
             {/* Emoji picker (emoji-mart) */}
             {showEmojiPicker && (
-              <div className="mb-2 rounded-xl overflow-hidden border border-[#21262d]">
+              <div className="mb-2 rounded-xl overflow-hidden border border-[#f3f4f6]">
                 <Picker
                   data={data}
                   onEmojiSelect={(emoji: any) => {
@@ -1550,10 +1550,10 @@ export default function CommunityChat() {
               {/* Emoji button */}
               <button
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className={`p-2 rounded-lg border border-[#21262d] bg-[#0d1117] cursor-pointer transition-all ${
+                className={`p-2 rounded-lg border border-[#f3f4f6] bg-[#ffffff] cursor-pointer transition-all ${
                   showEmojiPicker
-                    ? "text-[#58a6ff] border-[#58a6ff]"
-                    : "text-[#8b949e] hover:text-[#c9d1d9] hover:border-[#30363d]"
+                    ? "text-[#6366f1] border-[#6366f1]"
+                    : "text-[#6b7280] hover:text-[#1f2937] hover:border-[#e5e7eb]"
                 }`}
               >
                 <SvgSmile />
@@ -1571,7 +1571,7 @@ export default function CommunityChat() {
                   }
                 }}
                 placeholder={`Message #${currentChannel.name}`}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[#21262d] bg-[#0d1117] text-[#c9d1d9] text-[13.5px] outline-none focus:border-[#58a6ff] transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#f3f4f6] bg-[#ffffff] text-[#1f2937] text-[13.5px] outline-none focus:border-[#6366f1] transition-colors"
                 disabled={sending}
               />
 
@@ -1581,8 +1581,8 @@ export default function CommunityChat() {
                 disabled={!input.trim() || sending}
                 className={`px-5 py-2.5 rounded-xl border-none cursor-pointer text-[13px] font-semibold transition-all ${
                   input.trim()
-                    ? "bg-gradient-to-br from-[#238636] to-[#2ea043] text-white hover:from-[#2ea043] hover:to-[#3fb950]"
-                    : "bg-[#21262d] text-[#484f58] cursor-not-allowed"
+                    ? "bg-gradient-to-br from-[#047857] to-[#059669] text-white hover:from-[#059669] hover:to-[#10b981]"
+                    : "bg-[#f3f4f6] text-[#9ca3af] cursor-not-allowed"
                 }`}
               >
                 {sending ? "..." : <SvgSend />}
@@ -1594,15 +1594,15 @@ export default function CommunityChat() {
 
       {/* ═══ RIGHT SIDEBAR (Online Members) ═══ */}
       {showOnlinePanel && (
-        <div className="w-[220px] bg-[#161b22] border-l border-[#21262d] flex-col overflow-hidden max-lg:hidden flex">
-          <div className="px-3.5 py-3 border-b border-[#21262d] text-[12px] font-bold text-[#8b949e] uppercase flex items-center justify-between">
+        <div className="w-[220px] bg-[#f9fafb] border-l border-[#f3f4f6] flex-col overflow-hidden max-lg:hidden flex">
+          <div className="px-3.5 py-3 border-b border-[#f3f4f6] text-[12px] font-bold text-[#6b7280] uppercase flex items-center justify-between">
             <span>
               অনলাইন —{" "}
               {onlineUsers.filter((u) => u.id !== auth.user?.id).length + (auth.user ? 1 : 0)}
             </span>
             <button
               onClick={() => setShowOnlinePanel(false)}
-              className="bg-transparent border-none text-[#8b949e] cursor-pointer text-lg hover:text-[#c9d1d9] px-1 leading-none"
+              className="bg-transparent border-none text-[#6b7280] cursor-pointer text-lg hover:text-[#1f2937] px-1 leading-none"
               title="Hide panel"
             >
               ✕
@@ -1616,17 +1616,17 @@ export default function CommunityChat() {
                   <img
                     src={auth.user.avatarUrl || getAvatarUrl(auth.user.username)}
                     alt=""
-                    className="w-8 h-8 rounded-full bg-[#21262d]"
+                    className="w-8 h-8 rounded-full bg-[#f3f4f6]"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src =
                         `https://ui-avatars.com/api/?name=${auth.user?.username}&background=8957e5&color=fff&size=64`;
                     }}
                   />
-                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#3fb950] border-2 border-[#161b22]" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#10b981] border-2 border-[#f9fafb]" />
                 </div>
                 <div>
-                  <div className="text-[13px] text-[#e6edf3] font-medium">{auth.user.username}</div>
-                  <div className="text-[10px] text-[#3fb950]">online · you</div>
+                  <div className="text-[13px] text-[#111827] font-medium">{auth.user.username}</div>
+                  <div className="text-[10px] text-[#10b981]">online · you</div>
                 </div>
               </div>
             )}
@@ -1641,30 +1641,30 @@ export default function CommunityChat() {
                     <img
                       src={user.avatarUrl || getAvatarUrl(user.username)}
                       alt=""
-                      className="w-8 h-8 rounded-full bg-[#21262d]"
+                      className="w-8 h-8 rounded-full bg-[#f3f4f6]"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           `https://ui-avatars.com/api/?name=${user.username}&background=1f6feb&color=fff&size=64`;
                       }}
                     />
                     <div
-                      className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#161b22] ${
+                      className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#f9fafb] ${
                         user.status === "online"
-                          ? "bg-[#3fb950]"
+                          ? "bg-[#10b981]"
                           : user.status === "away"
                             ? "bg-[#d29922]"
-                            : "bg-[#484f58]"
+                            : "bg-[#9ca3af]"
                       }`}
                     />
                   </div>
                   <div>
-                    <div className="text-[13px] text-[#c9d1d9]">{user.username}</div>
-                    <div className="text-[10px] text-[#484f58]">{user.status}</div>
+                    <div className="text-[13px] text-[#1f2937]">{user.username}</div>
+                    <div className="text-[10px] text-[#9ca3af]">{user.status}</div>
                   </div>
                 </div>
               ))}
             {onlineUsers.length === 0 && !auth.user && (
-              <div className="px-3.5 py-4 text-center text-[12px] text-[#484f58]">
+              <div className="px-3.5 py-4 text-center text-[12px] text-[#9ca3af]">
                 Sign in to see who's online
               </div>
             )}

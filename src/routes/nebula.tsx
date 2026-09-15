@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,21 +106,21 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden">
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl" />
       </div>
-      <Card className="relative z-10 w-full max-w-md border border-white/10 bg-black/80 backdrop-blur-xl">
+      <Card className="relative z-10 w-full max-w-md border border-gray-200 bg-white/90 backdrop-blur-xl">
         <CardContent className="p-8">
           <div className="text-center mb-6">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center mb-4">
               <Zap className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent">
               ZYRAXON Nebula
             </h1>
-            <p className="text-sm text-gray-400 mt-1">AI Model Hub — Admin Access</p>
+            <p className="text-sm text-gray-500 mt-1">AI Model Hub — Admin Access</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
@@ -130,19 +130,19 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
                 placeholder="পাসওয়ার্ড..."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 bg-white/5 border-white/10 focus:border-purple-500"
+                className="pl-10 pr-10 bg-white border-gray-200 focus:border-purple-500"
                 autoFocus
               />
               <button
                 type="button"
                 onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             {error && (
-              <p className="text-red-400 text-sm flex items-center gap-2">
+              <p className="text-red-500 text-sm flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" /> {error}
               </p>
             )}
@@ -232,7 +232,7 @@ function ModelCard({
   const progress = downloadStatus?.progress || 0;
 
   return (
-    <Card className="border-white/10 bg-white/5 hover:bg-white/8 transition-all group">
+    <Card className="border-gray-200 bg-white hover:bg-gray-50 transition-all group">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="text-2xl shrink-0 mt-1">{icon}</div>
@@ -253,7 +253,7 @@ function ModelCard({
                   </span>
                   <span>{progress}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
@@ -269,7 +269,7 @@ function ModelCard({
           </div>
           <div className="flex flex-col gap-1.5 shrink-0">
             {status === "done" ? (
-              <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 h-7 text-xs">
+              <Button size="sm" variant="outline" className="border-green-300 text-green-600 h-7 text-xs">
                 <CheckCircle2 className="w-3 h-3 mr-1" /> Ready
               </Button>
             ) : status === "downloading" ? (
@@ -341,7 +341,7 @@ function SystemTab() {
   return (
     <div className="grid grid-cols-2 gap-3">
       {stats.map((s) => (
-        <Card key={s.label} className="border-white/10 bg-white/5">
+        <Card key={s.label} className="border-gray-200 bg-white">
           <CardContent className="p-4 flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${s.color} flex items-center justify-center`}>
               <s.icon className="w-5 h-5 text-white" />
@@ -521,12 +521,12 @@ function ChatTab() {
 
   return (
     <div className="flex flex-col h-[600px]">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4 text-purple-400" />
-          <span className="text-sm text-gray-300">Nebula Chat</span>
+          <span className="text-sm text-gray-600">Nebula Chat</span>
           {selectedModel && (
-            <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-xs">
+            <Badge variant="outline" className="border-purple-300 text-purple-600 text-xs">
               {selectedModel.modelId.split("/").pop()}
             </Badge>
           )}
@@ -542,7 +542,7 @@ function ChatTab() {
       </div>
 
       {showModelPicker && (
-        <div className="border-b border-white/10 bg-black/50 p-3 max-h-48 overflow-y-auto">
+        <div className="border-b border-gray-200 bg-gray-50 p-3 max-h-48 overflow-y-auto">
           <div className="flex items-center gap-2 mb-2">
             <Input
               placeholder="HuggingFace থেকে মডেল সার্চ করুন..."
@@ -552,7 +552,7 @@ function ChatTab() {
                   if (q) await searchModels(q);
                 }
               }}
-              className="bg-white/5 border-white/10 text-sm h-8"
+              className="bg-white border-gray-200 text-sm h-8"
             />
           </div>
           {searchResults.length > 0 && (
@@ -567,13 +567,13 @@ function ChatTab() {
                   }}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-colors ${
                     selectedModel?.modelId === m.modelId
-                      ? "bg-purple-500/20 text-purple-300"
-                      : "text-gray-300 hover:bg-white/5"
+                      ? "bg-purple-100 text-purple-700"
+                      : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   <span>{PIPELINE_ICONS[m.pipeline_tag] || "📦"}</span>
                   <span className="truncate">{m.modelId}</span>
-                  <span className="text-gray-500 ml-auto">⬇{formatNumber(m.downloads)}</span>
+                  <span className="text-gray-400 ml-auto">⬇{formatNumber(m.downloads)}</span>
                 </button>
               ))}
             </div>
@@ -590,8 +590,8 @@ function ChatTab() {
                   msg.role === "user"
                     ? "bg-gradient-to-r from-purple-600 to-cyan-600 text-white"
                     : msg.role === "system"
-                      ? "bg-white/5 text-gray-400 border border-white/10"
-                      : "bg-white/10 text-gray-200"
+                      ? "bg-gray-50 text-gray-500 border border-gray-200"
+                      : "bg-gray-100 text-gray-800"
                 }`}
               >
                 {msg.content}
@@ -608,9 +608,9 @@ function ChatTab() {
             <div className="flex justify-start">
               <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-2">
                 <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                 </div>
               </div>
             </div>
@@ -618,7 +618,7 @@ function ChatTab() {
         </div>
       </ScrollArea>
 
-      <div className="border-t border-white/10 p-3 bg-black/30">
+      <div className="border-t border-gray-200 p-3 bg-white">
         <div className="flex items-center gap-2">
           <Input
             ref={inputRef}
@@ -627,7 +627,7 @@ function ChatTab() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             disabled={loading}
-            className="bg-white/5 border-white/10 focus:border-purple-500"
+            className="bg-white border-gray-200 focus:border-purple-500"
           />
           <Button
             onClick={handleSend}
@@ -677,7 +677,7 @@ function DownloadsTab() {
 
   if (downloads.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-gray-400">
         <Download className="w-10 h-10 mx-auto mb-3 opacity-50" />
         <p className="text-sm">এখনো কোনো মডেল ডাউনলোড হয়নি।</p>
         <p className="text-xs mt-1">Chat ট্যাবে গিয়ে মডেল সার্চ ও ডাউনলোড করুন।</p>
@@ -688,7 +688,7 @@ function DownloadsTab() {
   return (
     <div className="space-y-3">
       {downloads.map((d) => (
-        <Card key={d.modelId} className="border-white/10 bg-white/5">
+        <Card key={d.modelId} className="border-gray-200 bg-white">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
@@ -700,7 +700,7 @@ function DownloadsTab() {
                   {d.status === "pending" && "⏳ Pending..."}
                 </p>
                 {d.status === "downloading" && (
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
+                  <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mt-2">
                     <div
                       className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full transition-all duration-300"
                       style={{ width: `${d.progress}%` }}
@@ -712,7 +712,7 @@ function DownloadsTab() {
                 size="sm"
                 variant="ghost"
                 onClick={() => removeModel(d.modelId)}
-                className="text-red-400 hover:text-red-300 ml-3 shrink-0"
+                className="text-red-500 hover:text-red-300 ml-3 shrink-0"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -726,21 +726,21 @@ function DownloadsTab() {
 
 function NebulaPanel() {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <header className="border-b border-white/10 bg-black/80 backdrop-blur-xl sticky top-0 z-50">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent">
                 ZYRAXON Nebula
               </h1>
               <p className="text-xs text-gray-500">Real AI Model Hub — HuggingFace Powered</p>
             </div>
           </div>
-          <Badge variant="outline" className="border-green-500/30 text-green-400">
+          <Badge variant="outline" className="border-green-300 text-green-600">
             <span className="w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse" />
             Live
           </Badge>
@@ -749,20 +749,20 @@ function NebulaPanel() {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Tabs defaultValue="chat" className="space-y-6">
-          <TabsList className="bg-white/5 border border-white/10 p-1">
-            <TabsTrigger value="chat" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+          <TabsList className="bg-gray-100 border border-gray-200 p-1">
+            <TabsTrigger value="chat" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
               <Brain className="w-4 h-4 mr-2" /> Chat
             </TabsTrigger>
-            <TabsTrigger value="downloads" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+            <TabsTrigger value="downloads" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
               <Download className="w-4 h-4 mr-2" /> Downloads
             </TabsTrigger>
-            <TabsTrigger value="system" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+            <TabsTrigger value="system" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
               <Cpu className="w-4 h-4 mr-2" /> System
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="chat">
-            <Card className="border-white/10 bg-white/5">
+            <Card className="border-gray-200 bg-white">
               <CardContent className="p-0">
                 <ChatTab />
               </CardContent>

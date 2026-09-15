@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import {
   IconHome,
   IconMarketplace,
@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
     background: active ? "rgba(31, 111, 235, 0.2)" : "transparent",
     border: "none",
     borderRadius: "8px",
-    color: active ? "#58a6ff" : "#8b949e",
+    color: active ? "#6366f1" : "#6b7280",
     cursor: "pointer",
     fontSize: "14px",
     fontWeight: active ? "600" : "400",
@@ -87,9 +87,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
         width: collapsed ? "56px" : "224px",
         minWidth: collapsed ? "56px" : "224px",
         height: "100vh",
-        background: "rgba(13,17,23,0.55)",
+        background: "rgba(255,255,255,0.55)",
         backdropFilter: "blur(24px)",
-        borderRight: "1px solid rgba(255,255,255,0.08)",
+        borderRight: "1px solid rgba(0,0,0,0.06)",
         display: "flex",
         flexDirection: "column",
         transition: "width 0.2s ease, min-width 0.2s ease",
@@ -102,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
           alignItems: "center",
           justifyContent: collapsed ? "center" : "space-between",
           padding: collapsed ? "16px 8px" : "16px",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
         }}
       >
         {!collapsed && (
@@ -110,7 +110,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
             style={{
               fontSize: "16px",
               fontWeight: "700",
-              color: "#c9d1d9",
+              color: "#1f2937",
               fontFamily: "inherit",
             }}
           >
@@ -126,9 +126,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
             width: "32px",
             height: "32px",
             background: "transparent",
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: "1px solid rgba(0,0,0,0.06)",
             borderRadius: "6px",
-            color: "#8b949e",
+            color: "#6b7280",
             cursor: "pointer",
             flexShrink: 0,
             outline: "none",
@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
                 padding: "8px 12px 4px",
                 fontSize: "11px",
                 fontWeight: "600",
-                color: "#484f58",
+                color: "#9ca3af",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}
@@ -177,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
         <div
           style={{
             height: "1px",
-            background: "rgba(48,54,61,0.45)",
+            background: "rgba(229,231,235,0.45)",
             backdropFilter: "blur(14px)",
             margin: "8px 12px",
           }}
@@ -190,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
                 padding: "8px 12px 4px",
                 fontSize: "11px",
                 fontWeight: "600",
-                color: "#484f58",
+                color: "#9ca3af",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}
@@ -215,7 +215,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
       <div
         style={{
           padding: collapsed ? "8px" : "12px",
-          borderTop: "1px solid rgba(255,255,255,0.08)",
+          borderTop: "1px solid rgba(0,0,0,0.06)",
         }}
       >
         <button

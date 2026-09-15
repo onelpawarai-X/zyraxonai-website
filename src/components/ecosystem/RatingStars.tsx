@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import { getAuthState } from "../../lib/ecosystem";
 import { getRating, setRating } from "../../lib/shared-data";
 
@@ -14,7 +14,7 @@ const Star = ({ filled, size = 20 }: { filled: boolean; size?: number }) => (
     height={size}
     viewBox="0 0 24 24"
     fill={filled ? "#e3b341" : "none"}
-    stroke={filled ? "#e3b341" : "#484f58"}
+    stroke={filled ? "#e3b341" : "#9ca3af"}
     strokeWidth="1.6"
     strokeLinejoin="round"
   >
@@ -111,12 +111,12 @@ export const RatingStars: React.FC<RatingStarsProps> = ({
             </button>
           ))}
         </div>
-        <span style={{ fontSize: 13, color: "#c9d1d9", fontWeight: 600 }}>
+        <span style={{ fontSize: 13, color: "#1f2937", fontWeight: 600 }}>
           {(average || 0).toFixed(1)}
         </span>
-        <span style={{ fontSize: 12, color: "#8b949e" }}>({count})</span>
+        <span style={{ fontSize: 12, color: "#6b7280" }}>({count})</span>
       </div>
-      <span style={{ fontSize: 11, color: status ? "#58a6ff" : "#484f58", minHeight: 14 }}>
+      <span style={{ fontSize: 11, color: status ? "#6366f1" : "#9ca3af", minHeight: 14 }}>
         {status ??
           (mine ? `Your rating: ${mine}★` : userId ? "Click a star to rate" : "Sign in to rate")}
       </span>

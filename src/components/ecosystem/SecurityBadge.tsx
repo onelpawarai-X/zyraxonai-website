@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { scanItem, type SecurityInput } from "@/lib/marketplace-security";
 
 /** Transparent, click-to-expand trust badge shown on every marketplace item. */
@@ -58,8 +58,8 @@ export const SecurityBadge: React.FC<{ input: SecurityInput; detailed?: boolean 
             marginTop: 8,
             padding: 12,
             borderRadius: 12,
-            background: "rgba(13,17,23,0.85)",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: "rgba(255,255,255,0.85)",
+            border: "1px solid rgba(0,0,0,0.08)",
             backdropFilter: "blur(20px)",
             maxWidth: 340,
           }}
@@ -68,7 +68,7 @@ export const SecurityBadge: React.FC<{ input: SecurityInput; detailed?: boolean 
             style={{
               height: 6,
               borderRadius: 4,
-              background: "rgba(255,255,255,0.08)",
+              background: "rgba(0,0,0,0.06)",
               overflow: "hidden",
               marginBottom: 10,
             }}
@@ -90,12 +90,12 @@ export const SecurityBadge: React.FC<{ input: SecurityInput; detailed?: boolean 
                 key={s.text}
                 style={{
                   fontSize: 11.5,
-                  color: s.ok ? "#b1bac4" : "#8b949e",
+                  color: s.ok ? "#6b7280" : "#6b7280",
                   display: "flex",
                   gap: 6,
                 }}
               >
-                <span style={{ color: s.ok ? "#3fb950" : "#d29922" }}>{s.ok ? "✓" : "!"}</span>
+                <span style={{ color: s.ok ? "#10b981" : "#d29922" }}>{s.ok ? "✓" : "!"}</span>
                 {s.text}
               </li>
             ))}
@@ -107,7 +107,7 @@ export const SecurityBadge: React.FC<{ input: SecurityInput; detailed?: boolean 
                   fontSize: 10.5,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
-                  color: "#8b949e",
+                  color: "#6b7280",
                   margin: "10px 0 6px",
                 }}
               >
@@ -119,9 +119,9 @@ export const SecurityBadge: React.FC<{ input: SecurityInput; detailed?: boolean 
                     key={p}
                     style={{
                       fontSize: 10.5,
-                      color: "#c9d1d9",
-                      background: "rgba(255,255,255,0.06)",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      color: "#1f2937",
+                      background: "rgba(0,0,0,0.04)",
+                      border: "1px solid rgba(0,0,0,0.1)",
                       borderRadius: 20,
                       padding: "2px 8px",
                       transition: "all 0.15s ease",

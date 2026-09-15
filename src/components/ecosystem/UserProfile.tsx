@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
   User,
   EcosystemItem,
@@ -161,7 +161,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
 
   const bannerStyle: React.CSSProperties = {
     height: "200px",
-    background: "linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1e2e 100%)",
+    background: "linear-gradient(135deg, #ffffff 0%, #f9fafb 50%, #f0f1f5 100%)",
     borderRadius: "12px 12px 0 0",
     position: "relative",
     overflow: "hidden",
@@ -170,11 +170,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "8px 12px",
-    background: "rgba(13,17,23,0.55)",
+    background: "rgba(255,255,255,0.55)",
     backdropFilter: "blur(24px)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    border: "1px solid rgba(0,0,0,0.1)",
     borderRadius: "8px",
-    color: "#c9d1d9",
+    color: "#1f2937",
     fontSize: "14px",
     fontFamily: "inherit",
     outline: "none",
@@ -191,9 +191,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
   return (
     <div
       style={{
-        background: "rgba(28,34,46,0.55)",
+        background: "rgba(243,244,246,0.55)",
         backdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: "1px solid rgba(0,0,0,0.06)",
         borderRadius: "12px",
         overflow: "hidden",
         maxWidth: "960px",
@@ -234,9 +234,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
               width: "96px",
               height: "96px",
               borderRadius: "50%",
-              border: "4px solid #161b22",
+              border: "4px solid #f9fafb",
               overflow: "hidden",
-              background: "rgba(48,54,61,0.45)",
+              background: "rgba(229,231,235,0.45)",
               backdropFilter: "blur(14px)",
               flexShrink: 0,
               position: "relative",
@@ -257,7 +257,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#8b949e",
+                  color: "#6b7280",
                 }}
               >
                 <IconUser size={40} />
@@ -284,11 +284,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                   placeholder="Display name"
                 />
               ) : (
-                <h1 style={{ fontSize: "22px", fontWeight: "600", color: "#c9d1d9", margin: 0 }}>
+                <h1 style={{ fontSize: "22px", fontWeight: "600", color: "#1f2937", margin: 0 }}>
                   {user.displayName || user.username}
                 </h1>
               )}
-              <span style={{ fontSize: "14px", color: "#8b949e" }}>@{user.username}</span>
+              <span style={{ fontSize: "14px", color: "#6b7280" }}>@{user.username}</span>
             </div>
             {editMode ? (
               <input
@@ -298,7 +298,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 placeholder="Title (e.g. Full Stack Developer)"
               />
             ) : user.title ? (
-              <div style={{ fontSize: "14px", color: "#8b949e", marginTop: "4px" }}>
+              <div style={{ fontSize: "14px", color: "#6b7280", marginTop: "4px" }}>
                 {user.title}
               </div>
             ) : null}
@@ -316,8 +316,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                       alignItems: "center",
                       gap: "6px",
                       padding: "8px 16px",
-                      background: "#238636",
-                      border: "1px solid #2ea043",
+                      background: "#047857",
+                      border: "1px solid #059669",
                       borderRadius: "8px",
                       color: "#ffffff",
                       fontSize: "13px",
@@ -338,9 +338,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                       gap: "6px",
                       padding: "8px 16px",
                       background: "transparent",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      border: "1px solid rgba(0,0,0,0.1)",
                       borderRadius: "8px",
-                      color: "#c9d1d9",
+                      color: "#1f2937",
                       fontSize: "13px",
                       fontWeight: "500",
                       cursor: "pointer",
@@ -361,9 +361,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                     gap: "6px",
                     padding: "8px 16px",
                     background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(0,0,0,0.1)",
                     borderRadius: "8px",
-                    color: "#c9d1d9",
+                    color: "#1f2937",
                     fontSize: "13px",
                     fontWeight: "500",
                     cursor: "pointer",
@@ -372,12 +372,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                     transition: "all 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#58a6ff50";
-                    e.currentTarget.style.color = "#58a6ff";
+                    e.currentTarget.style.borderColor = "#6366f150";
+                    e.currentTarget.style.color = "#6366f1";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#30363d";
-                    e.currentTarget.style.color = "#c9d1d9";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                    e.currentTarget.style.color = "#1f2937";
                   }}
                 >
                   <IconEdit size={14} />
@@ -392,11 +392,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                   alignItems: "center",
                   gap: "6px",
                   padding: "8px 20px",
-                  background: isFollowing ? "transparent" : "#238636",
+                  background: isFollowing ? "transparent" : "#047857",
                   border: "1px solid",
-                  borderColor: isFollowing ? "#30363d" : "#2ea043",
+                  borderColor: isFollowing ? "#e5e7eb" : "#059669",
                   borderRadius: "8px",
-                  color: isFollowing ? "#c9d1d9" : "#ffffff",
+                  color: isFollowing ? "#1f2937" : "#ffffff",
                   fontSize: "13px",
                   fontWeight: "600",
                   cursor: "pointer",
@@ -417,28 +417,28 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
             gridTemplateColumns: "repeat(3, 1fr)",
             gap: "16px",
             padding: "16px 0",
-            borderTop: "1px solid rgba(255,255,255,0.08)",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderTop: "1px solid rgba(0,0,0,0.06)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
             marginBottom: "24px",
           }}
         >
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "20px", fontWeight: "600", color: "#c9d1d9" }}>
+            <div style={{ fontSize: "20px", fontWeight: "600", color: "#1f2937" }}>
               {user.publishedCount}
             </div>
-            <div style={{ fontSize: "12px", color: "#8b949e" }}>Published</div>
+            <div style={{ fontSize: "12px", color: "#6b7280" }}>Published</div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "20px", fontWeight: "600", color: "#c9d1d9" }}>
+            <div style={{ fontSize: "20px", fontWeight: "600", color: "#1f2937" }}>
               {user.followerCount}
             </div>
-            <div style={{ fontSize: "12px", color: "#8b949e" }}>Followers</div>
+            <div style={{ fontSize: "12px", color: "#6b7280" }}>Followers</div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "20px", fontWeight: "600", color: "#c9d1d9" }}>
+            <div style={{ fontSize: "20px", fontWeight: "600", color: "#1f2937" }}>
               {user.followingCount}
             </div>
-            <div style={{ fontSize: "12px", color: "#8b949e" }}>Following</div>
+            <div style={{ fontSize: "12px", color: "#6b7280" }}>Following</div>
           </div>
         </div>
 
@@ -446,15 +446,15 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
           <div
             style={{
               padding: "20px",
-              background: "rgba(13,17,23,0.55)",
+              background: "rgba(255,255,255,0.55)",
               backdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid rgba(0,0,0,0.06)",
               borderRadius: "12px",
               marginBottom: "24px",
             }}
           >
             <h3
-              style={{ fontSize: "16px", fontWeight: "600", color: "#c9d1d9", margin: "0 0 16px" }}
+              style={{ fontSize: "16px", fontWeight: "600", color: "#1f2937", margin: "0 0 16px" }}
             >
               Edit Profile
             </h3>
@@ -463,7 +463,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 <label
                   style={{
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     marginBottom: "4px",
                     display: "block",
                   }}
@@ -480,7 +480,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 <label
                   style={{
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     marginBottom: "4px",
                     display: "block",
                   }}
@@ -497,7 +497,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 <label
                   style={{
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     marginBottom: "4px",
                     display: "block",
                   }}
@@ -514,7 +514,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 <label
                   style={{
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     marginBottom: "4px",
                     display: "block",
                   }}
@@ -531,7 +531,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 <label
                   style={{
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     marginBottom: "4px",
                     display: "block",
                   }}
@@ -548,7 +548,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 <label
                   style={{
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     marginBottom: "4px",
                     display: "block",
                   }}
@@ -565,7 +565,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 <label
                   style={{
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     marginBottom: "4px",
                     display: "block",
                   }}
@@ -585,7 +585,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                         border: "1px solid rgba(88, 166, 255, 0.2)",
                         borderRadius: "20px",
                         fontSize: "12px",
-                        color: "#58a6ff",
+                        color: "#6366f1",
                       }}
                     >
                       {skill}
@@ -594,7 +594,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                         style={{
                           background: "none",
                           border: "none",
-                          color: "#58a6ff",
+                          color: "#6366f1",
                           cursor: "pointer",
                           padding: 0,
                           display: "flex",
@@ -625,11 +625,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                     disabled={!newSkill.trim()}
                     style={{
                       padding: "8px 14px",
-                      background: "rgba(48,54,61,0.45)",
+                      background: "rgba(229,231,235,0.45)",
                       backdropFilter: "blur(14px)",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      border: "1px solid rgba(0,0,0,0.1)",
                       borderRadius: "8px",
-                      color: "#c9d1d9",
+                      color: "#1f2937",
                       fontSize: "13px",
                       cursor: newSkill.trim() ? "pointer" : "not-allowed",
                       fontFamily: "inherit",
@@ -649,7 +649,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
           style={{
             display: "flex",
             gap: "4px",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
             marginBottom: "24px",
           }}
         >
@@ -662,8 +662,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                 background: "transparent",
                 border: "none",
                 borderBottom: "2px solid",
-                borderBottomColor: activeTab === tab ? "#58a6ff" : "transparent",
-                color: activeTab === tab ? "#c9d1d9" : "#8b949e",
+                borderBottomColor: activeTab === tab ? "#6366f1" : "transparent",
+                color: activeTab === tab ? "#1f2937" : "#6b7280",
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
@@ -684,12 +684,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
               )}
               {tab}
               {tab === "items" && (
-                <span style={{ marginLeft: "6px", fontSize: "12px", color: "#484f58" }}>
+                <span style={{ marginLeft: "6px", fontSize: "12px", color: "#9ca3af" }}>
                   {items.length}
                 </span>
               )}
               {tab === "likes" && (
-                <span style={{ marginLeft: "6px", fontSize: "12px", color: "#484f58" }}>
+                <span style={{ marginLeft: "6px", fontSize: "12px", color: "#9ca3af" }}>
                   {likedItems.length}
                 </span>
               )}
@@ -704,7 +704,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
               alignItems: "center",
               justifyContent: "center",
               padding: "48px",
-              color: "#8b949e",
+              color: "#6b7280",
             }}
           >
             <IconLoader size={24} />
@@ -718,7 +718,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                     style={{
                       textAlign: "center",
                       padding: "48px 24px",
-                      color: "#484f58",
+                      color: "#9ca3af",
                       fontSize: "14px",
                     }}
                   >
@@ -749,7 +749,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                     style={{
                       textAlign: "center",
                       padding: "48px 24px",
-                      color: "#484f58",
+                      color: "#9ca3af",
                       fontSize: "14px",
                     }}
                   >
@@ -786,7 +786,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                     style={{
                       fontSize: "16px",
                       fontWeight: "600",
-                      color: "#c9d1d9",
+                      color: "#1f2937",
                       margin: "0 0 16px",
                     }}
                   >
@@ -794,7 +794,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                   </h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                     {user.bio && (
-                      <div style={{ fontSize: "14px", color: "#c9d1d9", lineHeight: "1.6" }}>
+                      <div style={{ fontSize: "14px", color: "#1f2937", lineHeight: "1.6" }}>
                         {user.bio}
                       </div>
                     )}
@@ -805,7 +805,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                           alignItems: "center",
                           gap: "8px",
                           fontSize: "13px",
-                          color: "#8b949e",
+                          color: "#6b7280",
                         }}
                       >
                         <IconMapPin size={14} />
@@ -819,7 +819,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                           alignItems: "center",
                           gap: "8px",
                           fontSize: "13px",
-                          color: "#8b949e",
+                          color: "#6b7280",
                         }}
                       >
                         <IconUser size={14} />
@@ -833,7 +833,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                           alignItems: "center",
                           gap: "8px",
                           fontSize: "13px",
-                          color: "#8b949e",
+                          color: "#6b7280",
                         }}
                       >
                         <IconGlobe size={14} />
@@ -841,7 +841,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                           href={user.blog.startsWith("http") ? user.blog : `https://${user.blog}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ color: "#58a6ff", textDecoration: "none" }}
+                          style={{ color: "#6366f1", textDecoration: "none" }}
                         >
                           {user.blog}
                         </a>
@@ -853,7 +853,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                         alignItems: "center",
                         gap: "8px",
                         fontSize: "13px",
-                        color: "#8b949e",
+                        color: "#6b7280",
                       }}
                     >
                       <IconCalendar size={14} />
@@ -867,14 +867,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                     style={{
                       fontSize: "16px",
                       fontWeight: "600",
-                      color: "#c9d1d9",
+                      color: "#1f2937",
                       margin: "0 0 16px",
                     }}
                   >
                     Skills
                   </h3>
                   {user.skills.length === 0 ? (
-                    <div style={{ fontSize: "13px", color: "#484f58" }}>No skills listed</div>
+                    <div style={{ fontSize: "13px", color: "#9ca3af" }}>No skills listed</div>
                   ) : (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                       {user.skills.map((skill) => (
@@ -886,7 +886,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, isOwnProfile = f
                             border: "1px solid rgba(88, 166, 255, 0.2)",
                             borderRadius: "20px",
                             fontSize: "12px",
-                            color: "#58a6ff",
+                            color: "#6366f1",
                           }}
                         >
                           {skill}

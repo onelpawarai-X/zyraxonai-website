@@ -15,9 +15,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Cpath d='M50 20L70 50L50 80L30 50Z' fill='%23fff' opacity='0.9'/%3E%3C/svg%3E"/>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -36,8 +33,8 @@
   --mono:'JetBrains Mono','SF Mono','Fira Code',monospace;
   --transition:cubic-bezier(.4,0,.2,1);
 }
-html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:#fff}
+body{font-family:var(--font);background:#fff;color:var(--text);line-height:1.6;overflow-x:hidden;margin:0}
 a{color:inherit;text-decoration:none}
 .container{max-width:1200px;margin:0 auto;padding:0 24px}
 ::selection{background:rgba(37,99,235,.15);color:var(--accent)}
@@ -100,26 +97,26 @@ a{color:inherit;text-decoration:none}
 .term-success{color:#10b981}
 
 /* SECTIONS */
-section{padding:120px 0;position:relative}
-.section-head{text-align:center;margin-bottom:72px}
-.section-head h2{font-size:clamp(36px,5vw,56px);font-weight:900;letter-spacing:-.03em;margin-bottom:20px;line-height:1.05;color:var(--primary)}
-.section-head p{color:var(--text-secondary);font-size:18px;max-width:580px;margin:0 auto;line-height:1.7}
+section{padding:140px 0;position:relative}
+.section-head{text-align:center;margin-bottom:80px}
+.section-head h2{font-size:clamp(36px,5vw,52px);font-weight:800;letter-spacing:-.03em;margin-bottom:20px;line-height:1.1;color:var(--primary)}
+.section-head p{color:var(--text-secondary);font-size:17px;max-width:520px;margin:0 auto;line-height:1.7}
 .gradient-text{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.section-divider{height:1px;background:var(--border);margin:0 auto;max-width:200px}
+.section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 auto;max-width:300px}
 
 /* CARDS */
-.grid{display:grid;gap:20px}
+.grid{display:grid;gap:16px}
 .grid-3{grid-template-columns:repeat(3,1fr)}
 .grid-2{grid-template-columns:repeat(2,1fr)}
 @media(max-width:768px){.grid-3,.grid-2{grid-template-columns:1fr}}
 
 .card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;
-  transition:all .3s var(--transition);position:relative;overflow:hidden}
-.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--border2)}
-.card-icon{width:48px;height:48px;border-radius:12px;background:var(--bg2);border:1px solid var(--border);display:grid;place-items:center;margin-bottom:20px;color:var(--accent)}
-.card h3{font-size:18px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
-.card p{color:var(--text-secondary);font-size:15px;line-height:1.7}
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 28px;
+  transition:all .35s var(--transition);position:relative;overflow:hidden}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.06);border-color:rgba(0,0,0,.08)}
+.card-icon{width:44px;height:44px;border-radius:11px;background:var(--bg2);display:grid;place-items:center;margin-bottom:20px;color:var(--accent)}
+.card h3{font-size:17px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
+.card p{color:var(--text-secondary);font-size:14px;line-height:1.7}
 
 /* ALT SECTION */
 .alt-section{background:var(--bg2)}
@@ -135,7 +132,7 @@ section{padding:120px 0;position:relative}
 .model-info p{font-size:12px;color:var(--text-muted)}
 
 /* TABLE */
-.table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm)}
+.table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface);box-shadow:0 2px 12px rgba(0,0,0,.04)}
 table{width:100%;border-collapse:collapse;min-width:600px}
 th,td{padding:16px 20px;text-align:center;border-bottom:1px solid var(--border)}
 th{background:var(--bg2);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)}
@@ -148,34 +145,34 @@ tbody tr{transition:background .15s}
 tbody tr:hover{background:var(--bg2)}
 
 /* DOWNLOAD */
-.dl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.dl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
 .dl-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px 24px;text-align:center;
-  transition:all .3s var(--transition);position:relative;overflow:hidden}
-.dl-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:var(--border2)}
-.dl-icon{width:64px;height:64px;border-radius:16px;background:var(--bg2);border:1px solid var(--border);display:grid;place-items:center;margin:0 auto 20px}
-.dl-icon svg{width:32px;height:32px}
-.dl-card h3{font-size:20px;font-weight:800;margin-bottom:4px;letter-spacing:-.01em}
-.dl-card .sub{color:var(--text-muted);font-size:13px;margin-bottom:20px}
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 24px;text-align:center;
+  transition:all .35s var(--transition);position:relative;overflow:hidden}
+.dl-card:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,.06);border-color:rgba(0,0,0,.08)}
+.dl-icon{width:56px;height:56px;border-radius:14px;background:var(--bg2);display:grid;place-items:center;margin:0 auto 18px}
+.dl-icon svg{width:28px;height:28px}
+.dl-card h3{font-size:18px;font-weight:700;margin-bottom:4px;letter-spacing:-.01em}
+.dl-card .sub{color:var(--text-muted);font-size:12px;margin-bottom:18px}
 .dl-buttons{display:flex;flex-direction:column;gap:8px;position:relative;z-index:2}
-.dl-btn{padding:12px 18px;border-radius:11px;font-weight:700;font-size:13px;
+.dl-btn{padding:11px 16px;border-radius:10px;font-weight:700;font-size:13px;
   background:var(--accent);color:#fff;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
-  box-shadow:0 2px 6px rgba(37,99,235,.2);position:relative;z-index:2;cursor:pointer;text-decoration:none}
-.dl-btn:hover{transform:scale(1.02);box-shadow:0 4px 12px rgba(37,99,235,.3);background:#1d4ed8}
+  box-shadow:0 2px 8px rgba(37,99,235,.18);position:relative;z-index:2;cursor:pointer;text-decoration:none}
+.dl-btn:hover{transform:scale(1.01);box-shadow:0 4px 16px rgba(37,99,235,.25);background:#1d4ed8}
 .dl-btn.alt{background:var(--bg2);border:1px solid var(--border);color:var(--text);box-shadow:none}
 .dl-btn.alt:hover{border-color:var(--accent);color:var(--accent);background:rgba(37,99,235,.04)}
-.dl-btn svg{width:16px;height:16px}
-.dl-file{font-size:11px;color:var(--text-muted);margin-top:12px;font-family:var(--mono);letter-spacing:.02em}
+.dl-btn svg{width:15px;height:15px}
+.dl-file{font-size:11px;color:var(--text-muted);margin-top:10px;font-family:var(--mono);letter-spacing:.02em}
 
 /* TECH */
-.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
 .tech{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 16px;text-align:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 14px;text-align:center;
   transition:all .25s var(--transition)}
-.tech:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
-.tech-icon{width:44px;height:44px;border-radius:11px;background:var(--bg2);display:grid;place-items:center;margin:0 auto 12px;border:1px solid var(--border)}
-.tech-icon svg{width:22px;height:22px}
-.tech-name{font-weight:700;font-size:13px;letter-spacing:-.01em}
+.tech:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.05)}
+.tech-icon{width:40px;height:40px;border-radius:10px;background:var(--bg2);display:grid;place-items:center;margin:0 auto 10px}
+.tech-icon svg{width:20px;height:20px}
+.tech-name{font-weight:600;font-size:12px;letter-spacing:-.01em}
 
 /* OSS */
 .oss{text-align:center;padding:64px 40px;border-radius:var(--radius-xl);background:var(--bg2);border:1px solid var(--border);position:relative;overflow:hidden}
@@ -185,10 +182,10 @@ tbody tr:hover{background:var(--bg2)}
 .oss-badges img{height:28px;border-radius:6px}
 
 /* COMMUNITY */
-.community-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
-.com-card{padding:32px 24px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);transition:all .3s var(--transition);cursor:pointer}
-.com-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--border2)}
-.com-card .card-icon{margin:0 auto 20px}
+.community-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.com-card{padding:32px 24px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);transition:all .35s var(--transition);cursor:pointer}
+.com-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.06);border-color:rgba(0,0,0,.08)}
+.com-card .card-icon{margin:0 auto 18px}
 
 /* FOOTER */
 footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
@@ -217,36 +214,6 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
 .to-top:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .to-top.show{display:flex}
 .to-top svg{width:18px;height:18px}
-
-/* NOTIFICATION BELL */
-.notif-bell{position:fixed;bottom:24px;left:24px;z-index:999;width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .25s;color:var(--text-muted)}
-.notif-bell:hover{transform:translateY(-2px);border-color:var(--accent);color:var(--accent)}
-.notif-bell svg{width:18px;height:18px}
-.notif-bell.subscribed{color:var(--accent);border-color:rgba(37,99,235,.2)}
-.notif-bell .notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:2px solid var(--bg);display:none}
-.notif-bell.subscribed .notif-dot{display:block;background:#10b981}
-
-/* NOTIFICATION POPUP */
-.notif-popup{position:fixed;bottom:80px;left:24px;z-index:1001;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:24px;transform:translateY(12px);opacity:0;pointer-events:none;transition:all .25s var(--transition)}
-.notif-popup.show{transform:translateY(0);opacity:1;pointer-events:auto}
-.notif-popup h3{font-size:16px;font-weight:800;margin-bottom:6px}
-.notif-popup p{font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6}
-.notif-popup .notif-btn{width:100%;padding:12px;border-radius:10px;border:none;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
-.notif-popup .notif-btn.allow{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(37,99,235,.2)}
-.notif-popup .notif-btn.allow:hover{box-shadow:0 4px 12px rgba(37,99,235,.3)}
-.notif-popup .notif-btn.subscribed{background:var(--bg2);border:1px solid var(--border);color:#10b981}
-.notif-popup .notif-btn.deny{background:transparent;color:var(--text-muted);font-size:12px;margin-top:8px}
-.notif-popup .notif-btn.deny:hover{color:var(--text)}
-.notif-popup .notif-schedule{margin-top:14px;padding:12px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);font-size:12px;color:var(--text-secondary)}
-.notif-popup .notif-schedule strong{color:var(--accent);font-weight:600}
-.notif-popup .notif-close{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;transition:color .15s}
-.notif-popup .notif-close:hover{color:var(--text)}
-.notif-popup .notif-close svg{width:16px;height:16px}
-@media(max-width:640px){
-  .notif-popup{left:16px;right:16px;width:auto}
-  .notif-bell{left:16px;bottom:16px}
-  .to-top{right:16px;bottom:16px}
-}
 
 /* REVEAL ANIMATION */
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s var(--transition),transform .7s var(--transition)}
@@ -355,7 +322,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
   <div class="container">
     <div class="badge" id="heroBadge"><span class="badge-dot"></span> <span id="heroBadgeText">Loading latest release...</span></div>
     <h1>ZYRAXON<br><span style="font-weight:400;font-size:.55em;color:var(--text-secondary);letter-spacing:0">All in One. Anything. Nothing is Impossible.</span></h1>
-    <p class="sub">Desktop AI agent that actually does things. 9 agent modes, 136+ tools, eternal memory, self-healing and always-on screen vision. For Windows, Linux and Android.</p>
+    <p class="sub">Desktop AI agent that actually does things. Everything is possible with ZYRAXON if you guide it right. 9 agent modes, 136+ tools, eternal memory, self-healing and always-on screen vision.</p>
     <div class="hero-cta">
       <a class="btn btn-primary" id="heroDownload" href="#download">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0M10.949 1.949L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.851"/></svg>
@@ -895,6 +862,9 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
           <a href="https://discord.gg/h8mHvf45g" target="_blank" rel="noopener" aria-label="Discord">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
           </a>
+          <a href="https://groups.google.com/g/onelpawarai-x" target="_blank" rel="noopener" aria-label="Google Group">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </a>
         </div>
       </div>
       <div class="footer-col">
@@ -916,6 +886,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
         <h4>Community</h4>
         <a href="https://discord.gg/h8mHvf45g" target="_blank" rel="noopener">Discord</a>
         <a href="https://www.youtube.com/@ZYRAXONAI" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://groups.google.com/g/onelpawarai-x" target="_blank" rel="noopener">Google Group</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/issues" target="_blank" rel="noopener">Report Issues</a>
       </div>
       <div class="footer-col">
@@ -939,30 +910,6 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
     </div>
   </div>
 </footer>
-
-<!-- NOTIFICATION BELL -->
-<button class="notif-bell" id="notifBell" aria-label="Notifications">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-  <span class="notif-dot"></span>
-</button>
-
-<!-- NOTIFICATION POPUP -->
-<div class="notif-popup" id="notifPopup">
-  <button class="notif-close" id="notifClose">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-  </button>
-  <h3>Stay Updated</h3>
-  <p>Get ZYRAXON AI updates, new features, and release announcements directly on your browser.</p>
-  <button class="notif-btn allow" id="notifAllow">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-    Enable Notifications
-  </button>
-  <div class="notif-schedule">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-    Auto-updates at <strong>10:00 AM</strong> and <strong>8:00 PM</strong> daily
-  </div>
-  <button class="notif-btn deny" id="notifDeny">Maybe later</button>
-</div>
 
 <!-- BACK TO TOP -->
 <button class="to-top" id="toTop" aria-label="Back to top">
@@ -1159,70 +1106,5 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 })();
 </script>
 
-<script>
-/* FIREBASE PUSH NOTIFICATION SYSTEM */
-(function(){
-  if(typeof firebase!=='undefined'&&!firebase.apps.length){
-    firebase.initializeApp({
-      apiKey:"AIzaSyBtp5tzBPw7NzFZRdcmtOiWARWmNl-EnWw",
-      authDomain:"lx-pdf-library.firebaseapp.com",
-      projectId:"lx-pdf-library",
-      storageBucket:"lx-pdf-library.firebasestorage.app",
-      messagingSenderId:"313164641962",
-      appId:"1:313164641962:web:1ba5f10d17289f053502d3",
-      measurementId:"G-CYBQLBQ3HV"
-    });
-  }
-
-  const messaging=firebase.messaging();
-  const db=firebase.firestore();
-  const VAPID_KEY='BEl62iUYgUivxIkv69yVAtZiLbYDPVwlnJhSPvYz9Gd9Y4BpJGFnEPXx8KFnJfJkTXCNRXVJqJiI0eP_yN0c';
-
-  const bell=document.getElementById('notifBell');
-  const popup=document.getElementById('notifPopup');
-  const allowBtn=document.getElementById('notifAllow');
-  const denyBtn=document.getElementById('notifDeny');
-  const closeBtn=document.getElementById('notifClose');
-
-  const isSubscribed=localStorage.getItem('zyraxon_notif_subscribed')==='true';
-  if(isSubscribed){bell.classList.add('subscribed')}
-  if(!isSubscribed){setTimeout(()=>{popup.classList.add('show')},5000)}
-
-  bell.addEventListener('click',()=>{popup.classList.toggle('show')});
-  closeBtn.addEventListener('click',()=>popup.classList.remove('show'));
-  denyBtn.addEventListener('click',()=>popup.classList.remove('show'));
-  document.addEventListener('click',(e)=>{if(!popup.contains(e.target)&&!bell.contains(e.target)){popup.classList.remove('show')}});
-
-  async function saveTokenToFirestore(token){
-    try{
-      await db.collection('notification_tokens').doc(token).set({
-        token:token,userAgent:navigator.userAgent,subscribedAt:firebase.firestore.FieldValue.serverTimestamp(),platform:navigator.platform
-      });
-    }catch(err){}
-  }
-
-  allowBtn.addEventListener('click',async()=>{
-    try{
-      allowBtn.textContent='Requesting...';allowBtn.disabled=true;
-      const permission=await Notification.requestPermission();
-      if(permission!=='granted'){allowBtn.textContent='Permission denied';allowBtn.disabled=false;return}
-      const token=await messaging.getToken({vapidKey:VAPID_KEY});
-      localStorage.setItem('zyraxon_notif_token',token);
-      localStorage.setItem('zyraxon_notif_subscribed','true');
-      await saveTokenToFirestore(token);
-      bell.classList.add('subscribed');
-      allowBtn.textContent='Subscribed!';
-      allowBtn.classList.add('subscribed');
-      setTimeout(()=>popup.classList.remove('show'),2000);
-    }catch(err){
-      allowBtn.textContent='Error -- Try again';allowBtn.disabled=false;
-    }
-  });
-
-  if(isSubscribed){const savedToken=localStorage.getItem('zyraxon_notif_token');if(savedToken) saveTokenToFirestore(savedToken)}
-  messaging.onTokenRefresh(async()=>{try{const newToken=await messaging.getToken({vapidKey:VAPID_KEY});localStorage.setItem('zyraxon_notif_token',newToken);await saveTokenToFirestore(newToken)}catch(err){}});
-  messaging.onMessage((payload)=>{const title=payload.notification?.title||'ZYRAXON AI';const body=payload.notification?.body||'New update';if(Notification.permission==='granted'){new Notification(title,{body:body,icon:'/favicon.ico',badge:'/favicon.ico'})}});
-})();
-</script>
 </body>
 </html>
