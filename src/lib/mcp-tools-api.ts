@@ -685,7 +685,7 @@ async function querySmithery(
     }
 
     const data = await response.json();
-    const tools: MCPTool[] = (data.servers || data.items || []).map((server: unknown) => ({
+    const tools: MCPTool[] = (data.servers || data.items || []).map((server: any) => ({
       id: server.qualifiedName || server.id || `smithery-${Date.now()}`,
       name: server.name || server.qualifiedName || "Unknown",
       displayName: server.displayName || server.name || server.qualifiedName || "Unknown",
@@ -864,7 +864,7 @@ async function queryGlama(
     }
 
     const data = await response.json();
-    const tools: MCPTool[] = (data.servers || []).map((server: unknown) => ({
+    const tools: MCPTool[] = (data.servers || []).map((server: any) => ({
       id: `glama-${server.id || server.slug}`,
       name: server.slug || server.name,
       displayName: server.name || server.slug,

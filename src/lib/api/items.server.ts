@@ -26,14 +26,14 @@ const CATEGORIES = [
 ] as const;
 type Category = (typeof CATEGORIES)[number];
 
-function parseCategory(value: unknown): Category {
+function parseCategory(value: any): Category {
   if (typeof value !== "string" || !CATEGORIES.includes(value as Category)) {
     throw badRequest(`category must be one of: ${CATEGORIES.join(", ")}`);
   }
   return value as Category;
 }
 
-function parseTags(value: unknown): string[] {
+function parseTags(value: any): string[] {
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value)) throw badRequest("tags must be an array of strings");
   return value.slice(0, 20).map((t) => String(t).slice(0, 40));

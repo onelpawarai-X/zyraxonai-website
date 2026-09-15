@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as IndexRouteImport } from './routes/index'
@@ -22,6 +23,8 @@ import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
 import { Route as EcosystemItemIdRouteImport } from './routes/ecosystem/item/$id'
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
+import { Route as ApiPublicSiteContentRouteImport } from './routes/api/public/site-content'
+import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mcp-registry'
 import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public/github-releases'
 import { Route as ApiPublicGithubDeviceRouteImport } from './routes/api/public/github-device'
@@ -56,6 +59,11 @@ import { Route as ApiPublicAuthGithubCallbackRouteImport } from './routes/api/pu
 import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/api/public/zyraxon/v1/chat/completions'
 import { Route as ApiGithubReposOwnerRepoPublishRouteImport } from './routes/api/github/repos/$owner/$repo/publish'
 
+const NebulaCoreRoute = NebulaCoreRouteImport.update({
+  id: '/nebula-core',
+  path: '/nebula-core',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuilderRoute = BuilderRouteImport.update({
   id: '/builder',
   path: '/builder',
@@ -120,6 +128,16 @@ const ApiPublicVscodeMarketplaceRoute =
 const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
   id: '/api/public/stt',
   path: '/api/public/stt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSiteContentRoute = ApiPublicSiteContentRouteImport.update({
+  id: '/api/public/site-content',
+  path: '/api/public/site-content',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNebulaRoute = ApiPublicNebulaRouteImport.update({
+  id: '/api/public/nebula',
+  path: '/api/public/nebula',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicMcpRegistryRoute = ApiPublicMcpRegistryRouteImport.update({
@@ -301,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula-core': typeof NebulaCoreRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
@@ -315,6 +334,8 @@ export interface FileRoutesByFullPath {
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
+  '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -349,6 +370,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula-core': typeof NebulaCoreRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
@@ -363,6 +385,8 @@ export interface FileRoutesByTo {
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
+  '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -398,6 +422,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula-core': typeof NebulaCoreRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
@@ -412,6 +437,8 @@ export interface FileRoutesById {
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
+  '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -448,6 +475,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula-core'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
@@ -462,6 +490,8 @@ export interface FileRouteTypes {
     | '/api/public/github-device'
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
+    | '/api/public/nebula'
+    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
@@ -496,6 +526,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula-core'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
@@ -510,6 +541,8 @@ export interface FileRouteTypes {
     | '/api/public/github-device'
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
+    | '/api/public/nebula'
+    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
@@ -544,6 +577,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula-core'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
@@ -558,6 +592,8 @@ export interface FileRouteTypes {
     | '/api/public/github-device'
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
+    | '/api/public/nebula'
+    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/ecosystem/item/$id'
@@ -593,6 +629,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
+  NebulaCoreRoute: typeof NebulaCoreRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiMarketplaceSearchRoute: typeof ApiMarketplaceSearchRoute
   DocsSlugRoute: typeof DocsSlugRoute
@@ -607,6 +644,8 @@ export interface RootRouteChildren {
   ApiPublicGithubDeviceRoute: typeof ApiPublicGithubDeviceRoute
   ApiPublicGithubReleasesRoute: typeof ApiPublicGithubReleasesRoute
   ApiPublicMcpRegistryRoute: typeof ApiPublicMcpRegistryRoute
+  ApiPublicNebulaRoute: typeof ApiPublicNebulaRoute
+  ApiPublicSiteContentRoute: typeof ApiPublicSiteContentRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
   EcosystemItemIdRoute: typeof EcosystemItemIdRoute
@@ -636,6 +675,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/nebula-core': {
+      id: '/nebula-core'
+      path: '/nebula-core'
+      fullPath: '/nebula-core'
+      preLoaderRoute: typeof NebulaCoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/builder': {
       id: '/builder'
       path: '/builder'
@@ -725,6 +771,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/stt'
       fullPath: '/api/public/stt'
       preLoaderRoute: typeof ApiPublicSttRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/site-content': {
+      id: '/api/public/site-content'
+      path: '/api/public/site-content'
+      fullPath: '/api/public/site-content'
+      preLoaderRoute: typeof ApiPublicSiteContentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/nebula': {
+      id: '/api/public/nebula'
+      path: '/api/public/nebula'
+      fullPath: '/api/public/nebula'
+      preLoaderRoute: typeof ApiPublicNebulaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/mcp-registry': {
@@ -992,6 +1052,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
+  NebulaCoreRoute: NebulaCoreRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiMarketplaceSearchRoute: ApiMarketplaceSearchRoute,
   DocsSlugRoute: DocsSlugRoute,
@@ -1006,6 +1067,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGithubDeviceRoute: ApiPublicGithubDeviceRoute,
   ApiPublicGithubReleasesRoute: ApiPublicGithubReleasesRoute,
   ApiPublicMcpRegistryRoute: ApiPublicMcpRegistryRoute,
+  ApiPublicNebulaRoute: ApiPublicNebulaRoute,
+  ApiPublicSiteContentRoute: ApiPublicSiteContentRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
   EcosystemItemIdRoute: EcosystemItemIdRoute,

@@ -4,8 +4,8 @@ import { getComments, addComment } from "../../lib/shared-data";
 
 interface CommentSectionProps {
   itemId: string;
-  comments: unknown[];
-  onCommentAdded?: (comment: unknown) => void;
+  comments: any[];
+  onCommentAdded?: (comment: any) => void;
 }
 
 function timeAgo(dateString: string): string {
@@ -25,7 +25,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   comments: initialComments,
   onCommentAdded,
 }) => {
-  const [comments, setComments] = useState<unknown[]>(initialComments);
+  const [comments, setComments] = useState<any[]>(initialComments);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 

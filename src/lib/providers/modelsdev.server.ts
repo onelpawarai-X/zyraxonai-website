@@ -39,10 +39,10 @@ const CACHE_TTL = 30 * 60 * 1000;
 type CatalogEntry = {
   id?: string;
   name?: string;
-  env?: unknown;
-  api?: unknown;
-  doc?: unknown;
-  npm?: unknown;
+  env?: any;
+  api?: any;
+  doc?: any;
+  npm?: any;
   models?: Record<string, unknown>;
 };
 
@@ -102,7 +102,7 @@ const FALLBACK_API: Record<string, string> = {
   ollama: "http://localhost:11434/v1",
 };
 
-function asStringArray(value: unknown): string[] {
+function asStringArray(value: any): string[] {
   return Array.isArray(value) ? value.filter((x): x is string => typeof x === "string") : [];
 }
 
@@ -135,7 +135,7 @@ export async function listProviders(): Promise<ProviderInfo[]> {
   return out;
 }
 
-function isFreeModel(id: string, model: unknown): boolean {
+function isFreeModel(id: string, model: any): boolean {
   if (/-free$/i.test(id)) return true;
   const cost = model?.cost;
   if (!cost || typeof cost !== "object") return true;
@@ -147,7 +147,7 @@ export async function getProviderDetail(providerId: string): Promise<ProviderDet
   const entry = data[providerId];
   if (!entry) return null;
   const models: CatalogModel[] = [];
-  for (const [key, raw] of Object.entries<unknown>(entry.models || {})) {
+  for (const [key, raw] of Object.entries<any>(entry.models || {})) {
     const id = String(raw?.id || key);
     const input = Array.isArray(raw?.modalities?.input) ? raw.modalities.input : ["text"];
     models.push({

@@ -6,7 +6,9 @@ import { createFileRoute } from "@tanstack/react-router";
  * that really matches each platform, so a mobile-only release can never make
  * the Windows / macOS / Linux buttons hand out an .apk.
  */
-export const REPO = "onelpawarai/ZYRAXON-AI";
+export const REPO = "onelpawarai-X/ZYRAXON-AI";
+/** Primary account first, mirror/fallback account second. */
+export const REPOS = ["onelpawarai-X/ZYRAXON-AI", "onelpawarai/ZYRAXON-AI"];
 
 const HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -67,17 +69,31 @@ type GhRelease = {
   assets: GhAsset[];
 };
 
-export async function resolveReleases() {
+async function fetchRepoReleases(repo: string): Promise<(GhRelease & { repo: string })[]> {
   const token = process.env["GITHUB_PERSONAL_ACCESS_TOKEN"];
-  const res = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=50`, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "zyraxon-website",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-  const releases = ((await res.json()) as GhRelease[]).filter((r) => !r.draft);
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=50`, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "zyraxon-website",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) return [];
+    const list = (await res.json()) as GhRelease[];
+    return (Array.isArray(list) ? list : [])
+      .filter((r) => !r.draft)
+      .map((r) => ({ ...r, repo }));
+  } catch {
+    return [];
+  }
+}
+
+export async function resolveReleases() {
+  const perRepo = await Promise.all(REPOS.map(fetchRepoReleases));
+  // Primary repo first; inside each account newest release first.
+  const releases = perRepo.flat();
+  if (releases.length === 0) throw new Error("No releases reachable from either account");
 
   const platforms: Record<string, ResolvedAsset | null> = {};
   for (const key of Object.keys(PLATFORM_PATTERNS)) {
@@ -101,7 +117,9 @@ export async function resolveReleases() {
     }
   }
 
-  const latest = releases[0];
+  const latest = [...releases].sort(
+    (a, b) => Date.parse(b.published_at || "0") - Date.parse(a.published_at || "0"),
+  )[0];
   return {
     latest: latest
       ? {
@@ -109,9 +127,16 @@ export async function resolveReleases() {
           name: latest.name || latest.tag_name,
           url: latest.html_url,
           publishedAt: latest.published_at,
+          repo: latest.repo,
         }
       : null,
     platforms,
+    sources: REPOS.map((repo, i) => ({
+      repo,
+      role: i === 0 ? "primary" : "fallback",
+      releases: perRepo[i].length,
+      releasesUrl: `https://github.com/${repo}/releases`,
+    })),
     releasesUrl: `https://github.com/${REPO}/releases`,
   };
 }

@@ -169,7 +169,7 @@ async function completeGitHubLogin(ctx: ApiContext, code: string) {
     ? await encryptGitHubToken(github.refresh_token)
     : null;
   const now = Date.now();
-  await ctx.db.from("github_connections").upsert({
+  await ctx.db.from("github_connections" as any).upsert({
     user_id: session.user.id,
     github_id: ghUser.id,
     github_login: ghUser.login,
@@ -257,7 +257,7 @@ export async function githubCallback(ctx: ApiContext): Promise<Response> {
       );
     headers.append("Set-Cookie", clearCookie(STATE_COOKIE));
     return new Response(null, { status: 302, headers });
-  } catch (error: unknown) {
+  } catch (error: any) {
     const target = new URL("/builder", ctx.url.origin);
     target.searchParams.set("github_error", error?.message || "github_sign_in_failed");
     return new Response(null, {

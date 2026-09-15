@@ -140,7 +140,7 @@ async function queryVSCodeMarketplace(
     const data = await response.json();
     const results = data?.results?.[0] || { extensions: [], metadata: { resultMetadata: [] } };
 
-    const extensions: VSCodeExtension[] = (results.extensions || []).map((ext: unknown) => {
+    const extensions: VSCodeExtension[] = (results.extensions || []).map((ext: any) => {
       const latestVersion = ext.versions?.[0] || {};
       const statistics = latestVersion.statistics || [];
 
@@ -157,22 +157,22 @@ async function queryVSCodeMarketplace(
           isDomainVerified: ext.publisher?.isDomainVerified,
           publisherId: ext.publisher?.publisherId,
         },
-        versions: (ext.versions || []).map((v: unknown) => ({
+        versions: (ext.versions || []).map((v: any) => ({
           version: v.version,
           targetPlatform: v.targetPlatform,
           lastUpdated: v.lastUpdated,
           assetUri: v.assetUri,
           install: v.install || "",
-          statistics: (v.statistics || []).map((s: unknown) => ({
+          statistics: (v.statistics || []).map((s: any) => ({
             statisticName: s.statisticName,
             value: s.value || 0,
           })),
         })),
         categories: ext.categories || [],
         tags: ext.tags || [],
-        installCount: statistics.find((s: unknown) => s.statisticName === "install")?.value || 0,
-        rating: statistics.find((s: unknown) => s.statisticName === "averagerating")?.value || 0,
-        ratingCount: statistics.find((s: unknown) => s.statisticName === "ratingcount")?.value || 0,
+        installCount: statistics.find((s: any) => s.statisticName === "install")?.value || 0,
+        rating: statistics.find((s: any) => s.statisticName === "averagerating")?.value || 0,
+        ratingCount: statistics.find((s: any) => s.statisticName === "ratingcount")?.value || 0,
         lastUpdated: latestVersion.lastUpdated || "",
         publishedDate: ext.publishedDate || "",
         license: ext.versions?.[0]?.targetPlatform ? undefined : undefined,
@@ -188,7 +188,7 @@ async function queryVSCodeMarketplace(
     return {
       extensions,
       totalCount:
-        results.resultMetadata?.find((m: unknown) => m.metadataType === "ResultCount")
+        results.resultMetadata?.find((m: any) => m.metadataType === "ResultCount")
           ?.metadata?.[0]?.count || extensions.length,
       hasMore: extensions.length === pageSize,
     };
@@ -221,7 +221,7 @@ async function queryOpenVSX(
     }
 
     const data = await response.json();
-    const extensions: VSCodeExtension[] = (data.extensions || []).map((ext: unknown) => ({
+    const extensions: VSCodeExtension[] = (data.extensions || []).map((ext: any) => ({
       id: ext.id || `${ext.namespace?.toLowerCase()}.${ext.name}`,
       extensionId: ext.id || `${ext.namespace?.toLowerCase()}.${ext.name}`,
       extensionName: ext.name,
@@ -247,9 +247,9 @@ async function queryOpenVSX(
       lastUpdated: ext.timestamp || "",
       publishedDate: ext.timestamp || "",
       repository: ext.repository,
-      icon: ext.files?.find((f: unknown) => f.type === "icon")?.url,
+      icon: ext.files?.find((f: any) => f.type === "icon")?.url,
       screenshots:
-        ext.files?.filter((f: unknown) => f.type === "screenshot").map((f: unknown) => f.url) || [],
+        ext.files?.filter((f: any) => f.type === "screenshot").map((f: any) => f.url) || [],
     }));
 
     return {

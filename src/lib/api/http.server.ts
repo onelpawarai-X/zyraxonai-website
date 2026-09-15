@@ -29,7 +29,7 @@ export const conflict = (m: string) => new HttpError(409, "CONFLICT", m);
 export const tooMany = (m = "Rate limit exceeded") => new HttpError(429, "RATE_LIMITED", m);
 
 export function ok(
-  data: unknown,
+  data: any,
   status = 200,
   extraHeaders: Record<string, string> = {},
 ): Response {
@@ -46,7 +46,7 @@ export function fail(status: number, code: string, message: string): Response {
   });
 }
 
-export function toErrorResponse(error: unknown): Response {
+export function toErrorResponse(error: any): Response {
   if (error instanceof HttpError) return fail(error.status, error.code, error.message);
   const message = error instanceof Error ? error.message : "Unexpected server error";
   console.error("[api]", error);
@@ -95,13 +95,13 @@ export function slugify(input: string): string {
   return base || `item-${Date.now().toString(36)}`;
 }
 
-export function requireString(value: unknown, field: string, max = 5000): string {
+export function requireString(value: any, field: string, max = 5000): string {
   if (typeof value !== "string" || !value.trim()) throw badRequest(`${field} is required`);
   if (value.length > max) throw badRequest(`${field} exceeds ${max} characters`);
   return value.trim();
 }
 
-export function optionalString(value: unknown, field: string, max = 5000): string | null {
+export function optionalString(value: any, field: string, max = 5000): string | null {
   if (value === undefined || value === null || value === "") return null;
   return requireString(value, field, max);
 }

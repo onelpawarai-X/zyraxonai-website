@@ -23,7 +23,7 @@ import { createFileRoute } from "@tanstack/react-router";
  * one-click source-code download (clone) URL, and the git clone URL.
  */
 const GITHUB_API = "https://api.github.com";
-const DEFAULT_OWNER = "onelpawarai";
+const DEFAULT_OWNER = "onelpawarai-X";
 const SEARCH_PAGE_SIZE = 100; // repos per search request
 const SEARCH_MAX_PAGES = 5; // fetch up to 5 pages = 500 repos
 const DEFAULT_DEPTH = 30;

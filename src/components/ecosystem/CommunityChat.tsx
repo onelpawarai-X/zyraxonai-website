@@ -351,13 +351,13 @@ async function storeRead<T>(file: string, fallback: T): Promise<T> {
   try {
     const res = await fetch(`${STORE}?file=${encodeURIComponent(file)}`);
     if (!res.ok) return fallback;
-    const data = (await res.json()) as { content?: unknown };
+    const data = (await res.json()) as { content?: any };
     return (data.content ?? fallback) as T;
   } catch {
     return fallback;
   }
 }
-async function storeWrite(file: string, content: unknown, message: string): Promise<boolean> {
+async function storeWrite(file: string, content: any, message: string): Promise<boolean> {
   try {
     const res = await fetch(STORE, {
       method: "POST",
@@ -544,7 +544,7 @@ export default function CommunityChat() {
   const localStream = useRef<MediaStream | null>(null);
   const screenStream = useRef<MediaStream | null>(null);
   const peerConnections = useRef<Map<string, unknown>>(new Map());
-  const peerJsRef = useRef<unknown>(null);
+  const peerJsRef = useRef<any>(null);
   const dataChannels = useRef<Map<string, RTCDataChannel>>(new Map());
   const fileChunksRef = useRef<Map<string, { data: string[]; name: string; type: string }>>(
     new Map(),
@@ -576,7 +576,7 @@ export default function CommunityChat() {
             try {
               const fileData = await storeRead<{ name: string; type: string; data: string }>(
                 `chat_files/${activeChannel}/${msg.attachment.fileId}.json`,
-                null as unknown,
+                null as any,
               );
               if (fileData?.data) {
                 return {
@@ -651,7 +651,7 @@ export default function CommunityChat() {
     rtRef.current = new CommunityRealtime(
       { userId: user.id, username: user.username, avatarUrl: user.avatarUrl || "" },
       {
-        onChat: (msg: unknown) => {
+        onChat: (msg: any) => {
           if (!msg?.id) return;
           setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
         },
@@ -753,7 +753,7 @@ export default function CommunityChat() {
             name: file.name,
             mimeType: file.type,
           };
-          rtRef.current?.sendChat(payload as unknown);
+          rtRef.current?.sendChat(payload as any);
           dataChannels.current.forEach((dc) => {
             try {
               dc.send(JSON.stringify(payload));
@@ -768,7 +768,7 @@ export default function CommunityChat() {
           fileName: file.name,
           mimeType: file.type,
         };
-        rtRef.current?.sendChat(complete as unknown);
+        rtRef.current?.sendChat(complete as any);
         dataChannels.current.forEach((dc) => {
           try {
             dc.send(JSON.stringify(complete));
@@ -849,18 +849,18 @@ export default function CommunityChat() {
     return `${ROOM_PREFIX}-${Date.now()}`;
   }, [loadRoomsFromGitHub]);
 
-  const broadcastToPeers = useCallback((data: unknown) => {
+  const broadcastToPeers = useCallback((data: any) => {
     const json = JSON.stringify(data);
     dataChannels.current.forEach((ch) => {
       if (ch.readyState === "open") ch.send(json);
     });
   }, []);
 
-  const setupDataChannelHandlers = useCallback((conn: unknown) => {
+  const setupDataChannelHandlers = useCallback((conn: any) => {
     conn.on("open", () => {
       dataChannels.current.set(conn.peer, conn);
     });
-    conn.on("data", (data: unknown) => {
+    conn.on("data", (data: any) => {
       if (typeof data !== "string") return;
       try {
         const parsed = JSON.parse(data);
@@ -926,7 +926,7 @@ export default function CommunityChat() {
         const peer = new PeerJS(`${roomId}-peer-${count}`, { debug: 0 });
         peerJsRef.current = peer;
         peer.on("open", () => connectToExistingPeers());
-        peer.on("call", (call: unknown) => {
+        peer.on("call", (call: any) => {
           if (localStream.current) {
             call.answer(localStream.current);
             call.on("stream", (remoteStream: MediaStream) => {
@@ -939,7 +939,7 @@ export default function CommunityChat() {
             });
           }
         });
-        peer.on("connection", (conn: unknown) => setupDataChannelHandlers(conn));
+        peer.on("connection", (conn: any) => setupDataChannelHandlers(conn));
       } catch {
         /* ignored */
       }
@@ -1039,7 +1039,7 @@ export default function CommunityChat() {
         const roomId = await findAvailableRoom();
         roomIdRef.current = roomId;
         await joinOrCreateRoom(roomId);
-      } catch (err: unknown) {
+      } catch (err: any) {
         setCallError(err?.message || "Failed to start call");
         setCallMode(null);
       }
@@ -1533,7 +1533,7 @@ export default function CommunityChat() {
               <div className="mb-2 rounded-xl overflow-hidden border border-[#21262d]">
                 <Picker
                   data={data}
-                  onEmojiSelect={(emoji: unknown) => {
+                  onEmojiSelect={(emoji: any) => {
                     setInput((prev) => prev + emoji.native);
                     setShowEmojiPicker(false);
                   }}

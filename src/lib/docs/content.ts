@@ -5,7 +5,7 @@ export type DocBlock =
   | { t: "code"; lang?: string; code: string }
   | { t: "list"; items: string[]; ordered?: boolean }
   | { t: "table"; head: string[]; rows: string[][] }
-  | { t: "note"; kind: "info" | "warn" | "tip"; title?: string; text: string };
+  | { t: "note"; kind: "info" | "warn" | "tip" | "success"; title?: string; text: string };
 
 export type DocPage = {
   slug: string;
@@ -93,7 +93,7 @@ export const DOCS: DocPage[] = [
       { t: "h2", text: "Download Latest Release" },
       {
         t: "p",
-        text: "Grab the newest build from the [Releases page](https://github.com/onelpawarai/ZYRAXON-AI/releases):",
+        text: "Grab the newest build from the [Releases page](https://github.com/onelpawarai-X/ZYRAXON-AI/releases):",
       },
       {
         t: "table",
@@ -498,7 +498,7 @@ export const DOCS: DocPage[] = [
       {
         t: "code",
         lang: "bash",
-        code: "git clone https://github.com/onelpawarai/ZYRAXON-AI.git\ncd ZYRAXON-AI\nbun install\n\n# Windows\nbun run zyraxon:full:win\n# Linux\nbun run zyraxon:full:linux\n# macOS\nbun run zyraxon:full:mac",
+        code: "git clone https://github.com/onelpawarai-X/ZYRAXON-AI.git\ncd ZYRAXON-AI\nbun install\n\n# Windows\nbun run zyraxon:full:win\n# Linux\nbun run zyraxon:full:linux\n# macOS\nbun run zyraxon:full:mac",
       },
       {
         t: "note",
@@ -614,7 +614,7 @@ export const DOCS: DocPage[] = [
         ordered: true,
         items: [
           "**Fork** the repository",
-          "Clone your fork: `git clone https://github.com/onelpawarai/ZYRAXON-AI.git`",
+          "Clone your fork: `git clone https://github.com/onelpawarai-X/ZYRAXON-AI.git`",
           "Install: `bun install`",
           "Build: `cd packages/zyraxon && bun run build`",
           "Create branch: `git checkout -b feat/my-feature`",
@@ -639,7 +639,7 @@ export const DOCS: DocPage[] = [
         t: "table",
         head: ["Channel", "Link"],
         rows: [
-          ["GitHub Issues", "github.com/onelpawarai/ZYRAXON-AI/issues"],
+          ["GitHub Issues", "github.com/onelpawarai-X/ZYRAXON-AI/issues"],
           ["Discord", "discord.gg/GP8yX33NA"],
           ["YouTube", "@zyraxon-aix"],
           ["Website", "zyraxonai.lovable.app"],

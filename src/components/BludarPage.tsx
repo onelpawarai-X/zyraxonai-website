@@ -140,7 +140,7 @@ export default function BludarPage() {
           }
         }
       });
-    } catch (e: unknown) {
+    } catch (e: any) {
       const msg = e?.message || "Generation failed";
       setError(msg);
       setMessages((m) => m.map((x) => (x.id === id ? { ...x, text: msg } : x)));

@@ -39,7 +39,7 @@ export const Route = createFileRoute("/api/public/providers/$provider")({
 
       POST: async ({ request, params }) => {
         const providerId = decodeURIComponent(params.provider).trim();
-        let body: unknown = null;
+        let body: any = null;
         try {
           body = await request.json();
         } catch {
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/public/providers/$provider")({
             {
               ...detail,
               keyAccepted: Boolean(apiKey),
-              endpoint: resolveProviderApi(providerId, detail as unknown),
+              endpoint: resolveProviderApi(providerId, detail as any),
               note: "API keys stay in your browser (localStorage) and are only forwarded per request. Nothing is stored on our servers.",
             },
             { headers: { ...CORS, "Cache-Control": "no-store" } },

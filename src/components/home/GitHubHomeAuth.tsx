@@ -3,7 +3,7 @@ import { Github, LogOut, Loader2, CheckCircle2 } from "lucide-react";
 import { clearAuthState, getAuthState, setAuthState } from "../../lib/ecosystem-auth";
 import type { User } from "../../lib/ecosystem-types";
 
-function toUser(apiUser: unknown): User {
+function toUser(apiUser: any): User {
   return {
     id: apiUser.id,
     githubUserId: Number(apiUser.github_id ?? 0),

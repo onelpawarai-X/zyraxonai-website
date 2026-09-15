@@ -164,7 +164,7 @@ export async function createShare(sessionID: string): Promise<{ id: string; secr
   return { id, secret };
 }
 
-type SyncItem = { type?: string; data?: unknown } & Record<string, unknown>;
+type SyncItem = { type?: string; data?: any } & Record<string, unknown>;
 
 function upsert(list: Record<string, unknown>[], item: Record<string, unknown>) {
   const id = item["id"];

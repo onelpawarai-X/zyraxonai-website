@@ -17,7 +17,7 @@ export async function handleCreateShare(request: Request): Promise<Response> {
 
 export async function handleSyncShare(request: Request, id: string): Promise<Response> {
   try {
-    const body = (await request.json().catch(() => ({}))) as { secret?: string; data?: unknown };
+    const body = (await request.json().catch(() => ({}))) as { secret?: string; data?: any };
     if (typeof body.secret !== "string" || !body.secret)
       return json({ error: "secret is required" }, 400);
     if (!Array.isArray(body.data)) return json({ error: "data must be an array" }, 400);

@@ -75,12 +75,12 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
 
       if (searchQuery) {
         result = await searchMCPTools(searchQuery, {
-          source: selectedSource as unknown,
+          source: selectedSource as any,
           pageSize: 100,
         });
       } else {
         result = await searchMCPTools(undefined, {
-          source: selectedSource as unknown,
+          source: selectedSource as any,
           pageSize: 100,
         });
       }

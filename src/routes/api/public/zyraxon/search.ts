@@ -39,7 +39,7 @@ export const Route = createFileRoute("/api/public/zyraxon/search")({
             headers: { Accept: "application/json" },
           },
         );
-        const payload: unknown = await response.json().catch(() => ({}));
+        const payload: any = await response.json().catch(() => ({}));
 
         if (!response.ok) {
           return Response.json(
@@ -59,7 +59,7 @@ export const Route = createFileRoute("/api/public/zyraxon/search")({
           {
             query,
             type,
-            results: items.map((item: unknown) => ({
+            results: items.map((item: any) => ({
               title: item.title,
               url: item.link,
               snippet: item.snippet,

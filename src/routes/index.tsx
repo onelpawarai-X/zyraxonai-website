@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { NebulaDeck } from "./nebula-core";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -101,10 +102,20 @@ function armGreeting() {
 
 function Index() {
   const [rage, setRage] = useState(false);
+  const [nebula, setNebula] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(armGreeting, 350);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  /** The landing page (inside the iframe) asks us to open the private control deck in place. */
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if ((e.data as any)?.type === "zyraxon:nebula") setNebula(true);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
   }, []);
 
   /** Every ~22s the ENTIRE site transforms into its terrifying blood-red form for a few seconds, then returns to blue. */
@@ -162,6 +173,21 @@ function Index() {
       <div className="zyraxon-red-edge" aria-hidden="true" />
       <div className={`zyraxon-rage-veil ${rage ? "on" : ""}`} aria-hidden="true" />
       <div className={`zyraxon-rage-glow ${rage ? "on" : ""}`} aria-hidden="true" />
+      {nebula && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 60,
+            background: "rgba(2,4,12,.86)",
+            backdropFilter: "blur(10px)",
+            display: "flex",
+            overflow: "auto",
+          }}
+        >
+          <NebulaDeck onClose={() => setNebula(false)} />
+        </div>
+      )}
     </main>
   );
 }

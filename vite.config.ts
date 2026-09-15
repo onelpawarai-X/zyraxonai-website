@@ -16,7 +16,7 @@ export default defineConfig({
   // explicit Nitro public asset entry, some hosted Nitro presets can fall through
   // unknown .html requests to the hosting platform's starter page.
   nitro: {
-    serveStatic: true,
+    // @ts-expect-error publicAssets is supported by Nitro but missing from the wrapper types
     publicAssets: [
       {
         dir: "public",

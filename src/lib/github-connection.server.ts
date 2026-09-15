@@ -6,7 +6,8 @@ export async function requireGitHubToken(
   ctx: ApiContext,
 ): Promise<{ token: string; githubLogin: string; githubId: number }> {
   const userId = ctx.requireUser();
-  const { data, error } = await ctx.db
+  const db = ctx.db as any;
+  const { data, error } = await db
     .from("github_connections")
     .select("github_id, github_login, encrypted_access_token, token_expires_at")
     .eq("user_id", userId)
@@ -14,7 +15,8 @@ export async function requireGitHubToken(
 
   if (error || !data)
     throw new HttpError(409, "GITHUB_NOT_CONNECTED", "Connect GitHub before using GitHub actions");
-  if (data.token_expires_at && new Date(data.token_expires_at).getTime() <= Date.now()) {
+  const row = data as any;
+  if (row.token_expires_at && new Date(row.token_expires_at).getTime() <= Date.now()) {
     throw new HttpError(
       401,
       "GITHUB_TOKEN_EXPIRED",
@@ -23,9 +25,9 @@ export async function requireGitHubToken(
   }
 
   return {
-    token: await decryptGitHubToken(data.encrypted_access_token),
-    githubLogin: data.github_login,
-    githubId: data.github_id,
+    token: await decryptGitHubToken(row.encrypted_access_token),
+    githubLogin: row.github_login,
+    githubId: row.github_id,
   };
 }
 

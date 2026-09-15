@@ -89,6 +89,8 @@ export async function buildContext(
   };
 }
 
-export function profileByLogin(ctx: ApiContext, login: string) {
-  return ctx.db.from("profiles").select("*").eq("login", login).maybeSingle();
+export async function profileByLogin(ctx: ApiContext, login: string) {
+  const { data } = await ctx.db.from("profiles").select("*").eq("login", login).maybeSingle();
+  return data;
 }
+

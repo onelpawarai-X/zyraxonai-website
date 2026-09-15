@@ -20,7 +20,7 @@ const CORS = {
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 };
 
-function requestApiKey(request: Request, body?: unknown) {
+function requestApiKey(request: Request, body?: any) {
   const authorization = request.headers.get("authorization")?.trim();
   if (authorization?.toLowerCase().startsWith("bearer "))
     return authorization.slice(7).trim() || undefined;
@@ -28,7 +28,7 @@ function requestApiKey(request: Request, body?: unknown) {
 }
 
 /** '' | 'zyraxon' | 'opencode' → Zen free pool. Anything else → universal provider gateway. */
-function routeProvider(providerId: unknown): string {
+function routeProvider(providerId: any): string {
   const id = typeof providerId === "string" ? providerId.trim().toLowerCase() : "";
   return !id || id === "zyraxon" || id === "opencode" ? "zyraxon" : id;
 }
@@ -73,7 +73,7 @@ export const Route = createFileRoute("/api/public/builder/chat")({
       },
 
       POST: async ({ request }) => {
-        let body: unknown;
+        let body: any;
         try {
           body = await request.json();
         } catch {
@@ -83,7 +83,7 @@ export const Route = createFileRoute("/api/public/builder/chat")({
         const messages: ChatMessage[] = Array.isArray(body?.messages)
           ? body.messages
               .filter(
-                (message: unknown) =>
+                (message: any) =>
                   message &&
                   (message.role === "user" || message.role === "assistant") &&
                   (typeof message.content === "string" || Array.isArray(message.content)),
@@ -97,15 +97,15 @@ export const Route = createFileRoute("/api/public/builder/chat")({
           Array.isArray(body?.attachments) ? body.attachments : []
         )
           .filter(
-            (attachment: unknown) =>
+            (attachment: any) =>
               attachment &&
               typeof attachment.name === "string" &&
               typeof attachment.mime === "string" &&
               typeof attachment.data === "string",
           )
-          .filter((attachment: unknown) => /^(image|audio|video)\//i.test(attachment.mime))
+          .filter((attachment: any) => /^(image|audio|video)\//i.test(attachment.mime))
           .slice(0, 6)
-          .map((attachment: unknown) => ({
+          .map((attachment: any) => ({
             name: attachment.name.slice(0, 160),
             mime: attachment.mime.slice(0, 100),
             data: attachment.data,
@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/builder/chat")({
           );
         }
 
-        // ── Route 2: unknown of the ~193 models.dev providers through their own key ──
+        // ── Route 2: any of the ~193 models.dev providers through their own key ──
         return await providerChatStream({
           providerId:
             routeProvider(body?.providerId) === "zyraxon"

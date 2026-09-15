@@ -175,7 +175,7 @@ export const Route = createFileRoute("/api/public/builder/powershell")({
             { status: 401, headers: CORS },
           );
 
-        let body: unknown;
+        let body: any;
         try {
           body = await request.json();
         } catch {
