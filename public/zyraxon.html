@@ -331,10 +331,10 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
       <a href="#models">Models</a>
       <a href="#compare">Compare</a>
       <a href="#download">Download</a>
-      <a href="/ecosystem" target="_top">Ecosystem</a>
-      <a href="/docs" target="_top">Documentation</a>
-      <a href="/bludar" target="_top" class="accent">AI Bludar</a>
-      <a href="#" id="nebulaBtn" class="accent">NEBULA</a>
+      <a href="/ecosystem">Ecosystem</a>
+      <a href="/docs">Documentation</a>
+      <a href="/bludar" class="accent">AI Bludar</a>
+      <a href="/nebula" class="accent">NEBULA</a>
     </div>
     <button class="nav-mobile-toggle" id="navToggle" aria-label="Menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -400,15 +400,6 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
     }).join('');
     document.getElementById('live-features').style.display='block';
   }catch(e){}
-})();
-(function(){
-  var btn=document.getElementById('nebulaBtn');
-  if(!btn) return;
-  btn.addEventListener('click',function(e){
-    e.preventDefault();
-    try{ window.parent.postMessage({type:'zyraxon:nebula'},'*'); }catch(err){}
-    if(window.parent===window) window.location.href='/nebula-core';
-  });
 })();
 </script>
 
@@ -654,7 +645,7 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
         <h3>Windows</h3>
         <div class="sub">Windows 10/11 (x64)</div>
         <div class="dl-buttons">
-          <a class="dl-btn" data-plat="win-primary" href="/api/public/download/windows" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="win-primary" href="/download/zyraxon-agent" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0M10.949 1.949L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.851"/></svg>
             <span data-label>Download .exe</span>
           </a>
@@ -674,11 +665,11 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
         <h3>macOS</h3>
         <div class="sub">macOS 12+ (Apple Silicon &amp; Intel)</div>
         <div class="dl-buttons">
-          <a class="dl-btn" data-plat="mac-arm" href="/api/public/download/mac-arm" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="mac-arm" href="/download/zyraxon-agent" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
             <span data-label>Apple Silicon</span>
           </a>
-          <a class="dl-btn" data-plat="mac-intel" href="/api/public/download/mac-intel" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="mac-intel" href="/download/zyraxon-agent" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
             <span data-label>Intel</span>
           </a>
@@ -694,7 +685,7 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
         <h3>Linux</h3>
         <div class="sub">Ubuntu / Debian / Fedora (x64)</div>
         <div class="dl-buttons">
-          <a class="dl-btn" data-plat="linux" href="/api/public/download/linux" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="linux" href="/download/zyraxon-agent" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z"/></svg>
             <span data-label>Download</span>
           </a>
@@ -714,7 +705,7 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
         <h3>Myra Agent</h3>
         <div class="sub">Android 8.0+ (APK) -- Myra AI Assistant</div>
         <div class="dl-buttons">
-          <a class="dl-btn" data-plat="android" href="/api/public/download/myra-apk" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="android" href="/download/myra-agent" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16V9a7 7 0 0 1 14 0v7"/><path d="M4 16h16"/><circle cx="8" cy="10" r="1" fill="currentColor"/><circle cx="16" cy="10" r="1" fill="currentColor"/></svg>
             <span data-label>Download .apk</span>
           </a>
@@ -734,7 +725,7 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
         <h3>Zyraxon Code</h3>
         <div class="sub">AI Code Editor -- Windows (x64)</div>
         <div class="dl-buttons">
-          <a class="dl-btn" data-plat="code-win" href="/api/public/download/zyraxon-code/windows" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="code-win" href="/download/zyraxon-code" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0M10.949 1.949L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.851"/></svg>
             <span data-label>Download .exe</span>
           </a>
@@ -754,11 +745,11 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
         <h3>Zyraxon Code</h3>
         <div class="sub">AI Code Editor -- macOS (Apple Silicon &amp; Intel)</div>
         <div class="dl-buttons">
-          <a class="dl-btn" data-plat="code-mac-arm" href="/api/public/download/zyraxon-code/mac-arm" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="code-mac-arm" href="/download/zyraxon-code" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
             <span data-label>Apple Silicon</span>
           </a>
-          <a class="dl-btn" data-plat="code-mac-intel" href="/api/public/download/zyraxon-code/mac-intel" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="code-mac-intel" href="/download/zyraxon-code" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
             <span data-label>Intel</span>
           </a>
@@ -774,7 +765,7 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
         <h3>Zyraxon Code</h3>
         <div class="sub">AI Code Editor -- Linux (x64)</div>
         <div class="dl-buttons">
-          <a class="dl-btn" data-plat="code-linux" href="/api/public/download/zyraxon-code/linux" target="_blank" rel="noopener">
+          <a class="dl-btn" data-plat="code-linux" href="/download/zyraxon-code" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z"/></svg>
             <span data-label>Download</span>
           </a>
@@ -907,6 +898,7 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
     </div>
     <div class="footer-bottom">
       <p>2026 ZYRAXON-AI. Built by OneL Pawar.</p>
+      <p style="font-size:10px;color:#d1d5db;letter-spacing:.04em;margin-top:4px;font-style:italic">this will never own a domain. freedom doesn't need an address.</p>
       <div class="footer-socials">
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI" target="_blank" rel="noopener" aria-label="GitHub">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
@@ -1125,11 +1117,12 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
   }
 
   const osNames={win:'Windows',mac:'macOS',linux:'Linux',android:'Android'};
+  const osRoutes={win:'/download/zyraxon-agent',mac:'/download/zyraxon-agent',linux:'/download/zyraxon-agent',android:'/download/myra-agent'};
   let heroFound=false;
-  if(userOS==='win'&&win){heroDl.href=win.asset.browser_download_url;heroDl.target='_blank';heroDl.rel='noopener';heroDlText.textContent='Download for '+osNames[userOS]+' -- '+win.release.tag_name;heroFound=true;}
-  else if(userOS==='mac'&&(macArm||macIntel)){const m=macArm||macIntel;heroDl.href=m.asset.browser_download_url;heroDl.target='_blank';heroDl.rel='noopener';heroDlText.textContent='Download for '+osNames[userOS]+' -- '+m.release.tag_name;heroFound=true;}
-  else if(userOS==='linux'&&linux){heroDl.href=linux.asset.browser_download_url;heroDl.target='_blank';heroDl.rel='noopener';heroDlText.textContent='Download for '+osNames[userOS]+' -- '+linux.release.tag_name;heroFound=true;}
-  else if(userOS==='android'&&apk){heroDl.href=apk.asset.browser_download_url;heroDl.target='_blank';heroDl.rel='noopener';heroDlText.textContent='Download for '+osNames[userOS]+' -- '+apk.release.tag_name;heroFound=true;}
+  if(userOS==='win'&&win){heroDl.href=osRoutes[userOS];heroDlText.textContent='Download for '+osNames[userOS]+' -- '+win.release.tag_name;heroFound=true;}
+  else if(userOS==='mac'&&(macArm||macIntel)){const m=macArm||macIntel;heroDl.href=osRoutes[userOS];heroDlText.textContent='Download for '+osNames[userOS]+' -- '+m.release.tag_name;heroFound=true;}
+  else if(userOS==='linux'&&linux){heroDl.href=osRoutes[userOS];heroDlText.textContent='Download for '+osNames[userOS]+' -- '+linux.release.tag_name;heroFound=true;}
+  else if(userOS==='android'&&apk){heroDl.href=osRoutes[userOS];heroDlText.textContent='Download for '+osNames[userOS]+' -- '+apk.release.tag_name;heroFound=true;}
   if(!heroFound){heroDl.href='#download';heroDlText.textContent='See downloads';}
 })();
 </script>
