@@ -191,19 +191,26 @@ tbody tr:hover{background:var(--bg2)}
 .com-card .card-icon{margin:0 auto 20px}
 
 /* FOOTER */
-footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
-.footer-main{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;margin-bottom:40px;text-align:left}
-.footer-brand .logo{font-size:16px;margin-bottom:14px;display:flex}
-.footer-brand p{color:var(--text-muted);font-size:13px;line-height:1.8}
-.footer-col h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:16px}
-.footer-col a{display:block;color:var(--text-secondary);font-size:13px;margin-bottom:10px;transition:all .2s}
+footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
+.footer-grid{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:32px;margin-bottom:48px}
+.footer-brand-col{padding-right:24px}
+.footer-brand .logo{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.footer-brand-col p{color:var(--text-muted);font-size:12px;line-height:1.8;max-width:240px}
+.footer-col h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:14px}
+.footer-col a{display:block;color:var(--text-secondary);font-size:12.5px;margin-bottom:8px;transition:all .2s;line-height:1.6}
 .footer-col a:hover{color:var(--accent)}
-.footer-bottom{padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-.footer-bottom p{color:var(--text-muted);font-size:12px}
-.footer-socials{display:flex;gap:10px}
-.footer-socials a{width:36px;height:36px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);display:grid;place-items:center;color:var(--text-muted);transition:all .2s}
-.footer-socials a:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 2px 8px rgba(37,99,235,.1)}
-.footer-socials a svg{width:16px;height:16px}
+.footer-social-row{display:flex;gap:8px;margin-top:16px}
+.footer-social-row a{width:32px;height:32px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);display:grid;place-items:center;color:var(--text-muted);transition:all .2s}
+.footer-social-row a:hover{border-color:var(--accent);color:var(--accent)}
+.footer-social-row a svg{width:14px;height:14px}
+.footer-bottom{border-top:1px solid var(--border);padding:20px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-bottom-left{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.footer-bottom p{color:var(--text-muted);font-size:11px}
+.footer-bottom-links{display:flex;gap:16px}
+.footer-bottom-links a{color:var(--text-muted);font-size:11px;transition:color .2s}
+.footer-bottom-links a:hover{color:var(--text)}
+.footer-tagline{font-size:10px;color:#d1d5db;letter-spacing:.04em;font-style:italic;margin-top:6px}
+@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:28px}.footer-brand-col{grid-column:1/-1}}
 
 /* BACK TO TOP */
 .to-top{position:fixed;bottom:24px;right:24px;z-index:999;width:44px;height:44px;border-radius:12px;background:var(--primary);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .25s}
@@ -869,40 +876,65 @@ footer{padding:64px 0 40px;border-top:1px solid var(--border);text-align:center}
 <!-- FOOTER -->
 <footer>
   <div class="container">
-    <div class="footer-main">
-      <div class="footer-brand">
-        <a href="#" class="logo">
-          <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
-          ZYRAXON-AI
-        </a>
-        <p>Desktop AI agent that takes action. 9 agent modes, 136+ tools, eternal memory, self-healing.</p>
+    <div class="footer-grid">
+      <div class="footer-brand-col">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+            ZYRAXON AI
+          </a>
+        </div>
+        <p>Autonomous AI agent that takes action. Desktop, mobile and code -- all in one system.</p>
+        <div class="footer-social-row">
+          <a href="https://github.com/onelpawarai-X/ZYRAXON-AI" target="_blank" rel="noopener" aria-label="GitHub">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          </a>
+          <a href="https://www.youtube.com/@ZYRAXONAI" target="_blank" rel="noopener" aria-label="YouTube">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </a>
+          <a href="https://discord.gg/h8mHvf45g" target="_blank" rel="noopener" aria-label="Discord">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+          </a>
+        </div>
       </div>
       <div class="footer-col">
-        <h4>Resources</h4>
+        <h4>Products</h4>
+        <a href="/download/zyraxon-agent">ZYRAXON Agent</a>
+        <a href="/download/myra-agent">Myra Agent</a>
+        <a href="/download/zyraxon-code">Zyraxon Code</a>
+        <a href="/ecosystem">Ecosystem Marketplace</a>
+        <a href="/bludar">AI Bludar</a>
+      </div>
+      <div class="footer-col">
+        <h4>Developers</h4>
+        <a href="/docs">Documentation</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/releases" target="_blank" rel="noopener">Releases</a>
-        <a href="/ecosystem">Ecosystem Marketplace</a>
-        <a href="/docs">Documentation</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
       </div>
       <div class="footer-col">
-        <h4>Compare</h4>
-        <a href="#compare">vs ChatGPT</a>
-        <a href="#compare">vs Cursor</a>
-        <a href="#compare">vs Aider</a>
+        <h4>Community</h4>
+        <a href="https://discord.gg/h8mHvf45g" target="_blank" rel="noopener">Discord</a>
+        <a href="https://www.youtube.com/@ZYRAXONAI" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/issues" target="_blank" rel="noopener">Report Issues</a>
       </div>
       <div class="footer-col">
-        <h4>Legal</h4>
+        <h4>About</h4>
+        <a href="https://github.com/onelpawarai-X" target="_blank" rel="noopener">OneL Pawar</a>
+        <a href="/nebula">NEBULA</a>
+        <a href="/docs">Blog</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/blob/main/LICENSE" target="_blank" rel="noopener">BSL 1.1 License</a>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>2026 ZYRAXON-AI. Built by OneL Pawar.</p>
-      <p style="font-size:10px;color:#d1d5db;letter-spacing:.04em;margin-top:4px;font-style:italic">this will never own a domain. freedom doesn't need an address.</p>
-      <div class="footer-socials">
-        <a href="https://github.com/onelpawarai-X/ZYRAXON-AI" target="_blank" rel="noopener" aria-label="GitHub">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-        </a>
+      <div class="footer-bottom-left">
+        <p>Copyright 2026 ZYRAXON AI Systems. All rights reserved.</p>
+        <span class="footer-tagline">this will never own a domain. freedom doesn't need an address.</span>
+      </div>
+      <div class="footer-bottom-links">
+        <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/blob/main/LICENSE" target="_blank" rel="noopener">Terms</a>
+        <a href="#">Privacy</a>
+        <a href="#">Sitemap</a>
       </div>
     </div>
   </div>
