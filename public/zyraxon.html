@@ -1020,12 +1020,13 @@ const topBtn=document.getElementById('toTop');
 window.addEventListener('scroll',()=>{topBtn.classList.toggle('show',window.scrollY>600)},{passive:true});
 topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 
-/* ===== RELEASE DETECTION (server-resolved, per platform) =====
-   /api/public/downloads returns the newest asset for EACH platform,
-   scanned across every release. A mobile-only release can never make
-   the Windows / macOS / Linux buttons serve an .apk. */
+/* ===== RELEASE DETECTION (client-side, direct GitHub API) =====
+   Fetches directly from GitHub API — no server dependency.
+   Works even if /api/public/downloads fails. */
 (async function(){
-  const RELEASES='https://github.com/onelpawarai-X/ZYRAXON-AI/releases';
+  const ZYRAXON_REPO='onelpawarai-X/ZYRAXON-AI';
+  const MYRA_REPO='onelpawarai-X/Myra-Agent';
+  const CODE_REPO='onelpawarai-X/Zyraxon-Code';
   const badgeText=document.getElementById('heroBadgeText');
   const heroDl=document.getElementById('heroDownload');
   const heroDlText=document.getElementById('heroDownloadText');
@@ -1036,58 +1037,130 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
   else if(/mac|iphone|ipad|ipod/i.test(ua)) userOS='mac';
   else if(/linux|x11|cros/i.test(ua)) userOS='linux';
 
-  function size(b){if(!b)return '';if(b>1e9)return (b/1e9).toFixed(1)+'GB';if(b>1e6)return (b/1e6).toFixed(0)+'MB';return (b/1e3).toFixed(0)+'KB'}
-  function setFile(cardId,text){const el=document.querySelector('#'+cardId+' [data-file]');if(el)el.textContent=text}
-  function label(plat,text){const b=document.querySelector('[data-plat="'+plat+'"] [data-label]');if(b)b.textContent=text}
-  function disable(plat){const b=document.querySelector('[data-plat="'+plat+'"]');if(b){b.href=RELEASES;b.target='_blank';b.rel='noopener';b.style.opacity='.55'}}
+  function fmtSize(b){if(!b)return '';if(b>1e9)return (b/1e9).toFixed(1)+' GB';if(b>1e6)return (b/1e6).toFixed(0)+' MB';return (b/1e3).toFixed(0)+' KB'}
+  function setFile(id,txt){const el=document.querySelector('#'+id+' [data-file]');if(el)el.textContent=txt}
+  function setLabel(plat,txt){const b=document.querySelector('[data-plat="'+plat+'"] [data-label]');if(b)b.textContent=txt}
+  function setBtn(plat,href){const b=document.querySelector('[data-plat="'+plat+'"]');if(b){b.href=href;b.target='_blank';b.rel='noopener'}}
 
-  try{
-    const r=await fetch('/api/public/downloads',{headers:{Accept:'application/json'}});
-    const d=await r.json();
-    const P=d.platforms||{};
+  const NOISE=/(\.blockmap$|\.ya?ml$|\.sha\d*$|\.sig$|\.txt$|^latest)/i;
+  const PLAT={
+    windows:[/win.*\.exe$/i,/setup.*\.exe$/i,/\.exe$/i,/win.*\.msi$/i],
+    'mac-arm':[/(mac|osx|darwin).*(arm64|aarch64|silicon)/i,/-arm64/i],
+    'mac-intel':[/(mac|osx|darwin).*(x64|x86_64|intel)/i,/-x64/i,/(mac|osx|darwin).*\.dmg$/i],
+    linux:[/\.AppImage$/i,/\.deb$/i,/\.rpm$/i,/linux.*\.tar\.gz$/i],
+    android:[/\.apk$/i]
+  };
 
-    if(d.latest){
-      badgeText.textContent=d.latest.tag+' \u2014 '+(d.latest.name||'Latest release');
-    }else{
-      badgeText.textContent='Latest release on GitHub';
-    }
-
-    setFile('dlWin', P.windows? P.windows.name+' ('+size(P.windows.size)+') \u00b7 '+P.windows.tag : 'No Windows build yet');
-    setFile('dlMac', (P['mac-arm']||P['mac-intel'])? (P['mac-arm']||P['mac-intel']).name+' ('+size((P['mac-arm']||P['mac-intel']).size)+')' : 'No macOS build yet \u2014 build from source');
-    setFile('dlLinux', P.linux? P.linux.name+' ('+size(P.linux.size)+') \u00b7 '+P.linux.tag : 'No Linux build yet');
-    setFile('dlAndroid', P.android? P.android.name+' ('+size(P.android.size)+') \u00b7 '+P.android.tag : 'No Android build yet');
-
-    if(P.windows) label('win-primary','Download .exe'); else disable('win-primary');
-    if(P['mac-arm']) label('mac-arm','Apple Silicon .dmg'); else disable('mac-arm');
-    if(P['mac-intel']) label('mac-intel','Intel .dmg'); else disable('mac-intel');
-    if(P.linux) label('linux', P.linux.name.replace(/^.*(\.[a-z]+)$/i,'Download $1').replace('.AppImage','.AppImage')); else disable('linux');
-    if(P.android) label('android','Download .apk'); else disable('android');
-
-    /* Myra Agent APK — always enabled (direct link) */
-    label('android','Download .apk (Myra Agent)');
-
-    /* Zyraxon Code buttons — enabled via direct API links */
-    label('code-win','Download .exe');
-    label('code-mac-arm','Apple Silicon');
-    label('code-mac-intel','Intel');
-    label('code-linux','Download');
-
-    const key = userOS==='win'?'windows' : userOS==='mac'?(P['mac-arm']?'mac-arm':'mac-intel') : userOS==='linux'?'linux':'android';
-    const osNames={win:'Windows',mac:'macOS',linux:'Linux',android:'Android'};
-    if(P[key]){
-      heroDl.href='/api/public/download/'+key;
-      heroDl.removeAttribute('target');
-      heroDlText.textContent='Download for '+osNames[userOS]+' \u2014 '+P[key].tag;
-    }else{
-      heroDl.href='#download';
-      heroDlText.textContent='See downloads';
-    }
-  }catch(err){
-    console.warn('[release-detect]',err);
-    badgeText.textContent='Latest release on GitHub';
-    heroDl.href=RELEASES;heroDl.target='_blank';heroDl.rel='noopener';
-    heroDlText.textContent='View latest release';
+  async function fetchReleases(repo){
+    try{
+      const r=await fetch('https://api.github.com/repos/'+repo+'/releases?per_page=10',{headers:{Accept:'application/vnd.github+json'}});
+      if(!r.ok)return[];
+      const d=await r.json();
+      return Array.isArray(d)?d.filter(x=>!x.draft):[];
+    }catch{return[]}
   }
+
+  function findAsset(releases,patterns){
+    for(const rel of releases){
+      const assets=(rel.assets||[]).filter(a=>!NOISE.test(a.name));
+      for(const pat of patterns){
+        const hit=assets.find(a=>pat.test(a.name));
+        if(hit)return{asset:hit,release:rel};
+      }
+    }
+    return null;
+  }
+
+  /* Fetch all three repos in parallel */
+  const[zyraxonRels,myraRels,codeRels]=await Promise.all([
+    fetchReleases(ZYRAXON_REPO),
+    fetchReleases(MYRA_REPO),
+    fetchReleases(CODE_REPO)
+  ]);
+
+  /* --- Hero badge --- */
+  const latest=zyraxonRels[0];
+  if(latest){
+    badgeText.textContent=latest.tag_name+' \u2014 '+(latest.name||latest.tag_name);
+  }else{
+    badgeText.textContent='Latest release on GitHub';
+  }
+
+  /* --- ZYRAXON Agent cards --- */
+  const win=findAsset(zyraxonRels,PLAT.windows);
+  const macArm=findAsset(zyraxonRels,PLAT['mac-arm']);
+  const macIntel=findAsset(zyraxonRels,PLAT['mac-intel']);
+  const linux=findAsset(zyraxonRels,PLAT.linux);
+
+  if(win){
+    setFile('dlWin',win.asset.name+' ('+fmtSize(win.asset.size)+') \u00b7 '+win.release.tag_name);
+    setLabel('win-primary','Download .exe');
+  }else{
+    setFile('dlWin','No Windows build yet');
+  }
+  if(macArm||macIntel){
+    const m=macArm||macIntel;
+    setFile('dlMac',m.asset.name+' ('+fmtSize(m.asset.size)+') \u00b7 '+m.release.tag_name);
+    if(macArm)setLabel('mac-arm','Apple Silicon .dmg');
+    if(macIntel)setLabel('mac-intel','Intel .dmg');
+  }else{
+    setFile('dlMac','No macOS build yet');
+  }
+  if(linux){
+    setFile('dlLinux',linux.asset.name+' ('+fmtSize(linux.asset.size)+') \u00b7 '+linux.release.tag_name);
+    setLabel('linux','Download');
+  }else{
+    setFile('dlLinux','No Linux build yet');
+  }
+
+  /* --- Myra Agent APK --- */
+  const apk=findAsset(myraRels,PLAT.android);
+  if(apk){
+    setFile('dlAndroid',apk.asset.name+' ('+fmtSize(apk.asset.size)+') \u00b7 '+apk.release.tag_name);
+    setBtn('android',apk.asset.browser_download_url);
+    setLabel('android','Download .apk');
+  }else{
+    setFile('dlAndroid','No APK build yet');
+    setBtn('android','https://github.com/'+MYRA_REPO+'/releases');
+  }
+
+  /* --- Zyraxon Code cards --- */
+  const codeWin=findAsset(codeRels,PLAT.windows);
+  const codeMacArm=findAsset(codeRels,PLAT['mac-arm']);
+  const codeMacIntel=findAsset(codeRels,PLAT['mac-intel']);
+  const codeLinux=findAsset(codeRels,PLAT.linux);
+
+  if(codeWin){
+    setFile('dlCodeWin',codeWin.asset.name+' ('+fmtSize(codeWin.asset.size)+') \u00b7 '+codeWin.release.tag_name);
+    setBtn('code-win',codeWin.asset.browser_download_url);
+    setLabel('code-win','Download .exe');
+  }else{
+    setFile('dlCodeWin','Build coming soon');
+  }
+  if(codeMacArm||codeMacIntel){
+    const cm=codeMacArm||codeMacIntel;
+    setFile('dlCodeMac',cm.asset.name+' ('+fmtSize(cm.asset.size)+') \u00b7 '+cm.release.tag_name);
+    if(codeMacArm){setBtn('code-mac-arm',codeMacArm.asset.browser_download_url);setLabel('code-mac-arm','Apple Silicon');}
+    if(codeMacIntel){setBtn('code-mac-intel',codeMacIntel.asset.browser_download_url);setLabel('code-mac-intel','Intel');}
+  }else{
+    setFile('dlCodeMac','Build coming soon');
+  }
+  if(codeLinux){
+    setFile('dlCodeLinux',codeLinux.asset.name+' ('+fmtSize(codeLinux.asset.size)+') \u00b7 '+codeLinux.release.tag_name);
+    setBtn('code-linux',codeLinux.asset.browser_download_url);
+    setLabel('code-linux','Download');
+  }else{
+    setFile('dlCodeLinux','Build coming soon');
+  }
+
+  /* --- Hero download button (auto-detect OS) --- */
+  const osNames={win:'Windows',mac:'macOS',linux:'Linux',android:'Android'};
+  let heroFound=false;
+  if(userOS==='win'&&win){heroDl.href=win.asset.browser_download_url;heroDl.target='_blank';heroDl.rel='noopener';heroDlText.textContent='Download for '+osNames[userOS]+' \u2014 '+win.release.tag_name;heroFound=true;}
+  else if(userOS==='mac'&&(macArm||macIntel)){const m=macArm||macIntel;heroDl.href=m.asset.browser_download_url;heroDl.target='_blank';heroDl.rel='noopener';heroDlText.textContent='Download for '+osNames[userOS]+' \u2014 '+m.release.tag_name;heroFound=true;}
+  else if(userOS==='linux'&&linux){heroDl.href=linux.asset.browser_download_url;heroDl.target='_blank';heroDl.rel='noopener';heroDlText.textContent='Download for '+osNames[userOS]+' \u2014 '+linux.release.tag_name;heroFound=true;}
+  else if(userOS==='android'&&apk){heroDl.href=apk.asset.browser_download_url;heroDl.target='_blank';heroDl.rel='noopener';heroDlText.textContent='Download for '+osNames[userOS]+' \u2014 '+apk.release.tag_name;heroFound=true;}
+  if(!heroFound){heroDl.href='#download';heroDlText.textContent='See downloads';}
 })();
 </script>
 
