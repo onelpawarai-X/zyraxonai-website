@@ -61,12 +61,12 @@ const gridStyle: React.CSSProperties = {
 const emptyStyle: React.CSSProperties = {
   textAlign: "center",
   padding: "60px 0",
-  color: "#8b949e",
+  color: "#6b7280",
 };
 const sectionTitle: React.CSSProperties = {
   fontSize: 18,
   fontWeight: 600,
-  color: "#c9d1d9",
+  color: "#1f2937",
   marginBottom: 16,
 };
 
@@ -262,7 +262,7 @@ export default function EcosystemPage() {
         position: "relative",
         display: "flex",
         minHeight: "100vh",
-        color: "#c9d1d9",
+        color: "#1f2937",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
@@ -287,9 +287,9 @@ export default function EcosystemPage() {
             alignItems: "center",
             gap: 16,
             padding: "12px 24px",
-            background: "rgba(13,17,23,0.5)",
+            background: "rgba(248,249,252,0.85)",
             backdropFilter: "blur(28px) saturate(160%)",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
           }}
         >
           <div style={{ flex: 1, maxWidth: 560 }}>
@@ -304,10 +304,10 @@ export default function EcosystemPage() {
               style={{
                 padding: "6px 14px",
                 borderRadius: 6,
-                border: "1px solid rgba(255,255,255,0.12)",
-                background: "rgba(28,34,46,0.55)",
+                border: "1px solid rgba(0,0,0,0.1)",
+                background: "rgba(255,255,255,0.7)",
                 backdropFilter: "blur(20px)",
-                color: "#c9d1d9",
+                color: "#374151",
                 cursor: "pointer",
                 fontSize: 13,
               }}
@@ -333,14 +333,14 @@ export default function EcosystemPage() {
                 style={{
                   width: 40,
                   height: 40,
-                  border: "3px solid #21262d",
-                  borderTopColor: "#58a6ff",
+                  border: "3px solid #e5e7eb",
+                  borderTopColor: "#6366f1",
                   borderRadius: "50%",
                   animation: "spin 0.8s linear infinite",
                 }}
               />
               <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-              <div style={{ color: "#8b949e", fontSize: 14 }}>Loading ecosystem...</div>
+              <div style={{ color: "#6b7280", fontSize: 14 }}>Loading ecosystem...</div>
             </div>
           ) : (
             <>
@@ -415,10 +415,10 @@ export default function EcosystemPage() {
                       style={{
                         padding: "6px 14px",
                         borderRadius: 8,
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        background: "rgba(28,34,46,0.55)",
+                        border: "1px solid rgba(0,0,0,0.1)",
+                        background: "rgba(255,255,255,0.7)",
                         backdropFilter: "blur(20px)",
-                        color: "#58a6ff",
+                        color: "#6366f1",
                         cursor: "pointer",
                         fontSize: 13,
                       }}
@@ -463,10 +463,10 @@ export default function EcosystemPage() {
                       style={{
                         padding: "6px 14px",
                         borderRadius: 8,
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        background: "rgba(28,34,46,0.55)",
+                        border: "1px solid rgba(0,0,0,0.1)",
+                        background: "rgba(255,255,255,0.7)",
                         backdropFilter: "blur(20px)",
-                        color: "#58a6ff",
+                        color: "#6366f1",
                         cursor: "pointer",
                         fontSize: 13,
                       }}
@@ -496,9 +496,9 @@ export default function EcosystemPage() {
                       padding: "6px 14px",
                       borderRadius: 20,
                       border: "1px solid",
-                      borderColor: !activeCategory ? "#58a6ff" : "#30363d",
-                      background: !activeCategory ? "rgba(56,139,253,0.1)" : "#161b22",
-                      color: !activeCategory ? "#58a6ff" : "#8b949e",
+                      borderColor: !activeCategory ? "#6366f1" : "#e5e7eb",
+                      background: !activeCategory ? "rgba(99,102,241,0.1)" : "#fff",
+                      color: !activeCategory ? "#6366f1" : "#6b7280",
                       fontSize: 13,
                       cursor: "pointer",
                     }}
@@ -513,9 +513,9 @@ export default function EcosystemPage() {
                         padding: "6px 14px",
                         borderRadius: 20,
                         border: "1px solid",
-                        borderColor: activeCategory === cat.id ? "#58a6ff" : "#30363d",
-                        background: activeCategory === cat.id ? "rgba(56,139,253,0.1)" : "#161b22",
-                        color: activeCategory === cat.id ? "#58a6ff" : "#8b949e",
+                        borderColor: activeCategory === cat.id ? "#6366f1" : "#e5e7eb",
+                        background: activeCategory === cat.id ? "rgba(99,102,241,0.1)" : "#fff",
+                        color: activeCategory === cat.id ? "#6366f1" : "#6b7280",
                         fontSize: 13,
                         cursor: "pointer",
                       }}

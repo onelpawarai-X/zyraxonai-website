@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ZYRAXON AI — MCP Tool Card Component
  *
  * Displays an individual MCP tool with its details, similar to
@@ -26,13 +26,13 @@ const formatNumber = (num: number): string => {
 const getTransportColor = (transport: string): string => {
   switch (transport) {
     case "stdio":
-      return "#3fb950";
+      return "#10b981";
     case "sse":
-      return "#58a6ff";
+      return "#6366f1";
     case "streamable-http":
       return "#a371f7";
     default:
-      return "#8b949e";
+      return "#6b7280";
   }
 };
 
@@ -41,13 +41,13 @@ const getSourceColor = (source: string): string => {
     case "smithery":
       return "#8957e5";
     case "github":
-      return "#c9d1d9";
+      return "#1f2937";
     case "glama":
-      return "#58a6ff";
+      return "#6366f1";
     case "mcpso":
-      return "#3fb950";
+      return "#10b981";
     default:
-      return "#8b949e";
+      return "#6b7280";
   }
 };
 
@@ -85,8 +85,8 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
     <div
       onClick={handleCardClick}
       style={{
-        background: "rgba(28,34,46,0.55)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(243,244,246,0.55)",
+        border: "1px solid rgba(0,0,0,0.06)",
         borderRadius: "12px",
         padding: "16px",
         cursor: onClick ? "pointer" : "default",
@@ -98,10 +98,10 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "#8957e5";
         e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(137,87,229,0.2)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(99,102,241,0.2)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+        e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
@@ -117,7 +117,7 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
                 borderRadius: "10px",
                 overflow: "hidden",
                 flexShrink: 0,
-                background: "rgba(48,54,61,0.45)",
+                background: "rgba(229,231,235,0.45)",
                 backdropFilter: "blur(14px)",
               }}
             >
@@ -167,7 +167,7 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
                 style={{
                   fontSize: "15px",
                   fontWeight: "600",
-                  color: "#c9d1d9",
+                  color: "#1f2937",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -211,7 +211,7 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
             <div
               style={{
                 fontSize: "12px",
-                color: "#8b949e",
+                color: "#6b7280",
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
@@ -219,9 +219,9 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
             >
               <span>by {tool.author}</span>
               {tool.authorVerified && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="#58a6ff">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#6366f1">
                   <path d="M12 1l2.6 2.1 3.3-.3.9 3.2 2.9 1.7-1.4 3 1.4 3-2.9 1.7-.9 3.2-3.3.3L12 23l-2.6-2.1-3.3.3-.9-3.2L2.3 16l1.4-3-1.4-3 2.9-1.7.9-3.2 3.3.3z" />
-                  <path d="M10.6 15.4l-2.8-2.8 1.2-1.2 1.6 1.6 4-4 1.2 1.2z" fill="#0d1117" />
+                  <path d="M10.6 15.4l-2.8-2.8 1.2-1.2 1.6 1.6 4-4 1.2 1.2z" fill="#ffffff" />
                 </svg>
               )}
             </div>
@@ -250,7 +250,7 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
       <div
         style={{
           fontSize: "13px",
-          color: "#8b949e",
+          color: "#6b7280",
           lineHeight: "1.5",
           display: "-webkit-box",
           WebkitLineClamp: 2,
@@ -274,11 +274,11 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
             key={tag}
             style={{
               padding: "2px 8px",
-              background: "rgba(48,54,61,0.45)",
+              background: "rgba(229,231,235,0.45)",
               backdropFilter: "blur(14px)",
               borderRadius: "10px",
               fontSize: "11px",
-              color: "#8b949e",
+              color: "#6b7280",
             }}
           >
             {tag}
@@ -288,11 +288,11 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
           <span
             style={{
               padding: "2px 8px",
-              background: "rgba(48,54,61,0.45)",
+              background: "rgba(229,231,235,0.45)",
               backdropFilter: "blur(14px)",
               borderRadius: "10px",
               fontSize: "11px",
-              color: "#484f58",
+              color: "#9ca3af",
             }}
           >
             +{tool.tags.length - 3}
@@ -307,7 +307,7 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
           alignItems: "center",
           gap: "12px",
           fontSize: "12px",
-          color: "#8b949e",
+          color: "#6b7280",
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -324,7 +324,7 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
           {formatNumber(tool.downloads)}
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="#e3b341">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
           {tool.rating.toFixed(1)}
@@ -356,7 +356,7 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
           gap: "8px",
           marginTop: "auto",
           paddingTop: "8px",
-          borderTop: "1px solid rgba(255,255,255,0.08)",
+          borderTop: "1px solid rgba(0,0,0,0.06)",
         }}
       >
         <InstallButton
@@ -378,10 +378,10 @@ export const MCPToolCard: React.FC<MCPToolCardProps> = ({ tool, onClick }) => {
             alignItems: "center",
             gap: "6px",
             padding: "5px 10px",
-            background: copied ? "rgba(63, 185, 80, 0.1)" : "rgba(48,54,61,0.45)",
-            border: `1px solid ${copied ? "rgba(63, 185, 80, 0.3)" : "rgba(255,255,255,0.12)"}`,
+            background: copied ? "rgba(63, 185, 80, 0.1)" : "rgba(229,231,235,0.45)",
+            border: `1px solid ${copied ? "rgba(63, 185, 80, 0.3)" : "rgba(0,0,0,0.1)"}`,
             borderRadius: "6px",
-            color: copied ? "#3fb950" : "#8b949e",
+            color: copied ? "#10b981" : "#6b7280",
             fontSize: "12px",
             cursor: "pointer",
             fontFamily: "inherit",

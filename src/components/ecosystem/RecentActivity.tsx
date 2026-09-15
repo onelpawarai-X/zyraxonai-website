@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { RecentActivity as RecentActivityType } from "../../lib/ecosystem";
 import { IconPackage, IconRobot, IconTemplate, IconUser, IconDownload } from "./Icons";
 
@@ -56,16 +56,16 @@ const activityIcons: Record<string, React.FC<{ size?: number; className?: string
 };
 
 const activityColors: Record<string, string> = {
-  plugin: "#58a6ff",
+  plugin: "#6366f1",
   bot: "#a855f7",
   template: "#34d399",
   model: "#f59e0b",
-  tool: "#8b949e",
-  sdk: "#8b949e",
-  api: "#8b949e",
-  app: "#8b949e",
-  extension: "#8b949e",
-  cli: "#8b949e",
+  tool: "#6b7280",
+  sdk: "#6b7280",
+  api: "#6b7280",
+  app: "#6b7280",
+  extension: "#6b7280",
+  cli: "#6b7280",
 };
 
 const SkeletonActivity: React.FC = () => (
@@ -75,7 +75,7 @@ const SkeletonActivity: React.FC = () => (
       alignItems: "center",
       gap: "12px",
       padding: "12px 0",
-      borderBottom: "1px solid rgba(255,255,255,0.08)",
+      borderBottom: "1px solid rgba(0,0,0,0.06)",
     }}
   >
     <div
@@ -83,7 +83,7 @@ const SkeletonActivity: React.FC = () => (
         width: "36px",
         height: "36px",
         borderRadius: "8px",
-        background: "rgba(48,54,61,0.45)",
+        background: "rgba(229,231,235,0.45)",
         backdropFilter: "blur(14px)",
         flexShrink: 0,
       }}
@@ -94,7 +94,7 @@ const SkeletonActivity: React.FC = () => (
           width: "70%",
           height: "14px",
           borderRadius: "4px",
-          background: "rgba(48,54,61,0.45)",
+          background: "rgba(229,231,235,0.45)",
           backdropFilter: "blur(14px)",
           marginBottom: "6px",
         }}
@@ -104,7 +104,7 @@ const SkeletonActivity: React.FC = () => (
           width: "40%",
           height: "12px",
           borderRadius: "4px",
-          background: "rgba(48,54,61,0.45)",
+          background: "rgba(229,231,235,0.45)",
           backdropFilter: "blur(14px)",
         }}
       />
@@ -114,7 +114,7 @@ const SkeletonActivity: React.FC = () => (
         width: "50px",
         height: "12px",
         borderRadius: "4px",
-        background: "rgba(48,54,61,0.45)",
+        background: "rgba(229,231,235,0.45)",
         backdropFilter: "blur(14px)",
       }}
     />
@@ -126,9 +126,9 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
     return (
       <div
         style={{
-          background: "rgba(28,34,46,0.55)",
+          background: "rgba(243,244,246,0.55)",
           backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: "1px solid rgba(0,0,0,0.06)",
           borderRadius: "12px",
           padding: "16px",
         }}
@@ -137,7 +137,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
           style={{
             fontSize: "15px",
             fontWeight: "600",
-            color: "#c9d1d9",
+            color: "#1f2937",
             marginBottom: "12px",
           }}
         >
@@ -155,9 +155,9 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
   return (
     <div
       style={{
-        background: "rgba(28,34,46,0.55)",
+        background: "rgba(243,244,246,0.55)",
         backdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: "1px solid rgba(0,0,0,0.06)",
         borderRadius: "12px",
         padding: "16px",
       }}
@@ -166,7 +166,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
         style={{
           fontSize: "15px",
           fontWeight: "600",
-          color: "#c9d1d9",
+          color: "#1f2937",
           marginBottom: "12px",
         }}
       >
@@ -178,7 +178,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
           style={{
             padding: "24px 0",
             textAlign: "center",
-            color: "#8b949e",
+            color: "#6b7280",
             fontSize: "13px",
           }}
         >
@@ -188,7 +188,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
         <div>
           {activities.map((activity) => {
             const IconComp = activityIcons[activity.type] || IconPackage;
-            const color = activityColors[activity.type] || "#58a6ff";
+            const color = activityColors[activity.type] || "#6366f1";
             return (
               <div
                 key={activity.id}
@@ -197,7 +197,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
                   alignItems: "center",
                   gap: "12px",
                   padding: "10px 0",
-                  borderBottom: "1px solid rgba(255,255,255,0.08)",
+                  borderBottom: "1px solid rgba(0,0,0,0.06)",
                 }}
               >
                 {activity.authorAvatar ? (
@@ -233,20 +233,20 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
                   <div
                     style={{
                       fontSize: "13px",
-                      color: "#c9d1d9",
+                      color: "#1f2937",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
                     }}
                   >
                     <span style={{ fontWeight: "600" }}>{activity.author}</span>
-                    <span style={{ color: "#8b949e" }}> published </span>
-                    <span style={{ fontWeight: "500", color: "#58a6ff" }}>{activity.name}</span>
+                    <span style={{ color: "#6b7280" }}> published </span>
+                    <span style={{ fontWeight: "500", color: "#6366f1" }}>{activity.name}</span>
                   </div>
                   <div
                     style={{
                       fontSize: "12px",
-                      color: "#8b949e",
+                      color: "#6b7280",
                       marginTop: "2px",
                       textTransform: "capitalize",
                     }}
@@ -258,7 +258,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities, load
                 <div
                   style={{
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     flexShrink: 0,
                   }}
                 >

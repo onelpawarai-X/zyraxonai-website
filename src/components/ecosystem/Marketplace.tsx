@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { EcosystemItem, getAllItems, getAuthState, getGitHubStorage } from "../../lib/ecosystem";
 import { ShareButton } from "./ShareButton";
 import { ItemDotMenu } from "./ItemDotMenu";
@@ -83,7 +83,7 @@ const renderStars = (rating: number) => {
     stars.push(
       <span
         key={i}
-        style={{ color: i <= Math.round(rating) ? "#e3b341" : "#30363d", fontSize: "12px" }}
+        style={{ color: i <= Math.round(rating) ? "#e3b341" : "#e5e7eb", fontSize: "12px" }}
       >
         ★
       </span>,
@@ -94,31 +94,31 @@ const renderStars = (rating: number) => {
 
 const TYPE_COLORS: Record<string, string> = {
   bot: "#8957e5",
-  plugin: "#238636",
-  template: "#1f6feb",
+  plugin: "#047857",
+  template: "#4f46e5",
   theme: "#a371f7",
-  model: "#da3633",
-  tool: "#238636",
-  cli: "#238636",
-  sdk: "#1f6feb",
-  extension: "#da3633",
+  model: "#dc2626",
+  tool: "#047857",
+  cli: "#047857",
+  sdk: "#4f46e5",
+  extension: "#dc2626",
   app: "#8957e5",
-  "desktop-app": "#238636",
-  workflow: "#1f6feb",
+  "desktop-app": "#047857",
+  workflow: "#4f46e5",
   "ui-kit": "#a371f7",
-  snippet: "#8b949e",
-  devops: "#238636",
-  font: "#8b949e",
-  "landing-page": "#1f6feb",
-  iso: "#da3633",
-  startkit: "#1f6feb",
-  api: "#1f6feb",
-  dataset: "#da3633",
+  snippet: "#6b7280",
+  devops: "#047857",
+  font: "#6b7280",
+  "landing-page": "#4f46e5",
+  iso: "#dc2626",
+  startkit: "#4f46e5",
+  api: "#4f46e5",
+  dataset: "#dc2626",
   prompt: "#8957e5",
   book: "#e3b341",
-  pdf: "#da3633",
+  pdf: "#dc2626",
   icon: "#a371f7",
-  component: "#1f6feb",
+  component: "#4f46e5",
   "website-game": "#f0883e",
 };
 
@@ -126,21 +126,21 @@ const getActionInfo = (item: EcosystemItem) => {
   const cat = item.category;
   if (cat === "website-games")
     return { label: "Play Game", color: "#f0883e", hoverColor: "#d29922" };
-  if (cat === "plugins") return { label: "Install", color: "#238636", hoverColor: "#2ea043" };
+  if (cat === "plugins") return { label: "Install", color: "#047857", hoverColor: "#059669" };
   if (cat === "ai-bots") return { label: "Add Bot", color: "#8957e5", hoverColor: "#a371f7" };
   if (cat === "website-templates")
-    return { label: "Use Template", color: "#1f6feb", hoverColor: "#58a6ff" };
-  if (cat === "ai-models") return { label: "Download", color: "#da3633", hoverColor: "#f85149" };
+    return { label: "Use Template", color: "#4f46e5", hoverColor: "#6366f1" };
+  if (cat === "ai-models") return { label: "Download", color: "#dc2626", hoverColor: "#ef4444" };
   if (cat === "tools" || cat === "cli-tools")
-    return { label: "Download", color: "#238636", hoverColor: "#2ea043" };
+    return { label: "Download", color: "#047857", hoverColor: "#059669" };
   if (cat === "browser-extensions")
-    return { label: "Add Extension", color: "#da3633", hoverColor: "#f85149" };
+    return { label: "Add Extension", color: "#dc2626", hoverColor: "#ef4444" };
   if (cat === "themes") return { label: "Apply Theme", color: "#8957e5", hoverColor: "#a371f7" };
-  if (cat === "workflows") return { label: "Import", color: "#1f6feb", hoverColor: "#58a6ff" };
-  if (item.installCommand) return { label: "Install", color: "#238636", hoverColor: "#2ea043" };
-  if (item.liveDemo) return { label: "Live Demo", color: "#1f6feb", hoverColor: "#58a6ff" };
-  if (item.downloadUrl) return { label: "Download", color: "#238636", hoverColor: "#2ea043" };
-  return { label: "View", color: "#21262d", hoverColor: "#30363d" };
+  if (cat === "workflows") return { label: "Import", color: "#4f46e5", hoverColor: "#6366f1" };
+  if (item.installCommand) return { label: "Install", color: "#047857", hoverColor: "#059669" };
+  if (item.liveDemo) return { label: "Live Demo", color: "#4f46e5", hoverColor: "#6366f1" };
+  if (item.downloadUrl) return { label: "Download", color: "#047857", hoverColor: "#059669" };
+  return { label: "View", color: "#f3f4f6", hoverColor: "#e5e7eb" };
 };
 
 export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserClick }) => {
@@ -199,7 +199,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
   return (
     <div
       style={{
-        color: "#c9d1d9",
+        color: "#1f2937",
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
       }}
     >
@@ -208,8 +208,8 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
           position: "relative",
           overflow: "hidden",
           background:
-            "radial-gradient(1200px 400px at 15% -10%, rgba(137,87,229,0.22), transparent 60%), radial-gradient(1000px 400px at 90% -20%, rgba(88,166,255,0.18), transparent 55%), linear-gradient(160deg, #161b22 0%, #0d1117 55%, #1a1025 100%)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+            "radial-gradient(1200px 400px at 15% -10%, rgba(99,102,241,0.22), transparent 60%), radial-gradient(1000px 400px at 90% -20%, rgba(88,166,255,0.18), transparent 55%), linear-gradient(160deg, #f9fafb 0%, #ffffff 55%, #f5f3ff 100%)",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
           padding: "44px 0 34px",
         }}
       >
@@ -221,8 +221,8 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
               gap: 8,
               padding: "5px 12px",
               borderRadius: 20,
-              background: "rgba(137,87,229,0.15)",
-              border: "1px solid rgba(137,87,229,0.35)",
+              background: "rgba(99,102,241,0.15)",
+              border: "1px solid rgba(99,102,241,0.35)",
               color: "#a371f7",
               fontSize: 12,
               fontWeight: 600,
@@ -236,7 +236,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                 height: 7,
                 borderRadius: "50%",
                 background: "#8957e5",
-                boxShadow: "0 0 10px rgba(137,87,229,0.9)",
+                boxShadow: "0 0 10px rgba(99,102,241,0.9)",
               }}
             />
             ZYRAXON AI ECOSYSTEM
@@ -255,13 +255,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
           >
             ZYRAXON Marketplace
           </h1>
-          <p style={{ fontSize: "16px", color: "#8b949e", marginBottom: "24px" }}>
+          <p style={{ fontSize: "16px", color: "#6b7280", marginBottom: "24px" }}>
             Discover plugins, templates, bots, and more — install straight into ZYRAXON AI
           </p>
           <div style={{ display: "flex", gap: "36px", flexWrap: "wrap" }}>
             {[
-              { label: "Total Items", value: totalItems, color: "#58a6ff" },
-              { label: "Plugins", value: totalPlugins, color: "#3fb950" },
+              { label: "Total Items", value: totalItems, color: "#6366f1" },
+              { label: "Plugins", value: totalPlugins, color: "#10b981" },
               { label: "Templates", value: totalTemplates, color: "#a371f7" },
               { label: "Bots", value: totalBots, color: "#f0883e" },
             ].map((stat) => (
@@ -276,7 +276,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                 >
                   {stat.value}
                 </div>
-                <div style={{ fontSize: "12px", color: "#8b949e" }}>{stat.label}</div>
+                <div style={{ fontSize: "12px", color: "#6b7280" }}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -300,7 +300,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                 left: "12px",
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "#8b949e",
+                color: "#6b7280",
                 fontSize: "14px",
               }}
             >
@@ -314,21 +314,21 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
               style={{
                 width: "100%",
                 padding: "10px 12px 10px 36px",
-                background: "rgba(28,34,46,0.55)",
+                background: "rgba(243,244,246,0.55)",
                 backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 borderRadius: "8px",
-                color: "#c9d1d9",
+                color: "#1f2937",
                 fontSize: "14px",
                 fontFamily: "inherit",
                 outline: "none",
                 transition: "border-color 0.2s ease",
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#58a6ff";
+                e.currentTarget.style.borderColor = "#6366f1";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#21262d";
+                e.currentTarget.style.borderColor = "#f3f4f6";
               }}
             />
           </div>
@@ -337,11 +337,11 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             style={{
               padding: "10px 12px",
-              background: "rgba(28,34,46,0.55)",
+              background: "rgba(243,244,246,0.55)",
               backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid rgba(0,0,0,0.06)",
               borderRadius: "8px",
-              color: "#c9d1d9",
+              color: "#1f2937",
               fontSize: "14px",
               fontFamily: "inherit",
               outline: "none",
@@ -361,9 +361,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
             marginBottom: "24px",
             flexWrap: "wrap",
             padding: "16px",
-            background: "rgba(28,34,46,0.55)",
+            background: "rgba(243,244,246,0.55)",
             backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: "1px solid rgba(0,0,0,0.06)",
             borderRadius: "10px",
           }}
         >
@@ -375,9 +375,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                 padding: "6px 14px",
                 borderRadius: "20px",
                 border: "1px solid",
-                borderColor: selectedCategory === cat ? "#58a6ff" : "#30363d",
+                borderColor: selectedCategory === cat ? "#6366f1" : "#e5e7eb",
                 background: selectedCategory === cat ? "rgba(88, 166, 255, 0.15)" : "transparent",
-                color: selectedCategory === cat ? "#58a6ff" : "#8b949e",
+                color: selectedCategory === cat ? "#6366f1" : "#6b7280",
                 fontSize: "13px",
                 fontWeight: "500",
                 cursor: "pointer",
@@ -400,8 +400,8 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
               style={{
                 width: "40px",
                 height: "40px",
-                border: "3px solid #21262d",
-                borderTopColor: "#58a6ff",
+                border: "3px solid #f3f4f6",
+                borderTopColor: "#6366f1",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
               }}
@@ -413,19 +413,19 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
             style={{
               textAlign: "center",
               padding: "80px 24px",
-              background: "rgba(28,34,46,0.55)",
+              background: "rgba(243,244,246,0.55)",
               backdropFilter: "blur(20px)",
               borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid rgba(0,0,0,0.06)",
             }}
           >
             <div style={{ fontSize: "48px", marginBottom: "16px" }}>📦</div>
             <h3
-              style={{ fontSize: "18px", fontWeight: "600", color: "#c9d1d9", marginBottom: "8px" }}
+              style={{ fontSize: "18px", fontWeight: "600", color: "#1f2937", marginBottom: "8px" }}
             >
               No items yet
             </h3>
-            <p style={{ fontSize: "14px", color: "#8b949e" }}>
+            <p style={{ fontSize: "14px", color: "#6b7280" }}>
               Items will appear here once AI publishes them
             </p>
           </div>
@@ -447,15 +447,15 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                   onMouseEnter={() => setHoveredItem(item.id)}
                   onMouseLeave={() => setHoveredItem(null)}
                   style={{
-                    background: "rgba(28,34,46,0.55)",
+                    background: "rgba(243,244,246,0.55)",
                     backdropFilter: "blur(20px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "12px",
                     overflow: "hidden",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                     transform: isHovered ? "translateY(-2px)" : "translateY(0)",
-                    boxShadow: isHovered ? "0 8px 24px rgba(0,0,0,0.3)" : "none",
+                    boxShadow: isHovered ? "0 8px 24px rgba(0,0,0,0.08)" : "none",
                   }}
                 >
                   {item.coverImage ? (
@@ -463,9 +463,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                       style={{
                         height: "160px",
                         overflow: "hidden",
-                        background: "rgba(13,17,23,0.55)",
+                        background: "rgba(255,255,255,0.55)",
                         backdropFilter: "blur(24px)",
-                        borderBottom: "1px solid rgba(255,255,255,0.08)",
+                        borderBottom: "1px solid rgba(0,0,0,0.06)",
                       }}
                     >
                       <img
@@ -478,11 +478,11 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                     <div
                       style={{
                         height: "160px",
-                        background: `linear-gradient(135deg, ${TYPE_COLORS[item.type] || "#58a6ff"}22, ${TYPE_COLORS[item.type] || "#58a6ff"}08)`,
+                        background: `linear-gradient(135deg, ${TYPE_COLORS[item.type] || "#6366f1"}22, ${TYPE_COLORS[item.type] || "#6366f1"}08)`,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        borderBottom: "1px solid rgba(255,255,255,0.08)",
+                        borderBottom: "1px solid rgba(0,0,0,0.06)",
                       }}
                     >
                       {item.icon ? (
@@ -501,7 +501,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           style={{
                             fontSize: "48px",
                             fontWeight: "700",
-                            color: TYPE_COLORS[item.type] || "#58a6ff",
+                            color: TYPE_COLORS[item.type] || "#6366f1",
                             opacity: 0.5,
                           }}
                         >
@@ -527,14 +527,14 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           fontSize: "11px",
                           fontWeight: "600",
                           textTransform: "capitalize",
-                          background: `${TYPE_COLORS[item.type] || "#58a6ff"}20`,
-                          color: TYPE_COLORS[item.type] || "#58a6ff",
+                          background: `${TYPE_COLORS[item.type] || "#6366f1"}20`,
+                          color: TYPE_COLORS[item.type] || "#6366f1",
                         }}
                       >
                         {item.type}
                       </span>
                       <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "11px", color: "#484f58" }}>v{item.version}</span>
+                        <span style={{ fontSize: "11px", color: "#9ca3af" }}>v{item.version}</span>
                         <ItemDotMenu item={item} align="right" />
                       </span>
                     </div>
@@ -552,7 +552,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                     <p
                       style={{
                         fontSize: "13px",
-                        color: "#8b949e",
+                        color: "#6b7280",
                         lineHeight: "1.5",
                         marginBottom: "12px",
                         display: "-webkit-box",
@@ -578,7 +578,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           height: "24px",
                           borderRadius: "50%",
                           overflow: "hidden",
-                          background: "rgba(48,54,61,0.45)",
+                          background: "rgba(229,231,235,0.45)",
                           backdropFilter: "blur(14px)",
                           flexShrink: 0,
                         }}
@@ -603,7 +603,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                               justifyContent: "center",
                               fontSize: "11px",
                               fontWeight: "600",
-                              color: "#8b949e",
+                              color: "#6b7280",
                             }}
                           >
                             {typeof item.author === "string"
@@ -626,7 +626,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           border: "none",
                           padding: 0,
                           fontSize: "12px",
-                          color: "#8b949e",
+                          color: "#6b7280",
                           cursor: "pointer",
                           fontFamily: "inherit",
                           outline: "none",
@@ -644,7 +644,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                         alignItems: "center",
                         gap: "12px",
                         fontSize: "12px",
-                        color: "#8b949e",
+                        color: "#6b7280",
                         marginBottom: "12px",
                       }}
                     >
@@ -652,7 +652,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                         <span style={{ display: "flex", gap: "1px" }}>
                           {renderStars(item.rating)}
                         </span>
-                        <span style={{ color: "#c9d1d9", fontWeight: "500" }}>
+                        <span style={{ color: "#1f2937", fontWeight: "500" }}>
                           {item.rating.toFixed(1)}
                         </span>
                       </span>
@@ -683,9 +683,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           style={{
                             padding: "6px 12px",
                             background: "transparent",
-                            border: "1px solid rgba(255,255,255,0.12)",
+                            border: "1px solid rgba(0,0,0,0.1)",
                             borderRadius: "6px",
-                            color: "#58a6ff",
+                            color: "#6366f1",
                             cursor: "pointer",
                             fontSize: "12px",
                             fontWeight: "500",
@@ -697,10 +697,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                             transition: "border-color 0.15s ease",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = "#58a6ff50";
+                            e.currentTarget.style.borderColor = "#6366f150";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = "#30363d";
+                            e.currentTarget.style.borderColor = "#e5e7eb";
                           }}
                         >
                           ↗ Live
@@ -714,9 +714,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           style={{
                             padding: "6px 12px",
                             background: "transparent",
-                            border: "1px solid rgba(255,255,255,0.12)",
+                            border: "1px solid rgba(0,0,0,0.1)",
                             borderRadius: "6px",
-                            color: "#58a6ff",
+                            color: "#6366f1",
                             cursor: "pointer",
                             fontSize: "12px",
                             fontWeight: "500",
@@ -728,10 +728,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                             transition: "border-color 0.15s ease",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = "#58a6ff50";
+                            e.currentTarget.style.borderColor = "#6366f150";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = "#30363d";
+                            e.currentTarget.style.borderColor = "#e5e7eb";
                           }}
                         >
                           ↓ Download
@@ -745,9 +745,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                           style={{
                             padding: "6px 12px",
                             background: "transparent",
-                            border: "1px solid rgba(255,255,255,0.12)",
+                            border: "1px solid rgba(0,0,0,0.1)",
                             borderRadius: "6px",
-                            color: "#58a6ff",
+                            color: "#6366f1",
                             cursor: "pointer",
                             fontSize: "12px",
                             fontWeight: "500",
@@ -759,10 +759,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onSelectItem, onUserCl
                             transition: "border-color 0.15s ease",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = "#58a6ff50";
+                            e.currentTarget.style.borderColor = "#6366f150";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = "#30363d";
+                            e.currentTarget.style.borderColor = "#e5e7eb";
                           }}
                         >
                           📋 Copy

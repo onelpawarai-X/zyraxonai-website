@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import {
   getRecord,
   install,
@@ -70,7 +70,7 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
     padding: "8px 12px",
     background: "none",
     border: "none",
-    color: "#c9d1d9",
+    color: "#1f2937",
     fontSize: 12.5,
     cursor: "pointer",
     fontFamily: "inherit",
@@ -89,9 +89,9 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
           onClick={() => act(() => install(target).then(() => undefined))}
           style={{
             ...base,
-            background: "linear-gradient(135deg, #8957e5, #6f42c1)",
+            background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
             color: "#fff",
-            boxShadow: "0 3px 14px rgba(137,87,229,0.35)",
+            boxShadow: "0 3px 14px rgba(99,102,241,0.35)",
           }}
         >
           {busy ? "Installing…" : "Install"}
@@ -104,7 +104,7 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
               ...base,
               background: "rgba(63,185,80,0.12)",
               border: "1px solid rgba(63,185,80,0.45)",
-              color: record.enabled ? "#3fb950" : "#8b949e",
+              color: record.enabled ? "#10b981" : "#6b7280",
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
@@ -127,16 +127,16 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
                 minWidth: 180,
                 zIndex: 70,
                 padding: 5,
-                background: "rgba(22,27,34,0.98)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(249,250,251,0.98)",
+                border: "1px solid rgba(0,0,0,0.1)",
                 borderRadius: 10,
-                boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.05)",
                 backdropFilter: "blur(16px)",
               }}
             >
               <button
                 style={menuItem}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
                 onClick={() => {
                   setMenu(false);
@@ -147,7 +147,7 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
               </button>
               <button
                 style={menuItem}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
                 onClick={() => {
                   setMenu(false);
@@ -157,8 +157,8 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
                 Reinstall / Update
               </button>
               <button
-                style={{ ...menuItem, color: "#f85149" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+                style={{ ...menuItem, color: "#ef4444" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
                 onClick={() => {
                   setMenu(false);

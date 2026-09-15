@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { CategoryInfo } from "../../lib/ecosystem";
 import {
   IconRobot,
@@ -73,9 +73,9 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick })
         alignItems: "flex-start",
         gap: "12px",
         padding: "20px",
-        background: "rgba(28,34,46,0.55)",
+        background: "rgba(243,244,246,0.55)",
         backdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: "1px solid rgba(0,0,0,0.06)",
         borderRadius: "12px",
         cursor: "pointer",
         transition: "all 0.2s ease",
@@ -85,13 +85,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick })
         fontFamily: "inherit",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "#58a6ff";
-        e.currentTarget.style.background = "#1c2128";
+        e.currentTarget.style.borderColor = "#6366f1";
+        e.currentTarget.style.background = "#f3f4f6";
         e.currentTarget.style.transform = "translateY(-2px)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "#21262d";
-        e.currentTarget.style.background = "#161b22";
+        e.currentTarget.style.borderColor = "#f3f4f6";
+        e.currentTarget.style.background = "#f9fafb";
         e.currentTarget.style.transform = "translateY(0)";
       }}
     >
@@ -104,7 +104,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick })
           height: "44px",
           borderRadius: "10px",
           background: "rgba(88, 166, 255, 0.1)",
-          color: "#58a6ff",
+          color: "#6366f1",
         }}
       >
         <IconComponent size={22} />
@@ -123,7 +123,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick })
             style={{
               fontSize: "15px",
               fontWeight: "600",
-              color: "#c9d1d9",
+              color: "#1f2937",
             }}
           >
             {category.name}
@@ -132,8 +132,8 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick })
             style={{
               fontSize: "12px",
               fontWeight: "500",
-              color: "#8b949e",
-              background: "rgba(48,54,61,0.45)",
+              color: "#6b7280",
+              background: "rgba(229,231,235,0.45)",
               backdropFilter: "blur(14px)",
               padding: "2px 8px",
               borderRadius: "10px",
@@ -145,7 +145,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick })
         <div
           style={{
             fontSize: "13px",
-            color: "#8b949e",
+            color: "#6b7280",
             lineHeight: "1.4",
           }}
         >

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
   startDeviceFlow,
   pollDeviceCode,
@@ -221,16 +221,16 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: "100vh",
-    background: "#0a0a0f",
+    background: "#f8f9fc",
     padding: 20,
   },
   card: {
-    background: "#111118",
+    background: "#ffffff",
     borderRadius: 16,
     padding: 40,
     maxWidth: 420,
     width: "100%",
-    border: "1px solid #1a1a2e",
+    border: "1px solid #f0f1f5",
     textAlign: "center",
   },
   title: {
@@ -242,7 +242,7 @@ const styles: Record<string, React.CSSProperties> = {
   subtitle: {
     margin: "0 0 28px",
     fontSize: 14,
-    color: "#888",
+    color: "#9ca3af",
   },
   steps: {
     display: "flex",
@@ -276,7 +276,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "0 0 4px",
     fontSize: 14,
     fontWeight: 600,
-    color: "#e0e0e0",
+    color: "#374151",
   },
   stepLink: {
     color: "#818cf8",
@@ -286,13 +286,13 @@ const styles: Record<string, React.CSSProperties> = {
   stepDesc: {
     margin: 0,
     fontSize: 13,
-    color: "#888",
+    color: "#9ca3af",
   },
   codeContainer: {
     display: "flex",
     alignItems: "center",
     gap: 10,
-    background: "#1a1a2e",
+    background: "#f0f1f5",
     borderRadius: 8,
     padding: "8px 12px",
     marginTop: 4,
@@ -307,9 +307,9 @@ const styles: Record<string, React.CSSProperties> = {
   copyButton: {
     padding: "4px 10px",
     borderRadius: 6,
-    border: "1px solid #333",
-    background: "#111",
-    color: "#aaa",
+    border: "1px solid #d1d5db",
+    background: "#f3f4f6",
+    color: "#9ca3af",
     cursor: "pointer",
     fontSize: 12,
     whiteSpace: "nowrap",
@@ -324,7 +324,7 @@ const styles: Record<string, React.CSSProperties> = {
   spinner: {
     width: 40,
     height: 40,
-    border: "3px solid #1a1a2e",
+    border: "3px solid #f0f1f5",
     borderTopColor: "#6366f1",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
@@ -333,7 +333,7 @@ const styles: Record<string, React.CSSProperties> = {
   spinnerSmall: {
     width: 16,
     height: 16,
-    border: "2px solid #1a1a2e",
+    border: "2px solid #f0f1f5",
     borderTopColor: "#6366f1",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
@@ -341,7 +341,7 @@ const styles: Record<string, React.CSSProperties> = {
   loadingText: {
     margin: 0,
     fontSize: 14,
-    color: "#888",
+    color: "#9ca3af",
   },
   checkmark: {
     margin: "0 auto 16px",
@@ -355,7 +355,7 @@ const styles: Record<string, React.CSSProperties> = {
   subText: {
     margin: 0,
     fontSize: 14,
-    color: "#888",
+    color: "#9ca3af",
   },
   errorIcon: {
     fontSize: 36,
@@ -378,6 +378,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   pollingText: {
     fontSize: 13,
-    color: "#888",
+    color: "#9ca3af",
   },
 };

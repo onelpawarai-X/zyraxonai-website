@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ZYRAXON AI — MCP Tools Page Component
  *
  * Main page for browsing and discovering MCP tools from the world's
@@ -32,16 +32,16 @@ const CATEGORIES = [
 ];
 
 const SOURCES = [
-  { id: "all", label: "All Sources", color: "#8b949e" },
+  { id: "all", label: "All Sources", color: "#6b7280" },
   { id: "smithery", label: "Smithery", color: "#8957e5" },
-  { id: "github", label: "GitHub", color: "#c9d1d9" },
-  { id: "glama", label: "Glama", color: "#58a6ff" },
+  { id: "github", label: "GitHub", color: "#1f2937" },
+  { id: "glama", label: "Glama", color: "#6366f1" },
 ];
 
 const TRANSPORTS = [
-  { id: "all", label: "All", color: "#8b949e" },
-  { id: "stdio", label: "Stdio", color: "#3fb950" },
-  { id: "sse", label: "SSE", color: "#58a6ff" },
+  { id: "all", label: "All", color: "#6b7280" },
+  { id: "stdio", label: "Stdio", color: "#10b981" },
+  { id: "sse", label: "SSE", color: "#6366f1" },
   { id: "streamable-http", label: "HTTP", color: "#a371f7" },
 ];
 
@@ -146,7 +146,7 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
   return (
     <div
       style={{
-        color: "#c9d1d9",
+        color: "#1f2937",
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
       }}
     >
@@ -156,8 +156,8 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
           position: "relative",
           overflow: "hidden",
           background:
-            "radial-gradient(1200px 400px at 15% -10%, rgba(137,87,229,0.22), transparent 60%), radial-gradient(1000px 400px at 90% -20%, rgba(137,87,229,0.18), transparent 55%), linear-gradient(160deg, #161b22 0%, #0d1117 55%, #1a1025 100%)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+            "radial-gradient(1200px 400px at 15% -10%, rgba(99,102,241,0.22), transparent 60%), radial-gradient(1000px 400px at 90% -20%, rgba(99,102,241,0.18), transparent 55%), linear-gradient(160deg, #f9fafb 0%, #ffffff 55%, #f5f3ff 100%)",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
           padding: "44px 0 34px",
         }}
       >
@@ -169,8 +169,8 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
               gap: 8,
               padding: "5px 12px",
               borderRadius: 20,
-              background: "rgba(137,87,229,0.15)",
-              border: "1px solid rgba(137,87,229,0.35)",
+              background: "rgba(99,102,241,0.15)",
+              border: "1px solid rgba(99,102,241,0.35)",
               color: "#a371f7",
               fontSize: 12,
               fontWeight: 600,
@@ -184,7 +184,7 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
                 height: 7,
                 borderRadius: "50%",
                 background: "#8957e5",
-                boxShadow: "0 0 10px rgba(137,87,229,0.9)",
+                boxShadow: "0 0 10px rgba(99,102,241,0.9)",
               }}
             />
             MODEL CONTEXT PROTOCOL
@@ -203,13 +203,13 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
           >
             MCP Tools Hub
           </h1>
-          <p style={{ fontSize: "16px", color: "#8b949e", marginBottom: "24px" }}>
+          <p style={{ fontSize: "16px", color: "#6b7280", marginBottom: "24px" }}>
             Discover and install MCP tools from the world's largest registries — connect AI models
             to external tools and data
           </p>
           <div style={{ display: "flex", gap: "36px", flexWrap: "wrap" }}>
             {[
-              { label: "Total Tools", value: tools.length, color: "#58a6ff" },
+              { label: "Total Tools", value: tools.length, color: "#6366f1" },
               {
                 label: "Smithery",
                 value: tools.filter((t) => t.source === "smithery").length,
@@ -218,12 +218,12 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
               {
                 label: "GitHub",
                 value: tools.filter((t) => t.source === "github").length,
-                color: "#c9d1d9",
+                color: "#1f2937",
               },
               {
                 label: "Glama",
                 value: tools.filter((t) => t.source === "glama").length,
-                color: "#58a6ff",
+                color: "#6366f1",
               },
             ].map((stat) => (
               <div key={stat.label} style={{ textAlign: "center" }}>
@@ -237,7 +237,7 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
                 >
                   {stat.value}
                 </div>
-                <div style={{ fontSize: "12px", color: "#8b949e" }}>{stat.label}</div>
+                <div style={{ fontSize: "12px", color: "#6b7280" }}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -263,7 +263,7 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
                 left: "12px",
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "#8b949e",
+                color: "#6b7280",
                 fontSize: "14px",
               }}
             >
@@ -277,11 +277,11 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
               style={{
                 width: "100%",
                 padding: "10px 12px 10px 36px",
-                background: "rgba(28,34,46,0.55)",
+                background: "rgba(243,244,246,0.55)",
                 backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 borderRadius: "8px",
-                color: "#c9d1d9",
+                color: "#1f2937",
                 fontSize: "14px",
                 fontFamily: "inherit",
                 outline: "none",
@@ -291,7 +291,7 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
                 e.currentTarget.style.borderColor = "#8957e5";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
               }}
             />
           </div>
@@ -300,11 +300,11 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
             onChange={(e) => setSortBy(e.target.value)}
             style={{
               padding: "10px 12px",
-              background: "rgba(28,34,46,0.55)",
+              background: "rgba(243,244,246,0.55)",
               backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid rgba(0,0,0,0.06)",
               borderRadius: "8px",
-              color: "#c9d1d9",
+              color: "#1f2937",
               fontSize: "14px",
               fontFamily: "inherit",
               outline: "none",
@@ -336,9 +336,9 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
                 padding: "6px 14px",
                 borderRadius: "20px",
                 border: "1px solid",
-                borderColor: selectedSource === source.id ? source.color : "#30363d",
+                borderColor: selectedSource === source.id ? source.color : "#e5e7eb",
                 background: selectedSource === source.id ? `${source.color}22` : "transparent",
-                color: selectedSource === source.id ? source.color : "#8b949e",
+                color: selectedSource === source.id ? source.color : "#6b7280",
                 fontSize: "13px",
                 fontWeight: "500",
                 cursor: "pointer",
@@ -370,10 +370,10 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
                 padding: "6px 14px",
                 borderRadius: "20px",
                 border: "1px solid",
-                borderColor: selectedTransport === transport.id ? transport.color : "#30363d",
+                borderColor: selectedTransport === transport.id ? transport.color : "#e5e7eb",
                 background:
                   selectedTransport === transport.id ? `${transport.color}22` : "transparent",
-                color: selectedTransport === transport.id ? transport.color : "#8b949e",
+                color: selectedTransport === transport.id ? transport.color : "#6b7280",
                 fontSize: "13px",
                 fontWeight: "500",
                 cursor: "pointer",
@@ -396,9 +396,9 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
             marginBottom: "24px",
             flexWrap: "wrap",
             padding: "16px",
-            background: "rgba(28,34,46,0.55)",
+            background: "rgba(243,244,246,0.55)",
             backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: "1px solid rgba(0,0,0,0.06)",
             borderRadius: "10px",
           }}
         >
@@ -410,9 +410,9 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
                 padding: "6px 14px",
                 borderRadius: "20px",
                 border: "1px solid",
-                borderColor: selectedCategory === cat ? "#8957e5" : "#30363d",
-                background: selectedCategory === cat ? "rgba(137, 87, 229, 0.15)" : "transparent",
-                color: selectedCategory === cat ? "#8957e5" : "#8b949e",
+                borderColor: selectedCategory === cat ? "#8957e5" : "#e5e7eb",
+                background: selectedCategory === cat ? "rgba(99,102,241, 0.15)" : "transparent",
+                color: selectedCategory === cat ? "#8957e5" : "#6b7280",
                 fontSize: "13px",
                 fontWeight: "500",
                 cursor: "pointer",
@@ -434,7 +434,7 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
               style={{
                 width: "40px",
                 height: "40px",
-                border: "3px solid #21262d",
+                border: "3px solid #f3f4f6",
                 borderTopColor: "#8957e5",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
@@ -443,10 +443,10 @@ export const MCPToolsPage: React.FC<MCPToolsPageProps> = ({ onSelectTool }) => {
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
           </div>
         ) : tools.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 0", color: "#8b949e" }}>
+          <div style={{ textAlign: "center", padding: "80px 0", color: "#6b7280" }}>
             <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔍</div>
             <h3
-              style={{ fontSize: "18px", fontWeight: "600", color: "#c9d1d9", margin: "0 0 8px" }}
+              style={{ fontSize: "18px", fontWeight: "600", color: "#1f2937", margin: "0 0 8px" }}
             >
               No MCP tools found
             </h3>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import {
   getAuthState,
   setAuthState,
@@ -178,25 +178,25 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
   };
 
   const modalStyle: React.CSSProperties = {
-    background: "rgba(28,34,46,0.55)",
+    background: "rgba(243,244,246,0.55)",
     backdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    border: "1px solid rgba(0,0,0,0.1)",
     borderRadius: "16px",
     width: "100%",
     maxWidth: "440px",
     maxHeight: "90vh",
     overflow: "auto",
-    boxShadow: "0 24px 48px rgba(0, 0, 0, 0.4)",
+    boxShadow: "0 24px 48px rgba(0,0,0,0.06)",
   };
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "10px 14px",
-    background: "rgba(13,17,23,0.55)",
+    background: "rgba(255,255,255,0.55)",
     backdropFilter: "blur(24px)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    border: "1px solid rgba(0,0,0,0.1)",
     borderRadius: "8px",
-    color: "#c9d1d9",
+    color: "#1f2937",
     fontSize: "14px",
     fontFamily: "monospace",
     outline: "none",
@@ -206,8 +206,8 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
   const btnPrimary: React.CSSProperties = {
     width: "100%",
     padding: "10px 16px",
-    background: "#238636",
-    border: "1px solid #2ea043",
+    background: "#047857",
+    border: "1px solid #059669",
     borderRadius: "8px",
     color: "#ffffff",
     fontSize: "14px",
@@ -222,9 +222,9 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
     width: "100%",
     padding: "10px 16px",
     background: "transparent",
-    border: "1px solid rgba(255,255,255,0.12)",
+    border: "1px solid rgba(0,0,0,0.1)",
     borderRadius: "8px",
-    color: "#c9d1d9",
+    color: "#1f2937",
     fontSize: "14px",
     fontWeight: "500",
     cursor: "pointer",
@@ -243,8 +243,8 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
             alignItems: "center",
             gap: "8px",
             padding: "8px 16px",
-            background: "#238636",
-            border: "1px solid #2ea043",
+            background: "#047857",
+            border: "1px solid #059669",
             borderRadius: "8px",
             color: "#ffffff",
             fontSize: "14px",
@@ -256,10 +256,10 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
             whiteSpace: "nowrap",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#2ea043";
+            e.currentTarget.style.background = "#059669";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#238636";
+            e.currentTarget.style.background = "#047857";
           }}
         >
           <IconCode size={16} />
@@ -277,7 +277,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                         width: "56px",
                         height: "56px",
                         borderRadius: "14px",
-                        background: "linear-gradient(135deg, #238636, #1a7f37)",
+                        background: "linear-gradient(135deg, #047857, #1a7f37)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -288,7 +288,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                     </div>
                     <h2
                       style={{
-                        color: "#c9d1d9",
+                        color: "#1f2937",
                         fontSize: "20px",
                         fontWeight: "600",
                         margin: "0 0 8px",
@@ -296,7 +296,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                     >
                       Sign in to Zyraxon
                     </h2>
-                    <p style={{ color: "#8b949e", fontSize: "14px", margin: 0, lineHeight: "1.5" }}>
+                    <p style={{ color: "#6b7280", fontSize: "14px", margin: 0, lineHeight: "1.5" }}>
                       Choose how you'd like to authenticate
                     </p>
                   </div>
@@ -313,11 +313,11 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                         textAlign: "left",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "#58a6ff50";
+                        e.currentTarget.style.borderColor = "#6366f150";
                         e.currentTarget.style.background = "rgba(88, 166, 255, 0.05)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "#30363d";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
                         e.currentTarget.style.background = "transparent";
                       }}
                     >
@@ -339,7 +339,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                         <div style={{ fontWeight: "600", marginBottom: "2px" }}>
                           Personal Access Token
                         </div>
-                        <div style={{ fontSize: "12px", color: "#8b949e" }}>
+                        <div style={{ fontSize: "12px", color: "#6b7280" }}>
                           Paste a GitHub PAT to sign in
                         </div>
                       </div>
@@ -359,12 +359,12 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                       }}
                       onMouseEnter={(e) => {
                         if (!devicePolling) {
-                          e.currentTarget.style.borderColor = "#58a6ff50";
+                          e.currentTarget.style.borderColor = "#6366f150";
                           e.currentTarget.style.background = "rgba(88, 166, 255, 0.05)";
                         }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "#30363d";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
                         e.currentTarget.style.background = "transparent";
                       }}
                     >
@@ -386,7 +386,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                         <div style={{ fontWeight: "600", marginBottom: "2px" }}>
                           {devicePolling ? "Starting..." : "Device Flow"}
                         </div>
-                        <div style={{ fontSize: "12px", color: "#8b949e" }}>
+                        <div style={{ fontSize: "12px", color: "#6b7280" }}>
                           Authorize from any device
                         </div>
                       </div>
@@ -401,7 +401,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                         background: "rgba(248, 81, 73, 0.1)",
                         border: "1px solid rgba(248, 81, 73, 0.3)",
                         borderRadius: "8px",
-                        color: "#f85149",
+                        color: "#ef4444",
                         fontSize: "13px",
                       }}
                     >
@@ -430,7 +430,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                       style={{
                         background: "none",
                         border: "none",
-                        color: "#8b949e",
+                        color: "#6b7280",
                         cursor: "pointer",
                         padding: "4px",
                         display: "flex",
@@ -440,7 +440,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                       <IconChevronRight size={20} style={{ transform: "rotate(180deg)" }} />
                     </button>
                     <h2
-                      style={{ color: "#c9d1d9", fontSize: "18px", fontWeight: "600", margin: 0 }}
+                      style={{ color: "#1f2937", fontSize: "18px", fontWeight: "600", margin: 0 }}
                     >
                       Personal Access Token
                     </h2>
@@ -455,16 +455,16 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                       marginBottom: "20px",
                     }}
                   >
-                    <div style={{ color: "#c9d1d9", fontSize: "13px", lineHeight: "1.6" }}>
+                    <div style={{ color: "#1f2937", fontSize: "13px", lineHeight: "1.6" }}>
                       <p style={{ margin: "0 0 8px" }}>To create a token:</p>
-                      <ol style={{ margin: "0", paddingLeft: "18px", color: "#8b949e" }}>
+                      <ol style={{ margin: "0", paddingLeft: "18px", color: "#6b7280" }}>
                         <li style={{ marginBottom: "4px" }}>
                           Go to{" "}
                           <a
                             href="https://github.com/settings/tokens"
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ color: "#58a6ff", textDecoration: "none" }}
+                            style={{ color: "#6366f1", textDecoration: "none" }}
                           >
                             github.com/settings/tokens
                           </a>
@@ -476,7 +476,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                           Select scopes:{" "}
                           <code
                             style={{
-                              background: "rgba(48,54,61,0.45)",
+                              background: "rgba(229,231,235,0.45)",
                               backdropFilter: "blur(14px)",
                               padding: "2px 6px",
                               borderRadius: "4px",
@@ -488,7 +488,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                           ,{" "}
                           <code
                             style={{
-                              background: "rgba(48,54,61,0.45)",
+                              background: "rgba(229,231,235,0.45)",
                               backdropFilter: "blur(14px)",
                               padding: "2px 6px",
                               borderRadius: "4px",
@@ -517,15 +517,15 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                         if (e.key === "Enter") handleTokenLogin();
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = "#58a6ff";
+                        e.currentTarget.style.borderColor = "#6366f1";
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = "#30363d";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
                       }}
                       autoFocus
                     />
                     {tokenError && (
-                      <div style={{ color: "#f85149", fontSize: "12px", marginTop: "8px" }}>
+                      <div style={{ color: "#ef4444", fontSize: "12px", marginTop: "8px" }}>
                         {tokenError}
                       </div>
                     )}
@@ -577,7 +577,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                     </div>
                     <h2
                       style={{
-                        color: "#c9d1d9",
+                        color: "#1f2937",
                         fontSize: "18px",
                         fontWeight: "600",
                         margin: "0 0 8px",
@@ -585,7 +585,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                     >
                       Device Authorization
                     </h2>
-                    <p style={{ color: "#8b949e", fontSize: "13px", margin: 0 }}>
+                    <p style={{ color: "#6b7280", fontSize: "13px", margin: 0 }}>
                       Enter the code below on GitHub to authorize
                     </p>
                   </div>
@@ -593,9 +593,9 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                   <div
                     style={{
                       padding: "16px",
-                      background: "rgba(13,17,23,0.55)",
+                      background: "rgba(255,255,255,0.55)",
                       backdropFilter: "blur(24px)",
-                      border: "2px dashed #30363d",
+                      border: "2px dashed #e5e7eb",
                       borderRadius: "12px",
                       marginBottom: "20px",
                     }}
@@ -605,7 +605,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                         fontSize: "28px",
                         fontWeight: "700",
                         fontFamily: "monospace",
-                        color: "#58a6ff",
+                        color: "#6366f1",
                         letterSpacing: "4px",
                         wordBreak: "break-all",
                       }}
@@ -623,11 +623,11 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                       alignItems: "center",
                       gap: "8px",
                       padding: "10px 20px",
-                      background: "rgba(48,54,61,0.45)",
+                      background: "rgba(229,231,235,0.45)",
                       backdropFilter: "blur(14px)",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      border: "1px solid rgba(0,0,0,0.1)",
                       borderRadius: "8px",
-                      color: "#58a6ff",
+                      color: "#6366f1",
                       fontSize: "14px",
                       fontWeight: "500",
                       textDecoration: "none",
@@ -635,10 +635,10 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                       transition: "all 0.15s ease",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#58a6ff50";
+                      e.currentTarget.style.borderColor = "#6366f150";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#30363d";
+                      e.currentTarget.style.borderColor = "#e5e7eb";
                     }}
                   >
                     <IconExternalLink size={16} />
@@ -651,7 +651,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                       alignItems: "center",
                       justifyContent: "center",
                       gap: "8px",
-                      color: "#8b949e",
+                      color: "#6b7280",
                       fontSize: "13px",
                     }}
                   >
@@ -667,7 +667,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                         background: "rgba(248, 81, 73, 0.1)",
                         border: "1px solid rgba(248, 81, 73, 0.3)",
                         borderRadius: "8px",
-                        color: "#f85149",
+                        color: "#ef4444",
                         fontSize: "13px",
                       }}
                     >
@@ -694,16 +694,16 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
           alignItems: "center",
           gap: "10px",
           padding: "4px 8px 4px 4px",
-          background: dropdownOpen ? "#21262d" : "transparent",
+          background: dropdownOpen ? "#f3f4f6" : "transparent",
           border: "1px solid",
-          borderColor: dropdownOpen ? "#30363d" : "transparent",
+          borderColor: dropdownOpen ? "#e5e7eb" : "transparent",
           borderRadius: "10px",
           cursor: "pointer",
           outline: "none",
           transition: "all 0.15s ease",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#21262d";
+          e.currentTarget.style.background = "#f3f4f6";
         }}
         onMouseLeave={(e) => {
           if (!dropdownOpen) e.currentTarget.style.background = "transparent";
@@ -716,7 +716,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               height: "32px",
               borderRadius: "50%",
               overflow: "hidden",
-              background: "rgba(48,54,61,0.45)",
+              background: "rgba(229,231,235,0.45)",
               backdropFilter: "blur(14px)",
             }}
           >
@@ -734,7 +734,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#8b949e",
+                  color: "#6b7280",
                 }}
               >
                 <IconUser size={16} />
@@ -751,11 +751,11 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               borderRadius: "50%",
               background:
                 aiStatus === "connected"
-                  ? "#3fb950"
+                  ? "#10b981"
                   : aiStatus === "connecting"
                     ? "#d29922"
-                    : "#484f58",
-              border: "2px solid #161b22",
+                    : "#9ca3af",
+              border: "2px solid #f9fafb",
             }}
           />
         </div>
@@ -767,10 +767,10 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
             lineHeight: "1.2",
           }}
         >
-          <span style={{ fontSize: "13px", fontWeight: "600", color: "#c9d1d9" }}>
+          <span style={{ fontSize: "13px", fontWeight: "600", color: "#1f2937" }}>
             {user.displayName || user.username}
           </span>
-          <span style={{ fontSize: "11px", color: "#8b949e" }}>
+          <span style={{ fontSize: "11px", color: "#6b7280" }}>
             {aiStatus === "connected"
               ? "AI Connected"
               : aiStatus === "connecting"
@@ -788,26 +788,26 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
             right: 0,
             marginTop: "8px",
             width: "240px",
-            background: "rgba(28,34,46,0.55)",
+            background: "rgba(243,244,246,0.55)",
             backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: "12px",
             padding: "6px",
             zIndex: 50,
-            boxShadow: "0 16px 48px rgba(0, 0, 0, 0.4)",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.06)",
           }}
         >
           <div
             style={{
               padding: "12px",
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
               marginBottom: "4px",
             }}
           >
-            <div style={{ fontSize: "14px", fontWeight: "600", color: "#c9d1d9" }}>
+            <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
               {user.displayName || user.username}
             </div>
-            <div style={{ fontSize: "12px", color: "#8b949e" }}>@{user.username}</div>
+            <div style={{ fontSize: "12px", color: "#6b7280" }}>@{user.username}</div>
           </div>
 
           <button
@@ -824,7 +824,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               background: "transparent",
               border: "none",
               borderRadius: "6px",
-              color: "#c9d1d9",
+              color: "#1f2937",
               cursor: "pointer",
               fontSize: "13px",
               fontFamily: "inherit",
@@ -833,7 +833,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               transition: "background 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#21262d";
+              e.currentTarget.style.background = "#f3f4f6";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
@@ -857,7 +857,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               background: "transparent",
               border: "none",
               borderRadius: "6px",
-              color: "#c9d1d9",
+              color: "#1f2937",
               cursor: "pointer",
               fontSize: "13px",
               fontFamily: "inherit",
@@ -866,7 +866,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               transition: "background 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#21262d";
+              e.currentTarget.style.background = "#f3f4f6";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
@@ -890,7 +890,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               background: "transparent",
               border: "none",
               borderRadius: "6px",
-              color: "#c9d1d9",
+              color: "#1f2937",
               cursor: "pointer",
               fontSize: "13px",
               fontFamily: "inherit",
@@ -899,7 +899,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               transition: "background 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#21262d";
+              e.currentTarget.style.background = "#f3f4f6";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
@@ -909,7 +909,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
             My Likes
           </button>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", margin: "4px 0" }} />
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", margin: "4px 0" }} />
 
           <button
             onClick={() => {
@@ -925,7 +925,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               background: "transparent",
               border: "none",
               borderRadius: "6px",
-              color: "#c9d1d9",
+              color: "#1f2937",
               cursor: "pointer",
               fontSize: "13px",
               fontFamily: "inherit",
@@ -934,7 +934,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               transition: "background 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#21262d";
+              e.currentTarget.style.background = "#f3f4f6";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
@@ -958,7 +958,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               background: "transparent",
               border: "none",
               borderRadius: "6px",
-              color: "#c9d1d9",
+              color: "#1f2937",
               cursor: "pointer",
               fontSize: "13px",
               fontFamily: "inherit",
@@ -967,7 +967,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               transition: "background 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#21262d";
+              e.currentTarget.style.background = "#f3f4f6";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
@@ -977,7 +977,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
             Settings
           </button>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", margin: "4px 0" }} />
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", margin: "4px 0" }} />
 
           <button
             onClick={handleLogout}
@@ -990,7 +990,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ onLogin, onLogout, onN
               background: "transparent",
               border: "none",
               borderRadius: "6px",
-              color: "#f85149",
+              color: "#ef4444",
               cursor: "pointer",
               fontSize: "13px",
               fontFamily: "inherit",

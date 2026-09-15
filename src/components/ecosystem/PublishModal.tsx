@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { EcosystemItem, Category } from "../../lib/ecosystem-types";
 import { getAuthState } from "../../lib/ecosystem-auth";
 import { publishItem, formatFileSize } from "../../lib/ecosystem-extras";
@@ -92,11 +92,11 @@ type Step = "form" | "preview" | "publishing" | "done";
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "10px 12px",
-  background: "rgba(13,17,23,0.55)",
+  background: "rgba(255,255,255,0.55)",
   backdropFilter: "blur(24px)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  border: "1px solid rgba(0,0,0,0.06)",
   borderRadius: "8px",
-  color: "#c9d1d9",
+  color: "#1f2937",
   fontSize: "14px",
   fontFamily: "inherit",
   outline: "none",
@@ -107,7 +107,7 @@ const labelStyle: React.CSSProperties = {
   display: "block",
   fontSize: "13px",
   fontWeight: "500",
-  color: "#c9d1d9",
+  color: "#1f2937",
   marginBottom: "6px",
 };
 
@@ -118,13 +118,13 @@ const rowStyle: React.CSSProperties = {
 };
 
 const dropZoneBase: React.CSSProperties = {
-  border: "2px dashed #30363d",
+  border: "2px dashed #e5e7eb",
   borderRadius: "8px",
   padding: "16px",
   textAlign: "center",
   cursor: "pointer",
   transition: "all 0.2s ease",
-  background: "rgba(13,17,23,0.55)",
+  background: "rgba(255,255,255,0.55)",
   backdropFilter: "blur(24px)",
 };
 
@@ -190,8 +190,8 @@ function FileDropZone({
       onClick={() => inputRef.current?.click()}
       style={{
         ...dropZoneBase,
-        borderColor: dragOver ? "#58a6ff" : file ? "#238636" : "#30363d",
-        background: dragOver ? "rgba(88,166,255,0.05)" : file ? "rgba(63,185,80,0.05)" : "#0d1117",
+        borderColor: dragOver ? "#6366f1" : file ? "#047857" : "#e5e7eb",
+        background: dragOver ? "rgba(88,166,255,0.05)" : file ? "rgba(63,185,80,0.05)" : "#ffffff",
       }}
     >
       <input
@@ -214,7 +214,7 @@ function FileDropZone({
               marginBottom: "8px",
             }}
           />
-          <div style={{ fontSize: "13px", color: "#8b949e" }}>
+          <div style={{ fontSize: "13px", color: "#6b7280" }}>
             {file!.name} ({formatFileSize(file!.size)})
           </div>
           <button
@@ -227,7 +227,7 @@ function FileDropZone({
               marginTop: "6px",
               padding: "4px 12px",
               borderRadius: "6px",
-              background: "#da3633",
+              background: "#dc2626",
               border: "none",
               color: "#fff",
               cursor: "pointer",
@@ -240,9 +240,9 @@ function FileDropZone({
       ) : (
         <div>
           <div style={{ fontSize: "24px", marginBottom: "6px" }}>{icon}</div>
-          <div style={{ fontSize: "13px", color: "#8b949e" }}>{label}</div>
+          <div style={{ fontSize: "13px", color: "#6b7280" }}>{label}</div>
           {file && (
-            <div style={{ fontSize: "12px", color: "#3fb950", marginTop: "4px" }}>
+            <div style={{ fontSize: "12px", color: "#10b981", marginTop: "4px" }}>
               ✓ {file.name}
             </div>
           )}
@@ -361,7 +361,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
         position: "fixed",
         inset: 0,
         zIndex: 1000,
-        background: "rgba(0, 0, 0, 0.6)",
+        background: "rgba(0,0,0,0.04)",
         backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
@@ -372,9 +372,9 @@ export const PublishModal: React.FC<PublishModalProps> = ({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "rgba(28,34,46,0.55)",
+          background: "rgba(243,244,246,0.55)",
           backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: "1px solid rgba(0,0,0,0.06)",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "680px",
@@ -382,7 +382,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.5)",
+          boxShadow: "0 24px 48px rgba(0,0,0,0.05)",
         }}
       >
         <div
@@ -391,7 +391,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
             alignItems: "center",
             justifyContent: "space-between",
             padding: "16px 20px",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -411,8 +411,8 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 height: "32px",
                 borderRadius: "8px",
                 background: "transparent",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "#8b949e",
+                border: "1px solid rgba(0,0,0,0.06)",
+                color: "#6b7280",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -423,12 +423,12 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 transition: "all 0.15s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#484f58";
-                e.currentTarget.style.color = "#c9d1d9";
+                e.currentTarget.style.borderColor = "#9ca3af";
+                e.currentTarget.style.color = "#1f2937";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#21262d";
-                e.currentTarget.style.color = "#8b949e";
+                e.currentTarget.style.borderColor = "#f3f4f6";
+                e.currentTarget.style.color = "#6b7280";
               }}
             >
               ✕
@@ -447,10 +447,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                   placeholder="My Awesome Plugin"
                   style={inputStyle}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#58a6ff";
+                    e.currentTarget.style.borderColor = "#6366f1";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#21262d";
+                    e.currentTarget.style.borderColor = "#f3f4f6";
                   }}
                 />
               </div>
@@ -463,10 +463,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                   rows={3}
                   style={{ ...inputStyle, resize: "vertical", minHeight: "80px" }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#58a6ff";
+                    e.currentTarget.style.borderColor = "#6366f1";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#21262d";
+                    e.currentTarget.style.borderColor = "#f3f4f6";
                   }}
                 />
               </div>
@@ -493,10 +493,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     placeholder="1.0.0"
                     style={inputStyle}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#58a6ff";
+                      e.currentTarget.style.borderColor = "#6366f1";
                     }}
                     onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#21262d";
+                      e.currentTarget.style.borderColor = "#f3f4f6";
                     }}
                   />
                 </div>
@@ -509,10 +509,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                   placeholder="react, typescript, ui"
                   style={inputStyle}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#58a6ff";
+                    e.currentTarget.style.borderColor = "#6366f1";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#21262d";
+                    e.currentTarget.style.borderColor = "#f3f4f6";
                   }}
                 />
               </div>
@@ -525,10 +525,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     placeholder="https://..."
                     style={inputStyle}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#58a6ff";
+                      e.currentTarget.style.borderColor = "#6366f1";
                     }}
                     onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#21262d";
+                      e.currentTarget.style.borderColor = "#f3f4f6";
                     }}
                   />
                 </div>
@@ -540,10 +540,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     placeholder="https://github.com/..."
                     style={inputStyle}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#58a6ff";
+                      e.currentTarget.style.borderColor = "#6366f1";
                     }}
                     onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#21262d";
+                      e.currentTarget.style.borderColor = "#f3f4f6";
                     }}
                   />
                 </div>
@@ -557,10 +557,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     placeholder="npm install ..."
                     style={inputStyle}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#58a6ff";
+                      e.currentTarget.style.borderColor = "#6366f1";
                     }}
                     onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#21262d";
+                      e.currentTarget.style.borderColor = "#f3f4f6";
                     }}
                   />
                 </div>
@@ -580,7 +580,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 </div>
               </div>
 
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "16px" }}>
+              <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: "16px" }}>
                 <h3
                   style={{
                     fontSize: "14px",
@@ -635,7 +635,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                           position: "relative",
                           borderRadius: "8px",
                           overflow: "hidden",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          border: "1px solid rgba(0,0,0,0.06)",
                         }}
                       >
                         <img
@@ -652,7 +652,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                             width: "20px",
                             height: "20px",
                             borderRadius: "50%",
-                            background: "#da3633",
+                            background: "#dc2626",
                             border: "none",
                             color: "#fff",
                             cursor: "pointer",
@@ -667,7 +667,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                         <div
                           style={{
                             fontSize: "10px",
-                            color: "#8b949e",
+                            color: "#6b7280",
                             padding: "2px 4px",
                             textAlign: "center",
                             overflow: "hidden",
@@ -708,8 +708,8 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     padding: "10px 20px",
                     borderRadius: "8px",
                     background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    color: "#8b949e",
+                    border: "1px solid rgba(0,0,0,0.1)",
+                    color: "#6b7280",
                     cursor: "pointer",
                     fontSize: "14px",
                     fontWeight: "500",
@@ -718,12 +718,12 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     transition: "all 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#484f58";
-                    e.currentTarget.style.color = "#c9d1d9";
+                    e.currentTarget.style.borderColor = "#9ca3af";
+                    e.currentTarget.style.color = "#1f2937";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#30363d";
-                    e.currentTarget.style.color = "#8b949e";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                    e.currentTarget.style.color = "#6b7280";
                   }}
                 >
                   Cancel
@@ -734,11 +734,11 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                   style={{
                     padding: "10px 20px",
                     borderRadius: "8px",
-                    background: form.name.trim() && form.description.trim() ? "#238636" : "#21262d",
+                    background: form.name.trim() && form.description.trim() ? "#047857" : "#f3f4f6",
                     border: "1px solid",
                     borderColor:
-                      form.name.trim() && form.description.trim() ? "#2ea043" : "#30363d",
-                    color: form.name.trim() && form.description.trim() ? "#ffffff" : "#484f58",
+                      form.name.trim() && form.description.trim() ? "#059669" : "#e5e7eb",
+                    color: form.name.trim() && form.description.trim() ? "#ffffff" : "#9ca3af",
                     cursor: form.name.trim() && form.description.trim() ? "pointer" : "not-allowed",
                     fontSize: "14px",
                     fontWeight: "600",
@@ -757,9 +757,9 @@ export const PublishModal: React.FC<PublishModalProps> = ({
             <div>
               <div
                 style={{
-                  background: "rgba(13,17,23,0.55)",
+                  background: "rgba(255,255,255,0.55)",
                   backdropFilter: "blur(24px)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(0,0,0,0.06)",
                   borderRadius: "12px",
                   padding: "20px",
                   marginBottom: "20px",
@@ -771,7 +771,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                       borderRadius: "8px",
                       overflow: "hidden",
                       marginBottom: "16px",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(0,0,0,0.06)",
                     }}
                   >
                     <img
@@ -807,7 +807,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                       fontWeight: "600",
                       textTransform: "capitalize",
                       background: "rgba(88, 166, 255, 0.1)",
-                      color: "#58a6ff",
+                      color: "#6366f1",
                     }}
                   >
                     {TYPE_MAP[form.category] || form.category}
@@ -816,7 +816,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 <p
                   style={{
                     fontSize: "14px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     lineHeight: "1.6",
                     margin: "0 0 12px 0",
                   }}
@@ -834,18 +834,18 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                         key={t}
                         style={{
                           padding: "3px 10px",
-                          background: "rgba(48,54,61,0.45)",
+                          background: "rgba(229,231,235,0.45)",
                           backdropFilter: "blur(14px)",
                           borderRadius: "12px",
                           fontSize: "12px",
-                          color: "#8b949e",
+                          color: "#6b7280",
                         }}
                       >
                         {t.trim()}
                       </span>
                     ))}
                 </div>
-                <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "#484f58" }}>
+                <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "#9ca3af" }}>
                   <span>v{form.version}</span>
                   <span>{form.license}</span>
                   {form.liveDemo && <span>🔗 {form.liveDemo}</span>}
@@ -864,7 +864,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                         style={{
                           height: "80px",
                           borderRadius: "6px",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          border: "1px solid rgba(0,0,0,0.06)",
                         }}
                       />
                     ))}
@@ -878,8 +878,8 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     padding: "10px 20px",
                     borderRadius: "8px",
                     background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    color: "#8b949e",
+                    border: "1px solid rgba(0,0,0,0.1)",
+                    color: "#6b7280",
                     cursor: "pointer",
                     fontSize: "14px",
                     fontWeight: "500",
@@ -887,12 +887,12 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     outline: "none",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#484f58";
-                    e.currentTarget.style.color = "#c9d1d9";
+                    e.currentTarget.style.borderColor = "#9ca3af";
+                    e.currentTarget.style.color = "#1f2937";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#30363d";
-                    e.currentTarget.style.color = "#8b949e";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                    e.currentTarget.style.color = "#6b7280";
                   }}
                 >
                   ← Back
@@ -902,8 +902,8 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                   style={{
                     padding: "10px 24px",
                     borderRadius: "8px",
-                    background: "#238636",
-                    border: "1px solid #2ea043",
+                    background: "#047857",
+                    border: "1px solid #059669",
                     color: "#ffffff",
                     cursor: "pointer",
                     fontSize: "14px",
@@ -913,10 +913,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                     transition: "background 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#2ea043";
+                    e.currentTarget.style.background = "#059669";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#238636";
+                    e.currentTarget.style.background = "#047857";
                   }}
                 >
                   🚀 Publish
@@ -931,15 +931,15 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 style={{
                   width: "48px",
                   height: "48px",
-                  border: "3px solid #21262d",
-                  borderTopColor: "#58a6ff",
+                  border: "3px solid #f3f4f6",
+                  borderTopColor: "#6366f1",
                   borderRadius: "50%",
                   animation: "spin 1s linear infinite",
                   margin: "0 auto 16px",
                 }}
               />
               <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-              <p style={{ fontSize: "16px", color: "#8b949e" }}>Publishing {form.name}...</p>
+              <p style={{ fontSize: "16px", color: "#6b7280" }}>Publishing {form.name}...</p>
             </div>
           )}
 
@@ -970,7 +970,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
               >
                 {form.name} published!
               </h3>
-              <p style={{ fontSize: "14px", color: "#8b949e", marginBottom: "24px" }}>
+              <p style={{ fontSize: "14px", color: "#6b7280", marginBottom: "24px" }}>
                 Your item is now live on the ZYRAXON Marketplace
               </p>
               <button
@@ -978,8 +978,8 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 style={{
                   padding: "10px 24px",
                   borderRadius: "8px",
-                  background: "#238636",
-                  border: "1px solid #2ea043",
+                  background: "#047857",
+                  border: "1px solid #059669",
                   color: "#ffffff",
                   cursor: "pointer",
                   fontSize: "14px",
@@ -988,10 +988,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                   outline: "none",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#2ea043";
+                  e.currentTarget.style.background = "#059669";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#238636";
+                  e.currentTarget.style.background = "#047857";
                 }}
               >
                 Done

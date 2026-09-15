@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CommentSection } from "./CommentSection";
 import { RatingStars } from "./RatingStars";
 import { LikeButton } from "./LikeButton";
@@ -161,7 +161,7 @@ const Stars: React.FC<{ value: number; size?: number }> = ({ value, size = 12 })
         width={size}
         height={size}
         viewBox="0 0 24 24"
-        fill={i <= Math.round(value) ? "#e3b341" : "#30363d"}
+        fill={i <= Math.round(value) ? "#e3b341" : "#e5e7eb"}
       >
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
@@ -170,9 +170,9 @@ const Stars: React.FC<{ value: number; size?: number }> = ({ value, size = 12 })
 );
 
 const Verified = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="#58a6ff" aria-label="Verified publisher">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="#6366f1" aria-label="Verified publisher">
     <path d="M12 1l2.6 2.1 3.3-.3.9 3.2 2.9 1.7-1.4 3 1.4 3-2.9 1.7-.9 3.2-3.3-.3L12 23l-2.6-2.1-3.3.3-.9-3.2L2.3 16l1.4-3-1.4-3 2.9-1.7.9-3.2 3.3.3z" />
-    <path d="M10.6 15.4l-2.8-2.8 1.2-1.2 1.6 1.6 4-4 1.2 1.2z" fill="#0d1117" />
+    <path d="M10.6 15.4l-2.8-2.8 1.2-1.2 1.6 1.6 4-4 1.2 1.2z" fill="#ffffff" />
   </svg>
 );
 
@@ -320,7 +320,7 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
     padding: "9px 12px",
     background: "none",
     border: "none",
-    color: "#c9d1d9",
+    color: "#1f2937",
     fontSize: 13,
     cursor: "pointer",
     fontFamily: "inherit",
@@ -348,9 +348,9 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
           width: 30,
           height: 30,
           borderRadius: 8,
-          border: "1px solid rgba(255,255,255,0.12)",
-          background: open ? "rgba(88,166,255,0.15)" : "rgba(22,27,34,0.8)",
-          color: open ? "#58a6ff" : "#8b949e",
+          border: "1px solid rgba(0,0,0,0.1)",
+          background: open ? "rgba(88,166,255,0.15)" : "rgba(249,250,251,0.8)",
+          color: open ? "#6366f1" : "#6b7280",
           cursor: "pointer",
           fontFamily: "inherit",
           transition: "all 0.15s ease",
@@ -369,12 +369,12 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
             right: align === "right" ? 0 : "auto",
             left: align === "left" ? 0 : "auto",
             minWidth: 220,
-            background: "rgba(22,27,34,0.98)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(249,250,251,0.98)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: 12,
             padding: 6,
             zIndex: 60,
-            boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.05)",
             backdropFilter: "blur(16px)",
           }}
         >
@@ -383,10 +383,10 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             style={item}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="#58a6ff">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="#6366f1">
               <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 2z" />
             </svg>
             View on Website
@@ -398,7 +398,7 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
               setOpen(false);
             }}
             style={item}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="#8957e5">
@@ -409,15 +409,15 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
           <button
             onClick={copyCommand}
             style={item}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
             {copied ? (
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="#3fb950">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="#10b981">
                 <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z" />
               </svg>
             ) : (
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="#8b949e">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="#6b7280">
                 <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25v-7.5z" />
                 <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25v-7.5zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25h-7.5z" />
               </svg>
@@ -430,10 +430,10 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               style={item}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="#8b949e">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="#6b7280">
                 <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8z" />
               </svg>
               GitHub Repository
@@ -445,10 +445,10 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
               onOpenDetail();
             }}
             style={item}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="#8b949e">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="#6b7280">
               <path d="M8 1.5a2 2 0 0 1 2 2v1h-4v-1a2 2 0 0 1 2-2zM3.5 5h9A1.5 1.5 0 0 1 14 6.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5v-7A1.5 1.5 0 0 1 3.5 5z" />
             </svg>
             Details
@@ -475,12 +475,12 @@ const Row: React.FC<{ ext: ZyraxonExtension; onOpen: () => void }> = ({ ext, onO
         cursor: "pointer",
         position: "relative",
         background: hover
-          ? "linear-gradient(135deg, rgba(137,87,229,0.12), rgba(22,27,34,0.9) 55%)"
-          : "rgba(22,27,34,0.85)",
-        border: `1px solid ${hover ? "rgba(137,87,229,0.5)" : "#21262d"}`,
+          ? "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(249,250,251,0.9) 55%)"
+          : "rgba(249,250,251,0.85)",
+        border: `1px solid ${hover ? "rgba(99,102,241,0.5)" : "#f3f4f6"}`,
         borderRadius: 12,
         transition: "all 0.15s ease",
-        boxShadow: hover ? "0 8px 30px rgba(0,0,0,0.35)" : "none",
+        boxShadow: hover ? "0 8px 30px rgba(0,0,0,0.06)" : "none",
         alignItems: "flex-start",
       }}
     >
@@ -495,7 +495,7 @@ const Row: React.FC<{ ext: ZyraxonExtension; onOpen: () => void }> = ({ ext, onO
           height: 48,
           borderRadius: 10,
           objectFit: "contain",
-          background: "rgba(13,17,23,0.55)",
+          background: "rgba(255,255,255,0.55)",
           backdropFilter: "blur(24px)",
           flexShrink: 0,
           border: `1px solid ${brand}44`,
@@ -507,7 +507,7 @@ const Row: React.FC<{ ext: ZyraxonExtension; onOpen: () => void }> = ({ ext, onO
             style={{
               fontSize: 14,
               fontWeight: 600,
-              color: "#e6edf3",
+              color: "#111827",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -516,7 +516,7 @@ const Row: React.FC<{ ext: ZyraxonExtension; onOpen: () => void }> = ({ ext, onO
           >
             {ext.displayName}
           </span>
-          <span style={{ fontSize: 12, color: "#8b949e" }}>v{ext.version}</span>
+          <span style={{ fontSize: 12, color: "#6b7280" }}>v{ext.version}</span>
           {ext.preview && (
             <span
               style={{
@@ -535,7 +535,7 @@ const Row: React.FC<{ ext: ZyraxonExtension; onOpen: () => void }> = ({ ext, onO
           style={{
             margin: "4px 0 6px",
             fontSize: 12.5,
-            color: "#8b949e",
+            color: "#6b7280",
             lineHeight: 1.45,
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -551,11 +551,11 @@ const Row: React.FC<{ ext: ZyraxonExtension; onOpen: () => void }> = ({ ext, onO
             alignItems: "center",
             gap: 12,
             fontSize: 12,
-            color: "#8b949e",
+            color: "#6b7280",
             flexWrap: "wrap",
           }}
         >
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#58a6ff" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#6366f1" }}>
             {ext.publisher.displayName}
             {ext.publisher.verified && <Verified />}
           </span>
@@ -652,10 +652,10 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
   );
 
   if (loading)
-    return <div style={{ padding: 60, textAlign: "center", color: "#8b949e" }}>Loading…</div>;
+    return <div style={{ padding: 60, textAlign: "center", color: "#6b7280" }}>Loading…</div>;
   if (!ext)
     return (
-      <div style={{ padding: 60, textAlign: "center", color: "#8b949e" }}>
+      <div style={{ padding: 60, textAlign: "center", color: "#6b7280" }}>
         Extension not found.{" "}
         <button onClick={onBack} style={linkBtn}>
           Go back
@@ -686,9 +686,9 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
           flexWrap: "wrap",
           position: "relative",
           overflow: "hidden",
-          background: `linear-gradient(135deg, ${brand}33, rgba(13,17,23,0.92) 55%)`,
+          background: `linear-gradient(135deg, ${brand}33, rgba(255,255,255,0.92) 55%)`,
           border: `1px solid ${brand}44`,
-          boxShadow: `0 12px 40px rgba(0,0,0,0.4), inset 0 0 60px ${brand}11`,
+          boxShadow: `0 12px 40px rgba(0,0,0,0.06), inset 0 0 60px ${brand}11`,
         }}
       >
         <img
@@ -701,13 +701,13 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
             height: 112,
             borderRadius: 14,
             objectFit: "contain",
-            background: "rgba(13,17,23,0.55)",
+            background: "rgba(255,255,255,0.55)",
             backdropFilter: "blur(24px)",
             border: `1px solid ${brand}44`,
           }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#e6edf3", margin: 0 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#111827", margin: 0 }}>
             {ext.displayName}
           </h1>
           <div
@@ -717,12 +717,12 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
               gap: 10,
               margin: "6px 0 10px",
               fontSize: 13,
-              color: "#8b949e",
+              color: "#6b7280",
               flexWrap: "wrap",
             }}
           >
             <span
-              style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#58a6ff" }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#6366f1" }}
             >
               {ext.publisher.displayName}
               {ext.publisher.verified && <Verified />}
@@ -732,7 +732,7 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
             <span>|</span>
             <span>v{ext.version}</span>
           </div>
-          <p style={{ margin: "0 0 14px", fontSize: 14, color: "#b1bac4", lineHeight: 1.5 }}>
+          <p style={{ margin: "0 0 14px", fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}>
             {ext.description}
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -770,7 +770,7 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
             style={{
               display: "flex",
               gap: 4,
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
               marginBottom: 16,
             }}
           >
@@ -792,7 +792,7 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
                   fontFamily: "inherit",
                   fontSize: 13,
                   fontWeight: tab === key ? 600 : 400,
-                  color: tab === key ? "#e6edf3" : "#8b949e",
+                  color: tab === key ? "#111827" : "#6b7280",
                   borderBottom: `2px solid ${tab === key ? brand : "transparent"}`,
                 }}
               >
@@ -825,7 +825,7 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
                       href={href as string}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: "#58a6ff", fontSize: 13 }}
+                      style={{ color: "#6366f1", fontSize: 13 }}
                     >
                       {label}
                     </a>
@@ -836,7 +836,7 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
             <div
               className="zxm-markdown"
               dangerouslySetInnerHTML={{
-                __html: html || '<p style="color:#8b949e">No content provided.</p>',
+                __html: html || '<p style="color:#6b7280">No content provided.</p>',
               }}
             />
           )}
@@ -886,11 +886,11 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
                   gap: 10,
                   fontSize: 12,
                   padding: "5px 0",
-                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  borderTop: "1px solid rgba(0,0,0,0.06)",
                 }}
               >
-                <span style={{ color: "#8b949e" }}>{k}</span>
-                <span style={{ color: "#c9d1d9", textAlign: "right", wordBreak: "break-all" }}>
+                <span style={{ color: "#6b7280" }}>{k}</span>
+                <span style={{ color: "#1f2937", textAlign: "right", wordBreak: "break-all" }}>
                   {v}
                 </span>
               </div>
@@ -1012,7 +1012,7 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
           style={{
             fontSize: 20,
             fontWeight: 700,
-            color: "#e6edf3",
+            color: "#111827",
             margin: 0,
             display: "flex",
             alignItems: "center",
@@ -1025,13 +1025,13 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
               height: 10,
               borderRadius: 3,
               display: "inline-block",
-              background: "linear-gradient(135deg, #8957e5, #58a6ff)",
-              boxShadow: "0 0 14px rgba(137,87,229,0.8)",
+              background: "linear-gradient(135deg, #8957e5, #6366f1)",
+              boxShadow: "0 0 14px rgba(99,102,241,0.8)",
             }}
           />
           ZYRAXON AI Extension Marketplace
         </h2>
-        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#8b949e" }}>
+        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}>
           Hand-picked extensions for the ZYRAXON AI ecosystem — {total.toLocaleString()} results.
         </p>
       </div>
@@ -1045,10 +1045,10 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
             flex: "1 1 260px",
             minWidth: 200,
             padding: "9px 12px",
-            background: "rgba(13,17,23,0.9)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.9)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: 10,
-            color: "#c9d1d9",
+            color: "#1f2937",
             fontSize: 14,
             fontFamily: "inherit",
             outline: "none",
@@ -1056,10 +1056,10 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
           }}
           onFocus={(e) => {
             e.currentTarget.style.borderColor = "#8957e5";
-            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(137,87,229,0.15)";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.15)";
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = "#30363d";
+            e.currentTarget.style.borderColor = "#e5e7eb";
             e.currentTarget.style.boxShadow = "none";
           }}
         />
@@ -1097,10 +1097,10 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
         <div
           style={{
             padding: 14,
-            border: "1px solid #f8514955",
-            background: "#f8514915",
+            border: "1px solid #ef444455",
+            background: "#ef444415",
             borderRadius: 8,
-            color: "#f85149",
+            color: "#ef4444",
             fontSize: 13,
           }}
         >
@@ -1122,8 +1122,8 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
               style={{
                 height: 108,
                 borderRadius: 12,
-                background: "rgba(22,27,34,0.7)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(249,250,251,0.7)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 opacity: 0.5,
                 animation: `zxmPulse 1.4s ease-in-out ${i * 0.1}s infinite`,
               }}
@@ -1142,7 +1142,7 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
             <Row key={ext.id} ext={ext} onOpen={() => setSelected(ext.id)} />
           ))}
           {items.length === 0 && !error && (
-            <div style={{ color: "#8b949e", padding: 40, textAlign: "center" }}>
+            <div style={{ color: "#6b7280", padding: 40, textAlign: "center" }}>
               No extensions found.
             </div>
           )}
@@ -1166,7 +1166,7 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
           >
             Previous
           </button>
-          <span style={{ fontSize: 13, color: "#8b949e" }}>
+          <span style={{ fontSize: 13, color: "#6b7280" }}>
             Page {page} of {pages}
           </span>
           <button
@@ -1185,31 +1185,31 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
 const Styles = () => (
   <style>{`
     @keyframes zxmPulse { 0%,100% { opacity: .4 } 50% { opacity: .8 } }
-    .zxm-markdown { color: #b1bac4; font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; }
-    .zxm-markdown h1, .zxm-markdown h2, .zxm-markdown h3, .zxm-markdown h4 { color: #e6edf3; margin: 22px 0 10px; line-height: 1.3; }
-    .zxm-markdown h1 { font-size: 22px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; }
-    .zxm-markdown h2 { font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; }
+    .zxm-markdown { color: #6b7280; font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; }
+    .zxm-markdown h1, .zxm-markdown h2, .zxm-markdown h3, .zxm-markdown h4 { color: #111827; margin: 22px 0 10px; line-height: 1.3; }
+    .zxm-markdown h1 { font-size: 22px; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 8px; }
+    .zxm-markdown h2 { font-size: 18px; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 6px; }
     .zxm-markdown h3 { font-size: 15px; }
     .zxm-markdown p { margin: 10px 0; }
-    .zxm-markdown a { color: #58a6ff; text-decoration: none; }
+    .zxm-markdown a { color: #6366f1; text-decoration: none; }
     .zxm-markdown a:hover { text-decoration: underline; }
     .zxm-markdown img { max-width: 100%; border-radius: 6px; }
-    .zxm-markdown code { background: #21262d; padding: 2px 5px; border-radius: 4px; font-size: 12.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .zxm-markdown pre { background: #0d1117; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; overflow-x: auto; }
+    .zxm-markdown code { background: #f3f4f6; padding: 2px 5px; border-radius: 4px; font-size: 12.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .zxm-markdown pre { background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; padding: 12px; overflow-x: auto; }
     .zxm-markdown pre code { background: none; padding: 0; }
     .zxm-markdown ul { padding-left: 20px; margin: 10px 0; }
     .zxm-markdown li { margin: 4px 0; }
-    .zxm-markdown hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 18px 0; }
+    .zxm-markdown hr { border: none; border-top: 1px solid rgba(0,0,0,0.06); margin: 18px 0; }
     @media (max-width: 860px) { .zxm-detail-grid { grid-template-columns: minmax(0,1fr) !important; } }
   `}</style>
 );
 
 const selectStyle: React.CSSProperties = {
   padding: "9px 10px",
-  background: "rgba(13,17,23,0.9)",
-  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.9)",
+  border: "1px solid rgba(0,0,0,0.1)",
   borderRadius: 10,
-  color: "#c9d1d9",
+  color: "#1f2937",
   fontSize: 13,
   fontFamily: "inherit",
   outline: "none",
@@ -1217,7 +1217,7 @@ const selectStyle: React.CSSProperties = {
 };
 const primaryBtn: React.CSSProperties = {
   padding: "8px 18px",
-  background: "linear-gradient(135deg, #8957e5, #6f42c1)",
+  background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
   border: "none",
   borderRadius: 10,
   color: "#fff",
@@ -1227,15 +1227,15 @@ const primaryBtn: React.CSSProperties = {
   textDecoration: "none",
   fontFamily: "inherit",
   display: "inline-block",
-  boxShadow: "0 4px 18px rgba(137,87,229,0.4)",
+  boxShadow: "0 4px 18px rgba(99,102,241,0.4)",
   transition: "transform 0.12s ease, box-shadow 0.12s ease",
 };
 const ghostBtn: React.CSSProperties = {
   padding: "8px 14px",
-  background: "rgba(22,27,34,0.8)",
-  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(249,250,251,0.8)",
+  border: "1px solid rgba(0,0,0,0.1)",
   borderRadius: 10,
-  color: "#c9d1d9",
+  color: "#1f2937",
   fontSize: 13,
   cursor: "pointer",
   textDecoration: "none",
@@ -1246,32 +1246,32 @@ const ghostBtn: React.CSSProperties = {
 const linkBtn: React.CSSProperties = {
   background: "none",
   border: "none",
-  color: "#58a6ff",
+  color: "#6366f1",
   cursor: "pointer",
   fontSize: 13,
   fontFamily: "inherit",
   padding: 0,
 };
 const panel: React.CSSProperties = {
-  background: "rgba(22,27,34,0.85)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  background: "rgba(249,250,251,0.85)",
+  border: "1px solid rgba(0,0,0,0.06)",
   borderRadius: 14,
   padding: 14,
 };
 const panelTitle: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
-  color: "#8b949e",
+  color: "#6b7280",
   margin: "0 0 10px",
   textTransform: "uppercase",
   letterSpacing: "0.5px",
 };
 const chip: React.CSSProperties = {
   fontSize: 11,
-  color: "#8b949e",
-  background: "rgba(13,17,23,0.55)",
+  color: "#6b7280",
+  background: "rgba(255,255,255,0.55)",
   backdropFilter: "blur(24px)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  border: "1px solid rgba(0,0,0,0.06)",
   borderRadius: 20,
   padding: "3px 9px",
 };

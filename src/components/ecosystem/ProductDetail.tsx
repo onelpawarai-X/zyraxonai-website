@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { EcosystemItem, getAuthState } from "../../lib/ecosystem";
 import { LikeButton } from "./LikeButton";
 import { ShareButton } from "./ShareButton";
@@ -49,12 +49,12 @@ function PlatformBadge({ platform }: { platform: string }) {
         alignItems: "center",
         gap: "4px",
         padding: "3px 8px",
-        background: "rgba(48,54,61,0.45)",
+        background: "rgba(229,231,235,0.45)",
         backdropFilter: "blur(14px)",
-        border: "1px solid rgba(255,255,255,0.12)",
+        border: "1px solid rgba(0,0,0,0.1)",
         borderRadius: "6px",
         fontSize: "11px",
-        color: "#8b949e",
+        color: "#6b7280",
         textTransform: "capitalize",
       }}
     >
@@ -138,7 +138,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(13,17,23,0.55)",
+        background: "rgba(255,255,255,0.55)",
         backdropFilter: "blur(24px)",
         zIndex: 999,
         overflow: "auto",
@@ -149,9 +149,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
           position: "sticky",
           top: 0,
           zIndex: 10,
-          background: "rgba(28,34,46,0.55)",
+          background: "rgba(243,244,246,0.55)",
           backdropFilter: "blur(20px)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
           padding: "12px 24px",
           display: "flex",
           alignItems: "center",
@@ -166,9 +166,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
             gap: "6px",
             padding: "6px 12px",
             background: "transparent",
-            border: "1px solid rgba(255,255,255,0.12)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: "8px",
-            color: "#c9d1d9",
+            color: "#1f2937",
             fontSize: "13px",
             cursor: "pointer",
             fontFamily: "inherit",
@@ -176,12 +176,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
             transition: "all 0.15s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#58a6ff50";
-            e.currentTarget.style.color = "#58a6ff";
+            e.currentTarget.style.borderColor = "#6366f150";
+            e.currentTarget.style.color = "#6366f1";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#30363d";
-            e.currentTarget.style.color = "#c9d1d9";
+            e.currentTarget.style.borderColor = "#e5e7eb";
+            e.currentTarget.style.color = "#1f2937";
           }}
         >
           <IconArrowLeft size={16} />
@@ -202,7 +202,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
             gap: "6px",
             padding: "6px 12px",
             background: "transparent",
-            border: "1px solid rgba(137, 87, 229, 0.4)",
+            border: "1px solid rgba(99,102,241, 0.4)",
             borderRadius: "8px",
             color: "#8957e5",
             fontSize: "13px",
@@ -212,10 +212,10 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = "#8957e5";
-            e.currentTarget.style.background = "rgba(137,87,229,0.1)";
+            e.currentTarget.style.background = "rgba(99,102,241,0.1)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(137, 87, 229, 0.4)";
+            e.currentTarget.style.borderColor = "rgba(99,102,241, 0.4)";
             e.currentTarget.style.background = "transparent";
           }}
         >
@@ -234,21 +234,21 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
               gap: "6px",
               padding: "6px 12px",
               background: "transparent",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid rgba(0,0,0,0.1)",
               borderRadius: "8px",
-              color: "#8b949e",
+              color: "#6b7280",
               fontSize: "13px",
               fontWeight: "500",
               textDecoration: "none",
               transition: "all 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#58a6ff50";
-              e.currentTarget.style.color = "#58a6ff";
+              e.currentTarget.style.borderColor = "#6366f150";
+              e.currentTarget.style.color = "#6366f1";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#30363d";
-              e.currentTarget.style.color = "#8b949e";
+              e.currentTarget.style.borderColor = "#e5e7eb";
+              e.currentTarget.style.color = "#6b7280";
             }}
           >
             <IconCode size={14} />
@@ -263,8 +263,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
             alignItems: "center",
             gap: "6px",
             padding: "8px 16px",
-            background: "#238636",
-            border: "1px solid #2ea043",
+            background: "#047857",
+            border: "1px solid #059669",
             borderRadius: "8px",
             color: "#ffffff",
             fontSize: "13px",
@@ -275,10 +275,10 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
             transition: "background 0.15s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#2ea043";
+            e.currentTarget.style.background = "#059669";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#238636";
+            e.currentTarget.style.background = "#047857";
           }}
         >
           {actionConfig.action === "install" && <IconTerminal size={14} />}
@@ -308,7 +308,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
               style={{
                 width: "100%",
                 height: "100%",
-                background: "linear-gradient(135deg, #161b22 0%, #1a1e2e 50%, #0d1117 100%)",
+                background: "linear-gradient(135deg, #f9fafb 0%, #f0f1f5 50%, #ffffff 100%)",
               }}
             />
           )}
@@ -316,7 +316,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
             style={{
               position: "absolute",
               inset: 0,
-              background: "linear-gradient(180deg, transparent 40%, rgba(13, 17, 23, 0.9) 100%)",
+              background: "linear-gradient(180deg, transparent 40%, rgba(255,255,255, 0.9) 100%)",
             }}
           />
           <div
@@ -336,8 +336,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                   height: "72px",
                   borderRadius: "16px",
                   overflow: "hidden",
-                  border: "3px solid #21262d",
-                  background: "rgba(28,34,46,0.55)",
+                  border: "3px solid #f3f4f6",
+                  background: "rgba(243,244,246,0.55)",
                   backdropFilter: "blur(20px)",
                   flexShrink: 0,
                 }}
@@ -356,7 +356,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                   fontWeight: "700",
                   color: "#ffffff",
                   margin: "0 0 4px",
-                  textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                  textShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 }}
               >
                 {item.name}
@@ -364,8 +364,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
               <div
                 style={{
                   fontSize: "14px",
-                  color: "#c9d1d9",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.4)",
+                  color: "#1f2937",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.06)",
                 }}
               >
                 by {item.author}
@@ -385,7 +385,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                   borderRadius: "20px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  color: "#58a6ff",
+                  color: "#6366f1",
                   textTransform: "capitalize",
                 }}
               >
@@ -394,12 +394,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
               <span
                 style={{
                   padding: "4px 10px",
-                  background: "rgba(48,54,61,0.45)",
+                  background: "rgba(229,231,235,0.45)",
                   backdropFilter: "blur(14px)",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(0,0,0,0.1)",
                   borderRadius: "6px",
                   fontSize: "12px",
-                  color: "#8b949e",
+                  color: "#6b7280",
                 }}
               >
                 v{item.version}
@@ -415,7 +415,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     border: "1px solid rgba(63, 185, 80, 0.2)",
                     borderRadius: "6px",
                     fontSize: "12px",
-                    color: "#3fb950",
+                    color: "#10b981",
                   }}
                 >
                   <IconCheck size={12} />
@@ -426,12 +426,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                 <span
                   style={{
                     padding: "4px 10px",
-                    background: "rgba(48,54,61,0.45)",
+                    background: "rgba(229,231,235,0.45)",
                     backdropFilter: "blur(14px)",
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(0,0,0,0.1)",
                     borderRadius: "6px",
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                   }}
                 >
                   {item.license}
@@ -450,7 +450,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
             <div
               style={{
                 fontSize: "15px",
-                color: "#c9d1d9",
+                color: "#1f2937",
                 lineHeight: "1.7",
                 marginBottom: "24px",
                 whiteSpace: "pre-wrap",
@@ -466,12 +466,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     key={tag}
                     style={{
                       padding: "3px 10px",
-                      background: "rgba(48,54,61,0.45)",
+                      background: "rgba(229,231,235,0.45)",
                       backdropFilter: "blur(14px)",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      border: "1px solid rgba(0,0,0,0.1)",
                       borderRadius: "12px",
                       fontSize: "12px",
-                      color: "#8b949e",
+                      color: "#6b7280",
                     }}
                   >
                     {tag}
@@ -486,7 +486,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                   style={{
                     fontSize: "16px",
                     fontWeight: "600",
-                    color: "#c9d1d9",
+                    color: "#1f2937",
                     margin: "0 0 12px",
                   }}
                 >
@@ -498,9 +498,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     alignItems: "center",
                     gap: "8px",
                     padding: "12px 16px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "8px",
                   }}
                 >
@@ -509,7 +509,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                       flex: 1,
                       fontSize: "13px",
                       fontFamily: "monospace",
-                      color: "#c9d1d9",
+                      color: "#1f2937",
                       overflowX: "auto",
                       whiteSpace: "nowrap",
                     }}
@@ -523,11 +523,11 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                       alignItems: "center",
                       gap: "4px",
                       padding: "6px 10px",
-                      background: copied ? "rgba(63, 185, 80, 0.1)" : "#21262d",
+                      background: copied ? "rgba(63, 185, 80, 0.1)" : "#f3f4f6",
                       border: "1px solid",
-                      borderColor: copied ? "rgba(63, 185, 80, 0.3)" : "#30363d",
+                      borderColor: copied ? "rgba(63, 185, 80, 0.3)" : "#e5e7eb",
                       borderRadius: "6px",
-                      color: copied ? "#3fb950" : "#8b949e",
+                      color: copied ? "#10b981" : "#6b7280",
                       cursor: "pointer",
                       fontSize: "12px",
                       fontFamily: "inherit",
@@ -549,7 +549,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                   style={{
                     fontSize: "16px",
                     fontWeight: "600",
-                    color: "#c9d1d9",
+                    color: "#1f2937",
                     margin: "0 0 12px",
                   }}
                 >
@@ -560,8 +560,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     style={{
                       borderRadius: "12px",
                       overflow: "hidden",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      background: "rgba(13,17,23,0.55)",
+                      border: "1px solid rgba(0,0,0,0.06)",
+                      background: "rgba(255,255,255,0.55)",
                       backdropFilter: "blur(24px)",
                       aspectRatio: "16/9",
                     }}
@@ -586,9 +586,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                           width: "36px",
                           height: "36px",
                           borderRadius: "50%",
-                          background: "rgba(22, 27, 34, 0.9)",
-                          border: "1px solid rgba(255,255,255,0.12)",
-                          color: "#c9d1d9",
+                          background: "rgba(249,250,251, 0.9)",
+                          border: "1px solid rgba(0,0,0,0.1)",
+                          color: "#1f2937",
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
@@ -610,9 +610,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                           width: "36px",
                           height: "36px",
                           borderRadius: "50%",
-                          background: "rgba(22, 27, 34, 0.9)",
-                          border: "1px solid rgba(255,255,255,0.12)",
-                          color: "#c9d1d9",
+                          background: "rgba(249,250,251, 0.9)",
+                          border: "1px solid rgba(0,0,0,0.1)",
+                          color: "#1f2937",
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
@@ -641,7 +641,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                             width: "8px",
                             height: "8px",
                             borderRadius: "50%",
-                            background: idx === screenshotIndex ? "#58a6ff" : "#30363d",
+                            background: idx === screenshotIndex ? "#6366f1" : "#e5e7eb",
                             border: "none",
                             cursor: "pointer",
                             outline: "none",
@@ -665,7 +665,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     marginBottom: "12px",
                   }}
                 >
-                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#c9d1d9", margin: 0 }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#1f2937", margin: 0 }}>
                     Live Preview
                   </h3>
                   <button
@@ -677,9 +677,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                       padding: "4px 10px",
                       background: showPreview ? "rgba(88, 166, 255, 0.1)" : "transparent",
                       border: "1px solid",
-                      borderColor: showPreview ? "rgba(88, 166, 255, 0.3)" : "#30363d",
+                      borderColor: showPreview ? "rgba(88, 166, 255, 0.3)" : "#e5e7eb",
                       borderRadius: "6px",
-                      color: showPreview ? "#58a6ff" : "#8b949e",
+                      color: showPreview ? "#6366f1" : "#6b7280",
                       cursor: "pointer",
                       fontSize: "12px",
                       fontFamily: "inherit",
@@ -695,9 +695,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     style={{
                       borderRadius: "12px",
                       overflow: "hidden",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(0,0,0,0.06)",
                       aspectRatio: "16/9",
-                      background: "rgba(13,17,23,0.55)",
+                      background: "rgba(255,255,255,0.55)",
                       backdropFilter: "blur(24px)",
                     }}
                   >
@@ -717,7 +717,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                 style={{
                   fontSize: "16px",
                   fontWeight: "600",
-                  color: "#c9d1d9",
+                  color: "#1f2937",
                   margin: "0 0 16px",
                 }}
               >
@@ -730,9 +730,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
           <div style={{ position: "sticky", top: "72px", alignSelf: "start" }}>
             <div
               style={{
-                background: "rgba(28,34,46,0.55)",
+                background: "rgba(243,244,246,0.55)",
                 backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 borderRadius: "12px",
                 padding: "20px",
                 marginBottom: "16px",
@@ -747,7 +747,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     height: "40px",
                     borderRadius: "50%",
                     overflow: "hidden",
-                    background: "rgba(48,54,61,0.45)",
+                    background: "rgba(229,231,235,0.45)",
                     backdropFilter: "blur(14px)",
                     flexShrink: 0,
                   }}
@@ -768,7 +768,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                         justifyContent: "center",
                         fontSize: "16px",
                         fontWeight: "600",
-                        color: "#8b949e",
+                        color: "#6b7280",
                       }}
                     >
                       {item.author?.charAt(0).toUpperCase() || "?"}
@@ -776,10 +776,10 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                   )}
                 </div>
                 <div>
-                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#c9d1d9" }}>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
                     {item.author}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#8b949e" }}>Author</div>
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>Author</div>
                 </div>
               </div>
 
@@ -794,9 +794,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                 <div
                   style={{
                     padding: "10px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "8px",
                     textAlign: "center",
                   }}
@@ -814,54 +814,54 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     <IconStar size={14} />
                     {item.rating.toFixed(1)}
                   </div>
-                  <div style={{ fontSize: "11px", color: "#484f58", marginTop: "2px" }}>Rating</div>
+                  <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>Rating</div>
                 </div>
                 <div
                   style={{
                     padding: "10px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "8px",
                     textAlign: "center",
                   }}
                 >
-                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#c9d1d9" }}>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
                     {formatDownloads(item.downloads)}
                   </div>
-                  <div style={{ fontSize: "11px", color: "#484f58", marginTop: "2px" }}>
+                  <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>
                     Downloads
                   </div>
                 </div>
                 <div
                   style={{
                     padding: "10px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "8px",
                     textAlign: "center",
                   }}
                 >
-                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#c9d1d9" }}>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
                     {item.likeCount}
                   </div>
-                  <div style={{ fontSize: "11px", color: "#484f58", marginTop: "2px" }}>Likes</div>
+                  <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>Likes</div>
                 </div>
                 <div
                   style={{
                     padding: "10px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "8px",
                     textAlign: "center",
                   }}
                 >
-                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#c9d1d9" }}>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
                     v{item.version}
                   </div>
-                  <div style={{ fontSize: "11px", color: "#484f58", marginTop: "2px" }}>
+                  <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>
                     Version
                   </div>
                 </div>
@@ -874,12 +874,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                     justifyContent: "space-between",
                     alignItems: "center",
                     padding: "8px 0",
-                    borderTop: "1px solid rgba(255,255,255,0.08)",
+                    borderTop: "1px solid rgba(0,0,0,0.06)",
                     fontSize: "13px",
                   }}
                 >
-                  <span style={{ color: "#8b949e" }}>File Size</span>
-                  <span style={{ color: "#c9d1d9" }}>{item.fileSize}</span>
+                  <span style={{ color: "#6b7280" }}>File Size</span>
+                  <span style={{ color: "#1f2937" }}>{item.fileSize}</span>
                 </div>
               )}
               <div
@@ -888,26 +888,26 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "8px 0",
-                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  borderTop: "1px solid rgba(0,0,0,0.06)",
                   fontSize: "13px",
                 }}
               >
-                <span style={{ color: "#8b949e" }}>Updated</span>
-                <span style={{ color: "#c9d1d9" }}>{formatDate(item.updatedAt)}</span>
+                <span style={{ color: "#6b7280" }}>Updated</span>
+                <span style={{ color: "#1f2937" }}>{formatDate(item.updatedAt)}</span>
               </div>
 
               <div
                 style={{
                   marginTop: "16px",
                   paddingTop: "12px",
-                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  borderTop: "1px solid rgba(0,0,0,0.06)",
                 }}
               >
                 <h4
                   style={{
                     fontSize: "12px",
                     fontWeight: 600,
-                    color: "#8b949e",
+                    color: "#6b7280",
                     margin: "0 0 8px",
                     textTransform: "uppercase",
                     letterSpacing: "0.5px",
@@ -936,14 +936,14 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                 style={{
                   marginTop: "16px",
                   paddingTop: "12px",
-                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  borderTop: "1px solid rgba(0,0,0,0.06)",
                 }}
               >
                 <h4
                   style={{
                     fontSize: "12px",
                     fontWeight: 600,
-                    color: "#8b949e",
+                    color: "#6b7280",
                     margin: "0 0 8px",
                     textTransform: "uppercase",
                     letterSpacing: "0.5px",
@@ -979,9 +979,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
             {item.socialLinks && Object.keys(item.socialLinks).length > 0 && (
               <div
                 style={{
-                  background: "rgba(28,34,46,0.55)",
+                  background: "rgba(243,244,246,0.55)",
                   backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(0,0,0,0.06)",
                   borderRadius: "12px",
                   padding: "16px",
                 }}
@@ -990,7 +990,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                   style={{
                     fontSize: "13px",
                     fontWeight: "600",
-                    color: "#8b949e",
+                    color: "#6b7280",
                     margin: "0 0 10px",
                     textTransform: "uppercase",
                     letterSpacing: "0.5px",
@@ -1013,14 +1013,14 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ item, onClose, onI
                         background: "transparent",
                         border: "1px solid transparent",
                         borderRadius: "6px",
-                        color: "#58a6ff",
+                        color: "#6366f1",
                         fontSize: "13px",
                         textDecoration: "none",
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#21262d";
-                        e.currentTarget.style.borderColor = "#30363d";
+                        e.currentTarget.style.background = "#f3f4f6";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";

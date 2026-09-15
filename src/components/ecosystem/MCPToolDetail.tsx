@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ZYRAXON AI — MCP Tool Detail Component
  *
  * Detailed view of an MCP tool showing all information including
@@ -29,13 +29,13 @@ const formatNumber = (num: number): string => {
 const getTransportColor = (transport: string): string => {
   switch (transport) {
     case "stdio":
-      return "#3fb950";
+      return "#10b981";
     case "sse":
-      return "#58a6ff";
+      return "#6366f1";
     case "streamable-http":
       return "#a371f7";
     default:
-      return "#8b949e";
+      return "#6b7280";
   }
 };
 
@@ -44,13 +44,13 @@ const getSourceColor = (source: string): string => {
     case "smithery":
       return "#8957e5";
     case "github":
-      return "#c9d1d9";
+      return "#1f2937";
     case "glama":
-      return "#58a6ff";
+      return "#6366f1";
     case "mcpso":
-      return "#3fb950";
+      return "#10b981";
     default:
-      return "#8b949e";
+      return "#6b7280";
   }
 };
 
@@ -90,7 +90,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(13,17,23,0.55)",
+        background: "rgba(255,255,255,0.55)",
         backdropFilter: "blur(24px)",
         zIndex: 999,
         overflow: "auto",
@@ -102,9 +102,9 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
           position: "sticky",
           top: 0,
           zIndex: 10,
-          background: "rgba(28,34,46,0.55)",
+          background: "rgba(243,244,246,0.55)",
           backdropFilter: "blur(20px)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
           padding: "12px 24px",
           display: "flex",
           alignItems: "center",
@@ -119,9 +119,9 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
             gap: "6px",
             padding: "6px 12px",
             background: "transparent",
-            border: "1px solid rgba(255,255,255,0.12)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: "8px",
-            color: "#c9d1d9",
+            color: "#1f2937",
             fontSize: "13px",
             cursor: "pointer",
             fontFamily: "inherit",
@@ -129,12 +129,12 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
             transition: "all 0.15s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#58a6ff50";
-            e.currentTarget.style.color = "#58a6ff";
+            e.currentTarget.style.borderColor = "#6366f150";
+            e.currentTarget.style.color = "#6366f1";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-            e.currentTarget.style.color = "#c9d1d9";
+            e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)";
+            e.currentTarget.style.color = "#1f2937";
           }}
         >
           <svg
@@ -165,21 +165,21 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
               gap: "6px",
               padding: "6px 12px",
               background: "transparent",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid rgba(0,0,0,0.1)",
               borderRadius: "8px",
-              color: "#8b949e",
+              color: "#6b7280",
               fontSize: "13px",
               fontWeight: "500",
               textDecoration: "none",
               transition: "all 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#58a6ff50";
-              e.currentTarget.style.color = "#58a6ff";
+              e.currentTarget.style.borderColor = "#6366f150";
+              e.currentTarget.style.color = "#6366f1";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-              e.currentTarget.style.color = "#8b949e";
+              e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)";
+              e.currentTarget.style.color = "#6b7280";
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -220,8 +220,8 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                 height: "80px",
                 borderRadius: "16px",
                 overflow: "hidden",
-                border: "3px solid #21262d",
-                background: "rgba(28,34,46,0.55)",
+                border: "3px solid #f3f4f6",
+                background: "rgba(243,244,246,0.55)",
                 backdropFilter: "blur(20px)",
                 flexShrink: 0,
               }}
@@ -305,18 +305,18 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
               )}
             </div>
 
-            <div style={{ fontSize: "14px", color: "#8b949e", marginBottom: "12px" }}>
-              by <span style={{ color: "#58a6ff" }}>{tool.author}</span>
+            <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "12px" }}>
+              by <span style={{ color: "#6366f1" }}>{tool.author}</span>
               {tool.authorVerified && (
                 <svg
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
-                  fill="#58a6ff"
+                  fill="#6366f1"
                   style={{ marginLeft: "4px", verticalAlign: "middle" }}
                 >
                   <path d="M12 1l2.6 2.1 3.3-.3.9 3.2 2.9 1.7-1.4 3 1.4 3-2.9 1.7-.9 3.2-3.3.3L12 23l-2.6-2.1-3.3.3-.9-3.2L2.3 16l1.4-3-1.4-3 2.9-1.7.9-3.2 3.3.3z" />
-                  <path d="M10.6 15.4l-2.8-2.8 1.2-1.2 1.6 1.6 4-4 1.2 1.2z" fill="#0d1117" />
+                  <path d="M10.6 15.4l-2.8-2.8 1.2-1.2 1.6 1.6 4-4 1.2 1.2z" fill="#ffffff" />
                 </svg>
               )}
             </div>
@@ -356,7 +356,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
               >
                 {tool.transport}
               </span>
-              <span style={{ fontSize: "13px", color: "#8b949e" }}>v{tool.version}</span>
+              <span style={{ fontSize: "13px", color: "#6b7280" }}>v{tool.version}</span>
             </div>
           </div>
         </div>
@@ -371,17 +371,17 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
           }}
         >
           {[
-            { label: "Downloads", value: formatNumber(tool.downloads), color: "#58a6ff" },
+            { label: "Downloads", value: formatNumber(tool.downloads), color: "#6366f1" },
             { label: "Rating", value: `${tool.rating.toFixed(1)} ⭐`, color: "#e3b341" },
-            { label: "Protocol", value: tool.protocol.toUpperCase(), color: "#3fb950" },
+            { label: "Protocol", value: tool.protocol.toUpperCase(), color: "#10b981" },
             { label: "Transport", value: tool.transport, color: getTransportColor(tool.transport) },
           ].map((stat) => (
             <div
               key={stat.label}
               style={{
                 padding: "16px",
-                background: "rgba(28,34,46,0.55)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(243,244,246,0.55)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 borderRadius: "12px",
                 textAlign: "center",
               }}
@@ -396,7 +396,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
               >
                 {stat.value}
               </div>
-              <div style={{ fontSize: "12px", color: "#8b949e" }}>{stat.label}</div>
+              <div style={{ fontSize: "12px", color: "#6b7280" }}>{stat.label}</div>
             </div>
           ))}
         </div>
@@ -407,7 +407,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
             display: "flex",
             gap: "4px",
             marginBottom: "24px",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
             paddingBottom: "4px",
           }}
         >
@@ -417,10 +417,10 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
               onClick={() => setActiveTab(tab)}
               style={{
                 padding: "8px 16px",
-                background: activeTab === tab ? "rgba(137, 87, 229, 0.2)" : "transparent",
+                background: activeTab === tab ? "rgba(99,102,241, 0.2)" : "transparent",
                 border: "none",
                 borderRadius: "8px 8px 0 0",
-                color: activeTab === tab ? "#8957e5" : "#8b949e",
+                color: activeTab === tab ? "#8957e5" : "#6b7280",
                 fontSize: "14px",
                 fontWeight: "600",
                 cursor: "pointer",
@@ -443,7 +443,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                 <div
                   style={{
                     fontSize: "15px",
-                    color: "#c9d1d9",
+                    color: "#1f2937",
                     lineHeight: "1.7",
                     marginBottom: "24px",
                     whiteSpace: "pre-wrap",
@@ -458,7 +458,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                       style={{
                         fontSize: "16px",
                         fontWeight: "600",
-                        color: "#c9d1d9",
+                        color: "#1f2937",
                         margin: "0 0 12px",
                       }}
                     >
@@ -470,8 +470,8 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                           key={cap}
                           style={{
                             padding: "6px 12px",
-                            background: "rgba(137, 87, 229, 0.1)",
-                            border: "1px solid rgba(137, 87, 229, 0.2)",
+                            background: "rgba(99,102,241, 0.1)",
+                            border: "1px solid rgba(99,102,241, 0.2)",
                             borderRadius: "8px",
                             fontSize: "13px",
                             color: "#a371f7",
@@ -490,7 +490,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                       style={{
                         fontSize: "16px",
                         fontWeight: "600",
-                        color: "#c9d1d9",
+                        color: "#1f2937",
                         margin: "0 0 12px",
                       }}
                     >
@@ -502,12 +502,12 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                           key={tag}
                           style={{
                             padding: "6px 12px",
-                            background: "rgba(48,54,61,0.45)",
+                            background: "rgba(229,231,235,0.45)",
                             backdropFilter: "blur(14px)",
-                            border: "1px solid rgba(255,255,255,0.12)",
+                            border: "1px solid rgba(0,0,0,0.1)",
                             borderRadius: "20px",
                             fontSize: "13px",
-                            color: "#8b949e",
+                            color: "#6b7280",
                           }}
                         >
                           {tag}
@@ -525,7 +525,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                   style={{
                     fontSize: "16px",
                     fontWeight: "600",
-                    color: "#c9d1d9",
+                    color: "#1f2937",
                     margin: "0 0 16px",
                   }}
                 >
@@ -534,9 +534,9 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                 <div
                   style={{
                     padding: "16px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "12px",
                     marginBottom: "16px",
                   }}
@@ -544,7 +544,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                   <div
                     style={{
                       fontSize: "12px",
-                      color: "#8b949e",
+                      color: "#6b7280",
                       marginBottom: "8px",
                       textTransform: "uppercase",
                       letterSpacing: "0.5px",
@@ -558,8 +558,8 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                       alignItems: "center",
                       gap: "8px",
                       padding: "12px 16px",
-                      background: "rgba(22,27,34,0.9)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "rgba(249,250,251,0.9)",
+                      border: "1px solid rgba(0,0,0,0.06)",
                       borderRadius: "8px",
                     }}
                   >
@@ -568,7 +568,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                         flex: 1,
                         fontSize: "13px",
                         fontFamily: "monospace",
-                        color: "#c9d1d9",
+                        color: "#1f2937",
                         overflowX: "auto",
                         whiteSpace: "nowrap",
                       }}
@@ -582,11 +582,11 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                         alignItems: "center",
                         gap: "4px",
                         padding: "6px 10px",
-                        background: copied ? "rgba(63, 185, 80, 0.1)" : "#21262d",
+                        background: copied ? "rgba(63, 185, 80, 0.1)" : "#f3f4f6",
                         border: "1px solid",
-                        borderColor: copied ? "rgba(63, 185, 80, 0.3)" : "#30363d",
+                        borderColor: copied ? "rgba(63, 185, 80, 0.3)" : "#e5e7eb",
                         borderRadius: "6px",
-                        color: copied ? "#3fb950" : "#8b949e",
+                        color: copied ? "#10b981" : "#6b7280",
                         cursor: "pointer",
                         fontSize: "12px",
                         fontFamily: "inherit",
@@ -613,8 +613,8 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                 <div
                   style={{
                     padding: "16px",
-                    background: "rgba(28,34,46,0.55)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(243,244,246,0.55)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "12px",
                   }}
                 >
@@ -622,7 +622,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                     style={{
                       fontSize: "14px",
                       fontWeight: "600",
-                      color: "#c9d1d9",
+                      color: "#1f2937",
                       margin: "0 0 12px",
                     }}
                   >
@@ -633,7 +633,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                       margin: 0,
                       paddingLeft: "20px",
                       fontSize: "13px",
-                      color: "#8b949e",
+                      color: "#6b7280",
                       lineHeight: "1.8",
                     }}
                   >
@@ -652,7 +652,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                   style={{
                     fontSize: "16px",
                     fontWeight: "600",
-                    color: "#c9d1d9",
+                    color: "#1f2937",
                     margin: "0 0 16px",
                   }}
                 >
@@ -661,16 +661,16 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                 <div
                   style={{
                     padding: "16px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "12px",
                   }}
                 >
                   <div
                     style={{
                       fontSize: "12px",
-                      color: "#8b949e",
+                      color: "#6b7280",
                       marginBottom: "8px",
                       textTransform: "uppercase",
                       letterSpacing: "0.5px",
@@ -684,8 +684,8 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                       alignItems: "center",
                       gap: "8px",
                       padding: "12px 16px",
-                      background: "rgba(22,27,34,0.9)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "rgba(249,250,251,0.9)",
+                      border: "1px solid rgba(0,0,0,0.06)",
                       borderRadius: "8px",
                     }}
                   >
@@ -695,7 +695,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                         margin: 0,
                         fontSize: "12px",
                         fontFamily: "monospace",
-                        color: "#c9d1d9",
+                        color: "#1f2937",
                         overflowX: "auto",
                         whiteSpace: "pre-wrap",
                       }}
@@ -709,11 +709,11 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                         alignItems: "center",
                         gap: "4px",
                         padding: "6px 10px",
-                        background: copied ? "rgba(63, 185, 80, 0.1)" : "#21262d",
+                        background: copied ? "rgba(63, 185, 80, 0.1)" : "#f3f4f6",
                         border: "1px solid",
-                        borderColor: copied ? "rgba(63, 185, 80, 0.3)" : "#30363d",
+                        borderColor: copied ? "rgba(63, 185, 80, 0.3)" : "#e5e7eb",
                         borderRadius: "6px",
-                        color: copied ? "#3fb950" : "#8b949e",
+                        color: copied ? "#10b981" : "#6b7280",
                         cursor: "pointer",
                         fontSize: "12px",
                         fontFamily: "inherit",
@@ -734,8 +734,8 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
           <div style={{ position: "sticky", top: "72px", alignSelf: "start" }}>
             <div
               style={{
-                background: "rgba(28,34,46,0.55)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(243,244,246,0.55)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 borderRadius: "12px",
                 padding: "20px",
                 marginBottom: "16px",
@@ -752,26 +752,26 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                 <div
                   style={{
                     padding: "10px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "8px",
                     textAlign: "center",
                   }}
                 >
-                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#c9d1d9" }}>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
                     {formatNumber(tool.downloads)}
                   </div>
-                  <div style={{ fontSize: "11px", color: "#484f58", marginTop: "2px" }}>
+                  <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>
                     Downloads
                   </div>
                 </div>
                 <div
                   style={{
                     padding: "10px",
-                    background: "rgba(13,17,23,0.55)",
+                    background: "rgba(255,255,255,0.55)",
                     backdropFilter: "blur(24px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "8px",
                     textAlign: "center",
                   }}
@@ -788,7 +788,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                   >
                     ⭐ {tool.rating.toFixed(1)}
                   </div>
-                  <div style={{ fontSize: "11px", color: "#484f58", marginTop: "2px" }}>Rating</div>
+                  <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>Rating</div>
                 </div>
               </div>
 
@@ -798,12 +798,12 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "8px 0",
-                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  borderTop: "1px solid rgba(0,0,0,0.06)",
                   fontSize: "13px",
                 }}
               >
-                <span style={{ color: "#8b949e" }}>Updated</span>
-                <span style={{ color: "#c9d1d9" }}>{formatDate(tool.lastUpdated)}</span>
+                <span style={{ color: "#6b7280" }}>Updated</span>
+                <span style={{ color: "#1f2937" }}>{formatDate(tool.lastUpdated)}</span>
               </div>
 
               <div
@@ -812,12 +812,12 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "8px 0",
-                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  borderTop: "1px solid rgba(0,0,0,0.06)",
                   fontSize: "13px",
                 }}
               >
-                <span style={{ color: "#8b949e" }}>License</span>
-                <span style={{ color: "#c9d1d9" }}>{tool.license || "MIT"}</span>
+                <span style={{ color: "#6b7280" }}>License</span>
+                <span style={{ color: "#1f2937" }}>{tool.license || "MIT"}</span>
               </div>
 
               <div style={{ marginTop: "16px" }}>
@@ -850,8 +850,8 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
             {/* Comments */}
             <div
               style={{
-                background: "rgba(28,34,46,0.55)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(243,244,246,0.55)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 borderRadius: "12px",
                 padding: "20px",
               }}
@@ -860,7 +860,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                 style={{
                   fontSize: "14px",
                   fontWeight: "600",
-                  color: "#c9d1d9",
+                  color: "#1f2937",
                   margin: "0 0 12px",
                 }}
               >

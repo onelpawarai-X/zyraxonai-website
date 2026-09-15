@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import { getAuthState } from "../../lib/ecosystem";
 import { toggleLike, getLikeCount, getUserLikes } from "../../lib/shared-data";
 
@@ -14,8 +14,8 @@ const Heart = ({ filled, size = 16 }: { filled: boolean; size?: number }) => (
     width={size}
     height={size}
     viewBox="0 0 24 24"
-    fill={filled ? "#f85149" : "none"}
-    stroke={filled ? "#f85149" : "currentColor"}
+    fill={filled ? "#ef4444" : "none"}
+    stroke={filled ? "#ef4444" : "currentColor"}
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
@@ -81,9 +81,9 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
         gap: "6px",
         padding: "6px 12px",
         background: liked ? "rgba(248, 81, 73, 0.1)" : "transparent",
-        border: `1px solid ${liked ? "#f8514950" : "#21262d"}`,
+        border: `1px solid ${liked ? "#ef444450" : "#f3f4f6"}`,
         borderRadius: "8px",
-        color: liked ? "#f85149" : "#8b949e",
+        color: liked ? "#ef4444" : "#6b7280",
         cursor: "pointer",
         fontSize: "13px",
         fontWeight: "500",

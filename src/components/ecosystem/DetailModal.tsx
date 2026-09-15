@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { EcosystemItem, Comment } from "../../lib/ecosystem";
 import { LikeButton } from "./LikeButton";
 import { ShareButton } from "./ShareButton";
@@ -22,7 +22,7 @@ const renderStars = (rating: number) => {
     stars.push(
       <span
         key={i}
-        style={{ color: i <= Math.round(rating) ? "#e3b341" : "#30363d", fontSize: "14px" }}
+        style={{ color: i <= Math.round(rating) ? "#e3b341" : "#e5e7eb", fontSize: "14px" }}
       >
         ★
       </span>,
@@ -33,31 +33,31 @@ const renderStars = (rating: number) => {
 
 const TYPE_COLORS: Record<string, string> = {
   bot: "#8957e5",
-  plugin: "#238636",
-  template: "#1f6feb",
+  plugin: "#047857",
+  template: "#4f46e5",
   theme: "#a371f7",
-  model: "#da3633",
-  tool: "#238636",
-  cli: "#238636",
-  sdk: "#1f6feb",
-  extension: "#da3633",
+  model: "#dc2626",
+  tool: "#047857",
+  cli: "#047857",
+  sdk: "#4f46e5",
+  extension: "#dc2626",
   app: "#8957e5",
-  "desktop-app": "#238636",
-  workflow: "#1f6feb",
+  "desktop-app": "#047857",
+  workflow: "#4f46e5",
   "ui-kit": "#a371f7",
-  snippet: "#8b949e",
-  devops: "#238636",
-  font: "#8b949e",
-  "landing-page": "#1f6feb",
-  iso: "#da3633",
-  startkit: "#1f6feb",
-  api: "#1f6feb",
-  dataset: "#da3633",
+  snippet: "#6b7280",
+  devops: "#047857",
+  font: "#6b7280",
+  "landing-page": "#4f46e5",
+  iso: "#dc2626",
+  startkit: "#4f46e5",
+  api: "#4f46e5",
+  dataset: "#dc2626",
   prompt: "#8957e5",
   book: "#e3b341",
-  pdf: "#da3633",
+  pdf: "#dc2626",
   icon: "#a371f7",
-  component: "#1f6feb",
+  component: "#4f46e5",
 };
 
 const getButtonConfig = (item: EcosystemItem) => {
@@ -65,26 +65,26 @@ const getButtonConfig = (item: EcosystemItem) => {
   if (cat === "plugins")
     return {
       label: "Install Plugin",
-      color: "#238636",
-      hover: "#2ea043",
+      color: "#047857",
+      hover: "#059669",
       action: "install" as const,
     };
   if (cat === "ai-bots")
     return { label: "Add Bot", color: "#8957e5", hover: "#a371f7", action: "install" as const };
   if (cat === "website-templates")
-    return { label: "Use Template", color: "#1f6feb", hover: "#58a6ff", action: "live" as const };
+    return { label: "Use Template", color: "#4f46e5", hover: "#6366f1", action: "live" as const };
   if (cat === "ai-models")
     return {
       label: "Download Model",
-      color: "#da3633",
-      hover: "#f85149",
+      color: "#dc2626",
+      hover: "#ef4444",
       action: "download" as const,
     };
   if (cat === "browser-extensions")
     return {
       label: "Add Extension",
-      color: "#da3633",
-      hover: "#f85149",
+      color: "#dc2626",
+      hover: "#ef4444",
       action: "download" as const,
     };
   if (cat === "themes")
@@ -92,28 +92,28 @@ const getButtonConfig = (item: EcosystemItem) => {
   if (cat === "workflows")
     return {
       label: "Import Workflow",
-      color: "#1f6feb",
-      hover: "#58a6ff",
+      color: "#4f46e5",
+      hover: "#6366f1",
       action: "install" as const,
     };
   if (cat === "desktop-apps")
     return {
       label: "Download App",
-      color: "#238636",
-      hover: "#2ea043",
+      color: "#047857",
+      hover: "#059669",
       action: "download" as const,
     };
   if (cat === "mobile-apps")
     return { label: "Get App", color: "#8957e5", hover: "#a371f7", action: "live" as const };
   if (item.installCommand)
-    return { label: "Install", color: "#238636", hover: "#2ea043", action: "install" as const };
+    return { label: "Install", color: "#047857", hover: "#059669", action: "install" as const };
   if (item.liveDemo)
-    return { label: "View Live", color: "#1f6feb", hover: "#58a6ff", action: "live" as const };
+    return { label: "View Live", color: "#4f46e5", hover: "#6366f1", action: "live" as const };
   if (item.downloadUrl)
-    return { label: "Download", color: "#238636", hover: "#2ea043", action: "download" as const };
+    return { label: "Download", color: "#047857", hover: "#059669", action: "download" as const };
   if (item.githubRepo)
-    return { label: "View Source", color: "#21262d", hover: "#30363d", action: "github" as const };
-  return { label: "View", color: "#21262d", hover: "#30363d", action: "view" as const };
+    return { label: "View Source", color: "#f3f4f6", hover: "#e5e7eb", action: "github" as const };
+  return { label: "View", color: "#f3f4f6", hover: "#e5e7eb", action: "view" as const };
 };
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInstall }) => {
@@ -123,7 +123,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
   if (!item) return null;
 
   const btn = getButtonConfig(item);
-  const typeColor = TYPE_COLORS[item.type] || "#58a6ff";
+  const typeColor = TYPE_COLORS[item.type] || "#6366f1";
 
   const handleInstall = () => {
     if (item.installCommand) {
@@ -158,7 +158,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
         position: "fixed",
         inset: 0,
         zIndex: 1000,
-        background: "rgba(0, 0, 0, 0.6)",
+        background: "rgba(0,0,0,0.04)",
         backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
@@ -169,9 +169,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "rgba(28,34,46,0.55)",
+          background: "rgba(243,244,246,0.55)",
           backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: "1px solid rgba(0,0,0,0.06)",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "720px",
@@ -179,7 +179,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 24px 48px rgba(0, 0, 0, 0.5)",
+          boxShadow: "0 24px 48px rgba(0,0,0,0.05)",
         }}
       >
         <div
@@ -188,7 +188,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
             alignItems: "center",
             justifyContent: "space-between",
             padding: "16px 20px",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
@@ -219,7 +219,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
             >
               {item.type}
             </span>
-            <span style={{ fontSize: "12px", color: "#484f58", flexShrink: 0 }}>
+            <span style={{ fontSize: "12px", color: "#9ca3af", flexShrink: 0 }}>
               v{item.version}
             </span>
           </div>
@@ -230,8 +230,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
               height: "32px",
               borderRadius: "8px",
               background: "transparent",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "#8b949e",
+              border: "1px solid rgba(0,0,0,0.06)",
+              color: "#6b7280",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -243,12 +243,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
               transition: "all 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#484f58";
-              e.currentTarget.style.color = "#c9d1d9";
+              e.currentTarget.style.borderColor = "#9ca3af";
+              e.currentTarget.style.color = "#1f2937";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#21262d";
-              e.currentTarget.style.color = "#8b949e";
+              e.currentTarget.style.borderColor = "#f3f4f6";
+              e.currentTarget.style.color = "#6b7280";
             }}
           >
             ✕
@@ -262,7 +262,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
                 borderRadius: "10px",
                 overflow: "hidden",
                 marginBottom: "20px",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid rgba(0,0,0,0.06)",
               }}
             >
               <img
@@ -281,7 +281,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
                   height: "48px",
                   borderRadius: "12px",
                   overflow: "hidden",
-                  background: "rgba(48,54,61,0.45)",
+                  background: "rgba(229,231,235,0.45)",
                   backdropFilter: "blur(14px)",
                   flexShrink: 0,
                 }}
@@ -294,7 +294,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
               </div>
             )}
             <div>
-              <p style={{ fontSize: "14px", color: "#8b949e", lineHeight: "1.6", margin: 0 }}>
+              <p style={{ fontSize: "14px", color: "#6b7280", lineHeight: "1.6", margin: 0 }}>
                 {item.description}
               </p>
             </div>
@@ -307,11 +307,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
                   key={tag}
                   style={{
                     padding: "4px 10px",
-                    background: "rgba(48,54,61,0.45)",
+                    background: "rgba(229,231,235,0.45)",
                     backdropFilter: "blur(14px)",
                     borderRadius: "14px",
                     fontSize: "12px",
-                    color: "#8b949e",
+                    color: "#6b7280",
                   }}
                 >
                   {tag}
@@ -330,7 +330,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
                     background: "rgba(88, 166, 255, 0.1)",
                     borderRadius: "14px",
                     fontSize: "12px",
-                    color: "#58a6ff",
+                    color: "#6366f1",
                   }}
                 >
                   {p}
@@ -345,7 +345,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
               style={{
                 padding: "10px 20px",
                 borderRadius: "8px",
-                background: actionDone ? "#238636" : btn.color,
+                background: actionDone ? "#047857" : btn.color,
                 border: "none",
                 color: "#ffffff",
                 cursor: "pointer",
@@ -362,7 +362,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
                 if (!actionDone) e.currentTarget.style.background = btn.hover;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = actionDone ? "#238636" : btn.color;
+                e.currentTarget.style.background = actionDone ? "#047857" : btn.color;
               }}
             >
               {actionDone ? "✓ Copied!" : btn.label}
@@ -375,8 +375,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
                   padding: "10px 20px",
                   borderRadius: "8px",
                   background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "#c9d1d9",
+                  border: "1px solid rgba(0,0,0,0.1)",
+                  color: "#1f2937",
                   cursor: "pointer",
                   fontSize: "14px",
                   fontWeight: "500",
@@ -388,10 +388,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
                   transition: "border-color 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#58a6ff";
+                  e.currentTarget.style.borderColor = "#6366f1";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#30363d";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
                 }}
               >
                 📂 Source Code
@@ -418,17 +418,17 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
                 key={stat.label}
                 style={{
                   padding: "12px",
-                  background: "rgba(13,17,23,0.55)",
+                  background: "rgba(255,255,255,0.55)",
                   backdropFilter: "blur(24px)",
                   borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(0,0,0,0.06)",
                   textAlign: "center",
                 }}
               >
                 <div style={{ fontSize: "16px", fontWeight: "600", color: "#f0f6fc" }}>
                   {stat.value}
                 </div>
-                <div style={{ fontSize: "11px", color: "#484f58", marginTop: "2px" }}>
+                <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>
                   {stat.label}
                 </div>
               </div>
@@ -444,7 +444,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
             />
           </div>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "20px" }}>
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: "20px" }}>
             <h3
               style={{
                 fontSize: "15px",

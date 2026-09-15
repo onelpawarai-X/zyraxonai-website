@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 
 interface IconProps {
   className?: string;
@@ -778,7 +778,7 @@ export const IconMCP: React.FC<IconProps> = ({ className, size = 16, style }) =>
   >
     <defs>
       <linearGradient id="mcp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#58a6ff" />
+        <stop offset="0%" stopColor="#6366f1" />
         <stop offset="100%" stopColor="#8957e5" />
       </linearGradient>
     </defs>

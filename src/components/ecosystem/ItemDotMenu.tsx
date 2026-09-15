@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { EcosystemItem } from "../../lib/ecosystem";
 import {
   IconExternalLink,
@@ -91,7 +91,7 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
     padding: "9px 12px",
     background: "none",
     border: "none",
-    color: "#c9d1d9",
+    color: "#1f2937",
     fontSize: 13,
     cursor: "pointer",
     fontFamily: "inherit",
@@ -120,9 +120,9 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
           width: 30,
           height: 30,
           borderRadius: 8,
-          border: "1px solid rgba(255,255,255,0.12)",
-          background: open ? "rgba(88,166,255,0.15)" : "rgba(22,27,34,0.8)",
-          color: open ? "#58a6ff" : "#8b949e",
+          border: "1px solid rgba(0,0,0,0.1)",
+          background: open ? "rgba(88,166,255,0.15)" : "rgba(249,250,251,0.8)",
+          color: open ? "#6366f1" : "#6b7280",
           cursor: "pointer",
           fontFamily: "inherit",
           transition: "all 0.15s ease",
@@ -141,12 +141,12 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
             right: align === "right" ? 0 : "auto",
             left: align === "left" ? 0 : "auto",
             minWidth: 230,
-            background: "rgba(22,27,34,0.98)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(249,250,251,0.98)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: 12,
             padding: 6,
             zIndex: 70,
-            boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.05)",
             backdropFilter: "blur(16px)",
           }}
         >
@@ -155,10 +155,10 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
             target="_blank"
             rel="noopener noreferrer"
             style={itemStyle}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
-            <span style={{ color: "#58a6ff", display: "inline-flex" }}>
+            <span style={{ color: "#6366f1", display: "inline-flex" }}>
               <IconExternalLink size={14} />
             </span>
             View on Website
@@ -170,7 +170,7 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
               setOpen(false);
             }}
             style={itemStyle}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
             <span style={{ color: "#8957e5", display: "inline-flex" }}>
@@ -181,10 +181,10 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
           <button
             onClick={copyCommand}
             style={itemStyle}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
-            <span style={{ color: copied ? "#3fb950" : "#8b949e", display: "inline-flex" }}>
+            <span style={{ color: copied ? "#10b981" : "#6b7280", display: "inline-flex" }}>
               {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
             </span>
             {copied ? "Copied!" : "Copy install command"}
@@ -192,10 +192,10 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
           <button
             onClick={copyLink}
             style={itemStyle}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
-            <span style={{ color: "#8b949e", display: "inline-flex" }}>
+            <span style={{ color: "#6b7280", display: "inline-flex" }}>
               <IconShare size={14} />
             </span>
             Copy website link
@@ -206,10 +206,10 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
               target="_blank"
               rel="noopener noreferrer"
               style={itemStyle}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
-              <span style={{ color: "#8b949e", display: "inline-flex" }}>
+              <span style={{ color: "#6b7280", display: "inline-flex" }}>
                 <IconGithub size={14} />
               </span>
               GitHub Repository
@@ -221,10 +221,10 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
               target="_blank"
               rel="noopener noreferrer"
               style={itemStyle}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#21262d")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
-              <span style={{ color: "#8b949e", display: "inline-flex" }}>
+              <span style={{ color: "#6b7280", display: "inline-flex" }}>
                 <IconCode size={14} />
               </span>
               Live Demo

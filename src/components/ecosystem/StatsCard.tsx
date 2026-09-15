@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { EcosystemStats } from "../../lib/ecosystem";
 import { IconDownload, IconPackage, IconRobot, IconTemplate, IconUser } from "./Icons";
 
@@ -24,9 +24,9 @@ const StatItem: React.FC<{
       alignItems: "center",
       gap: "12px",
       padding: "16px",
-      background: "rgba(28,34,46,0.55)",
+      background: "rgba(243,244,246,0.55)",
       backdropFilter: "blur(20px)",
-      border: "1px solid rgba(255,255,255,0.08)",
+      border: "1px solid rgba(0,0,0,0.06)",
       borderRadius: "12px",
       flex: "1 1 0",
       minWidth: "160px",
@@ -41,7 +41,7 @@ const StatItem: React.FC<{
         height: "40px",
         borderRadius: "10px",
         background: "rgba(88, 166, 255, 0.1)",
-        color: "#58a6ff",
+        color: "#6366f1",
         flexShrink: 0,
       }}
     >
@@ -52,7 +52,7 @@ const StatItem: React.FC<{
         style={{
           fontSize: "24px",
           fontWeight: "700",
-          color: "#c9d1d9",
+          color: "#1f2937",
           lineHeight: "1.2",
         }}
       >
@@ -61,7 +61,7 @@ const StatItem: React.FC<{
       <div
         style={{
           fontSize: "13px",
-          color: "#8b949e",
+          color: "#6b7280",
           marginTop: "2px",
         }}
       >
@@ -78,9 +78,9 @@ const SkeletonItem: React.FC = () => (
       alignItems: "center",
       gap: "12px",
       padding: "16px",
-      background: "rgba(28,34,46,0.55)",
+      background: "rgba(243,244,246,0.55)",
       backdropFilter: "blur(20px)",
-      border: "1px solid rgba(255,255,255,0.08)",
+      border: "1px solid rgba(0,0,0,0.06)",
       borderRadius: "12px",
       flex: "1 1 0",
       minWidth: "160px",
@@ -91,7 +91,7 @@ const SkeletonItem: React.FC = () => (
         width: "40px",
         height: "40px",
         borderRadius: "10px",
-        background: "linear-gradient(90deg, #21262d 25%, #30363d 50%, #21262d 75%)",
+        background: "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
         backgroundSize: "200% 100%",
         animation: "shimmer 1.5s ease-in-out infinite",
       }}
@@ -102,7 +102,7 @@ const SkeletonItem: React.FC = () => (
           width: "60px",
           height: "24px",
           borderRadius: "4px",
-          background: "linear-gradient(90deg, #21262d 25%, #30363d 50%, #21262d 75%)",
+          background: "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
           backgroundSize: "200% 100%",
           animation: "shimmer 1.5s ease-in-out infinite",
           marginBottom: "6px",
@@ -113,7 +113,7 @@ const SkeletonItem: React.FC = () => (
           width: "80px",
           height: "13px",
           borderRadius: "4px",
-          background: "linear-gradient(90deg, #21262d 25%, #30363d 50%, #21262d 75%)",
+          background: "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
           backgroundSize: "200% 100%",
           animation: "shimmer 1.5s ease-in-out infinite",
         }}

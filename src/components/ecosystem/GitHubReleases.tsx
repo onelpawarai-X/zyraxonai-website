@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CommentSection } from "./CommentSection";
 import { RatingStars } from "./RatingStars";
 import { LikeButton } from "./LikeButton";
@@ -119,7 +119,7 @@ function launchZyraxon(url: string): void {
 function RenderBody({ body }: { body: string | null }) {
   if (!body)
     return (
-      <p style={{ color: "#8b949e", fontSize: 13.5, fontStyle: "italic" }}>
+      <p style={{ color: "#6b7280", fontSize: 13.5, fontStyle: "italic" }}>
         No release notes provided.
       </p>
     );
@@ -132,7 +132,7 @@ function RenderBody({ body }: { body: string | null }) {
         gap: 10,
         fontSize: 13.5,
         lineHeight: 1.6,
-        color: "#c9d1d9",
+        color: "#1f2937",
         whiteSpace: "pre-wrap",
       }}
     >
@@ -146,16 +146,16 @@ function RenderBody({ body }: { body: string | null }) {
 }
 
 const StarIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 16 16" fill="#e3b341" style={{ flexShrink: 0 }}>
+  <svg width="12" height="12" viewBox="0 0 16 16" fill="#f59e0b" style={{ flexShrink: 0 }}>
     <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z" />
   </svg>
 );
-const DownloadIcon = ({ size = 13, color = "#58a6ff" }: { size?: number; color?: string }) => (
+const DownloadIcon = ({ size = 13, color = "#6366f1" }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill={color} style={{ flexShrink: 0 }}>
     <path d="M8 1a.75.75 0 0 1 .75.75v7.44l2.72-2.72a.75.75 0 0 1 1.06 1.06l-4 4a.75.75 0 0 1-1.06 0l-4-4a.75.75 0 1 1 1.06-1.06l2.72 2.72V1.75A.75.75 0 0 1 8 1zm-4.75 12.5a.75.75 0 0 0 0 1.5h9.5a.75.75 0 0 0 0-1.5h-9.5z" />
   </svg>
 );
-const GitIcon = ({ size = 13, color = "#8b949e" }: { size?: number; color?: string }) => (
+const GitIcon = ({ size = 13, color = "#6b7280" }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill={color} style={{ flexShrink: 0 }}>
     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
   </svg>
@@ -196,8 +196,8 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
     <div
       onClick={() => onOpen(r)}
       style={{
-        background: "linear-gradient(160deg, rgba(22,27,34,0.95), rgba(13,17,23,0.9))",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "linear-gradient(160deg, rgba(249,250,251,0.95), rgba(255,255,255,0.9))",
+        border: "1px solid rgba(0,0,0,0.06)",
         borderRadius: 14,
         padding: "16px 18px",
         display: "flex",
@@ -209,10 +209,10 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "rgba(240,136,62,0.55)";
         e.currentTarget.style.transform = "translateY(-3px)";
-        e.currentTarget.style.boxShadow = "0 12px 34px rgba(0,0,0,0.4)";
+        e.currentTarget.style.boxShadow = "0 12px 34px rgba(0,0,0,0.06)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "#21262d";
+        e.currentTarget.style.borderColor = "#f3f4f6";
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
@@ -235,14 +235,14 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
                   width: 22,
                   height: 22,
                   borderRadius: "50%",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(0,0,0,0.1)",
                   flexShrink: 0,
                 }}
               />
             )}
             <span style={{ fontSize: 13, fontWeight: 600, color: "#f0f6fc" }}>
               {r.owner ? `${r.owner}/` : ""}
-              <span style={{ color: "#58a6ff" }}>{r.repo}</span>
+              <span style={{ color: "#6366f1" }}>{r.repo}</span>
             </span>
             <span
               style={{
@@ -252,7 +252,7 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
                 borderRadius: 20,
                 background: r.prerelease ? "rgba(240,136,62,0.15)" : "rgba(63,185,80,0.15)",
                 border: `1px solid ${r.prerelease ? "rgba(240,136,62,0.4)" : "rgba(63,185,80,0.4)"}`,
-                color: r.prerelease ? "#f0883e" : "#3fb950",
+                color: r.prerelease ? "#f0883e" : "#10b981",
                 textTransform: "uppercase",
                 letterSpacing: "0.4px",
               }}
@@ -265,7 +265,7 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
               marginTop: 6,
               fontSize: 15,
               fontWeight: 700,
-              color: "#e6edf3",
+              color: "#111827",
               lineHeight: 1.3,
             }}
           >
@@ -275,7 +275,7 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
                 marginLeft: 8,
                 fontSize: 12,
                 fontWeight: 500,
-                color: "#8b949e",
+                color: "#6b7280",
                 fontFamily: "ui-monospace, monospace",
               }}
             >
@@ -283,7 +283,7 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
             </span>
           </div>
         </div>
-        <span style={{ fontSize: 11, color: "#8b949e", whiteSpace: "nowrap", opacity: 0.75 }}>
+        <span style={{ fontSize: 11, color: "#6b7280", whiteSpace: "nowrap", opacity: 0.75 }}>
           Details →
         </span>
       </div>
@@ -291,7 +291,7 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
       <div
         style={{
           fontSize: 12,
-          color: "#8b949e",
+          color: "#6b7280",
           display: "flex",
           alignItems: "center",
           gap: 6,
@@ -301,14 +301,14 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
         {r.stars > 0 && (
           <>
             <StarIcon />
-            <span style={{ fontWeight: 600, color: "#c9d1d9" }}>
+            <span style={{ fontWeight: 600, color: "#1f2937" }}>
               {r.stars >= 1000 ? `${(r.stars / 1000).toFixed(1)}k` : r.stars}
             </span>
           </>
         )}
         {r.language && (
           <>
-            <span style={{ color: "#484f58" }}>·</span>
+            <span style={{ color: "#9ca3af" }}>·</span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               <span
                 style={{
@@ -323,7 +323,7 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
             </span>
           </>
         )}
-        <span style={{ color: "#484f58" }}>·</span>
+        <span style={{ color: "#9ca3af" }}>·</span>
         <span title={fmtDate(r.publishedAt)}>{timeAgo(r.publishedAt)}</span>
       </div>
 
@@ -332,7 +332,7 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
           style={{
             margin: 0,
             fontSize: 12.5,
-            color: "#8b949e",
+            color: "#6b7280",
             lineHeight: 1.5,
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -349,17 +349,17 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
           <span
             style={{
               fontSize: 11,
-              color: "#3fb950",
+              color: "#10b981",
               display: "inline-flex",
               alignItems: "center",
               gap: 5,
             }}
           >
-            <DownloadIcon size={12} color="#3fb950" /> {r.assets.length} asset
+            <DownloadIcon size={12} color="#10b981" /> {r.assets.length} asset
             {r.assets.length > 1 ? "s" : ""}
           </span>
           {r.assets[0] && (
-            <span style={{ fontSize: 11, color: "#8b949e" }}>
+            <span style={{ fontSize: 11, color: "#6b7280" }}>
               {r.assets[0].name} · {fmtSize(r.assets[0].size)}
             </span>
           )}
@@ -385,7 +385,7 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
             fontWeight: 600,
             cursor: "pointer",
             fontFamily: "inherit",
-            boxShadow: "0 4px 16px rgba(137,87,229,0.35)",
+            boxShadow: "0 4px 16px rgba(99,102,241,0.35)",
             transition: "transform 0.12s ease",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
@@ -406,13 +406,13 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
             background: "rgba(46,160,67,0.15)",
             border: "1px solid rgba(46,160,67,0.45)",
             borderRadius: 10,
-            color: copiedSrc ? "#3fb950" : "#3fb950",
+            color: copiedSrc ? "#10b981" : "#10b981",
             fontSize: 12.5,
             cursor: "pointer",
             fontFamily: "inherit",
           }}
         >
-          <GitIcon size={13} color={copiedSrc ? "#3fb950" : "#3fb950"} />
+          <GitIcon size={13} color={copiedSrc ? "#10b981" : "#10b981"} />
           {copiedSrc ? "✓ Clone copied" : "Clone"}
         </button>
         <button
@@ -422,10 +422,10 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
             alignItems: "center",
             gap: 6,
             padding: "7px 12px",
-            background: "rgba(22,27,34,0.8)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(249,250,251,0.8)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: 10,
-            color: copied ? "#3fb950" : "#8b949e",
+            color: copied ? "#10b981" : "#6b7280",
             fontSize: 12.5,
             cursor: "pointer",
             fontFamily: "inherit",
@@ -443,10 +443,10 @@ const ReleaseCard: React.FC<{ r: GitHubReleaseItem; onOpen: (r: GitHubReleaseIte
             alignItems: "center",
             gap: 6,
             padding: "7px 12px",
-            background: "rgba(22,27,34,0.8)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(249,250,251,0.8)",
+            border: "1px solid rgba(0,0,0,0.1)",
             borderRadius: 10,
-            color: "#8b949e",
+            color: "#6b7280",
             fontSize: 12.5,
             textDecoration: "none",
             fontFamily: "inherit",
@@ -525,10 +525,10 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
         style={{
           width: "100%",
           maxWidth: 860,
-          background: "linear-gradient(170deg,#161b22,#0d1117)",
-          border: "1px solid rgba(255,255,255,0.12)",
+          background: "linear-gradient(170deg,#f9fafb,#ffffff)",
+          border: "1px solid rgba(0,0,0,0.1)",
           borderRadius: 18,
-          boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
+          boxShadow: "0 30px 80px rgba(0,0,0,0.04)",
           overflow: "hidden",
           position: "relative",
         }}
@@ -537,8 +537,8 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
         <div
           style={{
             padding: "24px 28px",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
-            background: "radial-gradient(circle at 20% 0%, rgba(137,87,229,0.18), transparent 55%)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            background: "radial-gradient(circle at 20% 0%, rgba(99,102,241,0.18), transparent 55%)",
           }}
         >
           <div
@@ -559,7 +559,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                       width: 32,
                       height: 32,
                       borderRadius: "50%",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      border: "1px solid rgba(0,0,0,0.1)",
                     }}
                   />
                 )}
@@ -575,7 +575,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                   }}
                 >
                   {r.owner ? `${r.owner}/` : ""}
-                  <span style={{ color: "#58a6ff" }}>{r.repo}</span>
+                  <span style={{ color: "#6366f1" }}>{r.repo}</span>
                 </a>
                 <span
                   style={{
@@ -585,7 +585,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                     borderRadius: 20,
                     background: r.prerelease ? "rgba(240,136,62,0.15)" : "rgba(63,185,80,0.15)",
                     border: `1px solid ${r.prerelease ? "rgba(240,136,62,0.4)" : "rgba(63,185,80,0.4)"}`,
-                    color: r.prerelease ? "#f0883e" : "#3fb950",
+                    color: r.prerelease ? "#f0883e" : "#10b981",
                     textTransform: "uppercase",
                     letterSpacing: "0.5px",
                   }}
@@ -610,7 +610,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                   alignItems: "center",
                   gap: 10,
                   flexWrap: "wrap",
-                  color: "#8b949e",
+                  color: "#6b7280",
                   fontSize: 12.5,
                 }}
               >
@@ -649,10 +649,10 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
             <button
               onClick={onClose}
               style={{
-                background: "rgba(22,27,34,0.9)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(249,250,251,0.9)",
+                border: "1px solid rgba(0,0,0,0.1)",
                 borderRadius: 10,
-                color: "#8b949e",
+                color: "#6b7280",
                 width: 34,
                 height: 34,
                 cursor: "pointer",
@@ -661,13 +661,13 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                 flexShrink: 0,
               }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#f0f6fc")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#8b949e")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#6b7280")}
             >
               ✕
             </button>
           </div>
           {r.repoDescription && (
-            <p style={{ margin: "12px 0 0", color: "#8b949e", fontSize: 13.5, lineHeight: 1.5 }}>
+            <p style={{ margin: "12px 0 0", color: "#6b7280", fontSize: 13.5, lineHeight: 1.5 }}>
               {r.repoDescription}
             </p>
           )}
@@ -695,7 +695,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                 fontWeight: 700,
                 cursor: "pointer",
                 fontFamily: "inherit",
-                boxShadow: "0 6px 20px rgba(137,87,229,0.4)",
+                boxShadow: "0 6px 20px rgba(99,102,241,0.4)",
               }}
             >
               <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
@@ -715,7 +715,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                   padding: "10px 18px",
                   border: "none",
                   borderRadius: 11,
-                  background: "linear-gradient(135deg,#238636,#1f7a37)",
+                  background: "linear-gradient(135deg,#047857,#1f7a37)",
                   color: "#fff",
                   fontSize: 13.5,
                   fontWeight: 700,
@@ -738,7 +738,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                   padding: "10px 18px",
                   border: "none",
                   borderRadius: 11,
-                  background: "linear-gradient(135deg,#238636,#1f7a37)",
+                  background: "linear-gradient(135deg,#047857,#1f7a37)",
                   color: "#fff",
                   fontSize: 13.5,
                   fontWeight: 700,
@@ -758,9 +758,9 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                 gap: 7,
                 padding: "10px 14px",
                 borderRadius: 11,
-                background: "rgba(22,27,34,0.9)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: copied ? "#3fb950" : "#8b949e",
+                background: "rgba(249,250,251,0.9)",
+                border: "1px solid rgba(0,0,0,0.1)",
+                color: copied ? "#10b981" : "#6b7280",
                 fontSize: 12.5,
                 cursor: "pointer",
                 fontFamily: "inherit",
@@ -778,13 +778,13 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                 borderRadius: 11,
                 background: "rgba(46,160,67,0.12)",
                 border: "1px solid rgba(46,160,67,0.45)",
-                color: "#3fb950",
+                color: "#10b981",
                 fontSize: 12.5,
                 cursor: "pointer",
                 fontFamily: "inherit",
               }}
             >
-              <GitIcon size={13} color="#3fb950" />{" "}
+              <GitIcon size={13} color="#10b981" />{" "}
               {copiedSrc ? "✓ Clone copied" : "Copy git clone"}
             </button>
           </div>
@@ -792,16 +792,16 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
           {/* Source code download */}
           <div
             style={{
-              background: "rgba(13,17,23,0.7)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.7)",
+              border: "1px solid rgba(0,0,0,0.06)",
               borderRadius: 12,
               padding: 14,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-              <GitIcon size={16} color="#58a6ff" />
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#e6edf3" }}>Source code</span>
-              <span style={{ fontSize: 11.5, color: "#8b949e" }}>
+              <GitIcon size={16} color="#6366f1" />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>Source code</span>
+              <span style={{ fontSize: 11.5, color: "#6b7280" }}>
                 — download this exact release's source or the latest branch
               </span>
             </div>
@@ -818,14 +818,14 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                   borderRadius: 9,
                   background: "rgba(56,139,253,0.15)",
                   border: "1px solid rgba(56,139,253,0.45)",
-                  color: "#58a6ff",
+                  color: "#6366f1",
                   fontSize: 12,
                   textDecoration: "none",
                   fontFamily: "inherit",
                   fontWeight: 600,
                 }}
               >
-                <DownloadIcon size={12} color="#58a6ff" /> Download release source (.zip)
+                <DownloadIcon size={12} color="#6366f1" /> Download release source (.zip)
               </a>
               <a
                 href={r.branchZipUrl}
@@ -837,15 +837,15 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                   gap: 6,
                   padding: "7px 12px",
                   borderRadius: 9,
-                  background: "rgba(22,27,34,0.9)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "#c9d1d9",
+                  background: "rgba(249,250,251,0.9)",
+                  border: "1px solid rgba(0,0,0,0.1)",
+                  color: "#1f2937",
                   fontSize: 12,
                   textDecoration: "none",
                   fontFamily: "inherit",
                 }}
               >
-                <DownloadIcon size={12} color="#c9d1d9" /> Latest {r.defaultBranch || "main"} (.zip)
+                <DownloadIcon size={12} color="#1f2937" /> Latest {r.defaultBranch || "main"} (.zip)
               </a>
               <code
                 style={{
@@ -854,9 +854,9 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                   gap: 6,
                   padding: "7px 12px",
                   borderRadius: 9,
-                  background: "rgba(13,17,23,0.9)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "#8b949e",
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(0,0,0,0.1)",
+                  color: "#6b7280",
                   fontSize: 11.5,
                   fontFamily: "ui-monospace, monospace",
                   overflow: "hidden",
@@ -876,7 +876,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                 margin: "0 0 10px",
                 fontSize: 13,
                 fontWeight: 700,
-                color: "#e6edf3",
+                color: "#111827",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}
@@ -894,7 +894,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                   margin: "0 0 10px",
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#e6edf3",
+                  color: "#111827",
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}
@@ -913,24 +913,24 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                       alignItems: "center",
                       gap: 12,
                       padding: "10px 14px",
-                      background: "rgba(13,17,23,0.8)",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      background: "rgba(255,255,255,0.8)",
+                      border: "1px solid rgba(0,0,0,0.1)",
                       borderRadius: 10,
                       textDecoration: "none",
-                      color: "#c9d1d9",
+                      color: "#1f2937",
                       fontSize: 13,
                       transition: "border-color 0.15s ease, background 0.15s ease",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#58a6ff";
+                      e.currentTarget.style.borderColor = "#6366f1";
                       e.currentTarget.style.background = "rgba(56,139,253,0.1)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#30363d";
-                      e.currentTarget.style.background = "rgba(13,17,23,0.8)";
+                      e.currentTarget.style.borderColor = "#e5e7eb";
+                      e.currentTarget.style.background = "rgba(255,255,255,0.8)";
                     }}
                   >
-                    <DownloadIcon size={15} color="#58a6ff" />
+                    <DownloadIcon size={15} color="#6366f1" />
                     <span
                       style={{
                         flex: 1,
@@ -944,9 +944,9 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                     >
                       {a.name}
                     </span>
-                    <span style={{ fontSize: 11.5, color: "#8b949e" }}>{fmtSize(a.size)}</span>
+                    <span style={{ fontSize: 11.5, color: "#6b7280" }}>{fmtSize(a.size)}</span>
                     {a.downloadCount > 0 && (
-                      <span style={{ fontSize: 11.5, color: "#3fb950" }}>
+                      <span style={{ fontSize: 11.5, color: "#10b981" }}>
                         {a.downloadCount.toLocaleString()}↓
                       </span>
                     )}
@@ -955,7 +955,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
               </div>
             </div>
           ) : (
-            <div style={{ fontSize: 12.5, color: "#484f58" }}>
+            <div style={{ fontSize: 12.5, color: "#9ca3af" }}>
               No binary assets in this release — use the source downloads above.
             </div>
           )}
@@ -966,7 +966,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
               display: "flex",
               gap: 10,
               flexWrap: "wrap",
-              borderTop: "1px solid rgba(255,255,255,0.08)",
+              borderTop: "1px solid rgba(0,0,0,0.06)",
               paddingTop: 16,
               alignItems: "center",
             }}
@@ -981,9 +981,9 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                 gap: 6,
                 padding: "7px 12px",
                 borderRadius: 9,
-                background: "rgba(22,27,34,0.9)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "#8b949e",
+                background: "rgba(249,250,251,0.9)",
+                border: "1px solid rgba(0,0,0,0.1)",
+                color: "#6b7280",
                 fontSize: 12,
                 textDecoration: "none",
                 fontFamily: "inherit",
@@ -1001,9 +1001,9 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
                 gap: 6,
                 padding: "7px 12px",
                 borderRadius: 9,
-                background: "rgba(22,27,34,0.9)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "#8b949e",
+                background: "rgba(249,250,251,0.9)",
+                border: "1px solid rgba(0,0,0,0.1)",
+                color: "#6b7280",
                 fontSize: 12,
                 textDecoration: "none",
                 fontFamily: "inherit",
@@ -1022,13 +1022,13 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
           </div>
 
           {/* Rating */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 16 }}>
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 16 }}>
             <h3
               style={{
                 margin: "0 0 10px",
                 fontSize: 13,
                 fontWeight: 700,
-                color: "#e6edf3",
+                color: "#111827",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}
@@ -1039,13 +1039,13 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
           </div>
 
           {/* Comments */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 16 }}>
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 16 }}>
             <h3
               style={{
                 margin: "0 0 10px",
                 fontSize: 13,
                 fontWeight: 700,
-                color: "#e6edf3",
+                color: "#111827",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}
@@ -1141,7 +1141,7 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
                 left: 12,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "#8b949e",
+                color: "#6b7280",
                 display: "inline-flex",
               }}
             >
@@ -1156,10 +1156,10 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
               style={{
                 width: "100%",
                 padding: "9px 12px 9px 36px",
-                background: "rgba(13,17,23,0.9)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.9)",
+                border: "1px solid rgba(0,0,0,0.1)",
                 borderRadius: 10,
-                color: "#c9d1d9",
+                color: "#1f2937",
                 fontSize: 14,
                 fontFamily: "inherit",
                 outline: "none",
@@ -1170,12 +1170,12 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(240,136,62,0.15)";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#30363d";
+                e.currentTarget.style.borderColor = "#e5e7eb";
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
           </div>
-          <span style={{ fontSize: 12.5, color: "#8b949e" }}>
+          <span style={{ fontSize: 12.5, color: "#6b7280" }}>
             {total.toLocaleString()} release{total !== 1 ? "s" : ""} found
           </span>
         </div>
@@ -1183,7 +1183,7 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
 
       {!compact && (
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12, color: "#484f58" }}>Trending:</span>
+          <span style={{ fontSize: 12, color: "#9ca3af" }}>Trending:</span>
           {SUGGESTIONS.map((s) => (
             <button
               key={s}
@@ -1194,9 +1194,9 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
                 fontSize: 12,
                 cursor: "pointer",
                 fontFamily: "inherit",
-                background: query === s ? "rgba(240,136,62,0.18)" : "rgba(22,27,34,0.9)",
-                border: `1px solid ${query === s ? "rgba(240,136,62,0.55)" : "#30363d"}`,
-                color: query === s ? "#f0883e" : "#8b949e",
+                background: query === s ? "rgba(240,136,62,0.18)" : "rgba(249,250,251,0.9)",
+                border: `1px solid ${query === s ? "rgba(240,136,62,0.55)" : "#e5e7eb"}`,
+                color: query === s ? "#f0883e" : "#6b7280",
                 transition: "all 0.15s ease",
               }}
               onMouseEnter={(e) => {
@@ -1207,8 +1207,8 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
               }}
               onMouseLeave={(e) => {
                 if (query !== s) {
-                  e.currentTarget.style.borderColor = "#30363d";
-                  e.currentTarget.style.color = "#8b949e";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.color = "#6b7280";
                 }
               }}
             >
@@ -1222,10 +1222,10 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
         <div
           style={{
             padding: 12,
-            border: "1px solid #f8514955",
-            background: "#f8514915",
+            border: "1px solid #ef444455",
+            background: "#ef444415",
             borderRadius: 10,
-            color: "#f85149",
+            color: "#ef4444",
             fontSize: 13,
           }}
         >
@@ -1247,8 +1247,8 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
               style={{
                 height: 210,
                 borderRadius: 14,
-                background: "rgba(22,27,34,0.7)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(249,250,251,0.7)",
+                border: "1px solid rgba(0,0,0,0.06)",
                 opacity: 0.5,
                 animation: `zxrPulse 1.4s ease-in-out ${i * 0.12}s infinite`,
               }}
@@ -1260,10 +1260,10 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
           style={{
             textAlign: "center",
             padding: "48px 20px",
-            background: "rgba(22,27,34,0.7)",
+            background: "rgba(249,250,251,0.7)",
             borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.08)",
-            color: "#8b949e",
+            border: "1px solid rgba(0,0,0,0.06)",
+            color: "#6b7280",
             fontSize: 14,
           }}
         >
@@ -1298,9 +1298,9 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
               gap: 8,
               padding: "10px 24px",
               borderRadius: 11,
-              background: "rgba(22,27,34,0.9)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              color: "#c9d1d9",
+              background: "rgba(249,250,251,0.9)",
+              border: "1px solid rgba(0,0,0,0.1)",
+              color: "#1f2937",
               fontSize: 13,
               cursor: "pointer",
               fontFamily: "inherit",
@@ -1308,11 +1308,11 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "#8957e5";
-              e.currentTarget.style.background = "rgba(137,87,229,0.12)";
+              e.currentTarget.style.background = "rgba(99,102,241,0.12)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#30363d";
-              e.currentTarget.style.background = "rgba(22,27,34,0.9)";
+              e.currentTarget.style.borderColor = "#e5e7eb";
+              e.currentTarget.style.background = "rgba(249,250,251,0.9)";
             }}
           >
             Load more releases ({Math.min(depth + 10, 100)}/100 repos depth)
@@ -1321,7 +1321,7 @@ export const GitHubReleases: React.FC<GitHubReleasesProps> = ({ compact = false 
       )}
 
       {compact && items.length > 4 && (
-        <div style={{ fontSize: 12.5, color: "#58a6ff", textAlign: "center" }}>
+        <div style={{ fontSize: 12.5, color: "#6366f1", textAlign: "center" }}>
           Showing the latest {Math.min(4, items.length)} of {total} releases — browse all to search,
           download & clone.
         </div>
