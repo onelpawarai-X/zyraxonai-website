@@ -1153,5 +1153,25 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 })();
 </script>
 
+<script>
+(function(){
+  var INTERNAL_ROUTES=['/docs','/nebula','/bludar','/ecosystem','/download'];
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a');
+    if(!a)return;
+    var href=a.getAttribute('href');
+    if(!href)return;
+    if(INTERNAL_ROUTES.some(function(r){return href===r||href.startsWith(r+'/');})){
+      e.preventDefault();
+      if(window.parent&&window.parent!==window){
+        window.parent.postMessage({type:'zyraxon:navigate',path:href},'*');
+      }else{
+        window.location.href=href;
+      }
+    }
+  });
+})();
+</script>
+
 </body>
 </html>

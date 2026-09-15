@@ -113,6 +113,9 @@ function Index() {
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if ((e.data as any)?.type === "zyraxon:nebula") setNebula(true);
+      if ((e.data as any)?.type === "zyraxon:navigate" && (e.data as any).path) {
+        window.top.location.href = (e.data as any).path;
+      }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
