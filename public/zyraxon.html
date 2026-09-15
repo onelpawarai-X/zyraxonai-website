@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -281,27 +281,18 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
 @keyframes scanline{0%{top:-2px}100%{top:100%}}
 .scanline{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,.08),transparent);pointer-events:none;z-index:1}
 
-/* RED AURA PULSE — triggers every 20 seconds */
-@keyframes redAuraPulse{
-  0%{box-shadow:0 0 0 0 rgba(220,38,38,0)}
-  5%{box-shadow:0 0 60px 20px rgba(220,38,38,0.15),inset 0 0 60px rgba(220,38,38,0.05)}
-  15%{box-shadow:0 0 80px 30px rgba(220,38,38,0.2),inset 0 0 80px rgba(220,38,38,0.08)}
-  50%{box-shadow:0 0 60px 20px rgba(220,38,38,0.15),inset 0 0 60px rgba(220,38,38,0.05)}
-  100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}
-}
-body.red-aura-active{
-  animation:redAuraPulse 3s ease-in-out;
-}
-body.red-aura-active .hero{
-  text-shadow:0 0 20px rgba(220,38,38,0.15);
-}
-body.red-aura-active .btn-primary{
-  box-shadow:0 0 30px rgba(220,38,38,0.3),0 2px 8px rgba(220,38,38,0.2);
-}
-body.red-aura-active .logo-mark svg{
-  stroke:#dc2626;
-  filter:drop-shadow(0 0 8px rgba(220,38,38,0.5));
-}
+/* HERO WORD-BY-WORD ANIMATION */
+.hero-word{display:inline-block;opacity:0;transform:translateY(30px);animation:heroWordIn .5s ease forwards}
+.hero-word:nth-child(odd){transform:translateX(-20px) translateY(0);animation:heroWordFromLeft .5s ease forwards}
+.hero-word:nth-child(even){transform:translateX(20px) translateY(0);animation:heroWordFromRight .5s ease forwards}
+.hero-word:nth-child(3n){transform:translateY(20px);animation:heroWordFromBottom .5s ease forwards}
+@keyframes heroWordIn{to{opacity:1;transform:translateY(0) translateX(0)}}
+@keyframes heroWordFromLeft{to{opacity:1;transform:translateX(0)}}
+@keyframes heroWordFromRight{to{opacity:1;transform:translateX(0)}}
+@keyframes heroWordFromBottom{to{opacity:1;transform:translateY(0)}}
+
+.hero-desc-word{display:inline-block;opacity:0;transform:translateY(15px);animation:descWordIn .4s ease forwards}
+@keyframes descWordIn{to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -343,8 +334,8 @@ body.red-aura-active .logo-mark svg{
   <div class="scanline"></div>
   <div class="container">
     <div class="badge" id="heroBadge"><span class="badge-dot"></span> <span id="heroBadgeText">Loading latest release...</span></div>
-    <h1>ZYRAXON<br><span style="font-weight:400;font-size:.55em;color:var(--text-secondary);letter-spacing:0">All in One. Anything. Nothing is Impossible.</span></h1>
-    <p class="sub">A chatbot talks. ZYRAXON acts. Desktop AI agent that reads your files, writes your code, runs your commands, builds your projects, deploys your apps, and evolves itself. 9 agent modes, 552+ tools, eternal memory, self-healing and always-on screen vision.</p>
+    <h1>ZYRAXON<br><span style="font-weight:400;font-size:.55em;color:var(--text-secondary);letter-spacing:0" class="hero-sub-animated">Everything is possible with our AI if you guide it right.</span></h1>
+    <p class="sub hero-desc-animated">A chatbot talks. ZYRAXON acts. Desktop AI agent that reads your files, writes your code, runs your commands, builds your projects, deploys your apps, and evolves itself. 9 agent modes, 552+ tools, eternal memory, self-healing and always-on screen vision.</p>
     <div class="hero-cta">
       <a class="btn btn-primary" id="heroDownload" href="#download">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0M10.949 1.949L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.851"/></svg>
@@ -448,7 +439,7 @@ body.red-aura-active .logo-mark svg{
       </div>
       <div class="card reveal">
         <div class="card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
-        <h3>136+ Tools</h3>
+        <h3>552+ Tools</h3>
         <p>124 MCP tools + 8 ULTRA tools + 4 vision tools. Shell, files, memory, browser, deploy, security sweep, refactor, docs -- and it installs new ones itself.</p>
       </div>
       <div class="card reveal">
@@ -595,7 +586,7 @@ body.red-aura-active .logo-mark svg{
           <tr><td>Eternal Memory (50k+)</td><td class="zyra-col check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
           <tr><td>Screen Vision</td><td class="zyra-col check">&#10003;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td><td class="cross">&#10007;</td></tr>
           <tr><td>Self-Healing</td><td class="zyra-col check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
-          <tr><td>136+ Tools</td><td class="zyra-col check">&#10003;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td><td class="cross">&#10007;</td></tr>
+          <tr><td>552+ Tools</td><td class="zyra-col check">&#10003;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td><td class="cross">&#10007;</td></tr>
           <tr><td>Free &amp; Source-Available</td><td class="zyra-col check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
           <tr><td>9 Agent Modes</td><td class="zyra-col check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
           <tr><td>Self-Evolving</td><td class="zyra-col check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
@@ -942,6 +933,40 @@ body.red-aura-active .logo-mark svg{
 /* LOADER */
 window.addEventListener('load',function(){setTimeout(function(){document.getElementById('loader').classList.add('done')},800)});
 
+// Word-by-word hero animation
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    var sub=document.querySelector('.hero-sub-animated');
+    if(sub){
+      var text=sub.textContent;
+      var words=text.split(' ');
+      sub.innerHTML='';
+      words.forEach(function(w,i){
+        var span=document.createElement('span');
+        span.className='hero-word';
+        span.textContent=w;
+        span.style.animationDelay=(i*0.08)+'s';
+        sub.appendChild(span);
+        if(i<words.length-1){sub.appendChild(document.createTextNode(' '));}
+      });
+    }
+    var desc=document.querySelector('.hero-desc-animated');
+    if(desc){
+      var text2=desc.textContent;
+      var words2=text2.split(' ');
+      desc.innerHTML='';
+      words2.forEach(function(w,i){
+        var span=document.createElement('span');
+        span.className='hero-desc-word';
+        span.textContent=w;
+        span.style.animationDelay=(0.5+i*0.03)+'s';
+        desc.appendChild(span);
+        if(i<words2.length-1){desc.appendChild(document.createTextNode(' '));}
+      });
+    }
+  },1000);
+});
+
 /* TERMINAL TYPING */
 const lines=[
   {t:'zyraxon> ',cls:'term-prompt',after:'build a react dashboard',afterCls:'term-user'},
@@ -1125,16 +1150,6 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
   else if(userOS==='linux'&&linux){heroDl.href=osRoutes[userOS];heroDlText.textContent='Download for '+osNames[userOS]+' -- '+linux.release.tag_name;heroFound=true;}
   else if(userOS==='android'&&apk){heroDl.href=osRoutes[userOS];heroDlText.textContent='Download for '+osNames[userOS]+' -- '+apk.release.tag_name;heroFound=true;}
   if(!heroFound){heroDl.href='#download';heroDlText.textContent='See downloads';}
-})();
-</script>
-
-<!-- RED AURA — triggers every 20 seconds -->
-<script>
-(function(){
-  setInterval(function(){
-    document.body.classList.add('red-aura-active');
-    setTimeout(function(){ document.body.classList.remove('red-aura-active'); }, 3000);
-  }, 20000);
 })();
 </script>
 
