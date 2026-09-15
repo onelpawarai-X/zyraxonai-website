@@ -89,9 +89,26 @@ function telemetry() {
   };
 }
 
+function verifyPassword(password: string) {
+  if (password === OWNER_PASSWORD) return { success: true, token: `nebula_${OWNER_PASSWORD}` };
+  const expected = process.env["NEBULA_ACCESS_KEY"];
+  if (expected && password === expected) return { success: true, token: `nebula_${expected}` };
+  return { success: false };
+}
+
 async function handleGet(request: Request) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action") || "telemetry";
+
+  if (action === "verify") {
+    const password = url.searchParams.get("password") || "";
+    const result = verifyPassword(password);
+    return Response.json(result, { headers: HEADERS });
+  }
+
+  if (!authed(request))
+    return Response.json({ error: "Unauthorized" }, { status: 401, headers: HEADERS });
+
   const repo = pickRepo(url.searchParams.get("repo"));
   const path = (url.searchParams.get("path") || "").replace(/^\/+/, "");
 
