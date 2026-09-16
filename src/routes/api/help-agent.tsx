@@ -2,30 +2,41 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type, authorization",
+  "Access-Control-Allow-Headers": "content-type, authorization, x-session-id",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 };
 
 const ZEN_BASE = "https://opencode.ai/zen/v1";
 const DEFAULT_ZEN_MODEL = "big-pickle";
+const FREE_MODEL_FALLBACKS = ["big-pickle", "deepseek-v4-flash-free", "glm-5-free"];
+const OPENCODE_FETCH_TIMEOUT_MS = 10 * 60 * 1000;
 
-let serverSessionId: string | null = null;
-function getSessionId(): string {
-  if (!serverSessionId) serverSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  return serverSessionId;
+let openCodeServerSessionId: string | null = null;
+function getOpenCodeSessionId(): string {
+  if (!openCodeServerSessionId) {
+    openCodeServerSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+  return openCodeServerSessionId;
 }
 
-function getOpenCodeHeaders(): Record<string, string> {
-  return {
+function getOpenCodeHeaders(useAuth = true): Record<string, string> {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "User-Agent": "OpenCode/1.0.0",
-    "x-session-id": getSessionId(),
+    "x-session-id": getOpenCodeSessionId(),
   };
+  if (useAuth) {
+    const key = process.env.OPENCODE_API_KEY || "";
+    if (key && !key.includes("placeholder") && key.trim()) {
+      headers["Authorization"] = `Bearer ${key.trim()}`;
+    }
+  }
+  return headers;
 }
 
 const HELP_SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate. You can also have casual conversations.
 
-CRITICAL RULE: ALWAYS respond in the SAME LANGUAGE the user writes in. If they write in Bengali, respond in Bengali. If they write in English, respond in English. If they write in Hindi, respond in Hindi. Match their language exactly.
+CRITICAL RULE: ALWAYS respond in the SAME LANGUAGE the user writes in. If they write in Bengali, respond in Bengali. If they write in English, respond in English. Match their language exactly.
 
 PRODUCTS:
 1. ZYRAXON Agent — Desktop AI (Win/Mac/Linux), 552+ tools, 9 modes. Download: /download/zyraxon-agent | GitHub: github.com/onelpawarai-X/ZYRAXON-AI
@@ -34,14 +45,12 @@ PRODUCTS:
 
 LICENSE: ZSL — ZSL-X v1.0.0 (2026-2028), MEKRA-X (2028+). Page: /zsl | GitHub: github.com/onelpawarai-X/ZSL
 PAGES: / (landing), /ecosystem (marketplace), /publish, /releases, /docs (18+ pages), /nebula (password: ZYRAXON), /bludar, /zsl
-COMMUNITY: Discord (discord.gg/h8mHvf45g), YouTube (@ZYRAXONAI), Google Group
+COMMUNITY: Discord (discord.gg/h8mHvf45g), YouTube (@ZYRAXONAI)
 FOUNDER: OneL Pawar — onelpawarai.lovable.app
 LICENSE PORTAL: zyraxonai-license.lovable.app
 GITHUB ORG: github.com/onelpawarai-X
 
 RULES: Respond in user's exact language. Be concise (2-4 sentences). Never make up URLs. Casual conversations OK.`;
-
-const FREE_MODEL_FALLBACKS = ["big-pickle", "deepseek-v4-flash-free", "glm-5-free"];
 
 function getFallback(message: string): string {
   const l = message.toLowerCase();
@@ -58,57 +67,83 @@ function getFallback(message: string): string {
   return "I'm here to help! Ask about our products, downloads, ZSL License, or anything about ZYRAXON.";
 }
 
-async function callZen(
+async function parseSSEStream(res: Response): Promise<string> {
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
+  let streamBuffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    streamBuffer += decoder.decode(value, { stream: true });
+    const lines = streamBuffer.split("\n");
+    streamBuffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("data: ")) {
+        const dataPart = trimmed.slice(6);
+        if (dataPart === "[DONE]") break;
+        try {
+          const parsed = JSON.parse(dataPart);
+          const delta = parsed.choices?.[0]?.delta;
+          if (delta?.content) {
+            fullText += delta.content;
+          }
+        } catch {}
+      }
+    }
+  }
+
+  return fullText.length > 0 ? fullText : null;
+}
+
+async function streamFromZen(
   model: string,
   messages: { role: string; content: string }[],
 ): Promise<string | null> {
   try {
-    const res = await fetch(`${ZEN_BASE}/chat/completions`, {
+    let useAuth = true;
+    let headers = getOpenCodeHeaders(useAuth);
+
+    let openCodeRes = await fetch(`${ZEN_BASE}/chat/completions`, {
       method: "POST",
-      headers: getOpenCodeHeaders(),
+      headers,
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: 512,
         stream: true,
       }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(OPENCODE_FETCH_TIMEOUT_MS),
     });
 
-    if (!res.ok) return null;
-    if (!res.body) return null;
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = "";
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith("data: ")) {
-          const dataPart = trimmed.slice(6);
-          if (dataPart === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(dataPart);
-            const delta = parsed.choices?.[0]?.delta;
-            if (delta?.content) {
-              fullText += delta.content;
-            }
-          } catch {}
-        }
-      }
+    // If 401, retry without auth (free tier)
+    if (openCodeRes.status === 401 && useAuth) {
+      useAuth = false;
+      headers = getOpenCodeHeaders(false);
+      openCodeRes = await fetch(`${ZEN_BASE}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model,
+          messages,
+          stream: true,
+        }),
+        signal: AbortSignal.timeout(OPENCODE_FETCH_TIMEOUT_MS),
+      });
     }
 
-    return fullText.length > 0 ? fullText : null;
-  } catch {
+    if (!openCodeRes.ok) {
+      console.warn(`[help-agent] ${model} returned ${openCodeRes.status}`);
+      return null;
+    }
+
+    if (!openCodeRes.body) return null;
+    return await parseSSEStream(openCodeRes);
+  } catch (err: any) {
+    console.warn(`[help-agent] ${model} error:`, err?.message);
     return null;
   }
 }
@@ -144,27 +179,27 @@ export const Route = createFileRoute("/api/help-agent")({
           const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
           const userContent = `${historyBlock}${message}`;
 
-          const modelsToTry = requestedModel
-            ? [requestedModel, ...FREE_MODEL_FALLBACKS.filter((m) => m !== requestedModel)]
-            : FREE_MODEL_FALLBACKS;
+          const targetModel = requestedModel || DEFAULT_ZEN_MODEL;
+          const modelsToTry = [targetModel, ...FREE_MODEL_FALLBACKS.filter((m) => m !== targetModel)];
 
           const messages = [
             { role: "system", content: HELP_SYSTEM_PROMPT },
             { role: "user", content: userContent },
           ];
 
-          for (const model of modelsToTry) {
-            const reply = await callZen(model, messages);
+          for (const tryModel of modelsToTry) {
+            console.log(`[help-agent] Trying model: ${tryModel}`);
+            const reply = await streamFromZen(tryModel, messages);
             if (reply) {
+              console.log(`[help-agent] Success on ${tryModel}, length: ${reply.length}`);
               return new Response(reply, {
-                headers: {
-                  ...CORS,
-                  "Content-Type": "text/plain; charset=utf-8",
-                },
+                headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
               });
             }
+            console.warn(`[help-agent] ${tryModel} returned null, trying next...`);
           }
 
+          console.warn(`[help-agent] All models failed, returning fallback`);
           return new Response(getFallback(message), {
             headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
           });
