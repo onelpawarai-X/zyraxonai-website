@@ -31,6 +31,7 @@ import { Marketplace } from "../../components/ecosystem/Marketplace";
 import { ZyraxonMarketplace } from "../../components/ecosystem/ZyraxonMarketplace";
 import GitHubReleases from "../../components/ecosystem/GitHubReleases";
 import { PublishModal } from "../../components/ecosystem/PublishModal";
+import { PublishedApps } from "../../components/ecosystem/PublishedApps";
 import { MCPToolsPage } from "../../components/ecosystem/MCPToolsPage";
 
 export const Route = createFileRoute("/ecosystem/")({
@@ -252,6 +253,8 @@ export default function EcosystemPage() {
         "my-favorites": "My Favorites",
         explore: "Explore",
         home: "Home",
+        publish: "Publish",
+        published: "Published Apps",
       } as Record<string, string>
     )[view] || "Explore";
 
@@ -374,6 +377,18 @@ export default function EcosystemPage() {
                     ))}
                   </div>
                 </section>
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <h2 style={{ ...sectionTitle, marginBottom: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 9, height: 9, borderRadius: 3, background: "linear-gradient(135deg,#059669,#10b981)", display: "inline-block", boxShadow: "0 0 12px rgba(16,185,129,0.8)" }} />
+                      Published Apps
+                    </h2>
+                    <button onClick={() => navigateTo("published")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(20px)", color: "#059669", cursor: "pointer", fontSize: 13 }}>
+                      Browse all →
+                    </button>
+                  </div>
+                  <PublishedApps compact />
+                </section>
                 {featuredItems.length > 0 && (
                   <section>
                     <h2 style={sectionTitle}>Featured</h2>
@@ -381,96 +396,24 @@ export default function EcosystemPage() {
                   </section>
                 )}
                 <section>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: 12,
-                    }}
-                  >
-                    <h2
-                      style={{
-                        ...sectionTitle,
-                        marginBottom: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 9,
-                          height: 9,
-                          borderRadius: 3,
-                          background: "linear-gradient(135deg,#8957e5,#58a6ff)",
-                          display: "inline-block",
-                          boxShadow: "0 0 12px rgba(137,87,229,0.8)",
-                        }}
-                      />
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <h2 style={{ ...sectionTitle, marginBottom: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 9, height: 9, borderRadius: 3, background: "linear-gradient(135deg,#8957e5,#58a6ff)", display: "inline-block", boxShadow: "0 0 12px rgba(137,87,229,0.8)" }} />
                       ZYRAXON AI Extensions
                     </h2>
-                    <button
-                      onClick={() => navigateTo("vscode")}
-                      style={{
-                        padding: "6px 14px",
-                        borderRadius: 8,
-                        border: "1px solid rgba(0,0,0,0.1)",
-                        background: "rgba(255,255,255,0.7)",
-                        backdropFilter: "blur(20px)",
-                        color: "#6366f1",
-                        cursor: "pointer",
-                        fontSize: 13,
-                      }}
-                    >
+                    <button onClick={() => navigateTo("vscode")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(20px)", color: "#6366f1", cursor: "pointer", fontSize: 13 }}>
                       Browse all →
                     </button>
                   </div>
                   <ZyraxonMarketplace />
                 </section>
                 <section>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: 12,
-                    }}
-                  >
-                    <h2
-                      style={{
-                        ...sectionTitle,
-                        marginBottom: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 9,
-                          height: 9,
-                          borderRadius: 3,
-                          background: "linear-gradient(135deg,#f0883e,#da3633)",
-                          display: "inline-block",
-                          boxShadow: "0 0 12px rgba(240,136,62,0.8)",
-                        }}
-                      />
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <h2 style={{ ...sectionTitle, marginBottom: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 9, height: 9, borderRadius: 3, background: "linear-gradient(135deg,#f0883e,#da3633)", display: "inline-block", boxShadow: "0 0 12px rgba(240,136,62,0.8)" }} />
                       GitHub Releases
                     </h2>
-                    <button
-                      onClick={() => navigateTo("github")}
-                      style={{
-                        padding: "6px 14px",
-                        borderRadius: 8,
-                        border: "1px solid rgba(0,0,0,0.1)",
-                        background: "rgba(255,255,255,0.7)",
-                        backdropFilter: "blur(20px)",
-                        color: "#6366f1",
-                        cursor: "pointer",
-                        fontSize: 13,
-                      }}
-                    >
+                    <button onClick={() => navigateTo("github")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(20px)", color: "#6366f1", cursor: "pointer", fontSize: 13 }}>
                       Browse all →
                     </button>
                   </div>
@@ -543,6 +486,45 @@ export default function EcosystemPage() {
               {/* ── GitHub Releases ── */}
               <div style={{ display: view === "github" ? "block" : "none" }}>
                 <GitHubReleases />
+              </div>
+              {/* ── Published Apps ── */}
+              <div style={{ display: view === "published" ? "block" : "none" }}>
+                <div style={{ marginBottom: 16 }}>
+                  <h2 style={{ ...sectionTitle, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ width: 9, height: 9, borderRadius: 3, background: "linear-gradient(135deg,#059669,#10b981)", display: "inline-block", boxShadow: "0 0 12px rgba(16,185,129,0.8)" }} />
+                    Published Apps
+                  </h2>
+                  <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>Projects published via the ZYRAXON Ecosystem Hub</p>
+                </div>
+                <PublishedApps />
+              </div>
+              {/* ── Publish ── */}
+              <div style={{ display: view === "publish" ? "block" : "none" }}>
+                <div style={{ marginBottom: 16 }}>
+                  <h2 style={{ ...sectionTitle, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ width: 9, height: 9, borderRadius: 3, background: "linear-gradient(135deg,#059669,#10b981)", display: "inline-block", boxShadow: "0 0 12px rgba(16,185,129,0.8)" }} />
+                    Publish Your Project
+                  </h2>
+                  <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 16px" }}>
+                    Send your project to the ZYRAXON Ecosystem Hub. Auto-scanned, then published live.
+                  </p>
+                </div>
+                <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, background: "white", padding: 24, marginBottom: 24 }}>
+                  <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1e40af", margin: "0 0 8px" }}>How it works</h3>
+                    <ol style={{ fontSize: 13, color: "#1e3a5f", margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
+                      <li>Click <strong>Publish</strong> and enter your agent API key</li>
+                      <li>Fill in project details — name, description, category, etc.</li>
+                      <li>The system auto-scans your code for security findings</li>
+                      <li>No critical findings = goes live instantly on the marketplace</li>
+                      <li>Connect your GitHub to track stats and publish count</li>
+                    </ol>
+                  </div>
+                  <button onClick={() => setShowPublish(true)}
+                    style={{ padding: "10px 24px", borderRadius: 8, background: "linear-gradient(135deg, #059669, #10b981)", border: "none", color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 14px rgba(16,185,129,0.3)" }}>
+                    Publish Now
+                  </button>
+                </div>
               </div>
               {/* ── MCP Tools ── */}
               <div style={{ display: view === "mcp" ? "block" : "none" }}>

@@ -145,7 +145,9 @@ export type ViewMode =
   | "vscode"
   | "github"
   | "mcp"
-  | "builder";
+  | "builder"
+  | "publish"
+  | "published";
 
 export interface User {
   id: string;

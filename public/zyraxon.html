@@ -354,6 +354,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
       <a href="#compare">Compare</a>
       <a href="#download">Download</a>
       <a href="/ecosystem">Ecosystem</a>
+      <a href="/publish">Publish</a>
       <a href="/releases">Releases</a>
       <a href="/docs">Documentation</a>
       <a href="/bludar" class="accent">AI Bludar</a>
@@ -1292,7 +1293,7 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 
 <script>
 (function(){
-  var INTERNAL_ROUTES=['/docs','/nebula','/bludar','/ecosystem','/download','/releases'];
+  var INTERNAL_ROUTES=['/docs','/nebula','/bludar','/ecosystem','/download','/releases','/publish'];
   document.addEventListener('click',function(e){
     var a=e.target.closest('a');
     if(!a)return;

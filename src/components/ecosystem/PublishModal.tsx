@@ -1,1004 +1,264 @@
-﻿import { useState, useRef, useEffect } from "react";
-import { EcosystemItem, Category } from "../../lib/ecosystem-types";
-import { getAuthState } from "../../lib/ecosystem-auth";
-import { publishItem, formatFileSize } from "../../lib/ecosystem-extras";
+﻿import { useState, useEffect } from "react";
+
+const ENDPOINT = "https://agent-ecosystem-hub.lovable.app/api/public/v1";
 
 interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPublished?: (item: EcosystemItem) => void;
-  aiGenerated?: Partial<EcosystemItem>;
+  onPublished?: () => void;
 }
 
-const CATEGORIES: { id: Category; label: string; accept: string }[] = [
-  { id: "ai-bots", label: "AI Bots", accept: ".py,.js,.ts,.json,.yaml,.yml,.zip" },
-  { id: "plugins", label: "Plugins", accept: ".js,.ts,.jsx,.tsx,.json,.zip" },
-  { id: "website-templates", label: "Templates", accept: ".html,.css,.js,.ts,.jsx,.tsx,.zip" },
-  { id: "themes", label: "Themes", accept: ".css,.scss,.less,.json,.zip" },
-  { id: "components", label: "Components", accept: ".jsx,.tsx,.vue,.svelte,.zip" },
-  { id: "desktop-apps", label: "Desktop Apps", accept: ".exe,.dmg,.AppImage,.deb,.zip,.msi" },
-  { id: "mobile-apps", label: "Mobile Apps", accept: ".apk,.ipa,.aab,.zip" },
-  { id: "ai-models", label: "AI Models", accept: ".bin,.gguf,.onnx,.pt,.pth,.zip" },
-  { id: "tools", label: "Dev Tools", accept: ".exe,.dmg,.AppImage,.deb,.zip,.js,.ts" },
-  { id: "cli-tools", label: "CLI Tools", accept: ".js,.ts,.py,.go,.rs,.zip" },
-  { id: "sdks", label: "SDKs", accept: ".js,.ts,.py,.go,.rs,.zip" },
-  { id: "fonts", label: "Fonts", accept: ".ttf,.otf,.woff,.woff2,.zip" },
-  { id: "iso-images", label: "ISO Images", accept: ".iso,.img,.zip" },
-  { id: "devops", label: "DevOps", accept: ".yml,.yaml,.tf,.hcl,.dockerfile,.zip" },
-  { id: "pdfs", label: "PDFs", accept: ".pdf" },
-  { id: "books", label: "Books", accept: ".pdf,.epub,.mobi,.zip" },
-  { id: "prompts", label: "AI Prompts", accept: ".txt,.md,.json,.yaml,.zip" },
-  { id: "datasets", label: "Datasets", accept: ".csv,.json,.jsonl,.parquet,.zip" },
-  { id: "code-snippets", label: "Snippets", accept: ".js,.ts,.py,.go,.rs,.java,.zip" },
-  { id: "apis", label: "APIs", accept: ".json,.yaml,.yml,.openapi,.zip" },
-  { id: "browser-extensions", label: "Extensions", accept: ".crx,.xpi,.zip" },
-  { id: "landing-pages", label: "Landing Pages", accept: ".html,.css,.js,.zip" },
-  { id: "ui-kits", label: "UI Kits", accept: ".fig,.sketch,.xd,.zip" },
-  { id: "icons", label: "Icons", accept: ".svg,.png,.zip" },
-  { id: "startkits", label: "Starter Kits", accept: ".zip,.tar.gz" },
-  { id: "workflows", label: "Workflows", accept: ".json,.yaml,.yml,.zip" },
-  { id: "types", label: "Types", accept: ".d.ts,.ts,.json,.zip" },
-  { id: "website-games", label: "Website Games", accept: ".html,.js,.css,.zip,.json" },
+interface PublishResult {
+  slug: string;
+  status: string;
+  scan?: { score: number; blocked: boolean; findings: string[] };
+  url: string;
+}
+
+const CATEGORIES = [
+  "website", "plugin", "template", "theme", "bot", "tool",
+  "cli", "sdk", "model", "app", "other",
 ];
 
-const LICENSES = ["MIT", "BSL-1.1", "Apache-2.0", "GPL-3.0", "BSD-3-Clause", "Unlicense", "None"];
-
-const TYPE_MAP: Record<string, string> = {
-  "ai-bots": "bot",
-  plugins: "plugin",
-  "website-templates": "template",
-  themes: "theme",
-  components: "component",
-  "desktop-apps": "desktop-app",
-  "mobile-apps": "app",
-  "ai-models": "model",
-  tools: "tool",
-  "cli-tools": "cli",
-  sdks: "sdk",
-  fonts: "font",
-  "iso-images": "iso",
-  devops: "devops",
-  pdfs: "pdf",
-  books: "book",
-  prompts: "prompt",
-  datasets: "dataset",
-  "code-snippets": "snippet",
-  apis: "api",
-  "browser-extensions": "extension",
-  "landing-pages": "landing-page",
-  "ui-kits": "ui-kit",
-  icons: "icon",
-  startkits: "startkit",
-  workflows: "workflow",
-  types: "component",
-  "website-games": "website-game",
-};
-
-const defaultForm = {
-  name: "",
-  description: "",
-  category: "plugins" as Category,
-  version: "1.0.0",
-  tags: "",
-  liveDemo: "",
-  githubRepo: "",
-  installCommand: "",
-  license: "MIT",
-  platforms: [] as string[],
-};
-
-type Step = "form" | "preview" | "publishing" | "done";
+const AGENTS = ["cloud", "desktop", "mobile", "code"];
 
 const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  background: "rgba(255,255,255,0.55)",
-  backdropFilter: "blur(24px)",
-  border: "1px solid rgba(0,0,0,0.06)",
-  borderRadius: "8px",
-  color: "#1f2937",
-  fontSize: "14px",
-  fontFamily: "inherit",
-  outline: "none",
-  transition: "border-color 0.2s ease",
+  width: "100%", padding: "10px 12px", border: "1px solid #e5e7eb", borderRadius: 8,
+  fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "inherit",
+  background: "white", color: "#1f2937",
 };
+const labelStyle: React.CSSProperties = { display: "block", fontSize: 13, fontWeight: 500, color: "#374151", marginBottom: 6 };
 
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "13px",
-  fontWeight: "500",
-  color: "#1f2937",
-  marginBottom: "6px",
-};
-
-const rowStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "16px",
-};
-
-const dropZoneBase: React.CSSProperties = {
-  border: "2px dashed #e5e7eb",
-  borderRadius: "8px",
-  padding: "16px",
-  textAlign: "center",
-  cursor: "pointer",
-  transition: "all 0.2s ease",
-  background: "rgba(255,255,255,0.55)",
-  backdropFilter: "blur(24px)",
-};
-
-function FileDropZone({
-  label,
-  accept,
-  file,
-  onFile,
-  icon,
-  multiple,
-  maxSize,
-}: {
-  label: string;
-  accept: string;
-  file: File | null;
-  onFile: (f: File | null) => void;
-  icon: string;
-  multiple?: boolean;
-  maxSize?: number;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      if (multiple) {
-        const limited = files.slice(0, 5);
-        for (const f of limited) {
-          if (maxSize && f.size > maxSize) continue;
-          onFile(f);
-        }
-      } else {
-        onFile(files[0]);
-      }
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    if (multiple) {
-      Array.from(files)
-        .slice(0, 5)
-        .forEach((f) => onFile(f));
-    } else {
-      onFile(files[0]);
-    }
-  };
-
-  const previewUrl = file && file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
-
-  return (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragOver(true);
-      }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={handleDrop}
-      onClick={() => inputRef.current?.click()}
-      style={{
-        ...dropZoneBase,
-        borderColor: dragOver ? "#6366f1" : file ? "#047857" : "#e5e7eb",
-        background: dragOver ? "rgba(88,166,255,0.05)" : file ? "rgba(63,185,80,0.05)" : "#ffffff",
-      }}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        multiple={multiple}
-        onChange={handleChange}
-        style={{ display: "none" }}
-      />
-      {previewUrl ? (
-        <div>
-          <img
-            src={previewUrl}
-            alt=""
-            style={{
-              maxWidth: "100%",
-              maxHeight: "120px",
-              borderRadius: "6px",
-              marginBottom: "8px",
-            }}
-          />
-          <div style={{ fontSize: "13px", color: "#6b7280" }}>
-            {file!.name} ({formatFileSize(file!.size)})
-          </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onFile(null);
-              URL.revokeObjectURL(previewUrl);
-            }}
-            style={{
-              marginTop: "6px",
-              padding: "4px 12px",
-              borderRadius: "6px",
-              background: "#dc2626",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer",
-              fontSize: "12px",
-            }}
-          >
-            Remove
-          </button>
-        </div>
-      ) : (
-        <div>
-          <div style={{ fontSize: "24px", marginBottom: "6px" }}>{icon}</div>
-          <div style={{ fontSize: "13px", color: "#6b7280" }}>{label}</div>
-          {file && (
-            <div style={{ fontSize: "12px", color: "#10b981", marginTop: "4px" }}>
-              ✓ {file.name}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export const PublishModal: React.FC<PublishModalProps> = ({
-  isOpen,
-  onClose,
-  onPublished,
-  aiGenerated,
-}) => {
-  const [step, setStep] = useState<Step>("form");
-  const [form, setForm] = useState(defaultForm);
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [logo, setLogo] = useState<File | null>(null);
-  const [screenshots, setScreenshots] = useState<File[]>([]);
-  const [downloadFile, setDownloadFile] = useState<File | null>(null);
-
-  const selectedCategory = CATEGORIES.find((c) => c.id === form.category);
+export const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublished }) => {
+  const [apiKey, setApiKey] = useState("");
+  const [form, setForm] = useState({
+    name: "", slug: "", tagline: "", description: "", category: "website",
+    source_agent: "cloud", author_name: "", live_url: "", repo_url: "",
+    version: "1.0.0", tags: "",
+  });
+  const [step, setStep] = useState<"form" | "publishing" | "done" | "error">("form");
+  const [result, setResult] = useState<PublishResult | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (aiGenerated && isOpen) fillFromAI();
-  }, [aiGenerated, isOpen]);
+    if (!isOpen) {
+      setStep("form");
+      setResult(null);
+      setError("");
+    }
+  }, [isOpen]);
 
-  const fillFromAI = () => {
-    if (!aiGenerated) return;
-    setForm({
-      name: aiGenerated.name || "",
-      description: aiGenerated.description || "",
-      category: aiGenerated.category || "plugins",
-      version: aiGenerated.version || "1.0.0",
-      tags: aiGenerated.tags?.join(", ") || "",
-      liveDemo: aiGenerated.liveDemo || "",
-      githubRepo: aiGenerated.githubRepo || "",
-      installCommand: aiGenerated.installCommand || "",
-      license: aiGenerated.license || "MIT",
-      platforms: [],
-    });
-  };
+  const update = (field: string, value: string) => setForm((p) => ({ ...p, [field]: value }));
 
-  const resetForm = () => {
-    setForm(defaultForm);
-    setCoverImage(null);
-    setLogo(null);
-    setScreenshots([]);
-    setDownloadFile(null);
-    setStep("form");
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
-  const updateField = (field: string, value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
-
-  const addScreenshot = (file: File) => {
-    if (screenshots.length < 5) setScreenshots((prev) => [...prev, file]);
-  };
-
-  const removeScreenshot = (idx: number) => {
-    setScreenshots((prev) => prev.filter((_, i) => i !== idx));
+  const generateSlug = () => {
+    const slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    update("slug", slug);
   };
 
   const handlePublish = async () => {
+    if (!form.name || !form.slug || !apiKey) return;
     setStep("publishing");
+    setError("");
     try {
-      const auth = getAuthState();
-      const item: Partial<EcosystemItem> = {
+      const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+      const body = {
         name: form.name,
+        slug: form.slug,
+        tagline: form.tagline,
         description: form.description,
         category: form.category,
-        type: (TYPE_MAP[form.category] as any) || "plugin",
+        source_agent: form.source_agent,
+        author_name: form.author_name,
+        live_url: form.live_url || undefined,
+        repo_url: form.repo_url || undefined,
         version: form.version,
-        tags: form.tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        liveDemo: form.liveDemo || undefined,
-        githubRepo: form.githubRepo || undefined,
-        installCommand: form.installCommand || undefined,
-        license: form.license,
-        platforms: form.platforms.length > 0 ? form.platforms : undefined,
-        author: auth.user?.displayName || auth.user?.username || "Anonymous",
-        authorId: auth.user?.id || "",
-        authorAvatar: auth.user?.avatarUrl || "",
+        tags,
+        publish: true,
       };
-      const files: { coverImage?: File; logo?: File; screenshots?: File[]; downloadFile?: File } =
-        {};
-      if (coverImage) files.coverImage = coverImage;
-      if (logo) files.logo = logo;
-      if (screenshots.length > 0) files.screenshots = screenshots;
-      if (downloadFile) files.downloadFile = downloadFile;
-
-      const published = await publishItem(
-        item as EcosystemItem,
-        Object.keys(files).length > 0 ? files : undefined,
-      );
-      setStep("done");
-      onPublished?.(published);
-    } catch {
-      setStep("form");
+      const res = await fetch(`${ENDPOINT}/ingest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-zyraxon-key": apiKey },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.slug || data.status) {
+        setResult(data);
+        setStep("done");
+        onPublished?.();
+      } else {
+        setError(data.message || data.error || "Publish failed. Check your API key.");
+        setStep("error");
+      }
+    } catch (e: any) {
+      setError(e?.message || "Connection failed. Is the endpoint reachable?");
+      setStep("error");
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div
-      onClick={handleClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        background: "rgba(0,0,0,0.04)",
-        backdropFilter: "blur(8px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "rgba(243,244,246,0.55)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(0,0,0,0.06)",
-          borderRadius: "16px",
-          width: "100%",
-          maxWidth: "680px",
-          maxHeight: "90vh",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.05)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "16px 20px",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "20px" }}>📦</span>
-            <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#f0f6fc", margin: 0 }}>
-              {step === "form" && "Publish to Marketplace"}
-              {step === "preview" && "Preview"}
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 640, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.15)" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #e5e7eb" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #059669, #10b981)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg style={{ width: 18, height: 18, color: "white" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+            </div>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: "#111827", margin: 0 }}>
+              {step === "form" && "Publish to ZYRAXON Hub"}
               {step === "publishing" && "Publishing..."}
               {step === "done" && "Published!"}
+              {step === "error" && "Publish Failed"}
             </h2>
           </div>
-          {step !== "publishing" && (
-            <button
-              onClick={handleClose}
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
-                background: "transparent",
-                border: "1px solid rgba(0,0,0,0.06)",
-                color: "#6b7280",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "18px",
-                fontFamily: "inherit",
-                outline: "none",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#9ca3af";
-                e.currentTarget.style.color = "#1f2937";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#f3f4f6";
-                e.currentTarget.style.color = "#6b7280";
-              }}
-            >
-              ✕
-            </button>
-          )}
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, background: "none", border: "1px solid #e5e7eb", color: "#6b7280", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          </button>
         </div>
 
-        <div style={{ overflow: "auto", flex: 1, padding: "20px" }}>
+        {/* Body */}
+        <div style={{ overflow: "auto", flex: 1, padding: 20 }}>
           {step === "form" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div>
-                <label style={labelStyle}>Name *</label>
-                <input
-                  value={form.name}
-                  onChange={(e) => updateField("name", e.target.value)}
-                  placeholder="My Awesome Plugin"
-                  style={inputStyle}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#6366f1";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#f3f4f6";
-                  }}
-                />
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: 14, marginBottom: 4 }}>
+                <p style={{ fontSize: 13, color: "#1e40af", margin: 0, lineHeight: 1.6 }}>
+                  Publish directly to the ZYRAXON Ecosystem Hub. Your project will be auto-scanned for security. No critical findings = goes live instantly.
+                </p>
               </div>
+
+              <div>
+                <label style={labelStyle}>Agent API Key *</label>
+                <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="x-zyraxon-key from your agent" style={inputStyle} />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Project Name *</label>
+                  <input value={form.name} onChange={(e) => update("name", e.target.value)} onBlur={generateSlug} placeholder="My Awesome Project" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Slug *</label>
+                  <input value={form.slug} onChange={(e) => update("slug", e.target.value)} placeholder="my-awesome-project" style={inputStyle} />
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Tagline</label>
+                <input value={form.tagline} onChange={(e) => update("tagline", e.target.value)} placeholder="One line about your project" style={inputStyle} />
+              </div>
+
               <div>
                 <label style={labelStyle}>Description *</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => updateField("description", e.target.value)}
-                  placeholder="What does it do? Why should someone use it?"
-                  rows={3}
-                  style={{ ...inputStyle, resize: "vertical", minHeight: "80px" }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#6366f1";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#f3f4f6";
-                  }}
-                />
+                <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={3} placeholder="Full description..." style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} />
               </div>
-              <div style={rowStyle}>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
                 <div>
-                  <label style={labelStyle}>Category *</label>
-                  <select
-                    value={form.category}
-                    onChange={(e) => updateField("category", e.target.value)}
-                    style={{ ...inputStyle, cursor: "pointer" }}
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.label}
-                      </option>
-                    ))}
+                  <label style={labelStyle}>Category</label>
+                  <select value={form.category} onChange={(e) => update("category", e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Source Agent</label>
+                  <select value={form.source_agent} onChange={(e) => update("source_agent", e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                    {AGENTS.map((a) => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={labelStyle}>Version</label>
-                  <input
-                    value={form.version}
-                    onChange={(e) => updateField("version", e.target.value)}
-                    placeholder="1.0.0"
-                    style={inputStyle}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#6366f1";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#f3f4f6";
-                    }}
-                  />
+                  <input value={form.version} onChange={(e) => update("version", e.target.value)} placeholder="1.0.0" style={inputStyle} />
                 </div>
               </div>
-              <div>
-                <label style={labelStyle}>Tags (comma separated)</label>
-                <input
-                  value={form.tags}
-                  onChange={(e) => updateField("tags", e.target.value)}
-                  placeholder="react, typescript, ui"
-                  style={inputStyle}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#6366f1";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#f3f4f6";
-                  }}
-                />
-              </div>
-              <div style={rowStyle}>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 <div>
-                  <label style={labelStyle}>Live Demo URL</label>
-                  <input
-                    value={form.liveDemo}
-                    onChange={(e) => updateField("liveDemo", e.target.value)}
-                    placeholder="https://..."
-                    style={inputStyle}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#6366f1";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#f3f4f6";
-                    }}
-                  />
+                  <label style={labelStyle}>Author Name</label>
+                  <input value={form.author_name} onChange={(e) => update("author_name", e.target.value)} placeholder="Your name" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Tags (comma separated)</label>
+                  <input value={form.tags} onChange={(e) => update("tags", e.target.value)} placeholder="react, landing, saas" style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Live URL</label>
+                  <input value={form.live_url} onChange={(e) => update("live_url", e.target.value)} placeholder="https://..." style={inputStyle} />
                 </div>
                 <div>
                   <label style={labelStyle}>GitHub Repo</label>
-                  <input
-                    value={form.githubRepo}
-                    onChange={(e) => updateField("githubRepo", e.target.value)}
-                    placeholder="https://github.com/..."
-                    style={inputStyle}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#6366f1";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#f3f4f6";
-                    }}
-                  />
+                  <input value={form.repo_url} onChange={(e) => update("repo_url", e.target.value)} placeholder="https://github.com/..." style={inputStyle} />
                 </div>
-              </div>
-              <div style={rowStyle}>
-                <div>
-                  <label style={labelStyle}>Install Command</label>
-                  <input
-                    value={form.installCommand}
-                    onChange={(e) => updateField("installCommand", e.target.value)}
-                    placeholder="npm install ..."
-                    style={inputStyle}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#6366f1";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#f3f4f6";
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>License</label>
-                  <select
-                    value={form.license}
-                    onChange={(e) => updateField("license", e.target.value)}
-                    style={{ ...inputStyle, cursor: "pointer" }}
-                  >
-                    {LICENSES.map((l) => (
-                      <option key={l} value={l}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: "16px" }}>
-                <h3
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: "#f0f6fc",
-                    margin: "0 0 12px 0",
-                  }}
-                >
-                  Files & Assets
-                </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <FileDropZone
-                    label="Cover Image"
-                    accept="image/*"
-                    file={coverImage}
-                    onFile={(f) => setCoverImage(f)}
-                    icon="🖼️"
-                    maxSize={10 * 1024 * 1024}
-                  />
-                  <FileDropZone
-                    label="Logo"
-                    accept="image/*"
-                    file={logo}
-                    onFile={(f) => setLogo(f)}
-                    icon="🏷️"
-                    maxSize={5 * 1024 * 1024}
-                  />
-                </div>
-                <div style={{ marginTop: "12px" }}>
-                  <FileDropZone
-                    label={`Download File (${selectedCategory?.label || "any"})`}
-                    accept={selectedCategory?.accept || "*/*"}
-                    file={downloadFile}
-                    onFile={(f) => setDownloadFile(f)}
-                    icon="📦"
-                    maxSize={100 * 1024 * 1024}
-                  />
-                </div>
-                <div style={{ marginTop: "12px" }}>
-                  <label style={labelStyle}>Screenshots (max 5)</label>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
-                      gap: "8px",
-                    }}
-                  >
-                    {screenshots.map((ss, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          position: "relative",
-                          borderRadius: "8px",
-                          overflow: "hidden",
-                          border: "1px solid rgba(0,0,0,0.06)",
-                        }}
-                      >
-                        <img
-                          src={URL.createObjectURL(ss)}
-                          alt=""
-                          style={{ width: "100%", height: "80px", objectFit: "cover" }}
-                        />
-                        <button
-                          onClick={() => removeScreenshot(idx)}
-                          style={{
-                            position: "absolute",
-                            top: "4px",
-                            right: "4px",
-                            width: "20px",
-                            height: "20px",
-                            borderRadius: "50%",
-                            background: "#dc2626",
-                            border: "none",
-                            color: "#fff",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          ×
-                        </button>
-                        <div
-                          style={{
-                            fontSize: "10px",
-                            color: "#6b7280",
-                            padding: "2px 4px",
-                            textAlign: "center",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {ss.name}
-                        </div>
-                      </div>
-                    ))}
-                    {screenshots.length < 5 && (
-                      <FileDropZone
-                        label="Add Screenshot"
-                        accept="image/*"
-                        file={null}
-                        onFile={(f) => {
-                          if (f) addScreenshot(f);
-                        }}
-                        icon="📸"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  justifyContent: "flex-end",
-                  marginTop: "8px",
-                }}
-              >
-                <button
-                  onClick={handleClose}
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: "8px",
-                    background: "transparent",
-                    border: "1px solid rgba(0,0,0,0.1)",
-                    color: "#6b7280",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    fontFamily: "inherit",
-                    outline: "none",
-                    transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#9ca3af";
-                    e.currentTarget.style.color = "#1f2937";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#e5e7eb";
-                    e.currentTarget.style.color = "#6b7280";
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => setStep("preview")}
-                  disabled={!form.name.trim() || !form.description.trim()}
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: "8px",
-                    background: form.name.trim() && form.description.trim() ? "#047857" : "#f3f4f6",
-                    border: "1px solid",
-                    borderColor:
-                      form.name.trim() && form.description.trim() ? "#059669" : "#e5e7eb",
-                    color: form.name.trim() && form.description.trim() ? "#ffffff" : "#9ca3af",
-                    cursor: form.name.trim() && form.description.trim() ? "pointer" : "not-allowed",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    fontFamily: "inherit",
-                    outline: "none",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  Preview →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === "preview" && (
-            <div>
-              <div
-                style={{
-                  background: "rgba(255,255,255,0.55)",
-                  backdropFilter: "blur(24px)",
-                  border: "1px solid rgba(0,0,0,0.06)",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  marginBottom: "20px",
-                }}
-              >
-                {coverImage && (
-                  <div
-                    style={{
-                      borderRadius: "8px",
-                      overflow: "hidden",
-                      marginBottom: "16px",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                    }}
-                  >
-                    <img
-                      src={URL.createObjectURL(coverImage)}
-                      alt={form.name}
-                      style={{ width: "100%", display: "block" }}
-                    />
-                  </div>
-                )}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    marginBottom: "8px",
-                  }}
-                >
-                  {logo && (
-                    <img
-                      src={URL.createObjectURL(logo)}
-                      alt=""
-                      style={{ width: "32px", height: "32px", borderRadius: "6px" }}
-                    />
-                  )}
-                  <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#f0f6fc", margin: 0 }}>
-                    {form.name}
-                  </h3>
-                  <span
-                    style={{
-                      padding: "3px 10px",
-                      borderRadius: "12px",
-                      fontSize: "11px",
-                      fontWeight: "600",
-                      textTransform: "capitalize",
-                      background: "rgba(88, 166, 255, 0.1)",
-                      color: "#6366f1",
-                    }}
-                  >
-                    {TYPE_MAP[form.category] || form.category}
-                  </span>
-                </div>
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: "#6b7280",
-                    lineHeight: "1.6",
-                    margin: "0 0 12px 0",
-                  }}
-                >
-                  {form.description}
-                </p>
-                <div
-                  style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "12px" }}
-                >
-                  {form.tags
-                    .split(",")
-                    .filter(Boolean)
-                    .map((t) => (
-                      <span
-                        key={t}
-                        style={{
-                          padding: "3px 10px",
-                          background: "rgba(229,231,235,0.45)",
-                          backdropFilter: "blur(14px)",
-                          borderRadius: "12px",
-                          fontSize: "12px",
-                          color: "#6b7280",
-                        }}
-                      >
-                        {t.trim()}
-                      </span>
-                    ))}
-                </div>
-                <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "#9ca3af" }}>
-                  <span>v{form.version}</span>
-                  <span>{form.license}</span>
-                  {form.liveDemo && <span>🔗 {form.liveDemo}</span>}
-                  {form.githubRepo && <span>📂 GitHub</span>}
-                  {downloadFile && <span>📦 {formatFileSize(downloadFile.size)}</span>}
-                </div>
-                {screenshots.length > 0 && (
-                  <div
-                    style={{ display: "flex", gap: "8px", marginTop: "12px", overflowX: "auto" }}
-                  >
-                    {screenshots.map((ss, i) => (
-                      <img
-                        key={i}
-                        src={URL.createObjectURL(ss)}
-                        alt=""
-                        style={{
-                          height: "80px",
-                          borderRadius: "6px",
-                          border: "1px solid rgba(0,0,0,0.06)",
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button
-                  onClick={() => setStep("form")}
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: "8px",
-                    background: "transparent",
-                    border: "1px solid rgba(0,0,0,0.1)",
-                    color: "#6b7280",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    fontFamily: "inherit",
-                    outline: "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#9ca3af";
-                    e.currentTarget.style.color = "#1f2937";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#e5e7eb";
-                    e.currentTarget.style.color = "#6b7280";
-                  }}
-                >
-                  ← Back
-                </button>
-                <button
-                  onClick={handlePublish}
-                  style={{
-                    padding: "10px 24px",
-                    borderRadius: "8px",
-                    background: "#047857",
-                    border: "1px solid #059669",
-                    color: "#ffffff",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    fontFamily: "inherit",
-                    outline: "none",
-                    transition: "background 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#059669";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#047857";
-                  }}
-                >
-                  🚀 Publish
-                </button>
               </div>
             </div>
           )}
 
           {step === "publishing" && (
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <div
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  border: "3px solid #f3f4f6",
-                  borderTopColor: "#6366f1",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                  margin: "0 auto 16px",
-                }}
-              />
-              <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-              <p style={{ fontSize: "16px", color: "#6b7280" }}>Publishing {form.name}...</p>
+            <div style={{ textAlign: "center", padding: 48 }}>
+              <div style={{ width: 48, height: 48, border: "3px solid #e5e7eb", borderTopColor: "#059669", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+              <p style={{ fontSize: 15, color: "#6b7280", margin: 0 }}>Scanning and publishing your project...</p>
             </div>
           )}
 
-          {step === "done" && (
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <div
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "50%",
-                  background: "rgba(63, 185, 80, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 16px",
-                  fontSize: "32px",
-                }}
-              >
-                ✓
+          {step === "done" && result && (
+            <div style={{ textAlign: "center", padding: 48 }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#ecfdf5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                <svg style={{ width: 32, height: 32, color: "#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
               </div>
-              <h3
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "600",
-                  color: "#f0f6fc",
-                  marginBottom: "8px",
-                }}
-              >
-                {form.name} published!
-              </h3>
-              <p style={{ fontSize: "14px", color: "#6b7280", marginBottom: "24px" }}>
-                Your item is now live on the ZYRAXON Marketplace
+              <h3 style={{ fontSize: 20, fontWeight: 700, color: "#111827", margin: "0 0 8px" }}>Published!</h3>
+              <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
+                {result.scan?.blocked ? "Published with warnings." : "Live on the marketplace."}
               </p>
-              <button
-                onClick={handleClose}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  background: "#047857",
-                  border: "1px solid #059669",
-                  color: "#ffffff",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  fontFamily: "inherit",
-                  outline: "none",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#059669";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#047857";
-                }}
-              >
-                Done
-              </button>
+              {result.scan && (
+                <div style={{ background: result.scan.blocked ? "#fef2f2" : "#f0fdf4", border: `1px solid ${result.scan.blocked ? "#fecaca" : "#bbf7d0"}`, borderRadius: 8, padding: 16, marginBottom: 20, textAlign: "left" }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>Security Score: {result.scan.score}/100</p>
+                  {result.scan.findings.length > 0 && (
+                    <ul style={{ fontSize: 12, color: "#6b7280", margin: 0, paddingLeft: 16 }}>
+                      {result.scan.findings.map((f, i) => <li key={i}>{f}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
+              {result.url && (
+                <a href={result.url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: "inline-block", padding: "8px 16px", borderRadius: 8, background: "#059669", color: "white", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+                  View on Marketplace
+                </a>
+              )}
+            </div>
+          )}
+
+          {step === "error" && (
+            <div style={{ textAlign: "center", padding: 48 }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                <svg style={{ width: 32, height: 32, color: "#dc2626" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 600, color: "#111827", margin: "0 0 8px" }}>Failed</h3>
+              <p style={{ fontSize: 14, color: "#dc2626", marginBottom: 16 }}>{error}</p>
             </div>
           )}
         </div>
+
+        {/* Footer */}
+        {step === "form" && (
+          <div style={{ padding: "16px 20px", borderTop: "1px solid #e5e7eb", display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#6b7280", fontSize: 13, cursor: "pointer" }}>Cancel</button>
+            <button onClick={handlePublish} disabled={!form.name || !form.slug || !apiKey}
+              style={{ padding: "8px 20px", borderRadius: 8, background: form.name && form.slug && apiKey ? "#059669" : "#d1d5db", border: "none", color: "white", fontSize: 13, fontWeight: 600, cursor: form.name && form.slug && apiKey ? "pointer" : "not-allowed" }}>
+              Publish
+            </button>
+          </div>
+        )}
+        {(step === "done" || step === "error") && (
+          <div style={{ padding: "16px 20px", borderTop: "1px solid #e5e7eb", display: "flex", justifyContent: "flex-end" }}>
+            <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: 8, background: "#059669", border: "none", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Done</button>
+          </div>
+        )}
       </div>
     </div>
   );

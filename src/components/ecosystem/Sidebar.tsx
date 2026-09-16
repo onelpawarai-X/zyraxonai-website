@@ -29,9 +29,23 @@ interface NavItem {
   icon: React.FC<{ size?: number; className?: string }>;
 }
 
+const IconPublish: React.FC<{ size?: number }> = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+  </svg>
+);
+
+const IconGlobe: React.FC<{ size?: number }> = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  </svg>
+);
+
 const mainNavItems: NavItem[] = [
   { id: "home", label: "Home", icon: IconHome },
   { id: "marketplace", label: "Marketplace", icon: IconMarketplace },
+  { id: "published", label: "Published Apps", icon: IconGlobe },
+  { id: "publish", label: "Publish", icon: IconPublish },
   { id: "vscode", label: "Extensions", icon: IconPackage },
   { id: "github", label: "GitHub Releases", icon: IconDownload },
   { id: "explore", label: "Explore", icon: IconSearch },
