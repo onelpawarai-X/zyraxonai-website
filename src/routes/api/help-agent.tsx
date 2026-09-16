@@ -2,15 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type, authorization, x-session-id",
+  "Access-Control-Allow-Headers": "content-type, authorization",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 };
 
-const ZEN_BASE = "https://opencode.ai/zen/v1";
-const ZEN_CHAT_URL = `${ZEN_BASE}/chat/completions`;
+const ZEN_CHAT_URL = "https://opencode.ai/zen/v1/chat/completions";
 const DEFAULT_ZEN_MODEL = "big-pickle";
 const FREE_MODEL_FALLBACKS = ["big-pickle", "deepseek-v4-flash-free", "glm-5-free", "mimo-v2.5-free"];
-const ZEN_UA = "opencode/1.0";
 
 let cachedPrompt: string | null = null;
 async function getSystemPrompt(): Promise<string> {
@@ -24,29 +22,7 @@ async function getSystemPrompt(): Promise<string> {
       return cachedPrompt!;
     }
   } catch {}
-  cachedPrompt = "You are ZYRAXON Help Agent. Help users navigate the website and products.";
-  return cachedPrompt!;
-}
-
-function getFallback(message: string): string {
-  const l = message.toLowerCase();
-  if (l.includes("download") || l.includes("install") || l.includes("ডাউনলোড"))
-    return "Download our products:\n- ZYRAXON Agent: /download/zyraxon-agent\n- Myra Agent: /download/myra-agent\n- Zyraxon Code: /download/zyraxon-code";
-  if (l.includes("license") || l.includes("zsl") || l.includes("লাইসেন্স"))
-    return "We use ZSL (Zyraxon Sovereign License). Visit /zsl or GitHub: github.com/onelpawarai-X/ZSL";
-  if (l.includes("ecosystem") || l.includes("marketplace") || l.includes("ইকোসিস্টেম"))
-    return "Ecosystem Marketplace: /ecosystem. Publish: /publish.";
-  if (l.includes("hello") || l.includes("hi") || l.includes("হ্যালো") || l.includes("নমস্কার"))
-    return "Hello! How can I help you? Ask about our products, downloads, or anything about ZYRAXON.";
-  if (l.includes("কেমন আছো") || l.includes("কি খবর"))
-    return "আমি ভালো আছি! আপনাকে কিভাবে সাহায্য করতে পারি?";
-  return "I'm here to help! Ask about our products, downloads, ZSL License, or anything about ZYRAXON.";
-}
-
-async function zenFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
-  const headers = new Headers(init?.headers || {});
-  headers.set("User-Agent", ZEN_UA);
-  return fetch(input, { ...init, headers });
+  return "You are ZYRAXON Help Agent. Help users navigate the website and products. Respond in the same language the user writes in.";
 }
 
 async function streamFromZen(
@@ -54,14 +30,20 @@ async function streamFromZen(
   messages: { role: string; content: string }[],
 ): Promise<string | null> {
   try {
-    const res = await zenFetch(ZEN_CHAT_URL, {
+    const res = await fetch(ZEN_CHAT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "opencode/1.0",
+      },
       body: JSON.stringify({ model, messages, stream: true }),
       signal: AbortSignal.timeout(30000),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(`[help-agent] ${model} status ${res.status}`);
+      return null;
+    }
     if (!res.body) return null;
 
     const reader = res.body.getReader();
@@ -72,11 +54,9 @@ async function streamFromZen(
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       streamBuffer += decoder.decode(value, { stream: true });
       const lines = streamBuffer.split("\n");
       streamBuffer = lines.pop() || "";
-
       for (const line of lines) {
         const trimmed = line.trim();
         if (trimmed.startsWith("data: ")) {
@@ -90,7 +70,6 @@ async function streamFromZen(
         }
       }
     }
-
     return fullText.length > 0 ? fullText : null;
   } catch (err: any) {
     console.warn(`[help-agent] ${model} error:`, err?.message);
@@ -150,13 +129,12 @@ export const Route = createFileRoute("/api/help-agent")({
             }
           }
 
-          console.warn(`[help-agent] All failed, fallback`);
-          return new Response(getFallback(message), {
+          return new Response("Sorry, all AI models are temporarily unavailable. Please try again later.", {
             headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
           });
         } catch (e) {
           console.error(`[help-agent] error:`, e);
-          return new Response(getFallback(""), {
+          return new Response("Sorry, something went wrong. Please try again.", {
             headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
           });
         }
