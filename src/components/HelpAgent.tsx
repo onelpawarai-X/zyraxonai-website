@@ -123,39 +123,12 @@ export default function HelpAgent() {
       });
 
       if (!res.ok) throw new Error("Failed");
-      const contentType = res.headers.get("content-type") || "";
+      const text = await res.text();
 
-      if (contentType.includes("text/event-stream")) {
-        const reader = res.body?.getReader();
-        if (!reader) throw new Error("No reader");
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let fullText = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6).trim();
-              if (data === "[DONE]") break;
-              try {
-                const parsed = JSON.parse(data);
-                const token = parsed.choices?.[0]?.delta?.content || parsed.token;
-                if (token) { fullText += token; setStreaming(fullText); }
-              } catch {}
-            }
-          }
-        }
-
-        setMessages((prev) => [...prev, { role: "assistant", content: fullText, timestamp: Date.now() }]);
-        setStreaming("");
+      if (text) {
+        setMessages((prev) => [...prev, { role: "assistant", content: text, timestamp: Date.now() }]);
       } else {
-        const data = await res.json();
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply, timestamp: Date.now() }]);
+        throw new Error("Empty response");
       }
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: getFallback(text), timestamp: Date.now() }]);
