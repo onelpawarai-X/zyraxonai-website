@@ -12,23 +12,21 @@ const DEFAULT_ZEN_MODEL = "big-pickle";
 const FREE_MODEL_FALLBACKS = ["big-pickle", "deepseek-v4-flash-free", "glm-5-free", "mimo-v2.5-free"];
 const ZEN_UA = "opencode/1.0";
 
-const HELP_SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate. You can also have casual conversations.
-
-CRITICAL RULE: ALWAYS respond in the SAME LANGUAGE the user writes in. If they write in Bengali, respond in Bengali. If they write in English, respond in English. Match their language exactly.
-
-PRODUCTS:
-1. ZYRAXON Agent — Desktop AI (Win/Mac/Linux), 552+ tools, 9 modes. Download: /download/zyraxon-agent | GitHub: github.com/onelpawarai-X/ZYRAXON-AI
-2. Myra Agent — Android voice AI, 6 personalities, Bengali/English. Download: /download/myra-agent | GitHub: github.com/onelpawarai-X/Myra-Agent
-3. Zyraxon Code — AI code editor (VS Code fork). Download: /download/zyraxon-code | GitHub: github.com/onelpawarai-X/Zyraxon-Code
-
-LICENSE: ZSL — ZSL-X v1.0.0 (2026-2028), MEKRA-X (2028+). Page: /zsl | GitHub: github.com/onelpawarai-X/ZSL
-PAGES: / (landing), /ecosystem (marketplace), /publish, /releases, /docs (18+ pages), /nebula (password: ZYRAXON), /bludar, /zsl
-COMMUNITY: Discord (discord.gg/h8mHvf45g), YouTube (@ZYRAXONAI)
-FOUNDER: OneL Pawar — onelpawarai.lovable.app
-LICENSE PORTAL: zyraxonai-license.lovable.app
-GITHUB ORG: github.com/onelpawarai-X
-
-RULES: Respond in user's exact language. Be concise (2-4 sentences). Never make up URLs. Casual conversations OK.`;
+let cachedPrompt: string | null = null;
+async function getSystemPrompt(): Promise<string> {
+  if (cachedPrompt) return cachedPrompt;
+  try {
+    const res = await fetch("https://zyraxonai.lovable.app/help-agent-prompt.txt", {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) {
+      cachedPrompt = await res.text();
+      return cachedPrompt!;
+    }
+  } catch {}
+  cachedPrompt = "You are ZYRAXON Help Agent. Help users navigate the website and products.";
+  return cachedPrompt!;
+}
 
 function getFallback(message: string): string {
   const l = message.toLowerCase();
@@ -58,22 +56,12 @@ async function streamFromZen(
   try {
     const res = await zenFetch(ZEN_CHAT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        stream: true,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, messages, stream: true }),
       signal: AbortSignal.timeout(30000),
     });
 
-    if (!res.ok) {
-      console.warn(`[help-agent] ${model} returned ${res.status}`);
-      return null;
-    }
-
+    if (!res.ok) return null;
     if (!res.body) return null;
 
     const reader = res.body.getReader();
@@ -97,9 +85,7 @@ async function streamFromZen(
           try {
             const parsed = JSON.parse(dataPart);
             const delta = parsed.choices?.[0]?.delta;
-            if (delta?.content) {
-              fullText += delta.content;
-            }
+            if (delta?.content) fullText += delta.content;
           } catch {}
         }
       }
@@ -141,6 +127,7 @@ export const Route = createFileRoute("/api/help-agent")({
             return Response.json({ error: "Message required" }, { status: 400, headers: CORS });
           }
 
+          const systemPrompt = await getSystemPrompt();
           const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
           const userContent = `${historyBlock}${message}`;
 
@@ -148,7 +135,7 @@ export const Route = createFileRoute("/api/help-agent")({
           const modelsToTry = [targetModel, ...FREE_MODEL_FALLBACKS.filter((m) => m !== targetModel)];
 
           const messages = [
-            { role: "system", content: HELP_SYSTEM_PROMPT },
+            { role: "system", content: systemPrompt },
             { role: "user", content: userContent },
           ];
 
