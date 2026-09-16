@@ -1,22 +1,4 @@
 ﻿import React, { useState } from "react";
-import {
-  IconHome,
-  IconMarketplace,
-  IconCommunity,
-  IconSearch,
-  IconCategories,
-  IconStar,
-  IconTrending,
-  IconNew,
-  IconPackage,
-  IconDownload,
-  IconHeart,
-  IconSettings,
-  IconChevronLeft,
-  IconChevronRight,
-  IconUser,
-  IconMCP,
-} from "./Icons";
 
 interface SidebarProps {
   currentView: string;
@@ -26,220 +8,71 @@ interface SidebarProps {
 interface NavItem {
   id: string;
   label: string;
-  icon: React.FC<{ size?: number; className?: string }>;
+  icon: React.ReactNode;
 }
 
-const IconPublish: React.FC<{ size?: number }> = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-  </svg>
-);
+const IconHome = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
+const IconGlobe = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>;
+const IconPackage = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
+const IconDownload = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>;
+const IconUpload = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>;
 
-const IconGlobe: React.FC<{ size?: number }> = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-  </svg>
-);
-
-const mainNavItems: NavItem[] = [
+const mainNav: NavItem[] = [
   { id: "home", label: "Home", icon: IconHome },
-  { id: "marketplace", label: "Marketplace", icon: IconMarketplace },
   { id: "published", label: "Published Apps", icon: IconGlobe },
-  { id: "publish", label: "Publish", icon: IconPublish },
-  { id: "vscode", label: "Extensions", icon: IconPackage },
-  { id: "github", label: "GitHub Releases", icon: IconDownload },
-  { id: "explore", label: "Explore", icon: IconSearch },
-  { id: "categories", label: "Categories", icon: IconCategories },
-  { id: "top-rated", label: "Top Rated", icon: IconStar },
-  { id: "trending", label: "Trending", icon: IconTrending },
-  { id: "new", label: "New Arrivals", icon: IconNew },
-  { id: "mcp", label: "MCP Tools", icon: IconMCP },
-  { id: "builder", label: "Blueprint (AI Builder)", icon: IconNew },
-];
-
-const myStuffItems: NavItem[] = [
-  { id: "my-plugins", label: "My Plugins", icon: IconPackage },
-  { id: "my-downloads", label: "My Downloads", icon: IconDownload },
-  { id: "my-favorites", label: "My Favorites", icon: IconHeart },
+  { id: "extensions", label: "Extensions", icon: IconPackage },
+  { id: "releases", label: "Releases", icon: IconDownload },
+  { id: "publish", label: "Publish", icon: IconUpload },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
   const [collapsed, setCollapsed] = useState(false);
 
-  const navButtonStyle = (active: boolean): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    width: "100%",
+  const navBtn = (active: boolean): React.CSSProperties => ({
+    display: "flex", alignItems: "center", gap: 12, width: "100%",
     padding: collapsed ? "10px" : "10px 12px",
     justifyContent: collapsed ? "center" : "flex-start",
-    background: active ? "rgba(31, 111, 235, 0.2)" : "transparent",
-    border: "none",
-    borderRadius: "8px",
-    color: active ? "#6366f1" : "#6b7280",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: active ? "600" : "400",
-    fontFamily: "inherit",
-    transition: "all 0.15s ease",
-    outline: "none",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
+    background: active ? "#ecfdf5" : "transparent",
+    border: "none", borderRadius: 8,
+    color: active ? "#059669" : "#6b7280",
+    cursor: "pointer", fontSize: 14, fontWeight: active ? 600 : 400,
+    fontFamily: "inherit", transition: "all 0.15s", outline: "none",
   });
 
-  const labelStyle: React.CSSProperties = {
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    opacity: collapsed ? 0 : 1,
-    width: collapsed ? 0 : "auto",
-    transition: "opacity 0.15s ease",
-  };
-
   return (
-    <div
-      style={{
-        width: collapsed ? "56px" : "224px",
-        minWidth: collapsed ? "56px" : "224px",
-        height: "100vh",
-        background: "rgba(255,255,255,0.55)",
-        backdropFilter: "blur(24px)",
-        borderRight: "1px solid rgba(0,0,0,0.06)",
-        display: "flex",
-        flexDirection: "column",
-        transition: "width 0.2s ease, min-width 0.2s ease",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: collapsed ? "center" : "space-between",
-          padding: collapsed ? "16px 8px" : "16px",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-        }}
-      >
-        {!collapsed && (
-          <span
-            style={{
-              fontSize: "16px",
-              fontWeight: "700",
-              color: "#1f2937",
-              fontFamily: "inherit",
-            }}
-          >
-            Ecosystem
-          </span>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "32px",
-            height: "32px",
-            background: "transparent",
-            border: "1px solid rgba(0,0,0,0.06)",
-            borderRadius: "6px",
-            color: "#6b7280",
-            cursor: "pointer",
-            flexShrink: 0,
-            outline: "none",
-          }}
-        >
-          {collapsed ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
+    <div style={{
+      width: collapsed ? 56 : 220, minWidth: collapsed ? 56 : 220,
+      height: "100vh", background: "white", borderRight: "1px solid #e5e7eb",
+      display: "flex", flexDirection: "column", transition: "width 0.2s",
+      overflow: "hidden",
+    }}>
+      {/* Logo */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", padding: collapsed ? "16px 8px" : "16px", borderBottom: "1px solid #e5e7eb" }}>
+        {!collapsed && <span style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>Ecosystem</span>}
+        <button onClick={() => setCollapsed(!collapsed)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, background: "none", border: "1px solid #e5e7eb", borderRadius: 6, color: "#6b7280", cursor: "pointer", flexShrink: 0 }}>
+          {collapsed ? "→" : "←"}
         </button>
       </div>
 
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
-          padding: collapsed ? "8px" : "8px",
-        }}
-      >
-        <div style={{ marginBottom: "8px" }}>
-          {!collapsed && (
-            <div
-              style={{
-                padding: "8px 12px 4px",
-                fontSize: "11px",
-                fontWeight: "600",
-                color: "#9ca3af",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              Browse
-            </div>
-          )}
-          {mainNavItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onViewChange(item.id)}
-              style={navButtonStyle(currentView === item.id)}
-              title={collapsed ? item.label : undefined}
-            >
-              <item.icon size={18} />
-              <span style={labelStyle}>{item.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div
-          style={{
-            height: "1px",
-            background: "rgba(229,231,235,0.45)",
-            backdropFilter: "blur(14px)",
-            margin: "8px 12px",
-          }}
-        />
-
-        <div>
-          {!collapsed && (
-            <div
-              style={{
-                padding: "8px 12px 4px",
-                fontSize: "11px",
-                fontWeight: "600",
-                color: "#9ca3af",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              My Stuff
-            </div>
-          )}
-          {myStuffItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onViewChange(item.id)}
-              style={navButtonStyle(currentView === item.id)}
-              title={collapsed ? item.label : undefined}
-            >
-              <item.icon size={18} />
-              <span style={labelStyle}>{item.label}</span>
-            </button>
-          ))}
-        </div>
+      {/* Nav */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
+        {!collapsed && <div style={{ padding: "8px 12px 4px", fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.5px" }}>Browse</div>}
+        {mainNav.map((item) => (
+          <button key={item.id} onClick={() => onViewChange(item.id)}
+            style={navBtn(currentView === item.id)} title={collapsed ? item.label : undefined}>
+            {item.icon}
+            {!collapsed && <span>{item.label}</span>}
+          </button>
+        ))}
       </div>
 
-      <div
-        style={{
-          padding: collapsed ? "8px" : "12px",
-          borderTop: "1px solid rgba(0,0,0,0.06)",
-        }}
-      >
-        <button
-          onClick={() => onViewChange("settings")}
-          style={navButtonStyle(currentView === "settings")}
-          title={collapsed ? "Settings" : undefined}
-        >
-          <IconSettings size={18} />
-          <span style={labelStyle}>Settings</span>
-        </button>
+      {/* Footer */}
+      <div style={{ padding: collapsed ? 8 : "12px", borderTop: "1px solid #e5e7eb" }}>
+        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, color: "#6b7280", textDecoration: "none", fontSize: 13, justifyContent: collapsed ? "center" : "flex-start" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+          {!collapsed && <span>Back to Home</span>}
+        </a>
       </div>
     </div>
   );
