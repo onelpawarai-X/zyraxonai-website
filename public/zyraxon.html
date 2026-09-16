@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Cpath d='M50 20L70 50L50 80L30 50Z' fill='%23fff' opacity='0.9'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Cpath d='M58 18L32 52h18L42 82l28-36H52z' fill='%23fff'/%3E%3C/svg%3E"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -308,7 +308,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
   <div class="nav-inner">
     <a href="#" class="logo">
       <span class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       </span>
       <span class="logo-text">ZYRAXON-AI</span>
     </a>
@@ -319,9 +319,11 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
       <a href="#compare">Compare</a>
       <a href="#download">Download</a>
       <a href="/ecosystem">Ecosystem</a>
+      <a href="/releases">Releases</a>
       <a href="/docs">Documentation</a>
       <a href="/bludar" class="accent">AI Bludar</a>
       <a href="/nebula" class="accent">NEBULA</a>
+      <a href="https://onelpawarai.lovable.app" target="_blank" rel="noopener" class="accent">Founder</a>
     </div>
     <button class="nav-mobile-toggle" id="navToggle" aria-label="Menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -860,7 +862,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
       <div class="footer-brand-col">
         <div class="footer-brand">
           <a href="#" class="logo">
-            <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+            <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
             ZYRAXON AI
           </a>
         </div>
@@ -886,6 +888,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
         <a href="/download/myra-agent">Myra Agent</a>
         <a href="/download/zyraxon-code">Zyraxon Code</a>
         <a href="/ecosystem">Ecosystem Marketplace</a>
+        <a href="/releases">All Releases</a>
         <a href="/bludar">AI Bludar</a>
       </div>
       <div class="footer-col">
@@ -904,7 +907,8 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
       </div>
       <div class="footer-col">
         <h4>About</h4>
-        <a href="https://github.com/onelpawarai-X" target="_blank" rel="noopener">OneL Pawar</a>
+        <a href="https://onelpawarai.lovable.app" target="_blank" rel="noopener">Founder — OneL Pawar</a>
+        <a href="https://github.com/onelpawarai-X" target="_blank" rel="noopener">GitHub Org</a>
         <a href="/nebula">NEBULA</a>
         <a href="/docs">Blog</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/blob/main/LICENSE" target="_blank" rel="noopener">BSL 1.1 License</a>
@@ -1047,11 +1051,32 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 
   async function fetchReleases(repo){
     try{
-      const r=await fetch('https://api.github.com/repos/'+repo+'/releases?per_page=10',{headers:{Accept:'application/vnd.github+json'}});
-      if(!r.ok)return[];
+      const r=await fetch('/api/public/github-releases?repo='+encodeURIComponent(repo)+'&perRepo=10',{headers:{Accept:'application/json'}});
+      if(!r.ok){
+        const r2=await fetch('https://api.github.com/repos/'+repo+'/releases?per_page=10',{headers:{Accept:'application/vnd.github+json'}});
+        if(!r2.ok)return[];
+        const d2=await r2.json();
+        return Array.isArray(d2)?d2.filter(x=>!x.draft):[];
+      }
       const d=await r.json();
-      return Array.isArray(d)?d.filter(x=>!x.draft):[];
-    }catch{return[]}
+      return(d.items||[]).filter(x=>!x.draft).map(x=>({
+        tag_name:x.tagName,
+        name:x.name,
+        html_url:x.htmlUrl,
+        published_at:x.publishedAt,
+        prerelease:x.prerelease,
+        draft:x.draft,
+        body:x.body,
+        assets:(x.assets||[]).map(a=>({name:a.name,size:a.size,browser_download_url:a.downloadUrl,download_count:a.downloadCount}))
+      }));
+    }catch{
+      try{
+        const r3=await fetch('https://api.github.com/repos/'+repo+'/releases?per_page=10',{headers:{Accept:'application/vnd.github+json'}});
+        if(!r3.ok)return[];
+        const d3=await r3.json();
+        return Array.isArray(d3)?d3.filter(x=>!x.draft):[];
+      }catch{return[]}
+    }
   }
 
   function findAsset(releases,patterns){
@@ -1155,7 +1180,7 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 
 <script>
 (function(){
-  var INTERNAL_ROUTES=['/docs','/nebula','/bludar','/ecosystem','/download'];
+  var INTERNAL_ROUTES=['/docs','/nebula','/bludar','/ecosystem','/download','/releases'];
   document.addEventListener('click',function(e){
     var a=e.target.closest('a');
     if(!a)return;

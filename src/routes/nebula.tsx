@@ -91,15 +91,17 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
     setError("");
     try {
       const res = await fetch(`/api/public/nebula?action=verify&password=${encodeURIComponent(password)}`);
-      const data = await res.json();
+      const text = await res.text();
+      let data: any;
+      try { data = JSON.parse(text); } catch { data = { success: false }; }
       if (data.success) {
-        localStorage.setItem("nebula_auth", data.token);
+        localStorage.setItem("nebula_auth", data.token || "ok");
         onUnlock();
       } else {
-        setError("ভুল পাসওয়ার্ড!");
+        setError("Wrong password!");
       }
     } catch {
-      setError("সংযোগ বিচ্ছিন্ন।");
+      setError("Connection failed. Try again.");
     } finally {
       setLoading(false);
     }
@@ -111,7 +113,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl" />
       </div>
-      <Card className="relative z-10 w-full max-w-md border border-gray-200 bg-white/90 backdrop-blur-xl">
+      <Card className="relative z-10 w-full max-w-md border border-gray-200 bg-white/90 backdrop-blur-xl shadow-xl">
         <CardContent className="p-8">
           <div className="text-center mb-6">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center mb-4">
@@ -127,7 +129,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <Input
                 type={showPw ? "text" : "password"}
-                placeholder="পাসওয়ার্ড..."
+                placeholder="Password..."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 pr-10 bg-white border-gray-200 focus:border-purple-500"
@@ -152,9 +154,14 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
               className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-semibold"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
-              {loading ? "যাচাই..." : "প্রবেশ করুন"}
+              {loading ? "Verifying..." : "Enter"}
             </Button>
           </form>
+          <div className="mt-6 text-center">
+            <a href="/" target="_top" className="text-xs text-gray-400 hover:text-gray-600">
+              Back to home
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -784,12 +791,37 @@ function NebulaPanel() {
 
 export default function NebulaPage() {
   const [unlocked, setUnlocked] = useState(false);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("nebula_auth");
-    if (token) setUnlocked(true);
+    try {
+      const token = localStorage.getItem("nebula_auth");
+      if (token) setUnlocked(true);
+    } catch {}
   }, []);
 
-  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
-  return <NebulaPanel />;
+  if (err) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-red-500 text-sm mb-3">{err}</p>
+          <a href="/" className="text-blue-600 text-sm underline">Go home</a>
+        </div>
+      </div>
+    );
+  }
+
+  try {
+    if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
+    return <NebulaPanel />;
+  } catch (e: any) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-red-500 text-sm mb-3">Something went wrong: {e?.message}</p>
+          <a href="/" className="text-blue-600 text-sm underline">Go home</a>
+        </div>
+      </div>
+    );
+  }
 }
