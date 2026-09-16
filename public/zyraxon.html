@@ -1159,33 +1159,36 @@ topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
   };
 
   async function fetchReleases(repo){
-    try{
-      const r=await fetch('/api/public/github-releases?repo='+encodeURIComponent(repo)+'&perRepo=10',{headers:{Accept:'application/json'}});
-      if(!r.ok){
-        const r2=await fetch('https://api.github.com/repos/'+repo+'/releases?per_page=10',{headers:{Accept:'application/vnd.github+json'}});
-        if(!r2.ok)return[];
-        const d2=await r2.json();
-        return Array.isArray(d2)?d2.filter(x=>!x.draft):[];
-      }
-      const d=await r.json();
-      return(d.items||[]).filter(x=>!x.draft).map(x=>({
-        tag_name:x.tagName,
-        name:x.name,
-        html_url:x.htmlUrl,
-        published_at:x.publishedAt,
-        prerelease:x.prerelease,
-        draft:x.draft,
-        body:x.body,
-        assets:(x.assets||[]).map(a=>({name:a.name,size:a.size,browser_download_url:a.downloadUrl,download_count:a.downloadCount}))
-      }));
-    }catch{
+    const urls=[
+      'https://api.github.com/repos/'+repo+'/releases?per_page=10',
+      '/api/public/github-releases?repo='+encodeURIComponent(repo)+'&perRepo=10'
+    ];
+    for(const url of urls){
       try{
-        const r3=await fetch('https://api.github.com/repos/'+repo+'/releases?per_page=10',{headers:{Accept:'application/vnd.github+json'}});
-        if(!r3.ok)return[];
-        const d3=await r3.json();
-        return Array.isArray(d3)?d3.filter(x=>!x.draft):[];
-      }catch{return[]}
+        const r=await fetch(url,{headers:{Accept:'application/vnd.github+json'}});
+        if(!r.ok)continue;
+        const d=await r.json();
+        const items=d.items||d;
+        if(!Array.isArray(items))continue;
+        const filtered=items.filter(x=>!x.draft);
+        return filtered.map(x=>({
+          tag_name:x.tag_name||x.tagName||'',
+          name:x.name||x.tagName||'',
+          html_url:x.html_url||x.htmlUrl||'',
+          published_at:x.published_at||x.publishedAt||'',
+          prerelease:!!x.prerelease,
+          draft:!!x.draft,
+          body:x.body||'',
+          assets:(x.assets||[]).map(a=>({
+            name:a.name||'',
+            size:a.size||0,
+            browser_download_url:a.browser_download_url||a.downloadUrl||'',
+            download_count:a.download_count||a.downloadCount||0
+          }))
+        }));
+      }catch{continue}
     }
+    return[];
   }
 
   function findAsset(releases,patterns){

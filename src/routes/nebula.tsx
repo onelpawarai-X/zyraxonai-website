@@ -1,83 +1,9 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Zap,
-  Lock,
-  Eye,
-  EyeOff,
-  Search,
-  Download,
-  CheckCircle2,
-  AlertCircle,
-  RefreshCw,
-  Cpu,
-  MemoryStick,
-  Server,
-  Activity,
-  Brain,
-  Send,
-  Trash2,
-  X,
-  Image as ImageIcon,
-  Volume2,
-  FileText,
-  Loader2,
-  ChevronDown,
-} from "lucide-react";
 
 export const Route = createFileRoute("/nebula")({
   head: () => ({ meta: [{ title: "ZYRAXON Nebula — AI Model Hub" }] }),
 });
-
-const NEBULA_PASSWORD = "zyraxon";
-
-type SystemInfo = {
-  platform: string;
-  arch: string;
-  cpus: number;
-  cpuModel: string;
-  totalMemoryGB: number;
-  freeMemoryGB: number;
-  uptime: number;
-  nodeVersion: string;
-};
-
-type HFModel = {
-  id: string;
-  modelId: string;
-  author: string;
-  pipeline_tag: string;
-  tags: string[];
-  downloads: number;
-  likes: number;
-  lastModified: string;
-};
-
-type DownloadStatus = {
-  modelId: string;
-  status: "pending" | "downloading" | "done" | "error";
-  progress: number;
-  totalBytes: number;
-  downloadedBytes: number;
-  error?: string;
-  files: { name: string; size: number }[];
-};
-
-type ChatMsg = {
-  role: "user" | "assistant" | "system";
-  content: string;
-  type?: "text" | "image" | "audio" | "download";
-  imageUrl?: string;
-  audioUrl?: string;
-  modelId?: string;
-  downloadProgress?: number;
-};
 
 function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState("");
@@ -101,7 +27,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
         setError("Wrong password!");
       }
     } catch {
-      setError("Connection failed. Try again.");
+      setError("Connection failed.");
     } finally {
       setLoading(false);
     }
@@ -109,61 +35,57 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden">
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl" />
       </div>
-      <Card className="relative z-10 w-full max-w-md border border-gray-200 bg-white/90 backdrop-blur-xl shadow-xl">
-        <CardContent className="p-8">
-          <div className="text-center mb-6">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center mb-4">
-              <Zap className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent">
-              ZYRAXON Nebula
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">AI Model Hub — Admin Access</p>
+      <div className="relative z-10 w-full max-w-md border border-gray-200 bg-white rounded-2xl shadow-xl p-8">
+        <div className="text-center mb-6">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <Input
-                type={showPw ? "text" : "password"}
-                placeholder="Password..."
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 bg-white border-gray-200 focus:border-purple-500"
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            {error && (
-              <p className="text-red-500 text-sm flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" /> {error}
-              </p>
-            )}
-            <Button
-              type="submit"
-              disabled={loading || !password}
-              className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-semibold"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
-              {loading ? "Verifying..." : "Enter"}
-            </Button>
-          </form>
-          <div className="mt-6 text-center">
-            <a href="/" target="_top" className="text-xs text-gray-400 hover:text-gray-600">
-              Back to home
-            </a>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent">
+            ZYRAXON Nebula
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">AI Model Hub — Admin Access</p>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            <input
+              type={showPw ? "text" : "password"}
+              placeholder="Password..."
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full pl-10 pr-10 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+              autoFocus
+            />
+            <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showPw ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              )}
+            </button>
           </div>
-        </CardContent>
-      </Card>
+          {error && (
+            <p className="text-red-500 text-sm flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={loading || !password}
+            className="w-full rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-semibold py-2.5 text-sm disabled:opacity-50 transition-all"
+          >
+            {loading ? "Verifying..." : "Enter"}
+          </button>
+        </form>
+        <div className="mt-6 text-center">
+          <a href="/" className="text-xs text-gray-400 hover:text-gray-600">Back to home</a>
+        </div>
+      </div>
     </div>
   );
 }
@@ -171,619 +93,172 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
-  return String(n);
-}
-
-const PIPELINE_ICONS: Record<string, string> = {
-  "text-generation": "🧠",
-  "text2text-generation": "📝",
-  "image-generation": "🎨",
-  "text-to-image": "🎨",
-  "text-to-audio": "🎵",
-  "text-to-speech": "🗣️",
-  "automatic-speech-recognition": "🎤",
-  "image-classification": "📷",
-  "fill-mask": "🎭",
-  "question-answering": "❓",
-  "summarization": "📄",
-  "translation": "🌐",
-  "zero-shot-classification": "🎯",
-  "object-detection": "🔍",
-  "segmentation": "🧩",
-  "feature-extraction": "📊",
-  "sentence-similarity": "🔗",
-};
-
-const PIPELINE_LABELS: Record<string, string> = {
-  "text-generation": "Text Generation",
-  "text2text-generation": "Text2Text",
-  "image-generation": "Image Generation",
-  "text-to-image": "Text to Image",
-  "text-to-audio": "Text to Audio",
-  "text-to-speech": "Text to Speech",
-  "automatic-speech-recognition": "Speech Recognition",
-  "image-classification": "Image Classification",
-  "question-answering": "Question Answering",
-  "summarization": "Summarization",
-  "translation": "Translation",
-};
-
-function getPipelineType(pipeline: string): "text" | "image" | "audio" {
-  if (pipeline.includes("image") || pipeline.includes("text-to-image")) return "image";
-  if (pipeline.includes("audio") || pipeline.includes("speech")) return "audio";
-  return "text";
-}
-
-function ModelCard({
-  model,
-  downloadStatus,
-  onDownload,
-  onUse,
-}: {
-  model: HFModel;
-  downloadStatus?: DownloadStatus;
-  onDownload: (modelId: string) => void;
-  onUse: (model: HFModel) => void;
-}) {
-  const icon = PIPELINE_ICONS[model.pipeline_tag] || "📦";
-  const label = PIPELINE_LABELS[model.pipeline_tag] || model.pipeline_tag;
-  const status = downloadStatus?.status;
-  const progress = downloadStatus?.progress || 0;
-
-  return (
-    <Card className="border-gray-200 bg-white hover:bg-gray-50 transition-all group">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="text-2xl shrink-0 mt-1">{icon}</div>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-white truncate text-sm">{model.modelId}</p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              by {model.author} · {label}
-            </p>
-            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-              <span>⬇ {formatNumber(model.downloads)}</span>
-              <span>❤ {formatNumber(model.likes)}</span>
-            </div>
-            {status === "downloading" && (
-              <div className="mt-2">
-                <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                  <span className="flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Downloading...
-                  </span>
-                  <span>{progress}%</span>
-                </div>
-                <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                {downloadStatus.totalBytes > 0 && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatBytes(downloadStatus.downloadedBytes)} / {formatBytes(downloadStatus.totalBytes)}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5 shrink-0">
-            {status === "done" ? (
-              <Button size="sm" variant="outline" className="border-green-300 text-green-600 h-7 text-xs">
-                <CheckCircle2 className="w-3 h-3 mr-1" /> Ready
-              </Button>
-            ) : status === "downloading" ? (
-              <Button size="sm" variant="outline" disabled className="h-7 text-xs">
-                <Loader2 className="w-3 h-3 animate-spin mr-1" /> {progress}%
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => onDownload(model.modelId)}
-                className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 h-7 text-xs"
-              >
-                <Download className="w-3 h-3 mr-1" /> Get
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onUse(model)}
-              className="h-7 text-xs text-gray-400 hover:text-white"
-            >
-              <Send className="w-3 h-3 mr-1" /> Use
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function SystemTab() {
-  const [info, setInfo] = useState<SystemInfo | null>(null);
+  const [info, setInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/public/nebula?action=system`);
-      const data = await res.json();
-      if (data.success) setInfo(data.system);
-    } catch {
-      setInfo(null);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/public/nebula?action=system");
+        const data = await res.json();
+        if (active && data.success) setInfo(data.system);
+      } catch {} finally { if (active) setLoading(false); }
+    })();
+    return () => { active = false; };
   }, []);
 
-  useEffect(() => {
-    load();
-    const iv = setInterval(load, 10000);
-    return () => clearInterval(iv);
-  }, [load]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center py-12"><div className="w-6 h-6 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" /></div>;
 
   const stats = [
-    { label: "CPU", value: `${info?.cpus ?? "?"} cores`, sub: info?.cpuModel || "", icon: Cpu, color: "from-purple-500 to-purple-700" },
-    { label: "RAM", value: `${info?.totalMemoryGB ?? "?"} GB`, sub: `${info?.freeMemoryGB ?? "?"} GB free`, icon: MemoryStick, color: "from-cyan-500 to-cyan-700" },
-    { label: "Platform", value: info?.platform ?? "?", sub: info?.arch ?? "", icon: Server, color: "from-orange-500 to-orange-700" },
-    { label: "Uptime", value: `${Math.floor((info?.uptime ?? 0) / 3600)}h`, sub: `Node ${info?.nodeVersion ?? ""}`, icon: Activity, color: "from-green-500 to-green-700" },
+    { label: "CPU", value: `${info?.cpus ?? "?"} cores`, sub: info?.cpuModel || "" },
+    { label: "RAM", value: `${info?.totalMemoryGB ?? "?"} GB`, sub: `${info?.freeMemoryGB ?? "?"} GB free` },
+    { label: "Platform", value: info?.platform ?? "?", sub: info?.arch ?? "" },
+    { label: "Uptime", value: `${Math.floor((info?.uptime ?? 0) / 3600)}h`, sub: `Node ${info?.nodeVersion ?? ""}` },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-3">
       {stats.map((s) => (
-        <Card key={s.label} className="border-gray-200 bg-white">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${s.color} flex items-center justify-center`}>
-              <s.icon className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-400">{s.label}</p>
-              <p className="text-lg font-bold text-white">{s.value}</p>
-              {s.sub && <p className="text-xs text-gray-500">{s.sub}</p>}
-            </div>
-          </CardContent>
-        </Card>
+        <div key={s.label} className="border border-gray-200 bg-white rounded-xl p-4">
+          <p className="text-xs text-gray-400">{s.label}</p>
+          <p className="text-lg font-bold text-gray-900">{s.value}</p>
+          {s.sub && <p className="text-xs text-gray-500">{s.sub}</p>}
+        </div>
       ))}
     </div>
   );
 }
 
 function ChatTab() {
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    {
-      role: "assistant",
-      content: "ZYRAXON Nebula-এ স্বাগতম! 🚀\n\nআমি HuggingFace থেকে রিয়েল AI মডেল খুঁজে বের করতে পারি, ডাউনলোড করতে পারি, এবং চালাতে পারি।\n\n• মডেল সার্চ করতে বলুন: \"sdxl খুঁজে বের করো\"\n• ডাউনলোড করতে বলুন: \"llama 3.2 ডাউনলোড করো\"\n• জেনারেট করতে বলুন: \"a cat sitting on mars দিয়ে image বানাও\"",
-    },
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([
+    { role: "assistant", content: "Welcome to ZYRAXON Nebula!\n\nSearch models, download them, or generate content.\n\nTry: \"search sdxl\" or \"generate a cat image\"" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<HFModel[]>([]);
-  const [showModelPicker, setShowModelPicker] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<HFModel | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const addMsg = (role: "user" | "assistant" | "system", content: string, extra?: Partial<ChatMsg>) => {
-    setMessages((prev) => [...prev, { role, content, ...extra }]);
-  };
-
-  const searchModels = async (query: string) => {
-    const res = await fetch(`/api/public/nebula/search?q=${encodeURIComponent(query)}&limit=10`);
-    const data = await res.json();
-    if (data.success) {
-      setSearchResults(data.models);
-      setShowModelPicker(true);
-    }
-    return data.models || [];
-  };
-
-  const downloadModel = async (modelId: string) => {
-    addMsg("system", `⬇️ ডাউনলোড শুরু হচ্ছে: ${modelId}`);
-    const res = await fetch("/api/public/nebula/download", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ modelId }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      addMsg("system", `✅ ${modelId} ডাউনলোড শুরু হয়েছে। Progress দেখতে "status ${modelId}" লিখুন।`);
-    } else {
-      addMsg("system", `❌ ডাউনলোড ব্যর্থ: ${data.error}`);
-    }
-  };
-
-  const generateContent = async (prompt: string, model: string, type: "text" | "image" | "audio") => {
-    addMsg("user", prompt);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/public/nebula/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, prompt, type, parameters: {} }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        const result = data.result;
-        if (result.type === "image" && result.base64) {
-          addMsg("assistant", "🎨 Image generated!", {
-            type: "image",
-            imageUrl: `data:${result.contentType};base64,${result.base64}`,
-          });
-        } else if (result.type === "audio" && result.base64) {
-          addMsg("assistant", "🎵 Audio generated!", {
-            type: "audio",
-            audioUrl: `data:${result.contentType};base64,${result.base64}`,
-          });
-        } else if (typeof result === "object" && result.generated_text) {
-          addMsg("assistant", result.generated_text);
-        } else if (Array.isArray(result)) {
-          addMsg("assistant", result.map((r: { generated_text?: string }) => r.generated_text || JSON.stringify(r)).join("\n"));
-        } else if (typeof result === "string") {
-          addMsg("assistant", result);
-        } else {
-          addMsg("assistant", JSON.stringify(result, null, 2));
-        }
-      } else {
-        addMsg("assistant", `❌ Error: ${data.error}`);
-      }
-    } catch (err) {
-      addMsg("assistant", `❌ Error: ${String(err)}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const addMsg = (role: string, content: string) => setMessages((p) => [...p, { role, content }]);
 
   const handleSend = async () => {
     const text = input.trim();
     if (!text || loading) return;
     setInput("");
     addMsg("user", text);
-
-    const lower = text.toLowerCase();
-
-    if (lower.includes("সার্চ") || lower.includes("search") || lower.includes("খুঁজ") || lower.includes("find")) {
-      const query = text.replace(/(সার্চ|search|খুঁজ|find|করো|করো|বের|করো)/gi, "").trim();
-      if (query) {
-        addMsg("assistant", `🔍 "${query}" সার্চ করছি HuggingFace-এ...`);
-        const models = await searchModels(query);
-        if (models.length > 0) {
-          const list = models
-            .slice(0, 5)
-            .map((m: HFModel) => `• **${m.modelId}** — ${PIPELINE_LABELS[m.pipeline_tag] || m.pipeline_tag} — ⬇${formatNumber(m.downloads)}`)
-            .join("\n");
-          addMsg("assistant", `${models.length}টি মডেল পাওয়া গেছে:\n${list}\n\nডাউনলোড করতে "download [model-id]" লিখুন।`);
-        } else {
-          addMsg("assistant", "কোনো মডেল পাওয়া যায়নি।");
+    setLoading(true);
+    try {
+      const lower = text.toLowerCase();
+      if (lower.includes("search") || lower.includes("find")) {
+        const query = text.replace(/(search|find|করো|বের)/gi, "").trim();
+        if (query) {
+          const res = await fetch(`/api/public/nebula/search?q=${encodeURIComponent(query)}&limit=5`);
+          const data = await res.json();
+          if (data.success && data.models?.length) {
+            const list = data.models.map((m: any) => `- ${m.modelId} (${m.pipeline_tag}) — ${m.downloads} downloads`).join("\n");
+            addMsg("assistant", `Found ${data.models.length} models:\n${list}`);
+          } else {
+            addMsg("assistant", "No models found.");
+          }
         }
-      }
-      return;
-    }
-
-    if (lower.includes("ডাউনলোড") || lower.includes("download")) {
-      const modelMatch = text.match(/[\w\-\.\/]+/g)?.filter((w) => w.includes("/"))[0];
-      if (modelMatch) {
-        await downloadModel(modelMatch);
       } else {
-        addMsg("assistant", "কোন মডেল ডাউনলোড করতে চান? মডেলের ID দিন (যেমন: `meta-llama/Llama-3.2-3B`)");
-      }
-      return;
-    }
-
-    if (lower.startsWith("status")) {
-      const modelId = text.replace(/^status\s*/i, "").trim();
-      if (modelId) {
-        const res = await fetch(`/api/public/nebula/download?modelId=${encodeURIComponent(modelId)}`);
+        const res = await fetch("/api/public/nebula/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "microsoft/DialoGPT-medium", prompt: text, type: "text" }),
+        });
         const data = await res.json();
-        if (data.success && data.status) {
-          const s = data.status;
-          addMsg("system", `📊 ${s.modelId}: ${s.status} — ${s.progress}% — ${formatBytes(s.downloadedBytes)}/${formatBytes(s.totalBytes)}`);
+        if (data.success) {
+          const result = data.result;
+          addMsg("assistant", typeof result === "string" ? result : result?.generated_text || JSON.stringify(result));
         } else {
-          addMsg("system", `📊 ${modelId}: কোনো download status নেই।`);
+          addMsg("assistant", `Error: ${data.error}`);
         }
       }
-      return;
-    }
-
-    const imageKeywords = ["image", "ছবি", "picture", "draw", "paint", "generate image", "art"];
-    const audioKeywords = ["audio", "গান", "music", "speech", "tts", "voice", "sound"];
-
-    if (imageKeywords.some((k) => lower.includes(k))) {
-      const model = selectedModel?.modelId || "stabilityai/stable-diffusion-xl-base-1.0";
-      addMsg("assistant", `🎨 ${model} দিয়ে image তৈরি করছি...`);
-      await generateContent(text, model, "image");
-      return;
-    }
-
-    if (audioKeywords.some((k) => lower.includes(k))) {
-      const model = selectedModel?.modelId || "facebook/musicgen-small";
-      addMsg("assistant", `🎵 ${model} দিয়ে audio তৈরি করছি...`);
-      await generateContent(text, model, "audio");
-      return;
-    }
-
-    const model = selectedModel?.modelId || "microsoft/DialoGPT-medium";
-    await generateContent(text, model, "text");
+    } catch (e: any) {
+      addMsg("assistant", `Error: ${e?.message}`);
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="flex flex-col h-[600px]">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-2">
-          <Brain className="w-4 h-4 text-purple-400" />
-          <span className="text-sm text-gray-600">Nebula Chat</span>
-          {selectedModel && (
-            <Badge variant="outline" className="border-purple-300 text-purple-600 text-xs">
-              {selectedModel.modelId.split("/").pop()}
-            </Badge>
-          )}
-        </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setShowModelPicker(!showModelPicker)}
-          className="text-xs text-gray-400"
-        >
-          <ChevronDown className="w-3 h-3 mr-1" /> Models
-        </Button>
-      </div>
-
-      {showModelPicker && (
-        <div className="border-b border-gray-200 bg-gray-50 p-3 max-h-48 overflow-y-auto">
-          <div className="flex items-center gap-2 mb-2">
-            <Input
-              placeholder="HuggingFace থেকে মডেল সার্চ করুন..."
-              onKeyDown={async (e) => {
-                if (e.key === "Enter") {
-                  const q = (e.target as HTMLInputElement).value;
-                  if (q) await searchModels(q);
-                }
-              }}
-              className="bg-white border-gray-200 text-sm h-8"
-            />
+    <div className="flex flex-col h-[500px]">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm whitespace-pre-wrap ${
+              msg.role === "user"
+                ? "bg-gradient-to-r from-purple-600 to-cyan-600 text-white"
+                : "bg-gray-100 text-gray-800"
+            }`}>{msg.content}</div>
           </div>
-          {searchResults.length > 0 && (
-            <div className="space-y-1">
-              {searchResults.map((m) => (
-                <button
-                  key={m.modelId}
-                  onClick={() => {
-                    setSelectedModel(m);
-                    setShowModelPicker(false);
-                    addMsg("system", `✅ মডেল সিলেক্ট হয়েছে: ${m.modelId}`);
-                  }}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-colors ${
-                    selectedModel?.modelId === m.modelId
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  <span>{PIPELINE_ICONS[m.pipeline_tag] || "📦"}</span>
-                  <span className="truncate">{m.modelId}</span>
-                  <span className="text-gray-400 ml-auto">⬇{formatNumber(m.downloads)}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      <ScrollArea className="flex-1 px-4" ref={scrollRef}>
-        <div className="py-4 space-y-4">
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm whitespace-pre-wrap ${
-                  msg.role === "user"
-                    ? "bg-gradient-to-r from-purple-600 to-cyan-600 text-white"
-                    : msg.role === "system"
-                      ? "bg-gray-50 text-gray-500 border border-gray-200"
-                      : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {msg.content}
-                {msg.type === "image" && msg.imageUrl && (
-                  <img src={msg.imageUrl} alt="Generated" className="mt-2 rounded-lg max-w-full" />
-                )}
-                {msg.type === "audio" && msg.audioUrl && (
-                  <audio controls src={msg.audioUrl} className="mt-2 w-full" />
-                )}
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-2">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-
+        ))}
+        {loading && <div className="flex justify-start"><div className="bg-gray-100 rounded-xl px-4 py-3"><div className="flex gap-1"><span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" /><span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} /><span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} /></div></div></div>}
+      </div>
       <div className="border-t border-gray-200 p-3 bg-white">
         <div className="flex items-center gap-2">
-          <Input
-            ref={inputRef}
-            placeholder="মডেল সার্চ করুন, ডাউনলোড করুন, বা generate করুন..."
+          <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Search models, generate content..."
             disabled={loading}
-            className="bg-white border-gray-200 focus:border-purple-500"
+            className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
           />
-          <Button
-            onClick={handleSend}
-            disabled={loading || !input.trim()}
-            className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 shrink-0"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+          <button onClick={handleSend} disabled={loading || !input.trim()} className="rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
+            Send
+          </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function DownloadsTab() {
-  const [downloads, setDownloads] = useState<DownloadStatus[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/public/nebula/download");
-      const data = await res.json();
-      if (data.success) setDownloads(data.models || []);
-    } catch {} finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-    const iv = setInterval(load, 3000);
-    return () => clearInterval(iv);
-  }, [load]);
-
-  const removeModel = async (modelId: string) => {
-    await fetch(`/api/public/nebula/download?modelId=${encodeURIComponent(modelId)}`, { method: "DELETE" });
-    load();
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
-      </div>
-    );
-  }
-
-  if (downloads.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-400">
-        <Download className="w-10 h-10 mx-auto mb-3 opacity-50" />
-        <p className="text-sm">এখনো কোনো মডেল ডাউনলোড হয়নি।</p>
-        <p className="text-xs mt-1">Chat ট্যাবে গিয়ে মডেল সার্চ ও ডাউনলোড করুন।</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {downloads.map((d) => (
-        <Card key={d.modelId} className="border-gray-200 bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white text-sm truncate">{d.modelId}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {d.status === "done" && `✅ Done — ${d.files.length} files`}
-                  {d.status === "downloading" && `⬇️ ${d.progress}% — ${formatBytes(d.downloadedBytes)}/${formatBytes(d.totalBytes)}`}
-                  {d.status === "error" && `❌ ${d.error}`}
-                  {d.status === "pending" && "⏳ Pending..."}
-                </p>
-                {d.status === "downloading" && (
-                  <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mt-2">
-                    <div
-                      className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full transition-all duration-300"
-                      style={{ width: `${d.progress}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => removeModel(d.modelId)}
-                className="text-red-500 hover:text-red-300 ml-3 shrink-0"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 }
 
 function NebulaPanel() {
+  const [tab, setTab] = useState<"chat" | "system">("chat");
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             </div>
             <div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent">
-                ZYRAXON Nebula
-              </h1>
-              <p className="text-xs text-gray-500">Real AI Model Hub — HuggingFace Powered</p>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent">ZYRAXON Nebula</h1>
+              <p className="text-xs text-gray-500">AI Model Hub — HuggingFace Powered</p>
             </div>
           </div>
-          <Badge variant="outline" className="border-green-300 text-green-600">
-            <span className="w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse" />
-            Live
-          </Badge>
+          <div className="flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-1">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-xs font-medium text-green-700">Live</span>
+          </div>
         </div>
       </header>
-
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <Tabs defaultValue="chat" className="space-y-6">
-          <TabsList className="bg-gray-100 border border-gray-200 p-1">
-            <TabsTrigger value="chat" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
-              <Brain className="w-4 h-4 mr-2" /> Chat
-            </TabsTrigger>
-            <TabsTrigger value="downloads" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
-              <Download className="w-4 h-4 mr-2" /> Downloads
-            </TabsTrigger>
-            <TabsTrigger value="system" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
-              <Cpu className="w-4 h-4 mr-2" /> System
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="chat">
-            <Card className="border-gray-200 bg-white">
-              <CardContent className="p-0">
-                <ChatTab />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="downloads">
-            <DownloadsTab />
-          </TabsContent>
-
-          <TabsContent value="system">
-            <SystemTab />
-          </TabsContent>
-        </Tabs>
+      <main className="max-w-5xl mx-auto px-4 py-6">
+        <div className="flex gap-2 mb-6">
+          {[["chat", "Chat"], ["system", "System"]].map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key as any)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === key ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:bg-gray-100"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {tab === "chat" && (
+          <div className="border border-gray-200 bg-white rounded-xl overflow-hidden">
+            <ChatTab />
+          </div>
+        )}
+        {tab === "system" && <SystemTab />}
       </main>
     </div>
   );
@@ -791,7 +266,6 @@ function NebulaPanel() {
 
 export default function NebulaPage() {
   const [unlocked, setUnlocked] = useState(false);
-  const [err, setErr] = useState("");
 
   useEffect(() => {
     try {
@@ -800,28 +274,6 @@ export default function NebulaPage() {
     } catch {}
   }, []);
 
-  if (err) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-red-500 text-sm mb-3">{err}</p>
-          <a href="/" className="text-blue-600 text-sm underline">Go home</a>
-        </div>
-      </div>
-    );
-  }
-
-  try {
-    if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
-    return <NebulaPanel />;
-  } catch (e: any) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-red-500 text-sm mb-3">Something went wrong: {e?.message}</p>
-          <a href="/" className="text-blue-600 text-sm underline">Go home</a>
-        </div>
-      </div>
-    );
-  }
+  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
+  return <NebulaPanel />;
 }
