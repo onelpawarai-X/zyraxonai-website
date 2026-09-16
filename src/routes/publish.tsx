@@ -69,9 +69,20 @@ function PublishForm() {
     source_agent: "cloud", author_name: "", live_url: "", repo_url: "",
     version: "1.0.0", tags: "", publish: false,
   });
+  const [sourceFiles, setSourceFiles] = useState<{ path: string; content: string }[]>([]);
+  const [dragOver, setDragOver] = useState(false);
   const [step, setStep] = useState<"form" | "preview" | "publishing" | "done" | "error">("form");
   const [result, setResult] = useState<PublishResult | null>(null);
   const [error, setError] = useState("");
+
+  async function handleFileDrop(files: FileList) {
+    const results: { path: string; content: string }[] = [];
+    for (let i = 0; i < files.length; i++) {
+      try { results.push({ path: files[i].name, content: await files[i].text() }); }
+      catch { results.push({ path: files[i].name, content: "[binary]" }); }
+    }
+    setSourceFiles((prev) => [...prev, ...results]);
+  }
 
   const update = (field: string, value: string | boolean) =>
     setForm((p) => ({ ...p, [field]: value }));
@@ -87,7 +98,7 @@ function PublishForm() {
     setError("");
     try {
       const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
-      const body = {
+      const body: any = {
         name: form.name,
         slug: form.slug,
         tagline: form.tagline,
@@ -101,6 +112,7 @@ function PublishForm() {
         tags,
         publish: true,
       };
+      if (sourceFiles.length > 0) body.files = sourceFiles;
       const res = await fetch(`${ENDPOINT}/ingest`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-zyraxon-key": apiKey },
@@ -210,6 +222,31 @@ function PublishForm() {
                 <label style={labelStyle}>GitHub Repo URL</label>
                 <input value={form.repo_url} onChange={(e) => update("repo_url", e.target.value)} placeholder="https://github.com/..." style={inputStyle} />
               </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Source Code (upload your project files)</label>
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={async (e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files.length) await handleFileDrop(e.dataTransfer.files); }}
+                style={{ border: `2px dashed ${dragOver ? "#059669" : "#d1d5db"}`, borderRadius: 8, padding: 24, textAlign: "center", background: dragOver ? "#f0fdf4" : "#f9fafb", cursor: "pointer" }}
+              >
+                <input type="file" multiple id="src-files" onChange={async (e) => { if (e.target.files?.length) await handleFileDrop(e.target.files); e.target.value = ""; }} style={{ display: "none" }} />
+                <svg style={{ width: 32, height: 32, color: "#9ca3af", margin: "0 auto 8px" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 4px" }}>Drop files here or <span style={{ color: "#059669", fontWeight: 600 }} onClick={() => document.getElementById("src-files")?.click()}>browse</span></p>
+                <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>Source files for auto-scan & publish</p>
+              </div>
+              {sourceFiles.length > 0 && (
+                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, maxHeight: 120, overflow: "auto" }}>
+                  {sourceFiles.map((f, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", background: "#f3f4f6", borderRadius: 4, fontSize: 12 }}>
+                      <span style={{ color: "#374151", fontFamily: "monospace" }}>{f.path}</span>
+                      <button onClick={() => setSourceFiles((p) => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 14 }}>&times;</button>
+                    </div>
+                  ))}
+                  <button onClick={() => setSourceFiles([])} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 12, textAlign: "left" }}>Clear all</button>
+                </div>
+              )}
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
               <button onClick={handleSubmit} disabled={!form.name || !form.slug || !apiKey}

@@ -22,6 +22,25 @@ const CATEGORIES = [
 
 const AGENTS = ["cloud", "desktop", "mobile", "code"];
 
+interface SourceFile {
+  path: string;
+  content: string;
+}
+
+async function readFilesAsSourceFiles(files: FileList): Promise<SourceFile[]> {
+  const results: SourceFile[] = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      const content = await file.text();
+      results.push({ path: file.name, content });
+    } catch {
+      results.push({ path: file.name, content: "[binary file]" });
+    }
+  }
+  return results;
+}
+
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "10px 12px", border: "1px solid #e5e7eb", borderRadius: 8,
   fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "inherit",
@@ -36,6 +55,8 @@ export const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onP
     source_agent: "cloud", author_name: "", live_url: "", repo_url: "",
     version: "1.0.0", tags: "",
   });
+  const [sourceFiles, setSourceFiles] = useState<SourceFile[]>([]);
+  const [dragOver, setDragOver] = useState(false);
   const [step, setStep] = useState<"form" | "publishing" | "done" | "error">("form");
   const [result, setResult] = useState<PublishResult | null>(null);
   const [error, setError] = useState("");
@@ -45,6 +66,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onP
       setStep("form");
       setResult(null);
       setError("");
+      setSourceFiles([]);
     }
   }, [isOpen]);
 
@@ -61,7 +83,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onP
     setError("");
     try {
       const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
-      const body = {
+      const body: any = {
         name: form.name,
         slug: form.slug,
         tagline: form.tagline,
@@ -75,6 +97,9 @@ export const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onP
         tags,
         publish: true,
       };
+      if (sourceFiles.length > 0) {
+        body.files = sourceFiles;
+      }
       const res = await fetch(`${ENDPOINT}/ingest`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-zyraxon-key": apiKey },
@@ -193,6 +218,63 @@ export const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onP
                   <label style={labelStyle}>GitHub Repo</label>
                   <input value={form.repo_url} onChange={(e) => update("repo_url", e.target.value)} placeholder="https://github.com/..." style={inputStyle} />
                 </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Source Code (optional — upload your project files)</label>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                      const newFiles = await readFilesAsSourceFiles(files);
+                      setSourceFiles((prev) => [...prev, ...newFiles]);
+                    }
+                  }}
+                  style={{
+                    border: `2px dashed ${dragOver ? "#059669" : "#d1d5db"}`,
+                    borderRadius: 8,
+                    padding: 24,
+                    textAlign: "center",
+                    background: dragOver ? "#f0fdf4" : "#f9fafb",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    id="source-files-input"
+                    onChange={async (e) => {
+                      const files = e.target.files;
+                      if (files && files.length > 0) {
+                        const newFiles = await readFilesAsSourceFiles(files);
+                        setSourceFiles((prev) => [...prev, ...newFiles]);
+                      }
+                      e.target.value = "";
+                    }}
+                    style={{ display: "none" }}
+                  />
+                  <svg style={{ width: 32, height: 32, color: "#9ca3af", margin: "0 auto 8px" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                  <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 4px" }}>
+                    Drop files here or <span style={{ color: "#059669", fontWeight: 600 }} onClick={() => document.getElementById("source-files-input")?.click()}>browse</span>
+                  </p>
+                  <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>Source code files for auto-scan & publish</p>
+                </div>
+                {sourceFiles.length > 0 && (
+                  <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, maxHeight: 120, overflow: "auto" }}>
+                    {sourceFiles.map((f, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", background: "#f3f4f6", borderRadius: 4, fontSize: 12 }}>
+                        <span style={{ color: "#374151", fontFamily: "monospace" }}>{f.path}</span>
+                        <button onClick={() => setSourceFiles((prev) => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 14, padding: 0 }}>×</button>
+                      </div>
+                    ))}
+                    <button onClick={() => setSourceFiles([])} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 12, textAlign: "left", padding: "2px 0" }}>Clear all</button>
+                  </div>
+                )}
               </div>
             </div>
           )}
