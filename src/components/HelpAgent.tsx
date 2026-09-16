@@ -1,8 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-const ZEN_CHAT_URL = "https://opencode.ai/zen/v1/chat/completions";
-const PROMPT_URL = "/help-agent-prompt.txt";
-
 interface Model { id: string; name: string; free: true }
 interface Message { role: "user" | "assistant"; content: string; image?: string; timestamp: number }
 
@@ -15,7 +12,6 @@ export default function HelpAgent() {
   const [location, setLocation] = useState<string | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState("big-pickle");
-  const [systemPrompt, setSystemPrompt] = useState("");
   const messagesEnd = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -32,7 +28,6 @@ export default function HelpAgent() {
         () => setLocation(null),
       );
     }
-    fetch(PROMPT_URL).then(r => r.text()).then(setSystemPrompt).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -59,58 +54,55 @@ export default function HelpAgent() {
       const locationContext = location ? `\n[User location: ${location}]` : "";
       const imageContext = image ? "\n[User shared a screenshot]" : "";
       const history = [...messages, userMsg].slice(-10).map((m) => `${m.role}: ${m.content}`).join("\n");
-      const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
 
-      const allMessages = [];
-      if (systemPrompt) allMessages.push({ role: "system", content: systemPrompt });
-      allMessages.push({ role: "user", content: `${historyBlock}${text}${locationContext}${imageContext}` });
-
-      const res = await fetch(ZEN_CHAT_URL, {
+      const res = await fetch("/api/help-agent", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "opencode/1.0",
-          "x-session-id": "help-agent-" + Date.now(),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          message: text + locationContext + imageContext,
+          history,
           model: selectedModel,
-          messages: allMessages,
-          stream: true,
         }),
       });
 
-      if (!res.ok) throw new Error(`Zen ${res.status}`);
-      if (!res.body) throw new Error("No body");
+      if (!res.ok) throw new Error(`Server ${res.status}`);
+      const contentType = res.headers.get("content-type") || "";
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-      let buffer = "";
+      if (contentType.includes("text/event-stream")) {
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("No reader");
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullText = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("data: ")) {
-            const dataPart = trimmed.slice(6);
-            if (dataPart === "[DONE]") break;
-            try {
-              const parsed = JSON.parse(dataPart);
-              const token = parsed.choices?.[0]?.delta?.content;
-              if (token) { fullText += token; setStreaming(fullText); }
-            } catch {}
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("data: ")) {
+              const dataPart = trimmed.slice(6);
+              if (dataPart === "[DONE]") break;
+              try {
+                const parsed = JSON.parse(dataPart);
+                const token = parsed.choices?.[0]?.delta?.content;
+                if (token) { fullText += token; setStreaming(fullText); }
+              } catch {}
+            }
           }
         }
-      }
 
-      if (fullText) {
-        setMessages((prev) => [...prev, { role: "assistant", content: fullText, timestamp: Date.now() }]);
+        if (fullText) {
+          setMessages((prev) => [...prev, { role: "assistant", content: fullText, timestamp: Date.now() }]);
+        } else {
+          throw new Error("Empty stream");
+        }
       } else {
-        throw new Error("Empty response");
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || "Unexpected response");
       }
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, AI is temporarily unavailable. Please try again.", timestamp: Date.now() }]);
