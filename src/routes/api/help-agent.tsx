@@ -6,22 +6,11 @@ const CORS = {
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 };
 
-const ZEN_BASE = "https://opencode.ai/zen/v1";
-const DEFAULT_ZEN_MODEL = "big-pickle";
-
-let serverSessionId: string | null = null;
-function getSessionId(): string {
-  if (!serverSessionId) serverSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  return serverSessionId;
-}
-
-function getHeaders(): Record<string, string> {
-  return {
-    "Content-Type": "application/json",
-    "User-Agent": "OpenCode/1.0.0",
-    "x-session-id": getSessionId(),
-  };
-}
+const HF_MODELS = [
+  "HuggingFaceH4/zephyr-7b-beta",
+  "microsoft/DialoGPT-medium",
+  "facebook/opt-1.3b",
+];
 
 const HELP_SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate. You can also have casual conversations.
 
@@ -62,11 +51,11 @@ export const Route = createFileRoute("/api/help-agent")({
         return Response.json(
           {
             models: [
-              { id: "big-pickle", name: "Big Pickle", free: true },
-              { id: "deepseek-v4-flash-free", name: "DeepSeek V4 Flash", free: true },
-              { id: "glm-5-free", name: "GLM 5", free: true },
+              { id: "HuggingFaceH4/zephyr-7b-beta", name: "Zephyr 7B", free: true },
+              { id: "microsoft/DialoGPT-medium", name: "DialoGPT", free: true },
+              { id: "facebook/opt-1.3b", name: "OPT 1.3B", free: true },
             ],
-            defaultModel: DEFAULT_ZEN_MODEL,
+            defaultModel: "HuggingFaceH4/zephyr-7b-beta",
           },
           { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },
         );
@@ -81,77 +70,50 @@ export const Route = createFileRoute("/api/help-agent")({
             return Response.json({ error: "Message required" }, { status: 400, headers: CORS });
           }
 
-          const upstream = requestedModel || DEFAULT_ZEN_MODEL;
           const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
           const userContent = `${historyBlock}${message}`;
 
-          const fallbacks = [upstream, "big-pickle", "deepseek-v4-flash-free", "glm-5-free"];
+          const modelsToTry = requestedModel
+            ? [requestedModel, ...HF_MODELS.filter((m) => m !== requestedModel)]
+            : HF_MODELS;
 
-          for (const curModel of fallbacks) {
+          for (const model of modelsToTry) {
             try {
-              const res = await fetch(`${ZEN_BASE}/chat/completions`, {
-                method: "POST",
-                headers: getHeaders(),
-                body: JSON.stringify({
-                  model: curModel,
-                  messages: [
-                    { role: "system", content: HELP_SYSTEM_PROMPT },
-                    { role: "user", content: userContent },
-                  ],
-                  stream: true,
-                  max_tokens: 512,
-                  temperature: 0.7,
-                }),
-                signal: AbortSignal.timeout(20000),
-              });
+              const res = await fetch(
+                `https://api-inference.huggingface.co/models/${model}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    inputs: `<|system|>\n${HELP_SYSTEM_PROMPT}\n<|user|>\n${userContent}\n<|assistant|>`,
+                    parameters: { max_new_tokens: 256, temperature: 0.7, return_full_text: false },
+                  }),
+                  signal: AbortSignal.timeout(30000),
+                },
+              );
 
               if (!res.ok) {
-                console.warn(`[help-agent] ${curModel} returned ${res.status}`);
+                console.warn(`[help-agent] HF ${model} returned ${res.status}`);
                 continue;
               }
 
-              const reader = res.body?.getReader();
-              if (!reader) continue;
+              const data = await res.json();
+              const reply = Array.isArray(data) ? data[0]?.generated_text : data?.generated_text;
 
-              const stream = new ReadableStream({
-                async start(controller) {
-                  try {
-                    while (true) {
-                      const { done, value } = await reader.read();
-                      if (done) break;
-                      controller.enqueue(value);
-                    }
-                  } finally {
-                    controller.close();
-                  }
-                },
-              });
-
-              return new Response(stream, {
-                headers: {
-                  "Content-Type": "text/event-stream; charset=utf-8",
-                  "Cache-Control": "no-cache, no-transform",
-                  Connection: "keep-alive",
-                  "X-Accel-Buffering": "no",
-                  "Access-Control-Allow-Origin": "*",
-                },
-              });
+              if (reply && reply.trim()) {
+                const cleaned = reply.replace(/^<\|assistant\|>\s*/i, "").trim();
+                return Response.json({ reply: cleaned || getFallback(message) }, { headers: CORS });
+              }
             } catch (err: any) {
-              console.warn(`[help-agent] ${curModel} error:`, err?.message);
+              console.warn(`[help-agent] HF ${model} error:`, err?.message);
               continue;
             }
           }
 
-          return Response.json(
-            { reply: getFallback(message) },
-            { headers: CORS },
-          );
+          return Response.json({ reply: getFallback(message) }, { headers: CORS });
         } catch (e) {
           console.error(`[help-agent] POST error:`, e);
-          return Response.json(
-            { reply: getFallback("") },
-            { headers: CORS },
-          );
+          return Response.json({ reply: getFallback("") }, { headers: CORS });
         }
       },
     },

@@ -65,7 +65,7 @@ export default function HelpAgent() {
   const [streaming, setStreaming] = useState("");
   const [location, setLocation] = useState<string | null>(null);
   const [models, setModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState("big-pickle");
+  const [selectedModel, setSelectedModel] = useState("HuggingFaceH4/zephyr-7b-beta");
   const messagesEnd = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
