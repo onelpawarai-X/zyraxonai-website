@@ -9,11 +9,10 @@ import { SecurityBadge } from "./SecurityBadge";
 /**
  * ZYRAXON AI Extension Marketplace
  * -------------------------------------------------------------
- * A modern, rebranded extension browser for the ZYRAXON AI
- * ecosystem. Extensions are rendered the way they look inside
- * the ZYRAXON app, and every install is handed to the ZYRAXON AI
- * desktop app via the `zyraxon://` deep-link protocol — never to
- * a third-party editor.
+ * A modern, rebranded extension browser for the ZYRAXON ecosystem.
+ * Extensions are rendered the way they look inside ZYRAXON Code,
+ * and every install is handed to the ZYRAXON Code desktop app via
+ * the `zyraxon-code://` deep-link protocol.
  *
  * All data comes from /api/public/vscode-marketplace (server-side proxy).
  */
@@ -50,7 +49,7 @@ export interface ZyraxonExtension {
 
 const API = "/api/public/vscode-marketplace";
 const WEBSITE_BASE = "https://zyraxonai.lovable.app/ecosystem";
-const ZYRAXON_SCHEME = "zyraxon://";
+const ZYRAXON_SCHEME = "zyraxon-code://";
 
 const CATEGORIES = [
   "All",
@@ -113,8 +112,8 @@ function zyraxonInstallUrl(id: string): string {
 }
 
 /**
- * Launch the ZYRAXON AI desktop app via its registered deep-link
- * protocol. If the app is not installed the browser navigation is
+ * Launch ZYRAXON Code via its registered deep-link protocol.
+ * If the app is not installed the browser navigation is
  * a silent no-op, so we fall back to the website product page.
  */
 function launchZyraxon(id: string): void {
@@ -404,7 +403,7 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
             <svg width="15" height="15" viewBox="0 0 16 16" fill="#8957e5">
               <path d="M1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0zm6.5 3.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zM4.75 7.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm6.5 0a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zM8 4.75a1.75 1.75 0 0 0-1.61 1.146l.002.002a2.94 2.94 0 0 0-.13.352h3.476a2.94 2.94 0 0 0-.13-.352A1.75 1.75 0 0 0 8 4.75z" />
             </svg>
-            Open in ZYRAXON AI
+            Open in ZYRAXON Code
           </button>
           <button
             onClick={copyCommand}
@@ -465,7 +464,6 @@ const Row: React.FC<{ ext: ZyraxonExtension; onOpen: () => void }> = ({ ext, onO
   const brand = ext.brandingColor ?? "#8957e5";
   return (
     <div
-      onClick={onOpen}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -501,7 +499,7 @@ const Row: React.FC<{ ext: ZyraxonExtension; onOpen: () => void }> = ({ ext, onO
           border: `1px solid ${brand}44`,
         }}
       />
-      <div style={{ minWidth: 0, flex: 1 }}>
+      <div style={{ minWidth: 0, flex: 1 }} onClick={onOpen}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
           <span
             style={{
@@ -738,7 +736,7 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <InstallButton target={installTarget(ext)} size="md" />
             <button onClick={() => launchZyraxon(ext.id)} style={ghostBtn}>
-              Open in ZYRAXON AI
+              Open in ZYRAXON Code
             </button>
             <a href={ext.websiteUrl} target="_blank" rel="noopener noreferrer" style={ghostBtn}>
               View on Website
@@ -1029,7 +1027,7 @@ export const ZyraxonMarketplace: React.FC<{ deepLinkId?: string | null }> = ({ d
               boxShadow: "0 0 14px rgba(99,102,241,0.8)",
             }}
           />
-          ZYRAXON AI Extension Marketplace
+          ZYRAXON Extension Marketplace
         </h2>
         <p style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}>
           Hand-picked extensions for the ZYRAXON AI ecosystem — {total.toLocaleString()} results.

@@ -1,19 +1,15 @@
 /**
- * ZYRAXON AI — Marketplace install engine
+ * ZYRAXON Code — Marketplace install engine
  * -------------------------------------------------------------
- * Mirrors how VS Code manages extensions, so the ZYRAXON desktop
- * app needs no changes: the website exposes the exact same
- * install / uninstall / enable / disable / update surface and
- * hands each action to the app through one of three channels,
- * tried in order:
+ * Manages extension install/uninstall flow through ZYRAXON Code.
  *
- *   1. window.zyraxon  — Electron preload bridge (best, silent)
- *   2. zyraxon://      — registered deep-link protocol
- *   3. VSIX download   — manual fallback, always works
+ * Detection flow:
+ *   1. Check if zyraxon-code:// deep link is reachable (app installed)
+ *   2. If yes → open app via deep link, extension installs automatically
+ *   3. If no → show "Install ZYRAXON Code" modal with download links
  *
  * The website keeps its own mirror of the installed set in
- * localStorage so the UI is instant and survives reloads, and it
- * reconciles with the app whenever the app reports back.
+ * localStorage so the UI is instant and survives reloads.
  */
 
 export type InstallState =
@@ -49,32 +45,111 @@ export interface InstallTarget {
 }
 
 const STORAGE_KEY = "zyraxon.marketplace.installed.v1";
-const SCHEME = "zyraxon://";
+const SCHEME = "zyraxon-code://";
+const APP_CHECK_KEY = "zyraxon_code_app_detected";
+const APP_CHECK_TIME_KEY = "zyraxon_code_app_detected_at";
+const APP_CHECK_TTL = 5 * 60 * 1000; // 5 minutes
 
 /* ------------------------------------------------------------------ */
-/* Electron / app bridge                                              */
+/* App detection                                                       */
 /* ------------------------------------------------------------------ */
 
-interface ZyraxonBridge {
-  installExtension?: (payload: any) => Promise<any> | any;
-  uninstallExtension?: (id: string) => Promise<any> | any;
-  setExtensionEnabled?: (id: string, enabled: boolean) => Promise<any> | any;
-  listExtensions?: () => Promise<InstalledRecord[]> | InstalledRecord[];
-}
+/**
+ * Detect if ZYRAXON Code is installed by trying to open a deep link.
+ * Uses an iframe + timeout trick — if the app is installed, the
+ * iframe loads instantly; if not, it times out.
+ */
+let appDetected: boolean | null = null;
 
-function bridge(): ZyraxonBridge | null {
+export function isAppDetected(): boolean | null {
   if (typeof window === "undefined") return null;
-  const w = window as any as { zyraxon?: ZyraxonBridge; zyraxonBridge?: ZyraxonBridge };
-  return w.zyraxon ?? w.zyraxonBridge ?? null;
+  // Check cache first
+  if (appDetected !== null) return appDetected;
+  try {
+    const cached = localStorage.getItem(APP_CHECK_KEY);
+    const cachedAt = localStorage.getItem(APP_CHECK_TIME_KEY);
+    if (cached !== null && cachedAt) {
+      const age = Date.now() - parseInt(cachedAt, 10);
+      if (age < APP_CHECK_TTL) {
+        appDetected = cached === "true";
+        return appDetected;
+      }
+    }
+  } catch {}
+  return null;
 }
 
-export function hasAppBridge(): boolean {
-  const b = bridge();
-  return !!(b && (b.installExtension || b.listExtensions));
+export function setAppDetected(detected: boolean): void {
+  appDetected = detected;
+  try {
+    localStorage.setItem(APP_CHECK_KEY, detected ? "true" : "false");
+    localStorage.setItem(APP_CHECK_TIME_KEY, String(Date.now()));
+  } catch {}
+}
+
+export function clearAppDetection(): void {
+  appDetected = null;
+  try {
+    localStorage.removeItem(APP_CHECK_KEY);
+    localStorage.removeItem(APP_CHECK_TIME_KEY);
+  } catch {}
+}
+
+/**
+ * Try to detect the app by firing a deep link and measuring response.
+ * Returns true if app is detected, false otherwise.
+ */
+export function detectApp(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") { resolve(false); return; }
+
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        setAppDetected(false);
+        resolve(false);
+      }
+    }, 2000);
+
+    // Try to open the app
+    try {
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = `${SCHEME}ping`;
+      document.body.appendChild(iframe);
+
+      // If the app is installed, it should respond quickly
+      window.addEventListener("message", function handler(e) {
+        if (e.data === "zyraxon-code:pong" || e.data?.type === "zyraxon-code:pong") {
+          clearTimeout(timeout);
+          if (!resolved) {
+            resolved = true;
+            setAppDetected(true);
+            resolve(true);
+          }
+          window.removeEventListener("message", handler);
+          iframe.remove();
+        }
+      });
+
+      // Also try direct navigation as fallback
+      window.location.href = `${SCHEME}ping`;
+
+      setTimeout(() => iframe.remove(), 3000);
+    } catch {
+      clearTimeout(timeout);
+      if (!resolved) {
+        resolved = true;
+        setAppDetected(false);
+        resolve(false);
+      }
+    }
+  });
 }
 
 /* ------------------------------------------------------------------ */
-/* Deep links (VS Code parity: vscode:extension/<id>)                  */
+/* Deep links                                                          */
 /* ------------------------------------------------------------------ */
 
 export function installDeepLink(t: InstallTarget): string {
@@ -108,6 +183,14 @@ export function openDeepLink(url: string): void {
   }
 }
 
+/** Open ZYRAXON Code app (general) */
+export function openApp(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.location.href = SCHEME;
+  } catch {}
+}
+
 /* ------------------------------------------------------------------ */
 /* Local registry                                                      */
 /* ------------------------------------------------------------------ */
@@ -132,9 +215,7 @@ function write(next: Record<string, InstalledRecord>): void {
   cache = next;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    /* quota */
-  }
+  } catch {}
   listeners.forEach((fn) => fn(next));
 }
 
@@ -152,9 +233,7 @@ export function isInstalled(id: string): boolean {
 
 export function subscribe(fn: Listener): () => void {
   listeners.add(fn);
-  return () => {
-    listeners.delete(fn);
-  };
+  return () => { listeners.delete(fn); };
 }
 
 /* ------------------------------------------------------------------ */
@@ -162,16 +241,20 @@ export function subscribe(fn: Listener): () => void {
 /* ------------------------------------------------------------------ */
 
 export async function install(t: InstallTarget): Promise<InstalledRecord> {
-  const b = bridge();
-  if (b?.installExtension) {
-    try {
-      await b.installExtension({ ...t, kind: t.source ?? "extension" });
-    } catch {
-      /* fall through */
-    }
-  } else {
+  const detected = isAppDetected();
+
+  if (detected === true) {
+    // App is installed — open via deep link
     openDeepLink(installDeepLink(t));
+  } else if (detected === null) {
+    // Unknown — try to detect
+    const result = await detectApp();
+    if (result) {
+      openDeepLink(installDeepLink(t));
+    }
+    // If not detected, caller should show the "Install ZYRAXON Code" modal
   }
+  // If detected === false, caller should show the modal
 
   const record: InstalledRecord = {
     id: t.id,
@@ -191,14 +274,7 @@ export async function install(t: InstallTarget): Promise<InstalledRecord> {
 
 export async function uninstall(id: string): Promise<void> {
   const existing = read()[id];
-  const b = bridge();
-  if (b?.uninstallExtension) {
-    try {
-      await b.uninstallExtension(id);
-    } catch {
-      /* fall through */
-    }
-  } else {
+  if (isAppDetected()) {
     openDeepLink(uninstallDeepLink(id, existing?.source ?? "extension"));
   }
   const next = { ...read() };
@@ -209,14 +285,7 @@ export async function uninstall(id: string): Promise<void> {
 export async function setEnabled(id: string, enabled: boolean): Promise<void> {
   const existing = read()[id];
   if (!existing) return;
-  const b = bridge();
-  if (b?.setExtensionEnabled) {
-    try {
-      await b.setExtensionEnabled(id, enabled);
-    } catch {
-      /* fall through */
-    }
-  } else {
+  if (isAppDetected()) {
     openDeepLink(
       `${SCHEME}${enabled ? "enable" : "disable"}/${existing.source}/${encodeURIComponent(id)}`,
     );
@@ -230,33 +299,14 @@ export function setAutoUpdate(id: string, autoUpdate: boolean): void {
   write({ ...read(), [id]: { ...existing, autoUpdate } });
 }
 
-/** Reconcile the website mirror with what the desktop app actually has. */
-export async function syncWithApp(): Promise<void> {
-  const b = bridge();
-  if (!b?.listExtensions) return;
-  try {
-    const list = await b.listExtensions();
-    if (!Array.isArray(list)) return;
-    const next: Record<string, InstalledRecord> = {};
-    for (const r of list) if (r?.id) next[r.id] = r;
-    write(next);
-  } catch {
-    /* app unavailable */
-  }
-}
-
 /* ------------------------------------------------------------------ */
 /* VSIX download from VS Code Marketplace                              */
 /* ------------------------------------------------------------------ */
 
-/**
- * Fetch the VSIX download URL for an extension from the VS Code Marketplace.
- */
 export async function fetchVSIXUrl(extensionId: string): Promise<string | null> {
   try {
     const [publisher, name] = extensionId.split(".");
     if (!publisher || !name) return null;
-
     const response = await fetch(
       "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery",
       {
@@ -266,25 +316,17 @@ export async function fetchVSIXUrl(extensionId: string): Promise<string | null> 
           Accept: "application/json;api-version=6.1-preview.1",
         },
         body: JSON.stringify({
-          filters: [
-            {
-              criteria: [{ filterType: 7, value: extensionId }],
-            },
-          ],
+          filters: [{ criteria: [{ filterType: 7, value: extensionId }] }],
           flags: 0x200,
         }),
       },
     );
-
     if (!response.ok) return null;
-
     const data = await response.json();
     const extension = data?.results?.[0]?.extensions?.[0];
     if (!extension) return null;
-
     const version = extension.versions?.[0];
     if (!version) return null;
-
     const asset = version.files?.find(
       (f: any) => f.assetType === "Microsoft.VisualStudio.Services.VSIXPackage",
     );
@@ -294,10 +336,6 @@ export async function fetchVSIXUrl(extensionId: string): Promise<string | null> 
   }
 }
 
-/**
- * Install an extension directly from the VS Code Marketplace.
- * Fetches the VSIX and triggers install via bridge or deep-link.
- */
 export async function installFromMarketplace(
   extensionId: string,
   displayName: string,
@@ -305,10 +343,7 @@ export async function installFromMarketplace(
   icon?: string,
 ): Promise<InstalledRecord> {
   const vsixUrl = await fetchVSIXUrl(extensionId);
-  if (!vsixUrl) {
-    throw new Error(`Could not find VSIX for ${extensionId}`);
-  }
-
+  if (!vsixUrl) throw new Error(`Could not find VSIX for ${extensionId}`);
   const target: InstallTarget = {
     id: extensionId,
     displayName,
@@ -318,6 +353,5 @@ export async function installFromMarketplace(
     vsixUrl,
     source: "extension",
   };
-
   return install(target);
 }

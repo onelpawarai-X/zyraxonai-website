@@ -176,7 +176,7 @@ export const ItemDotMenu: React.FC<ItemDotMenuProps> = ({ item, align = "right" 
             <span style={{ color: "#8957e5", display: "inline-flex" }}>
               <IconRocket size={14} />
             </span>
-            Open in ZYRAXON AI
+            Open in ZYRAXON Code
           </button>
           <button
             onClick={copyCommand}

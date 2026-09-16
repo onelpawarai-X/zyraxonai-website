@@ -626,7 +626,7 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                       margin: "0 0 12px",
                     }}
                   >
-                    How to Install in ZYRAXON AI
+                    How to Install in ZYRAXON Code
                   </h4>
                   <ol
                     style={{
@@ -638,9 +638,9 @@ export const MCPToolDetail: React.FC<MCPToolDetailProps> = ({ tool, onClose }) =
                     }}
                   >
                     <li>Click the "Install" button above</li>
-                    <li>ZYRAXON AI will open automatically</li>
+                    <li>ZYRAXON Code will open automatically</li>
                     <li>The MCP tool will be configured and ready to use</li>
-                    <li>Restart ZYRAXON AI if prompted</li>
+                    <li>Restart ZYRAXON Code if prompted</li>
                   </ol>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Sidebar } from "../../components/ecosystem/Sidebar";
 import { PublishedApps } from "../../components/ecosystem/PublishedApps";
 import { ZyraxonMarketplace } from "../../components/ecosystem/ZyraxonMarketplace";
@@ -18,18 +18,76 @@ export const Route = createFileRoute("/ecosystem/")({
 
 const ENDPOINT = "https://agent-ecosystem-hub.lovable.app/api/public/v1";
 
-type Tab = "home" | "published" | "extensions" | "releases" | "publish";
+type Tab = "home" | "published" | "extensions" | "releases" | "publish" | "featured" | "search";
+
+interface SearchResult {
+  slug: string;
+  name: string;
+  tagline: string;
+  category: string;
+  source_agent: string;
+  author_name: string;
+  cover_url: string;
+  live_url: string;
+  repo_url: string;
+  version: string;
+  tags: string[];
+  downloads: number;
+  rating: number;
+  featured: boolean;
+}
+
+const AGENT_COLORS: Record<string, string> = {
+  cloud: "#2563eb", desktop: "#7c3aed", mobile: "#f59e0b", code: "#059669",
+};
 
 export default function EcosystemPage() {
   const [tab, setTab] = useState<Tab>("home");
   const [showPublish, setShowPublish] = useState(false);
   const [appCount, setAppCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [featuredApps, setFeaturedApps] = useState<SearchResult[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch(`${ENDPOINT}/apps`)
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d)) setAppCount(d.length); else if (d?.apps) setAppCount(d.apps.length); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch(`${ENDPOINT}/featured`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d)) setFeaturedApps(d);
+        else if (d?.featured) setFeaturedApps(d.featured);
+        else if (d?.apps) setFeaturedApps(d.apps);
+      })
+      .catch(() => {})
+      .finally(() => setFeaturedLoading(false));
+  }, []);
+
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      if (q.trim().length < 2) { setSearchResults([]); return; }
+      setSearchLoading(true);
+      fetch(`${ENDPOINT}/search?q=${encodeURIComponent(q.trim())}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (Array.isArray(d)) setSearchResults(d);
+          else if (d?.apps) setSearchResults(d.apps);
+          else if (d?.results) setSearchResults(d.results);
+          else setSearchResults([]);
+        })
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearchLoading(false));
+    }, 400);
   }, []);
 
   return (
@@ -42,33 +100,56 @@ export default function EcosystemPage() {
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         {/* Header */}
         <header style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid #e5e7eb" }}>
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0 }}>
-              {tab === "home" && "Ecosystem"}
-              {tab === "published" && "Published Apps"}
-              {tab === "extensions" && "Extensions"}
-              {tab === "releases" && "GitHub Releases"}
-            </h1>
-            <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>
-              {tab === "home" && `${appCount} apps published via ZYRAXON Hub`}
-              {tab === "published" && "Projects published to the marketplace"}
-              {tab === "extensions" && "ZYRAXON AI extension marketplace"}
-              {tab === "releases" && "All GitHub releases across repos"}
-            </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div>
+              <h1 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0 }}>
+                {tab === "home" && "Ecosystem"}
+                {tab === "published" && "Published Apps"}
+                {tab === "extensions" && "Extensions"}
+                {tab === "releases" && "GitHub Releases"}
+                {tab === "featured" && "Featured Apps"}
+                {tab === "search" && `Search: "${searchQuery}"`}
+              </h1>
+              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>
+                {tab === "home" && `${appCount} apps published via ZYRAXON Hub`}
+                {tab === "published" && "Projects published to the marketplace"}
+                {tab === "extensions" && "ZYRAXON Code extension marketplace"}
+                {tab === "releases" && "All GitHub releases across repos"}
+                {tab === "featured" && "Top rated and popular apps"}
+                {tab === "search" && `${searchResults.length} results found`}
+              </p>
+            </div>
           </div>
-          <button onClick={() => setShowPublish(true)}
-            style={{ padding: "8px 18px", borderRadius: 8, background: "linear-gradient(135deg, #059669, #10b981)", border: "none", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 8px rgba(16,185,129,0.3)" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
-            Publish
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Global search bar */}
+            <div style={{ position: "relative" }}>
+              <input
+                type="text"
+                placeholder="Search ecosystem..."
+                value={searchQuery}
+                onChange={(e) => { handleSearch(e.target.value); if (e.target.value.length >= 2) setTab("search"); }}
+                style={{ width: 260, padding: "8px 12px 8px 36px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+              />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}>
+                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+              </svg>
+            </div>
+            <button onClick={() => setShowPublish(true)}
+              style={{ padding: "8px 18px", borderRadius: 8, background: "linear-gradient(135deg, #059669, #10b981)", border: "none", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 8px rgba(16,185,129,0.3)" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
+              Publish
+            </button>
+          </div>
         </header>
 
         {/* Content */}
         <div style={{ flex: 1, padding: 24, overflowY: "auto" }}>
-          {tab === "home" && <HomeView onNavigate={setTab} onPublish={() => setShowPublish(true)} appCount={appCount} />}
+          {tab === "home" && <HomeView onNavigate={setTab} onPublish={() => setShowPublish(true)} appCount={appCount} featuredApps={featuredApps} featuredLoading={featuredLoading} />}
           {tab === "published" && <div><PublishedApps /></div>}
           {tab === "extensions" && <div><ZyraxonMarketplace /></div>}
           {tab === "releases" && <div><GitHubReleases /></div>}
+          {tab === "featured" && <FeaturedView apps={featuredApps} loading={featuredLoading} />}
+          {tab === "search" && <SearchView results={searchResults} loading={searchLoading} query={searchQuery} />}
         </div>
       </main>
 
@@ -77,7 +158,10 @@ export default function EcosystemPage() {
   );
 }
 
-function HomeView({ onNavigate, onPublish, appCount }: { onNavigate: (t: Tab) => void; onPublish: () => void; appCount: number }) {
+function HomeView({ onNavigate, onPublish, appCount, featuredApps, featuredLoading }: {
+  onNavigate: (t: Tab) => void; onPublish: () => void; appCount: number;
+  featuredApps: SearchResult[]; featuredLoading: boolean;
+}) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
       {/* Hero */}
@@ -119,6 +203,26 @@ function HomeView({ onNavigate, onPublish, appCount }: { onNavigate: (t: Tab) =>
           </div>
         ))}
       </div>
+
+      {/* Featured Apps */}
+      {featuredApps.length > 0 && (
+        <section>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 3, background: "#f59e0b", display: "inline-block" }} />
+              Featured Apps
+            </h2>
+            <button onClick={() => onNavigate("featured")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#f59e0b", cursor: "pointer", fontSize: 13 }}>
+              View all
+            </button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+            {featuredApps.slice(0, 3).map((app) => (
+              <FeaturedCard key={app.slug} app={app} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Published Apps */}
       <section>
@@ -163,6 +267,95 @@ function HomeView({ onNavigate, onPublish, appCount }: { onNavigate: (t: Tab) =>
         </div>
         <GitHubReleases compact />
       </section>
+    </div>
+  );
+}
+
+function FeaturedCard({ app }: { app: SearchResult }) {
+  return (
+    <div style={{ border: "1px solid #fbbf24", borderRadius: 12, background: "white", padding: 16, position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, #f59e0b, #f97316)" }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>FEATURED</span>
+        <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "#f3f4f6", color: "#6b7280", textTransform: "capitalize" }}>{app.category}</span>
+      </div>
+      <h4 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: "0 0 4px" }}>{app.name}</h4>
+      {app.tagline && <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 8px", lineHeight: 1.4 }}>{app.tagline}</p>}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "#9ca3af" }}>
+        <span>by {app.author_name || "Anonymous"}</span>
+        {app.downloads > 0 && <span>{app.downloads} downloads</span>}
+        {app.rating > 0 && <span>{app.rating.toFixed(1)} stars</span>}
+      </div>
+      <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+        {app.live_url && (
+          <a href={app.live_url} target="_blank" rel="noopener noreferrer"
+            style={{ padding: "4px 10px", borderRadius: 6, background: "#059669", color: "white", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>Live</a>
+        )}
+        {app.repo_url && (
+          <a href={app.repo_url} target="_blank" rel="noopener noreferrer"
+            style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 11, textDecoration: "none" }}>GitHub</a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FeaturedView({ apps, loading }: { apps: SearchResult[]; loading: boolean }) {
+  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 13 }}>Loading featured apps...</div>;
+  if (apps.length === 0) return (
+    <div style={{ textAlign: "center", padding: 60, border: "1px dashed #d1d5db", borderRadius: 12, color: "#9ca3af" }}>
+      <p style={{ fontSize: 15, margin: "0 0 8px" }}>No featured apps yet</p>
+      <p style={{ fontSize: 13, margin: 0 }}>Featured apps are curated by the ZYRAXON team.</p>
+    </div>
+  );
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+      {apps.map((app) => <FeaturedCard key={app.slug} app={app} />)}
+    </div>
+  );
+}
+
+function SearchView({ results, loading, query }: { results: SearchResult[]; loading: boolean; query: string }) {
+  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 13 }}>Searching...</div>;
+  if (!query || query.length < 2) return (
+    <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>
+      <p style={{ fontSize: 15, margin: "0 0 8px" }}>Type to search the ecosystem</p>
+      <p style={{ fontSize: 13, margin: 0 }}>Search across published apps, extensions, and more.</p>
+    </div>
+  );
+  if (results.length === 0) return (
+    <div style={{ textAlign: "center", padding: 60, border: "1px dashed #d1d5db", borderRadius: 12, color: "#9ca3af" }}>
+      <p style={{ fontSize: 15, margin: "0 0 8px" }}>No results for "{query}"</p>
+      <p style={{ fontSize: 13, margin: 0 }}>Try a different search term.</p>
+    </div>
+  );
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+      {results.map((app) => (
+        <div key={app.slug} style={{ border: "1px solid #e5e7eb", borderRadius: 12, background: "white", padding: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "#f3f4f6", color: "#6b7280", textTransform: "capitalize" }}>{app.category}</span>
+            <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: `${AGENT_COLORS[app.source_agent] || "#6b7280"}15`, color: AGENT_COLORS[app.source_agent] || "#6b7280" }}>{app.source_agent}</span>
+            {app.featured && <span style={{ padding: "2px 6px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "#fef3c7", color: "#b45309" }}>FEATURED</span>}
+          </div>
+          <h4 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: "0 0 4px" }}>{app.name}</h4>
+          {app.tagline && <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 8px", lineHeight: 1.4 }}>{app.tagline}</p>}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "#9ca3af" }}>
+            <span>by {app.author_name || "Anonymous"}</span>
+            {app.downloads > 0 && <span>{app.downloads} downloads</span>}
+          </div>
+          <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+            {app.live_url && (
+              <a href={app.live_url} target="_blank" rel="noopener noreferrer"
+                style={{ padding: "4px 10px", borderRadius: 6, background: "#059669", color: "white", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>Live</a>
+            )}
+            {app.repo_url && (
+              <a href={app.repo_url} target="_blank" rel="noopener noreferrer"
+                style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 11, textDecoration: "none" }}>GitHub</a>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

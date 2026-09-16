@@ -147,7 +147,9 @@ export type ViewMode =
   | "mcp"
   | "builder"
   | "publish"
-  | "published";
+  | "published"
+  | "featured"
+  | "search";
 
 export interface User {
   id: string;
