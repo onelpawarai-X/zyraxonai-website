@@ -9,18 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReleasesRouteImport } from './routes/releases'
 import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
+import { Route as NebulaRouteImport } from './routes/nebula'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EcosystemIndexRouteImport } from './routes/ecosystem/index'
 import { Route as DocsIndexRouteImport } from './routes/docs.index'
 import { Route as ShareIdRouteImport } from './routes/share/$id'
+import { Route as DownloadZyraxonCodeRouteImport } from './routes/download.zyraxon-code'
+import { Route as DownloadZyraxonAgentRouteImport } from './routes/download.zyraxon-agent'
+import { Route as DownloadMyraAgentRouteImport } from './routes/download.myra-agent'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as ApiMarketplaceSearchRouteImport } from './routes/api/marketplace-search'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
 import { Route as EcosystemItemIdRouteImport } from './routes/ecosystem/item/$id'
+import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/public/zyraxon-releases'
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
 import { Route as ApiPublicSiteContentRouteImport } from './routes/api/public/site-content'
@@ -40,7 +46,11 @@ import { Route as ApiSharesIdSyncRouteImport } from './routes/api/shares/$id/syn
 import { Route as ApiSharesIdDataRouteImport } from './routes/api/shares/$id/data'
 import { Route as ApiPublicZyraxonSearchRouteImport } from './routes/api/public/zyraxon/search'
 import { Route as ApiPublicProvidersProviderRouteImport } from './routes/api/public/providers/$provider'
+import { Route as ApiPublicNebulaSearchRouteImport } from './routes/api/public/nebula/search'
+import { Route as ApiPublicNebulaGenerateRouteImport } from './routes/api/public/nebula/generate'
+import { Route as ApiPublicNebulaDownloadRouteImport } from './routes/api/public/nebula/download'
 import { Route as ApiPublicGithubPublishRouteImport } from './routes/api/public/github/publish'
+import { Route as ApiPublicDownloadMyraApkRouteImport } from './routes/api/public/download/myra-apk'
 import { Route as ApiPublicDownloadPlatformRouteImport } from './routes/api/public/download/$platform'
 import { Route as ApiPublicBuilderSitesRouteImport } from './routes/api/public/builder/sites'
 import { Route as ApiPublicBuilderSearchRouteImport } from './routes/api/public/builder/search'
@@ -53,15 +63,26 @@ import { Route as ApiPublicSharesIdIndexRouteImport } from './routes/api/public/
 import { Route as ApiPublicZyraxonV1ModelsRouteImport } from './routes/api/public/zyraxon/v1/models'
 import { Route as ApiPublicSharesIdSyncRouteImport } from './routes/api/public/shares/$id/sync'
 import { Route as ApiPublicSharesIdDataRouteImport } from './routes/api/public/shares/$id/data'
+import { Route as ApiPublicDownloadZyraxonCodePlatformRouteImport } from './routes/api/public/download/zyraxon-code/$platform'
 import { Route as ApiPublicAuthGithubStartRouteImport } from './routes/api/public/auth/github/start'
 import { Route as ApiPublicAuthGithubLogoutRouteImport } from './routes/api/public/auth/github/logout'
 import { Route as ApiPublicAuthGithubCallbackRouteImport } from './routes/api/public/auth/github/callback'
 import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/api/public/zyraxon/v1/chat/completions'
 import { Route as ApiGithubReposOwnerRepoPublishRouteImport } from './routes/api/github/repos/$owner/$repo/publish'
 
+const ReleasesRoute = ReleasesRouteImport.update({
+  id: '/releases',
+  path: '/releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NebulaCoreRoute = NebulaCoreRouteImport.update({
   id: '/nebula-core',
   path: '/nebula-core',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NebulaRoute = NebulaRouteImport.update({
+  id: '/nebula',
+  path: '/nebula',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuilderRoute = BuilderRouteImport.update({
@@ -94,6 +115,21 @@ const ShareIdRoute = ShareIdRouteImport.update({
   path: '/share/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DownloadZyraxonCodeRoute = DownloadZyraxonCodeRouteImport.update({
+  id: '/download/zyraxon-code',
+  path: '/download/zyraxon-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadZyraxonAgentRoute = DownloadZyraxonAgentRouteImport.update({
+  id: '/download/zyraxon-agent',
+  path: '/download/zyraxon-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadMyraAgentRoute = DownloadMyraAgentRouteImport.update({
+  id: '/download/myra-agent',
+  path: '/download/myra-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocsSlugRoute = DocsSlugRouteImport.update({
   id: '/docs/$slug',
   path: '/docs/$slug',
@@ -119,6 +155,12 @@ const EcosystemItemIdRoute = EcosystemItemIdRouteImport.update({
   path: '/ecosystem/item/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicZyraxonReleasesRoute =
+  ApiPublicZyraxonReleasesRouteImport.update({
+    id: '/api/public/zyraxon-releases',
+    path: '/api/public/zyraxon-releases',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicVscodeMarketplaceRoute =
   ApiPublicVscodeMarketplaceRouteImport.update({
     id: '/api/public/vscode-marketplace',
@@ -216,11 +258,32 @@ const ApiPublicProvidersProviderRoute =
     path: '/api/public/providers/$provider',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicNebulaSearchRoute = ApiPublicNebulaSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => ApiPublicNebulaRoute,
+} as any)
+const ApiPublicNebulaGenerateRoute = ApiPublicNebulaGenerateRouteImport.update({
+  id: '/generate',
+  path: '/generate',
+  getParentRoute: () => ApiPublicNebulaRoute,
+} as any)
+const ApiPublicNebulaDownloadRoute = ApiPublicNebulaDownloadRouteImport.update({
+  id: '/download',
+  path: '/download',
+  getParentRoute: () => ApiPublicNebulaRoute,
+} as any)
 const ApiPublicGithubPublishRoute = ApiPublicGithubPublishRouteImport.update({
   id: '/api/public/github/publish',
   path: '/api/public/github/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDownloadMyraApkRoute =
+  ApiPublicDownloadMyraApkRouteImport.update({
+    id: '/api/public/download/myra-apk',
+    path: '/api/public/download/myra-apk',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicDownloadPlatformRoute =
   ApiPublicDownloadPlatformRouteImport.update({
     id: '/api/public/download/$platform',
@@ -284,6 +347,12 @@ const ApiPublicSharesIdDataRoute = ApiPublicSharesIdDataRouteImport.update({
   path: '/api/public/shares/$id/data',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDownloadZyraxonCodePlatformRoute =
+  ApiPublicDownloadZyraxonCodePlatformRouteImport.update({
+    id: '/api/public/download/zyraxon-code/$platform',
+    path: '/api/public/download/zyraxon-code/$platform',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAuthGithubStartRoute =
   ApiPublicAuthGithubStartRouteImport.update({
     id: '/start',
@@ -319,10 +388,15 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
+  '/releases': typeof ReleasesRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
+  '/download/myra-agent': typeof DownloadMyraAgentRoute
+  '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
+  '/download/zyraxon-code': typeof DownloadZyraxonCodeRoute
   '/share/$id': typeof ShareIdRoute
   '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
@@ -334,10 +408,11 @@ export interface FileRoutesByFullPath {
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
-  '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
+  '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
   '/api/shares/': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
@@ -348,7 +423,11 @@ export interface FileRoutesByFullPath {
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
+  '/api/public/download/myra-apk': typeof ApiPublicDownloadMyraApkRoute
   '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/nebula/download': typeof ApiPublicNebulaDownloadRoute
+  '/api/public/nebula/generate': typeof ApiPublicNebulaGenerateRoute
+  '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
@@ -359,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
   '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
   '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
+  '/api/public/download/zyraxon-code/$platform': typeof ApiPublicDownloadZyraxonCodePlatformRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
@@ -370,10 +450,15 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
+  '/releases': typeof ReleasesRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
+  '/download/myra-agent': typeof DownloadMyraAgentRoute
+  '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
+  '/download/zyraxon-code': typeof DownloadZyraxonCodeRoute
   '/share/$id': typeof ShareIdRoute
   '/docs': typeof DocsIndexRoute
   '/ecosystem': typeof EcosystemIndexRoute
@@ -385,10 +470,11 @@ export interface FileRoutesByTo {
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
-  '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
+  '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
   '/api/shares': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
@@ -399,7 +485,11 @@ export interface FileRoutesByTo {
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
+  '/api/public/download/myra-apk': typeof ApiPublicDownloadMyraApkRoute
   '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/nebula/download': typeof ApiPublicNebulaDownloadRoute
+  '/api/public/nebula/generate': typeof ApiPublicNebulaGenerateRoute
+  '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
@@ -410,6 +500,7 @@ export interface FileRoutesByTo {
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
   '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
   '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
+  '/api/public/download/zyraxon-code/$platform': typeof ApiPublicDownloadZyraxonCodePlatformRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
@@ -422,10 +513,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
+  '/releases': typeof ReleasesRoute
   '/api/$': typeof ApiSplatRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
+  '/download/myra-agent': typeof DownloadMyraAgentRoute
+  '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
+  '/download/zyraxon-code': typeof DownloadZyraxonCodeRoute
   '/share/$id': typeof ShareIdRoute
   '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
@@ -437,10 +533,11 @@ export interface FileRoutesById {
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
-  '/api/public/nebula': typeof ApiPublicNebulaRoute
+  '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
+  '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
   '/api/shares/': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
@@ -451,7 +548,11 @@ export interface FileRoutesById {
   '/api/public/builder/search': typeof ApiPublicBuilderSearchRoute
   '/api/public/builder/sites': typeof ApiPublicBuilderSitesRoute
   '/api/public/download/$platform': typeof ApiPublicDownloadPlatformRoute
+  '/api/public/download/myra-apk': typeof ApiPublicDownloadMyraApkRoute
   '/api/public/github/publish': typeof ApiPublicGithubPublishRoute
+  '/api/public/nebula/download': typeof ApiPublicNebulaDownloadRoute
+  '/api/public/nebula/generate': typeof ApiPublicNebulaGenerateRoute
+  '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
@@ -462,6 +563,7 @@ export interface FileRoutesById {
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
   '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
   '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
+  '/api/public/download/zyraxon-code/$platform': typeof ApiPublicDownloadZyraxonCodePlatformRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
@@ -475,10 +577,15 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula'
     | '/nebula-core'
+    | '/releases'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
+    | '/download/myra-agent'
+    | '/download/zyraxon-agent'
+    | '/download/zyraxon-code'
     | '/share/$id'
     | '/docs/'
     | '/ecosystem/'
@@ -494,6 +601,7 @@ export interface FileRouteTypes {
     | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
+    | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
     | '/api/shares/'
     | '/api/public/auth/github'
@@ -504,7 +612,11 @@ export interface FileRouteTypes {
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
+    | '/api/public/download/myra-apk'
     | '/api/public/github/publish'
+    | '/api/public/nebula/download'
+    | '/api/public/nebula/generate'
+    | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
@@ -515,6 +627,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/github/callback'
     | '/api/public/auth/github/logout'
     | '/api/public/auth/github/start'
+    | '/api/public/download/zyraxon-code/$platform'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
     | '/api/public/zyraxon/v1/models'
@@ -526,10 +639,15 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula'
     | '/nebula-core'
+    | '/releases'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
+    | '/download/myra-agent'
+    | '/download/zyraxon-agent'
+    | '/download/zyraxon-code'
     | '/share/$id'
     | '/docs'
     | '/ecosystem'
@@ -545,6 +663,7 @@ export interface FileRouteTypes {
     | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
+    | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
     | '/api/shares'
     | '/api/public/auth/github'
@@ -555,7 +674,11 @@ export interface FileRouteTypes {
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
+    | '/api/public/download/myra-apk'
     | '/api/public/github/publish'
+    | '/api/public/nebula/download'
+    | '/api/public/nebula/generate'
+    | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
@@ -566,6 +689,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/github/callback'
     | '/api/public/auth/github/logout'
     | '/api/public/auth/github/start'
+    | '/api/public/download/zyraxon-code/$platform'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
     | '/api/public/zyraxon/v1/models'
@@ -577,10 +701,15 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/nebula'
     | '/nebula-core'
+    | '/releases'
     | '/api/$'
     | '/api/marketplace-search'
     | '/docs/$slug'
+    | '/download/myra-agent'
+    | '/download/zyraxon-agent'
+    | '/download/zyraxon-code'
     | '/share/$id'
     | '/docs/'
     | '/ecosystem/'
@@ -596,6 +725,7 @@ export interface FileRouteTypes {
     | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
+    | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
     | '/api/shares/'
     | '/api/public/auth/github'
@@ -606,7 +736,11 @@ export interface FileRouteTypes {
     | '/api/public/builder/search'
     | '/api/public/builder/sites'
     | '/api/public/download/$platform'
+    | '/api/public/download/myra-apk'
     | '/api/public/github/publish'
+    | '/api/public/nebula/download'
+    | '/api/public/nebula/generate'
+    | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
@@ -617,6 +751,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/github/callback'
     | '/api/public/auth/github/logout'
     | '/api/public/auth/github/start'
+    | '/api/public/download/zyraxon-code/$platform'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
     | '/api/public/zyraxon/v1/models'
@@ -629,10 +764,15 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
+  NebulaRoute: typeof NebulaRoute
   NebulaCoreRoute: typeof NebulaCoreRoute
+  ReleasesRoute: typeof ReleasesRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiMarketplaceSearchRoute: typeof ApiMarketplaceSearchRoute
   DocsSlugRoute: typeof DocsSlugRoute
+  DownloadMyraAgentRoute: typeof DownloadMyraAgentRoute
+  DownloadZyraxonAgentRoute: typeof DownloadZyraxonAgentRoute
+  DownloadZyraxonCodeRoute: typeof DownloadZyraxonCodeRoute
   ShareIdRoute: typeof ShareIdRoute
   DocsIndexRoute: typeof DocsIndexRoute
   EcosystemIndexRoute: typeof EcosystemIndexRoute
@@ -644,10 +784,11 @@ export interface RootRouteChildren {
   ApiPublicGithubDeviceRoute: typeof ApiPublicGithubDeviceRoute
   ApiPublicGithubReleasesRoute: typeof ApiPublicGithubReleasesRoute
   ApiPublicMcpRegistryRoute: typeof ApiPublicMcpRegistryRoute
-  ApiPublicNebulaRoute: typeof ApiPublicNebulaRoute
+  ApiPublicNebulaRoute: typeof ApiPublicNebulaRouteWithChildren
   ApiPublicSiteContentRoute: typeof ApiPublicSiteContentRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
+  ApiPublicZyraxonReleasesRoute: typeof ApiPublicZyraxonReleasesRoute
   EcosystemItemIdRoute: typeof EcosystemItemIdRoute
   ApiSharesIndexRoute: typeof ApiSharesIndexRoute
   ApiPublicAuthGithubRoute: typeof ApiPublicAuthGithubRouteWithChildren
@@ -658,6 +799,7 @@ export interface RootRouteChildren {
   ApiPublicBuilderSearchRoute: typeof ApiPublicBuilderSearchRoute
   ApiPublicBuilderSitesRoute: typeof ApiPublicBuilderSitesRoute
   ApiPublicDownloadPlatformRoute: typeof ApiPublicDownloadPlatformRoute
+  ApiPublicDownloadMyraApkRoute: typeof ApiPublicDownloadMyraApkRoute
   ApiPublicGithubPublishRoute: typeof ApiPublicGithubPublishRoute
   ApiPublicProvidersProviderRoute: typeof ApiPublicProvidersProviderRoute
   ApiPublicZyraxonSearchRoute: typeof ApiPublicZyraxonSearchRoute
@@ -666,6 +808,7 @@ export interface RootRouteChildren {
   ApiPublicProvidersIndexRoute: typeof ApiPublicProvidersIndexRoute
   ApiPublicSharesIndexRoute: typeof ApiPublicSharesIndexRoute
   ApiSharesIdIndexRoute: typeof ApiSharesIdIndexRoute
+  ApiPublicDownloadZyraxonCodePlatformRoute: typeof ApiPublicDownloadZyraxonCodePlatformRoute
   ApiPublicSharesIdDataRoute: typeof ApiPublicSharesIdDataRoute
   ApiPublicSharesIdSyncRoute: typeof ApiPublicSharesIdSyncRoute
   ApiPublicZyraxonV1ModelsRoute: typeof ApiPublicZyraxonV1ModelsRoute
@@ -675,11 +818,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/releases': {
+      id: '/releases'
+      path: '/releases'
+      fullPath: '/releases'
+      preLoaderRoute: typeof ReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/nebula-core': {
       id: '/nebula-core'
       path: '/nebula-core'
       fullPath: '/nebula-core'
       preLoaderRoute: typeof NebulaCoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nebula': {
+      id: '/nebula'
+      path: '/nebula'
+      fullPath: '/nebula'
+      preLoaderRoute: typeof NebulaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/builder': {
@@ -724,6 +881,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShareIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/download/zyraxon-code': {
+      id: '/download/zyraxon-code'
+      path: '/download/zyraxon-code'
+      fullPath: '/download/zyraxon-code'
+      preLoaderRoute: typeof DownloadZyraxonCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/zyraxon-agent': {
+      id: '/download/zyraxon-agent'
+      path: '/download/zyraxon-agent'
+      fullPath: '/download/zyraxon-agent'
+      preLoaderRoute: typeof DownloadZyraxonAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/myra-agent': {
+      id: '/download/myra-agent'
+      path: '/download/myra-agent'
+      fullPath: '/download/myra-agent'
+      preLoaderRoute: typeof DownloadMyraAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs/$slug': {
       id: '/docs/$slug'
       path: '/docs/$slug'
@@ -757,6 +935,13 @@ declare module '@tanstack/react-router' {
       path: '/ecosystem/item/$id'
       fullPath: '/ecosystem/item/$id'
       preLoaderRoute: typeof EcosystemItemIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zyraxon-releases': {
+      id: '/api/public/zyraxon-releases'
+      path: '/api/public/zyraxon-releases'
+      fullPath: '/api/public/zyraxon-releases'
+      preLoaderRoute: typeof ApiPublicZyraxonReleasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/vscode-marketplace': {
@@ -892,11 +1077,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicProvidersProviderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/nebula/search': {
+      id: '/api/public/nebula/search'
+      path: '/search'
+      fullPath: '/api/public/nebula/search'
+      preLoaderRoute: typeof ApiPublicNebulaSearchRouteImport
+      parentRoute: typeof ApiPublicNebulaRoute
+    }
+    '/api/public/nebula/generate': {
+      id: '/api/public/nebula/generate'
+      path: '/generate'
+      fullPath: '/api/public/nebula/generate'
+      preLoaderRoute: typeof ApiPublicNebulaGenerateRouteImport
+      parentRoute: typeof ApiPublicNebulaRoute
+    }
+    '/api/public/nebula/download': {
+      id: '/api/public/nebula/download'
+      path: '/download'
+      fullPath: '/api/public/nebula/download'
+      preLoaderRoute: typeof ApiPublicNebulaDownloadRouteImport
+      parentRoute: typeof ApiPublicNebulaRoute
+    }
     '/api/public/github/publish': {
       id: '/api/public/github/publish'
       path: '/api/public/github/publish'
       fullPath: '/api/public/github/publish'
       preLoaderRoute: typeof ApiPublicGithubPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/download/myra-apk': {
+      id: '/api/public/download/myra-apk'
+      path: '/api/public/download/myra-apk'
+      fullPath: '/api/public/download/myra-apk'
+      preLoaderRoute: typeof ApiPublicDownloadMyraApkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/download/$platform': {
@@ -983,6 +1196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSharesIdDataRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/download/zyraxon-code/$platform': {
+      id: '/api/public/download/zyraxon-code/$platform'
+      path: '/api/public/download/zyraxon-code/$platform'
+      fullPath: '/api/public/download/zyraxon-code/$platform'
+      preLoaderRoute: typeof ApiPublicDownloadZyraxonCodePlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/auth/github/start': {
       id: '/api/public/auth/github/start'
       path: '/start'
@@ -1033,6 +1253,22 @@ const ApiGithubReposRouteWithChildren = ApiGithubReposRoute._addFileChildren(
   ApiGithubReposRouteChildren,
 )
 
+interface ApiPublicNebulaRouteChildren {
+  ApiPublicNebulaDownloadRoute: typeof ApiPublicNebulaDownloadRoute
+  ApiPublicNebulaGenerateRoute: typeof ApiPublicNebulaGenerateRoute
+  ApiPublicNebulaSearchRoute: typeof ApiPublicNebulaSearchRoute
+}
+
+const ApiPublicNebulaRouteChildren: ApiPublicNebulaRouteChildren = {
+  ApiPublicNebulaDownloadRoute: ApiPublicNebulaDownloadRoute,
+  ApiPublicNebulaGenerateRoute: ApiPublicNebulaGenerateRoute,
+  ApiPublicNebulaSearchRoute: ApiPublicNebulaSearchRoute,
+}
+
+const ApiPublicNebulaRouteWithChildren = ApiPublicNebulaRoute._addFileChildren(
+  ApiPublicNebulaRouteChildren,
+)
+
 interface ApiPublicAuthGithubRouteChildren {
   ApiPublicAuthGithubCallbackRoute: typeof ApiPublicAuthGithubCallbackRoute
   ApiPublicAuthGithubLogoutRoute: typeof ApiPublicAuthGithubLogoutRoute
@@ -1052,10 +1288,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
+  NebulaRoute: NebulaRoute,
   NebulaCoreRoute: NebulaCoreRoute,
+  ReleasesRoute: ReleasesRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiMarketplaceSearchRoute: ApiMarketplaceSearchRoute,
   DocsSlugRoute: DocsSlugRoute,
+  DownloadMyraAgentRoute: DownloadMyraAgentRoute,
+  DownloadZyraxonAgentRoute: DownloadZyraxonAgentRoute,
+  DownloadZyraxonCodeRoute: DownloadZyraxonCodeRoute,
   ShareIdRoute: ShareIdRoute,
   DocsIndexRoute: DocsIndexRoute,
   EcosystemIndexRoute: EcosystemIndexRoute,
@@ -1067,10 +1308,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGithubDeviceRoute: ApiPublicGithubDeviceRoute,
   ApiPublicGithubReleasesRoute: ApiPublicGithubReleasesRoute,
   ApiPublicMcpRegistryRoute: ApiPublicMcpRegistryRoute,
-  ApiPublicNebulaRoute: ApiPublicNebulaRoute,
+  ApiPublicNebulaRoute: ApiPublicNebulaRouteWithChildren,
   ApiPublicSiteContentRoute: ApiPublicSiteContentRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
+  ApiPublicZyraxonReleasesRoute: ApiPublicZyraxonReleasesRoute,
   EcosystemItemIdRoute: EcosystemItemIdRoute,
   ApiSharesIndexRoute: ApiSharesIndexRoute,
   ApiPublicAuthGithubRoute: ApiPublicAuthGithubRouteWithChildren,
@@ -1081,6 +1323,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBuilderSearchRoute: ApiPublicBuilderSearchRoute,
   ApiPublicBuilderSitesRoute: ApiPublicBuilderSitesRoute,
   ApiPublicDownloadPlatformRoute: ApiPublicDownloadPlatformRoute,
+  ApiPublicDownloadMyraApkRoute: ApiPublicDownloadMyraApkRoute,
   ApiPublicGithubPublishRoute: ApiPublicGithubPublishRoute,
   ApiPublicProvidersProviderRoute: ApiPublicProvidersProviderRoute,
   ApiPublicZyraxonSearchRoute: ApiPublicZyraxonSearchRoute,
@@ -1089,6 +1332,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicProvidersIndexRoute: ApiPublicProvidersIndexRoute,
   ApiPublicSharesIndexRoute: ApiPublicSharesIndexRoute,
   ApiSharesIdIndexRoute: ApiSharesIdIndexRoute,
+  ApiPublicDownloadZyraxonCodePlatformRoute:
+    ApiPublicDownloadZyraxonCodePlatformRoute,
   ApiPublicSharesIdDataRoute: ApiPublicSharesIdDataRoute,
   ApiPublicSharesIdSyncRoute: ApiPublicSharesIdSyncRoute,
   ApiPublicZyraxonV1ModelsRoute: ApiPublicZyraxonV1ModelsRoute,
