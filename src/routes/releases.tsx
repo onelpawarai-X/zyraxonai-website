@@ -32,6 +32,7 @@ const REPOS = [
 
 export const Route = createFileRoute("/releases")({
   head: () => ({ meta: [{ title: "Releases — ZYRAXON AI" }, { name: "description", content: "All releases for ZYRAXON Agent, Myra Agent, and ZYRAXON Code." }] }),
+  component: ReleasesPage,
 });
 
 function fmtSize(b: number): string {

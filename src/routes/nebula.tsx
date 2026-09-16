@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 export const Route = createFileRoute("/nebula")({
   head: () => ({ meta: [{ title: "ZYRAXON Nebula — AI Model Hub" }] }),
+  component: NebulaPage,
 });
 
 function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
