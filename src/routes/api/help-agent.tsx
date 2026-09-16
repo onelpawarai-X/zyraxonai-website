@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { normalizeZenModel, DEFAULT_ZEN_MODEL, zenFreeModels } from "@/lib/builder/zen.server";
+import { randomUUID } from "crypto";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +9,21 @@ const CORS = {
 };
 
 const ZEN_BASE = "https://opencode.ai/zen/v1";
+
+let serverSessionId = randomUUID();
+
+function getHeaders(apiKey?: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "User-Agent": "OpenCode/1.0.0",
+    "x-session-id": serverSessionId,
+  };
+  const key = apiKey || process.env.OPENCODE_API_KEY || "";
+  if (key && !key.includes("placeholder") && key.trim()) {
+    headers["Authorization"] = `Bearer ${key.trim()}`;
+  }
+  return headers;
+}
 
 const HELP_SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate. You can also have casual conversations.
 
@@ -69,66 +85,75 @@ export const Route = createFileRoute("/api/help-agent")({
           }
 
           const upstream = normalizeZenModel(requestedModel) || DEFAULT_ZEN_MODEL;
-
           const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
           const userContent = `${historyBlock}${message}`;
 
-          const payload = {
-            model: upstream,
-            messages: [
-              { role: "system", content: HELP_SYSTEM_PROMPT },
-              { role: "user", content: userContent },
-            ],
-            stream: true,
-            max_tokens: 512,
-            temperature: 0.7,
-          };
+          // Try requested model first, then fallbacks — same pattern as zyraxon-pro
+          const fallbacks = [upstream, "big-pickle", "deepseek-v4-flash-free", "glm-5-free"];
 
-          const r = await fetch(`${ZEN_BASE}/chat/completions`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "User-Agent": "opencode/1.0",
-            },
-            body: JSON.stringify(payload),
-          });
+          for (const curModel of fallbacks) {
+            try {
+              const res = await fetch(`${ZEN_BASE}/chat/completions`, {
+                method: "POST",
+                headers: getHeaders(),
+                body: JSON.stringify({
+                  model: curModel,
+                  messages: [
+                    { role: "system", content: HELP_SYSTEM_PROMPT },
+                    { role: "user", content: userContent },
+                  ],
+                  stream: true,
+                  max_tokens: 512,
+                  temperature: 0.7,
+                }),
+                signal: AbortSignal.timeout(20000),
+              });
 
-          if (!r.ok) {
-            const errText = await r.text().catch(() => "unknown");
-            console.error(`[help-agent] Zen ${r.status}: ${errText.slice(0, 200)}`);
-            return Response.json(
-              { reply: getFallback(message) },
-              { headers: CORS },
-            );
+              if (!res.ok) {
+                console.warn(`[help-agent] ${curModel} returned ${res.status}`);
+                continue;
+              }
+
+              // Stream SSE directly to client — exact same pattern as zyraxon-pro
+              const reader = res.body?.getReader();
+              if (!reader) continue;
+
+              const encoder = new TextEncoder();
+              const stream = new ReadableStream({
+                async start(controller) {
+                  const decoder = new TextDecoder();
+                  try {
+                    while (true) {
+                      const { done, value } = await reader.read();
+                      if (done) break;
+                      controller.enqueue(value);
+                    }
+                  } finally {
+                    controller.close();
+                  }
+                },
+              });
+
+              return new Response(stream, {
+                headers: {
+                  "Content-Type": "text/event-stream; charset=utf-8",
+                  "Cache-Control": "no-cache, no-transform",
+                  Connection: "keep-alive",
+                  "X-Accel-Buffering": "no",
+                  "Access-Control-Allow-Origin": "*",
+                },
+              });
+            } catch (err: any) {
+              console.warn(`[help-agent] ${curModel} error:`, err?.message);
+              continue;
+            }
           }
 
-          const encoder = new TextEncoder();
-          const stream = new ReadableStream({
-            async start(controller) {
-              const reader = r.body?.getReader();
-              if (!reader) { controller.close(); return; }
-              const decoder = new TextDecoder();
-              try {
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-                  controller.enqueue(value);
-                }
-              } finally {
-                controller.close();
-              }
-            },
-          });
-
-          return new Response(stream, {
-            headers: {
-              "Content-Type": "text/event-stream; charset=utf-8",
-              "Cache-Control": "no-cache, no-transform",
-              Connection: "keep-alive",
-              "X-Accel-Buffering": "no",
-              "Access-Control-Allow-Origin": "*",
-            },
-          });
+          // All models failed
+          return Response.json(
+            { reply: getFallback(message) },
+            { headers: CORS },
+          );
         } catch (e) {
           console.error(`[help-agent] POST error:`, e);
           return Response.json(
