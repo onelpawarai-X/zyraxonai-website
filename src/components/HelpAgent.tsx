@@ -70,6 +70,7 @@ export default function HelpAgent() {
         headers: {
           "Content-Type": "application/json",
           "User-Agent": "opencode/1.0",
+          "x-session-id": "help-agent-" + Date.now(),
         },
         body: JSON.stringify({
           model: selectedModel,
