@@ -1,21 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { zenChatStream, normalizeZenModel, DEFAULT_ZEN_MODEL, zenFreeModels, type ChatMessage } from "@/lib/builder/zen.server";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type, authorization",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers": "content-type",
+  "Access-Control-Allow-Methods": "GET,OPTIONS",
 };
 
-let cachedPrompt: string | null = null;
-async function getSystemPrompt(): Promise<string> {
-  if (cachedPrompt) return cachedPrompt;
-  try {
-    const res = await fetch("https://zyraxonai.lovable.app/help-agent-prompt.txt", { signal: AbortSignal.timeout(5000) });
-    if (res.ok) { cachedPrompt = await res.text(); return cachedPrompt!; }
-  } catch {}
-  return "You are ZYRAXON Help Agent. Help users navigate the website and products. Respond in the same language the user writes in.";
-}
+const ZEN_BASE = "https://opencode.ai/zen/v1";
+const ZEN_MODELS_URL = `${ZEN_BASE}/models`;
 
 export const Route = createFileRoute("/api/help-agent")({
   server: {
@@ -24,46 +16,34 @@ export const Route = createFileRoute("/api/help-agent")({
 
       GET: async () => {
         try {
-          const models = await zenFreeModels();
+          const res = await fetch(ZEN_MODELS_URL, {
+            headers: { "User-Agent": "opencode/1.0" },
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!res.ok) throw new Error("models fetch failed");
+          const data = await res.json();
+          const allModels = data?.data || [];
+          const freeModels = allModels
+            .filter((m: any) => {
+              const id = m.id || "";
+              return id.includes("free") || id === "big-pickle" || id === "union-alpha";
+            })
+            .map((m: any) => ({
+              id: m.id,
+              name: m.id,
+              free: true,
+            }));
+          if (freeModels.length === 0) {
+            freeModels.push({ id: "big-pickle", name: "big-pickle", free: true });
+          }
           return Response.json(
-            { models, defaultModel: DEFAULT_ZEN_MODEL },
+            { models: freeModels, defaultModel: "big-pickle" },
             { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },
           );
         } catch {
           return Response.json(
-            { models: [{ id: "big-pickle", name: "Big Pickle", multimodal: false, reasoning: false, context: 200000, output: 32768, free: true }], defaultModel: "big-pickle" },
+            { models: [{ id: "big-pickle", name: "big-pickle", free: true }], defaultModel: "big-pickle" },
             { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },
-          );
-        }
-      },
-
-      POST: async ({ request }: { request: Request }) => {
-        try {
-          const body = await request.json();
-          const { message, history, model: requestedModel } = body;
-
-          if (!message || typeof message !== "string") {
-            return Response.json({ error: "Message required" }, { status: 400, headers: CORS });
-          }
-
-          const systemPrompt = await getSystemPrompt();
-          const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
-          const userContent = `${historyBlock}${message}`;
-
-          const upstream = normalizeZenModel(requestedModel) || DEFAULT_ZEN_MODEL;
-
-          const messages: ChatMessage[] = [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userContent },
-          ];
-
-          const response = await zenChatStream(upstream, messages, undefined, []);
-          return response;
-        } catch (e) {
-          console.error(`[help-agent] error:`, e);
-          return Response.json(
-            { error: "Help Agent unavailable. Please try again." },
-            { status: 500, headers: CORS },
           );
         }
       },

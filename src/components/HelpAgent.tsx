@@ -1,20 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-interface Model {
-  id: string;
-  name: string;
-  multimodal: boolean;
-  context: number;
-  output: number;
-  free: true;
-}
+const ZEN_CHAT_URL = "https://opencode.ai/zen/v1/chat/completions";
+const PROMPT_URL = "/help-agent-prompt.txt";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  image?: string;
-  timestamp: number;
-}
+interface Model { id: string; name: string; free: true }
+interface Message { role: "user" | "assistant"; content: string; image?: string; timestamp: number }
 
 export default function HelpAgent() {
   const [open, setOpen] = useState(false);
@@ -25,6 +15,7 @@ export default function HelpAgent() {
   const [location, setLocation] = useState<string | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState("big-pickle");
+  const [systemPrompt, setSystemPrompt] = useState("");
   const messagesEnd = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -41,6 +32,7 @@ export default function HelpAgent() {
         () => setLocation(null),
       );
     }
+    fetch(PROMPT_URL).then(r => r.text()).then(setSystemPrompt).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -48,10 +40,8 @@ export default function HelpAgent() {
       fetch("/api/help-agent")
         .then((r) => r.json())
         .then((data) => {
-          if (data.models) {
-            setModels(data.models);
-            if (data.defaultModel) setSelectedModel(data.defaultModel);
-          }
+          if (data.models) setModels(data.models);
+          if (data.defaultModel) setSelectedModel(data.defaultModel);
         })
         .catch(() => {});
     }
@@ -69,62 +59,60 @@ export default function HelpAgent() {
       const locationContext = location ? `\n[User location: ${location}]` : "";
       const imageContext = image ? "\n[User shared a screenshot]" : "";
       const history = [...messages, userMsg].slice(-10).map((m) => `${m.role}: ${m.content}`).join("\n");
+      const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
 
-      const res = await fetch("/api/help-agent", {
+      const allMessages = [];
+      if (systemPrompt) allMessages.push({ role: "system", content: systemPrompt });
+      allMessages.push({ role: "user", content: `${historyBlock}${text}${locationContext}${imageContext}` });
+
+      const res = await fetch(ZEN_CHAT_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "opencode/1.0",
+        },
         body: JSON.stringify({
-          message: text + locationContext + imageContext,
-          history,
           model: selectedModel,
+          messages: allMessages,
+          stream: true,
         }),
       });
 
-      if (!res.ok) throw new Error("Failed");
-      const contentType = res.headers.get("content-type") || "";
+      if (!res.ok) throw new Error(`Zen ${res.status}`);
+      if (!res.body) throw new Error("No body");
 
-      if (contentType.includes("text/event-stream") || contentType.includes("application/json")) {
-        const reader = res.body?.getReader();
-        if (!reader) throw new Error("No reader");
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let fullText = "";
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let buffer = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith("data: ")) {
-              const data = trimmed.slice(6).trim();
-              if (data === "[DONE]") break;
-              try {
-                const parsed = JSON.parse(data);
-                const token = parsed.choices?.[0]?.delta?.content;
-                if (token) { fullText += token; setStreaming(fullText); }
-              } catch {}
-            }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("data: ")) {
+            const dataPart = trimmed.slice(6);
+            if (dataPart === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(dataPart);
+              const token = parsed.choices?.[0]?.delta?.content;
+              if (token) { fullText += token; setStreaming(fullText); }
+            } catch {}
           }
         }
+      }
 
-        if (fullText) {
-          setMessages((prev) => [...prev, { role: "assistant", content: fullText, timestamp: Date.now() }]);
-        } else {
-          throw new Error("Empty stream");
-        }
+      if (fullText) {
+        setMessages((prev) => [...prev, { role: "assistant", content: fullText, timestamp: Date.now() }]);
       } else {
-        const data = await res.text();
-        if (data) {
-          setMessages((prev) => [...prev, { role: "assistant", content: data, timestamp: Date.now() }]);
-        } else {
-          throw new Error("Empty response");
-        }
+        throw new Error("Empty response");
       }
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I'm having trouble connecting. Please try again.", timestamp: Date.now() }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, AI is temporarily unavailable. Please try again.", timestamp: Date.now() }]);
     } finally {
       setLoading(false);
       setStreaming("");
@@ -142,17 +130,15 @@ export default function HelpAgent() {
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        style={{
-          position: "fixed", bottom: 24, left: 24, zIndex: 9999,
-          width: 56, height: 56, borderRadius: "50%",
-          background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-          border: "none", cursor: "pointer",
-          boxShadow: "0 4px 20px rgba(124,58,237,0.4)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "transform 0.2s",
-        }}
+      <button onClick={() => setOpen(true)} style={{
+        position: "fixed", bottom: 24, left: 24, zIndex: 9999,
+        width: 56, height: 56, borderRadius: "50%",
+        background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+        border: "none", cursor: "pointer",
+        boxShadow: "0 4px 20px rgba(124,58,237,0.4)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        transition: "transform 0.2s",
+      }}
         onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
         onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
       >
@@ -192,16 +178,9 @@ export default function HelpAgent() {
 
       {models.length > 0 && (
         <div style={{ padding: "6px 16px", borderTop: "1px solid #e5e7eb", background: "#f9fafb" }}>
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            style={{ width: "100%", padding: "4px 8px", borderRadius: 6, border: "1px solid #e5e7eb", fontSize: 11, background: "white", color: "#374151", outline: "none" }}
-          >
-            {models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} {m.multimodal ? "(Vision)" : ""}
-              </option>
-            ))}
+          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}
+            style={{ width: "100%", padding: "4px 8px", borderRadius: 6, border: "1px solid #e5e7eb", fontSize: 11, background: "white", color: "#374151", outline: "none" }}>
+            {models.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
           </select>
         </div>
       )}
