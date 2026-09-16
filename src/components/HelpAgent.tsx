@@ -16,56 +16,15 @@ interface Message {
   timestamp: number;
 }
 
-const SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate.
-
-IDENTITY: You are AI, speak user's language, be warm & concise (2-4 sentences).
-
-PRODUCTS:
-1. ZYRAXON Agent — Desktop AI (Win/Mac/Linux), 552+ tools, 9 modes. Download: /download/zyraxon-agent | GitHub: github.com/onelpawarai-X/ZYRAXON-AI
-2. Myra Agent — Android voice AI, 6 personalities, Bengali/English. Download: /download/myra-agent | GitHub: github.com/onelpawarai-X/Myra-Agent
-3. Zyraxon Code — AI code editor (VS Code fork). Download: /download/zyraxon-code | GitHub: github.com/onelpawarai-X/Zyraxon-Code
-
-LICENSE: ZSL (Zyraxon Sovereign License) — ZSL-X v1.0.0 (2026-2028), MEKRA-X (2028+). Enterprise-grade. Page: /zsl | GitHub: github.com/onelpawarai-X/ZSL
-
-PAGES:
-- / — Landing (features, modes, models, comparison, download)
-- /ecosystem — Marketplace (published apps, extensions, releases, publish)
-- /publish — Publish your project to ZYRAXON Hub
-- /releases — All GitHub releases from 3 repos
-- /docs — Documentation (18+ pages)
-- /nebula — NEBULA AI chat (password: ZYRAXON)
-- /bludar — AI Bludar builder
-- /zsl — ZSL License page
-
-COMMUNITY: Discord (discord.gg/h8mHvf45g), YouTube (@ZYRAXONAI), Google Group
-FOUNDER: OneL Pawar — onelpawarai.lovable.app
-LICENSE PORTAL: zyraxonai-license.lovable.app
-GITHUB ORG: github.com/onelpawarai-X
-
-RULES: Respond in user's language. Be concise. If screenshot shared, analyze it. If location shared, acknowledge. Never make up URLs. You can also have casual conversations.`;
-
-function getFallback(msg: string): string {
-  const l = msg.toLowerCase();
-  if (l.includes("download") || l.includes("install")) return "Download our products:\n- ZYRAXON Agent: /download/zyraxon-agent\n- Myra Agent: /download/myra-agent\n- Zyraxon Code: /download/zyraxon-code\n\nOr visit /releases.";
-  if (l.includes("license") || l.includes("zsl")) return "We use ZSL (Zyraxon Sovereign License) — enterprise-grade. Visit /zsl or GitHub: github.com/onelpawarai-X/ZSL";
-  if (l.includes("ecosystem") || l.includes("marketplace")) return "Ecosystem Marketplace: /ecosystem. Publish: /publish.";
-  if (l.includes("docs") || l.includes("documentation")) return "Documentation: /docs (18+ pages).";
-  if (l.includes("hello") || l.includes("hi") || l.includes("হ্যালো") || l.includes("নমস্কার")) return "Hello! How can I help you today? Ask about our products, downloads, or anything about ZYRAXON.";
-  if (l.includes("কেমন আছো") || l.includes("কি খবর")) return "আমি ভালো আছি! আপনাকে কিভাবে সাহায্য করতে পারি? ZYRAXON এর প্রোডাক্ট, ডাউনলোড, বা যেকোনো বিষয়ে জিজ্ঞেস করুন।";
-  return "I'm here to help! Ask about our products (ZYRAXON Agent, Myra Agent, Zyraxon Code), downloads, ZSL License, Ecosystem, or Documentation. You can also just chat with me!";
-}
-
 export default function HelpAgent() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hi! I'm the ZYRAXON Help Agent. Ask me about our products, downloads, or anything. You can also just chat!", timestamp: Date.now() },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState("");
   const [location, setLocation] = useState<string | null>(null);
   const [models, setModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState("HuggingFaceH4/zephyr-7b-beta");
+  const [selectedModel, setSelectedModel] = useState("big-pickle");
   const messagesEnd = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -118,20 +77,54 @@ export default function HelpAgent() {
           message: text + locationContext + imageContext,
           history,
           model: selectedModel,
-          hasImage: !!image,
         }),
       });
 
       if (!res.ok) throw new Error("Failed");
-      const text = await res.text();
+      const contentType = res.headers.get("content-type") || "";
 
-      if (text) {
-        setMessages((prev) => [...prev, { role: "assistant", content: text, timestamp: Date.now() }]);
+      if (contentType.includes("text/event-stream") || contentType.includes("application/json")) {
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("No reader");
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullText = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("data: ")) {
+              const data = trimmed.slice(6).trim();
+              if (data === "[DONE]") break;
+              try {
+                const parsed = JSON.parse(data);
+                const token = parsed.choices?.[0]?.delta?.content;
+                if (token) { fullText += token; setStreaming(fullText); }
+              } catch {}
+            }
+          }
+        }
+
+        if (fullText) {
+          setMessages((prev) => [...prev, { role: "assistant", content: fullText, timestamp: Date.now() }]);
+        } else {
+          throw new Error("Empty stream");
+        }
       } else {
-        throw new Error("Empty response");
+        const data = await res.text();
+        if (data) {
+          setMessages((prev) => [...prev, { role: "assistant", content: data, timestamp: Date.now() }]);
+        } else {
+          throw new Error("Empty response");
+        }
       }
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: getFallback(text), timestamp: Date.now() }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I'm having trouble connecting. Please try again.", timestamp: Date.now() }]);
     } finally {
       setLoading(false);
       setStreaming("");
@@ -206,7 +199,7 @@ export default function HelpAgent() {
           >
             {models.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name} {m.multimodal ? "(Vision)" : ""} — {m.context >= 1000000 ? `${(m.context / 1000000).toFixed(0)}M` : `${(m.context / 1000).toFixed(0)}K`} ctx
+                {m.name} {m.multimodal ? "(Vision)" : ""}
               </option>
             ))}
           </select>
