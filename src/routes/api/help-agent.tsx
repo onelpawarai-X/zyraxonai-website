@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { normalizeZenModel, DEFAULT_ZEN_MODEL, zenFreeModels } from "@/lib/builder/zen.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -8,20 +7,20 @@ const CORS = {
 };
 
 const ZEN_BASE = "https://opencode.ai/zen/v1";
+const DEFAULT_ZEN_MODEL = "big-pickle";
 
-let serverSessionId = crypto.randomUUID();
+let serverSessionId: string | null = null;
+function getSessionId(): string {
+  if (!serverSessionId) serverSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  return serverSessionId;
+}
 
-function getHeaders(apiKey?: string): Record<string, string> {
-  const headers: Record<string, string> = {
+function getHeaders(): Record<string, string> {
+  return {
     "Content-Type": "application/json",
     "User-Agent": "OpenCode/1.0.0",
-    "x-session-id": serverSessionId,
+    "x-session-id": getSessionId(),
   };
-  const key = apiKey || process.env.OPENCODE_API_KEY || "";
-  if (key && !key.includes("placeholder") && key.trim()) {
-    headers["Authorization"] = `Bearer ${key.trim()}`;
-  }
-  return headers;
 }
 
 const HELP_SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate. You can also have casual conversations.
@@ -60,18 +59,17 @@ export const Route = createFileRoute("/api/help-agent")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
 
       GET: async () => {
-        try {
-          const models = await zenFreeModels();
-          return Response.json(
-            { models, defaultModel: DEFAULT_ZEN_MODEL },
-            { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },
-          );
-        } catch {
-          return Response.json(
-            { models: [{ id: "big-pickle", name: "Big Pickle", multimodal: false, reasoning: false, context: 200000, output: 32768, free: true }], defaultModel: "big-pickle" },
-            { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },
-          );
-        }
+        return Response.json(
+          {
+            models: [
+              { id: "big-pickle", name: "Big Pickle", free: true },
+              { id: "deepseek-v4-flash-free", name: "DeepSeek V4 Flash", free: true },
+              { id: "glm-5-free", name: "GLM 5", free: true },
+            ],
+            defaultModel: DEFAULT_ZEN_MODEL,
+          },
+          { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },
+        );
       },
 
       POST: async ({ request }: { request: Request }) => {
@@ -83,11 +81,10 @@ export const Route = createFileRoute("/api/help-agent")({
             return Response.json({ error: "Message required" }, { status: 400, headers: CORS });
           }
 
-          const upstream = normalizeZenModel(requestedModel) || DEFAULT_ZEN_MODEL;
+          const upstream = requestedModel || DEFAULT_ZEN_MODEL;
           const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
           const userContent = `${historyBlock}${message}`;
 
-          // Try requested model first, then fallbacks — same pattern as zyraxon-pro
           const fallbacks = [upstream, "big-pickle", "deepseek-v4-flash-free", "glm-5-free"];
 
           for (const curModel of fallbacks) {
@@ -113,14 +110,11 @@ export const Route = createFileRoute("/api/help-agent")({
                 continue;
               }
 
-              // Stream SSE directly to client — exact same pattern as zyraxon-pro
               const reader = res.body?.getReader();
               if (!reader) continue;
 
-              const encoder = new TextEncoder();
               const stream = new ReadableStream({
                 async start(controller) {
-                  const decoder = new TextDecoder();
                   try {
                     while (true) {
                       const { done, value } = await reader.read();
@@ -148,7 +142,6 @@ export const Route = createFileRoute("/api/help-agent")({
             }
           }
 
-          // All models failed
           return Response.json(
             { reply: getFallback(message) },
             { headers: CORS },
