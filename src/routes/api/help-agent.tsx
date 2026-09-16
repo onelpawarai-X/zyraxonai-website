@@ -7,32 +7,10 @@ const CORS: Record<string, string> = {
 };
 
 const ZEN_BASE = "https://opencode.ai/zen/v1";
+const ZEN_CHAT_URL = `${ZEN_BASE}/chat/completions`;
 const DEFAULT_ZEN_MODEL = "big-pickle";
-const FREE_MODEL_FALLBACKS = ["big-pickle", "deepseek-v4-flash-free", "glm-5-free"];
-const OPENCODE_FETCH_TIMEOUT_MS = 10 * 60 * 1000;
-
-let openCodeServerSessionId: string | null = null;
-function getOpenCodeSessionId(): string {
-  if (!openCodeServerSessionId) {
-    openCodeServerSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  }
-  return openCodeServerSessionId;
-}
-
-function getOpenCodeHeaders(useAuth = true): Record<string, string> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "User-Agent": "OpenCode/1.0.0",
-    "x-session-id": getOpenCodeSessionId(),
-  };
-  if (useAuth) {
-    const key = process.env.OPENCODE_API_KEY || "";
-    if (key && !key.includes("placeholder") && key.trim()) {
-      headers["Authorization"] = `Bearer ${key.trim()}`;
-    }
-  }
-  return headers;
-}
+const FREE_MODEL_FALLBACKS = ["big-pickle", "deepseek-v4-flash-free", "glm-5-free", "mimo-v2.5-free"];
+const ZEN_UA = "opencode/1.0";
 
 const HELP_SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate. You can also have casual conversations.
 
@@ -67,37 +45,10 @@ function getFallback(message: string): string {
   return "I'm here to help! Ask about our products, downloads, ZSL License, or anything about ZYRAXON.";
 }
 
-async function parseSSEStream(res: Response): Promise<string> {
-  const reader = res.body!.getReader();
-  const decoder = new TextDecoder();
-  let fullText = "";
-  let streamBuffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    streamBuffer += decoder.decode(value, { stream: true });
-    const lines = streamBuffer.split("\n");
-    streamBuffer = lines.pop() || "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("data: ")) {
-        const dataPart = trimmed.slice(6);
-        if (dataPart === "[DONE]") break;
-        try {
-          const parsed = JSON.parse(dataPart);
-          const delta = parsed.choices?.[0]?.delta;
-          if (delta?.content) {
-            fullText += delta.content;
-          }
-        } catch {}
-      }
-    }
-  }
-
-  return fullText.length > 0 ? fullText : null;
+async function zenFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers || {});
+  headers.set("User-Agent", ZEN_UA);
+  return fetch(input, { ...init, headers });
 }
 
 async function streamFromZen(
@@ -105,43 +56,56 @@ async function streamFromZen(
   messages: { role: string; content: string }[],
 ): Promise<string | null> {
   try {
-    let useAuth = true;
-    let headers = getOpenCodeHeaders(useAuth);
-
-    let openCodeRes = await fetch(`${ZEN_BASE}/chat/completions`, {
+    const res = await zenFetch(ZEN_CHAT_URL, {
       method: "POST",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         model,
         messages,
         stream: true,
       }),
-      signal: AbortSignal.timeout(OPENCODE_FETCH_TIMEOUT_MS),
+      signal: AbortSignal.timeout(30000),
     });
 
-    // If 401, retry without auth (free tier)
-    if (openCodeRes.status === 401 && useAuth) {
-      useAuth = false;
-      headers = getOpenCodeHeaders(false);
-      openCodeRes = await fetch(`${ZEN_BASE}/chat/completions`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model,
-          messages,
-          stream: true,
-        }),
-        signal: AbortSignal.timeout(OPENCODE_FETCH_TIMEOUT_MS),
-      });
-    }
-
-    if (!openCodeRes.ok) {
-      console.warn(`[help-agent] ${model} returned ${openCodeRes.status}`);
+    if (!res.ok) {
+      console.warn(`[help-agent] ${model} returned ${res.status}`);
       return null;
     }
 
-    if (!openCodeRes.body) return null;
-    return await parseSSEStream(openCodeRes);
+    if (!res.body) return null;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = "";
+    let streamBuffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      streamBuffer += decoder.decode(value, { stream: true });
+      const lines = streamBuffer.split("\n");
+      streamBuffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("data: ")) {
+          const dataPart = trimmed.slice(6);
+          if (dataPart === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(dataPart);
+            const delta = parsed.choices?.[0]?.delta;
+            if (delta?.content) {
+              fullText += delta.content;
+            }
+          } catch {}
+        }
+      }
+    }
+
+    return fullText.length > 0 ? fullText : null;
   } catch (err: any) {
     console.warn(`[help-agent] ${model} error:`, err?.message);
     return null;
@@ -160,6 +124,7 @@ export const Route = createFileRoute("/api/help-agent")({
               { id: "big-pickle", name: "Big Pickle (Free)", free: true },
               { id: "deepseek-v4-flash-free", name: "DeepSeek V4 Flash (Free)", free: true },
               { id: "glm-5-free", name: "GLM 5 (Free)", free: true },
+              { id: "mimo-v2.5-free", name: "MiMo V2.5 (Free)", free: true },
             ],
             defaultModel: DEFAULT_ZEN_MODEL,
           },
@@ -188,23 +153,22 @@ export const Route = createFileRoute("/api/help-agent")({
           ];
 
           for (const tryModel of modelsToTry) {
-            console.log(`[help-agent] Trying model: ${tryModel}`);
+            console.log(`[help-agent] Trying: ${tryModel}`);
             const reply = await streamFromZen(tryModel, messages);
             if (reply) {
-              console.log(`[help-agent] Success on ${tryModel}, length: ${reply.length}`);
+              console.log(`[help-agent] OK: ${tryModel} (${reply.length} chars)`);
               return new Response(reply, {
                 headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
               });
             }
-            console.warn(`[help-agent] ${tryModel} returned null, trying next...`);
           }
 
-          console.warn(`[help-agent] All models failed, returning fallback`);
+          console.warn(`[help-agent] All failed, fallback`);
           return new Response(getFallback(message), {
             headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
           });
         } catch (e) {
-          console.error(`[help-agent] POST error:`, e);
+          console.error(`[help-agent] error:`, e);
           return new Response(getFallback(""), {
             headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
           });
