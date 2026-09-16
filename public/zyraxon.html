@@ -222,6 +222,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
 .reveal[data-reveal="right"]{transform:translate3d(38px,16px,0) scale(var(--reveal-scale))}
 .reveal.in{opacity:1;filter:blur(0);transform:translate3d(0,0,0) scale(1)}
 .motion-surface{--tilt-x:0deg;--tilt-y:0deg;--lift:0px;--spot-x:50%;--spot-y:50%;transform:perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translate3d(0,var(--lift),0);transform-style:preserve-3d;transition:transform .32s cubic-bezier(.16,1,.3,1),box-shadow .35s var(--transition),border-color .35s var(--transition);will-change:transform}
+.motion-surface:hover{transform:perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translate3d(0,var(--lift),0)}
 .motion-surface.reveal{transform:perspective(900px) translate3d(0,var(--reveal-y),0) scale(var(--reveal-scale)) rotateX(2deg)}
 .motion-surface.reveal.in{transform:perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translate3d(0,var(--lift),0) scale(1)}
 .motion-surface::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;opacity:0;background:radial-gradient(320px circle at var(--spot-x) var(--spot-y),rgba(37,99,235,.12),rgba(124,58,237,.035) 35%,transparent 70%);transition:opacity .35s var(--transition)}
