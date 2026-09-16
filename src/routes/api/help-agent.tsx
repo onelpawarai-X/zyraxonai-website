@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { normalizeZenModel, DEFAULT_ZEN_MODEL, zenFreeModels } from "@/lib/builder/zen.server";
-import { randomUUID } from "crypto";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +9,7 @@ const CORS = {
 
 const ZEN_BASE = "https://opencode.ai/zen/v1";
 
-let serverSessionId = randomUUID();
+let serverSessionId = crypto.randomUUID();
 
 function getHeaders(apiKey?: string): Record<string, string> {
   const headers: Record<string, string> = {
