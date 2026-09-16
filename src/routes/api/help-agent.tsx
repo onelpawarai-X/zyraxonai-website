@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { normalizeZenModel, DEFAULT_ZEN_MODEL, zenFreeModels, zenFetch } from "@/lib/builder/zen.server";
+import { normalizeZenModel, DEFAULT_ZEN_MODEL, zenFreeModels } from "@/lib/builder/zen.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -84,13 +84,18 @@ export const Route = createFileRoute("/api/help-agent")({
             temperature: 0.7,
           };
 
-          const r = await zenFetch(`${ZEN_BASE}/chat/completions`, {
+          const r = await fetch(`${ZEN_BASE}/chat/completions`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "User-Agent": "opencode/1.0",
+            },
             body: JSON.stringify(payload),
           });
 
           if (!r.ok) {
+            const errText = await r.text().catch(() => "unknown");
+            console.error(`[help-agent] Zen ${r.status}: ${errText.slice(0, 200)}`);
             return Response.json(
               { reply: getFallback(message) },
               { headers: CORS },
@@ -124,7 +129,8 @@ export const Route = createFileRoute("/api/help-agent")({
               "Access-Control-Allow-Origin": "*",
             },
           });
-        } catch {
+        } catch (e) {
+          console.error(`[help-agent] POST error:`, e);
           return Response.json(
             { reply: getFallback("") },
             { headers: CORS },
