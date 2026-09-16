@@ -305,6 +305,15 @@ export const Route = createFileRoute("/api/public/nebula")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: HEADERS }),
       GET: async ({ request }) => {
+        const url = new URL(request.url);
+        const action = url.searchParams.get("action");
+        if (action === "verify") {
+          try {
+            return await handleGet(request);
+          } catch (err: any) {
+            return Response.json({ error: String(err) }, { status: 200, headers: HEADERS });
+          }
+        }
         if (!authed(request))
           return Response.json({ error: "Unauthorized" }, { status: 401, headers: HEADERS });
         try {
