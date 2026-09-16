@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
+interface Model {
+  id: string;
+  name: string;
+  multimodal: boolean;
+  context: number;
+  output: number;
+  free: true;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -55,6 +64,8 @@ export default function HelpAgent() {
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState("");
   const [location, setLocation] = useState<string | null>(null);
+  const [models, setModels] = useState<Model[]>([]);
+  const [selectedModel, setSelectedModel] = useState("big-pickle");
   const messagesEnd = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -72,6 +83,20 @@ export default function HelpAgent() {
       );
     }
   }, []);
+
+  useEffect(() => {
+    if (open && models.length === 0) {
+      fetch("/api/help-agent")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.models) {
+            setModels(data.models);
+            if (data.defaultModel) setSelectedModel(data.defaultModel);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [open, models.length]);
 
   const sendMessage = async (text: string, image?: string) => {
     if (!text.trim() && !image) return;
@@ -92,7 +117,7 @@ export default function HelpAgent() {
         body: JSON.stringify({
           message: text + locationContext + imageContext,
           history,
-          system: SYSTEM_PROMPT,
+          model: selectedModel,
           hasImage: !!image,
         }),
       });
@@ -119,7 +144,8 @@ export default function HelpAgent() {
               if (data === "[DONE]") break;
               try {
                 const parsed = JSON.parse(data);
-                if (parsed.token) { fullText += parsed.token; setStreaming(fullText); }
+                const token = parsed.choices?.[0]?.delta?.content || parsed.token;
+                if (token) { fullText += token; setStreaming(fullText); }
               } catch {}
             }
           }
@@ -197,6 +223,22 @@ export default function HelpAgent() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
         </button>
       </div>
+
+      {models.length > 0 && (
+        <div style={{ padding: "6px 16px", borderTop: "1px solid #e5e7eb", background: "#f9fafb" }}>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            style={{ width: "100%", padding: "4px 8px", borderRadius: 6, border: "1px solid #e5e7eb", fontSize: 11, background: "white", color: "#374151", outline: "none" }}
+          >
+            {models.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} {m.multimodal ? "(Vision)" : ""} — {m.context >= 1000000 ? `${(m.context / 1000000).toFixed(0)}M` : `${(m.context / 1000).toFixed(0)}K`} ctx
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
         {messages.map((msg, i) => (

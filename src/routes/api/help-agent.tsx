@@ -1,6 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  DEFAULT_ZEN_MODEL,
+  normalizeZenModel,
+  zenChatStream,
+  zenFreeModels,
+  isZenModel,
+  type ChatMessage,
+} from "@/lib/builder/zen.server";
 
-const SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate. Speak user's language. Be warm & concise. You can also have casual conversations.
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "content-type, authorization",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+};
+
+const HELP_SYSTEM_PROMPT = `You are ZYRAXON Help Agent — a friendly, multilingual AI assistant on the ZYRAXON AI website. Guide users, answer questions, help navigate. Speak user's language. Be warm & concise. You can also have casual conversations.
 
 PRODUCTS:
 1. ZYRAXON Agent — Desktop AI (Win/Mac/Linux), 552+ tools, 9 modes. Download: /download/zyraxon-agent | GitHub: github.com/onelpawarai-X/ZYRAXON-AI
@@ -18,13 +32,6 @@ GITHUB ORG: github.com/onelpawarai-X
 
 RULES: Respond in user's language. Be concise. Never make up URLs. You can have casual conversations too.`;
 
-// Free models — NO API KEY NEEDED
-const HF_MODELS = [
-  "HuggingFaceH4/zephyr-7b-beta",
-  "mistralai/Mistral-7B-Instruct-v0.3",
-  "google/gemma-2-2b-it",
-];
-
 function getFallback(message: string): string {
   const l = message.toLowerCase();
   if (l.includes("download") || l.includes("install")) return "Download our products:\n- ZYRAXON Agent: /download/zyraxon-agent\n- Myra Agent: /download/myra-agent\n- Zyraxon Code: /download/zyraxon-code\n\nOr visit /releases.";
@@ -39,68 +46,52 @@ function getFallback(message: string): string {
 export const Route = createFileRoute("/api/help-agent")({
   server: {
     handlers: {
+      OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
+
+      GET: async () => {
+        try {
+          const models = await zenFreeModels();
+          return Response.json(
+            { models, defaultModel: DEFAULT_ZEN_MODEL },
+            { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },
+          );
+        } catch (e) {
+          return Response.json(
+            { error: "Failed to load models", detail: e instanceof Error ? e.message : "unknown" },
+            { status: 502, headers: CORS },
+          );
+        }
+      },
+
       POST: async ({ request }: { request: Request }) => {
         try {
           const body = await request.json();
-          const { message, history, hasImage } = body;
+          const { message, history, model: requestedModel, hasImage } = body;
 
           if (!message || typeof message !== "string") {
-            return Response.json({ error: "Message required" }, { status: 400 });
+            return Response.json({ error: "Message required" }, { status: 400, headers: CORS });
           }
 
-          // Build prompt for Hugging Face text-generation
-          const prompt = `<|system|>\n${SYSTEM_PROMPT}\n${history ? `Previous conversation:\n${history}\n` : ""}<|user|>\n${message}<|assistant|>\n`;
+          const upstream = normalizeZenModel(requestedModel) || DEFAULT_ZEN_MODEL;
 
-          // Try each free model
-          for (const model of HF_MODELS) {
-            try {
-              const res = await fetch(
-                `https://api-inference.huggingface.co/models/${model}`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    inputs: prompt,
-                    parameters: {
-                      max_new_tokens: 400,
-                      temperature: 0.7,
-                      top_p: 0.9,
-                      do_sample: true,
-                      return_full_text: false,
-                    },
-                  }),
-                },
-              );
+          const historyBlock = history ? `Previous conversation:\n${history}\n` : "";
+          const userContent = `${historyBlock}${message}`;
 
-              if (!res.ok) continue;
+          const messages: ChatMessage[] = [
+            { role: "system", content: HELP_SYSTEM_PROMPT },
+            { role: "user", content: userContent },
+          ];
 
-              const data = await res.json();
-              let reply = "";
-
-              if (Array.isArray(data) && data[0]?.generated_text) {
-                reply = data[0].generated_text.trim();
-              } else if (data.generated_text) {
-                reply = data.generated_text.trim();
-              } else if (typeof data === "string") {
-                reply = data.trim();
-              }
-
-              if (reply && reply.length > 5) {
-                // Clean up the reply — remove system/user prefixes if leaked
-                reply = reply.replace(/<\|.*?\|>/g, "").trim();
-                if (reply.length > 5) {
-                  return Response.json({ reply });
-                }
-              }
-            } catch {
-              continue;
-            }
+          if (isZenModel(upstream)) {
+            return await zenChatStream(upstream, messages);
           }
 
-          // All models failed — use smart fallback
-          return Response.json({ reply: getFallback(message) });
+          return await zenChatStream(DEFAULT_ZEN_MODEL, messages);
         } catch {
-          return Response.json({ reply: getFallback("") });
+          return Response.json(
+            { reply: getFallback("") },
+            { headers: CORS },
+          );
         }
       },
     },
