@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/packages")({
   head: () => ({ meta: [{ title: "NPM Packages — ZYRAXON AI" }] }),
@@ -17,6 +17,25 @@ type Package = {
   installCmd: string;
 };
 
+const S = {
+  bg: "#ffffff",
+  bg2: "#f8f9fb",
+  surface: "#ffffff",
+  border: "rgba(0,0,0,.06)",
+  border2: "rgba(0,0,0,.1)",
+  accent: "#2563eb",
+  accent2: "#7c3aed",
+  accent3: "#06b6d4",
+  green: "#10b981",
+  text: "#111827",
+  textSec: "#6b7280",
+  textMuted: "#9ca3af",
+  mono: "'JetBrains Mono','SF Mono','Fira Code',monospace",
+  font: "'Inter',-apple-system,BlinkMacSystemFont,sans-serif",
+  shadow: "0 4px 16px rgba(0,0,0,.06)",
+  shadowLg: "0 12px 40px rgba(0,0,0,.08)",
+};
+
 function CopyBtn({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -27,16 +46,17 @@ function CopyBtn({ text }: { text: string }) {
         setTimeout(() => setCopied(false), 1500);
       }}
       style={{
-        background: copied ? "#10b981" : "rgba(0,245,255,.1)",
-        border: `1px solid ${copied ? "#10b981" : "rgba(0,245,255,.2)"}`,
-        color: copied ? "#fff" : "#00f5ff",
-        borderRadius: 6,
-        padding: "4px 10px",
+        background: copied ? S.green : S.accent,
+        color: "#fff",
+        border: "none",
+        borderRadius: 8,
+        padding: "6px 14px",
         fontSize: 12,
-        fontWeight: 600,
+        fontWeight: 700,
         cursor: "pointer",
         transition: "all .2s",
-        whiteSpace: "nowrap",
+        whiteSpace: "nowrap" as const,
+        flexShrink: 0,
       }}
     >
       {copied ? "Copied!" : "Copy"}
@@ -45,76 +65,47 @@ function CopyBtn({ text }: { text: string }) {
 }
 
 function PackageCard({ pkg }: { pkg: Package }) {
-  const shortName = pkg.name.replace(`@${pkg.scope || "zyraxon-ai"}/`, "");
-  const isCore = ["sdk", "client", "server", "core", "llm"].includes(shortName);
-  const isInfra = ["schema", "protocol", "plugin"].includes(shortName);
-
   return (
     <div
       style={{
-        border: "1px solid rgba(255,255,255,.08)",
-        background: isCore
-          ? "linear-gradient(135deg, rgba(0,245,255,.04), rgba(124,58,237,.04))"
-          : isInfra
-          ? "linear-gradient(135deg, rgba(124,58,237,.04), rgba(236,72,153,.04))"
-          : "rgba(255,255,255,.02)",
+        background: S.surface,
+        border: `1px solid ${S.border}`,
         borderRadius: 16,
         padding: 24,
         display: "flex",
         flexDirection: "column" as const,
         gap: 12,
-        transition: "all .3s",
-        position: "relative" as const,
-        overflow: "hidden",
+        transition: "all .25s",
+        boxShadow: "none",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgba(0,245,255,.25)";
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,245,255,.08)";
+        e.currentTarget.style.boxShadow = S.shadowLg;
+        e.currentTarget.style.transform = "translateY(-3px)";
+        e.currentTarget.style.borderColor = "rgba(37,99,235,.15)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,.08)";
-        e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.borderColor = S.border;
       }}
     >
-      {isCore && (
-        <div
-          style={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            background: "linear-gradient(135deg, #00f5ff, #7c3aed)",
-            color: "#000",
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "3px 8px",
-            borderRadius: 6,
-            textTransform: "uppercase" as const,
-            letterSpacing: "0.5px",
-          }}
-        >
-          Core
-        </div>
-      )}
-
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
         <span
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 15,
+            fontFamily: S.mono,
+            fontSize: 14,
             fontWeight: 700,
-            color: "#00f5ff",
+            color: S.accent,
           }}
         >
           {pkg.name}
         </span>
         <span
           style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "#7c3aed",
-            background: "rgba(124,58,237,.12)",
+            fontSize: 11,
+            fontWeight: 700,
+            color: S.accent2,
+            background: "rgba(124,58,237,.08)",
             padding: "2px 8px",
             borderRadius: 6,
           }}
@@ -123,7 +114,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
         </span>
       </div>
 
-      <p style={{ fontSize: 13, color: "#9ca3af", margin: 0, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: S.textSec, margin: 0, lineHeight: 1.5, minHeight: 40 }}>
         {pkg.description || "No description"}
       </p>
 
@@ -132,17 +123,17 @@ function PackageCard({ pkg }: { pkg: Package }) {
           display: "flex",
           alignItems: "center",
           gap: 8,
-          background: "rgba(0,0,0,.3)",
-          border: "1px solid rgba(255,255,255,.06)",
-          borderRadius: 8,
-          padding: "8px 12px",
-          fontFamily: "'JetBrains Mono', monospace",
+          background: S.bg2,
+          border: `1px solid ${S.border}`,
+          borderRadius: 10,
+          padding: "10px 14px",
+          fontFamily: S.mono,
           fontSize: 13,
-          color: "#e5e7eb",
+          color: S.text,
           overflow: "hidden",
         }}
       >
-        <span style={{ color: "#6b7280", userSelect: "none" }}>$</span>
+        <span style={{ color: S.textMuted, userSelect: "none" }}>$</span>
         <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
           {pkg.installCmd}
         </span>
@@ -150,8 +141,8 @@ function PackageCard({ pkg }: { pkg: Package }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
-        <span style={{ fontSize: 11, color: "#6b7280" }}>
-          Published {new Date(pkg.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        <span style={{ fontSize: 11, color: S.textMuted }}>
+          {new Date(pkg.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </span>
         <a
           href={pkg.npmUrl}
@@ -159,9 +150,8 @@ function PackageCard({ pkg }: { pkg: Package }) {
           rel="noopener"
           style={{
             fontSize: 12,
-            color: "#7c3aed",
+            color: S.accent2,
             fontWeight: 600,
-            textDecoration: "none",
             display: "flex",
             alignItems: "center",
             gap: 4,
@@ -181,9 +171,9 @@ function PackageCard({ pkg }: { pkg: Package }) {
               key={kw}
               style={{
                 fontSize: 10,
-                color: "#6b7280",
-                background: "rgba(255,255,255,.04)",
-                border: "1px solid rgba(255,255,255,.06)",
+                color: S.textMuted,
+                background: S.bg2,
+                border: `1px solid ${S.border}`,
                 padding: "2px 8px",
                 borderRadius: 999,
               }}
@@ -202,7 +192,6 @@ function PackagesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -229,80 +218,41 @@ function PackagesPage() {
   );
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#06060e",
-        fontFamily: "'Inter', system-ui, sans-serif",
-        color: "#f0f0f5",
-      }}
-    >
-      {/* Ambient BG */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-        <div
+    <div style={{ minHeight: "100vh", background: S.bg, fontFamily: S.font, color: S.text }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px 80px" }}>
+        {/* Back link */}
+        <a
+          href="/"
           style={{
-            position: "absolute",
-            width: 600,
-            height: 600,
-            borderRadius: "50%",
-            background: "rgba(0,245,255,.06)",
-            filter: "blur(120px)",
-            top: "-200px",
-            right: "-100px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 13,
+            color: S.textMuted,
+            marginBottom: 24,
           }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: 500,
-            height: 500,
-            borderRadius: "50%",
-            background: "rgba(124,58,237,.06)",
-            filter: "blur(120px)",
-            bottom: "-150px",
-            left: "-100px",
-          }}
-        />
-      </div>
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back to home
+        </a>
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: "40px 24px 80px" }}>
         {/* Header */}
-        <div style={{ marginBottom: 48, textAlign: "center" }}>
-          <a
-            href="/"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13,
-              color: "#7a7a95",
-              textDecoration: "none",
-              marginBottom: 24,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Back to home
-          </a>
-
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
           <h1
             style={{
-              fontSize: "clamp(32px, 5vw, 52px)",
+              fontSize: "clamp(32px, 5vw, 48px)",
               fontWeight: 900,
-              letterSpacing: "-0.03em",
+              letterSpacing: "-.03em",
               margin: 0,
-              background: "linear-gradient(135deg, #00f5ff 0%, #a855f7 50%, #ec4899 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              color: S.text,
             }}
           >
-            NPM Packages
+            NPM <span style={{ color: S.accent }}>Packages</span>
           </h1>
-          <p style={{ fontSize: 16, color: "#7a7a95", marginTop: 12, maxWidth: 600, marginInline: "auto" }}>
+          <p style={{ fontSize: 16, color: S.textSec, marginTop: 12, maxWidth: 560, marginInline: "auto" }}>
             Official {`@zyraxon-ai/*`} packages for building AI-powered applications.
-            <br />
-            All packages are open-source and published to npm.
           </p>
 
           {/* Quick install */}
@@ -310,18 +260,18 @@ function PackagesPage() {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
+              gap: 10,
               marginTop: 24,
-              background: "rgba(0,0,0,.4)",
-              border: "1px solid rgba(255,255,255,.08)",
-              borderRadius: 10,
-              padding: "10px 16px",
-              fontFamily: "'JetBrains Mono', monospace",
+              background: S.bg2,
+              border: `1px solid ${S.border}`,
+              borderRadius: 12,
+              padding: "12px 20px",
+              fontFamily: S.mono,
               fontSize: 14,
-              color: "#e5e7eb",
+              color: S.text,
             }}
           >
-            <span style={{ color: "#6b7280" }}>$</span>
+            <span style={{ color: S.textMuted }}>$</span>
             <span>npm install @zyraxon-ai/sdk</span>
             <CopyBtn text="npm install @zyraxon-ai/sdk" />
           </div>
@@ -334,7 +284,7 @@ function PackagesPage() {
             height="18"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#4a4a65"
+            stroke={S.textMuted}
             strokeWidth="2"
             style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}
           >
@@ -349,33 +299,36 @@ function PackagesPage() {
             style={{
               width: "100%",
               padding: "12px 16px 12px 42px",
-              background: "rgba(255,255,255,.03)",
-              border: "1px solid rgba(255,255,255,.08)",
+              background: S.surface,
+              border: `1px solid ${S.border2}`,
               borderRadius: 12,
               fontSize: 14,
-              color: "#f0f0f5",
+              color: S.text,
               outline: "none",
               boxSizing: "border-box",
+              transition: "border-color .2s",
             }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = S.accent)}
+            onBlur={(e) => (e.currentTarget.style.borderColor = S.border2)}
           />
         </div>
 
         {/* Stats */}
         {!loading && (
-          <div style={{ textAlign: "center", marginBottom: 24, fontSize: 13, color: "#6b7280" }}>
-            {packages.length} packages published under {`@zyraxon-ai`}
+          <div style={{ textAlign: "center", marginBottom: 24, fontSize: 13, color: S.textMuted }}>
+            {packages.length} packages under {`@zyraxon-ai`}
           </div>
         )}
 
         {/* Loading */}
         {loading && (
-          <div style={{ textAlign: "center", padding: 60, color: "#7a7a95" }}>
+          <div style={{ textAlign: "center", padding: 60, color: S.textSec }}>
             <div
               style={{
                 width: 32,
                 height: 32,
-                border: "3px solid rgba(0,245,255,.2)",
-                borderTopColor: "#00f5ff",
+                border: `3px solid ${S.border}`,
+                borderTopColor: S.accent,
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
                 margin: "0 auto 16px",
@@ -392,10 +345,10 @@ function PackagesPage() {
             style={{
               textAlign: "center",
               padding: 40,
-              background: "rgba(239,68,68,.06)",
-              border: "1px solid rgba(239,68,68,.15)",
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
               borderRadius: 12,
-              color: "#fca5a5",
+              color: "#991b1b",
             }}
           >
             Failed to load packages: {error}
@@ -407,7 +360,7 @@ function PackagesPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
               gap: 16,
             }}
           >
@@ -418,19 +371,18 @@ function PackagesPage() {
         )}
 
         {!loading && !error && filtered.length === 0 && packages.length > 0 && (
-          <div style={{ textAlign: "center", padding: 40, color: "#6b7280" }}>
+          <div style={{ textAlign: "center", padding: 40, color: S.textMuted }}>
             No packages match "{search}"
           </div>
         )}
 
-        {/* Footer link */}
-        <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,.06)" }}>
+        {/* Footer */}
+        <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: `1px solid ${S.border}` }}>
           <a
             href="/"
             style={{
               fontSize: 13,
-              color: "#7a7a95",
-              textDecoration: "none",
+              color: S.textMuted,
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
