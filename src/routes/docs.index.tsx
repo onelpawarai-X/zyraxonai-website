@@ -8,7 +8,7 @@ export const Route = createFileRoute("/docs/")({
       {
         name: "description",
         content:
-          "Official ZYRAXON-AI documentation: agent modes, 552+ tools, vision system, eternal memory, self-healing, build guides and more.",
+          "Complete technical reference for ZYRAXON-AI: 3 platforms, 9 agent modes, 552+ tools, vision system, eternal memory, self-healing, build guides and more.",
       },
     ],
   }),

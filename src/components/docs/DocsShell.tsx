@@ -34,7 +34,7 @@ function XToolsCatalog({ search }: { search: string }) {
         ].map(([label, value]) => (
           <div
             key={label}
-            className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm"
+            className="p-4 text-center"
           >
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text font-mono text-2xl font-black text-transparent sm:text-3xl">
               {value}
@@ -65,25 +65,25 @@ function XToolsCatalog({ search }: { search: string }) {
             </span>
           </div>
           <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{c.blurb}</p>
-          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="mt-4 overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-blue-600">
+                <tr className="border-b border-gray-200">
+                  <th className="pb-2 pr-4 font-mono text-[10px] uppercase tracking-[0.16em] text-blue-600">
                     Tool
                   </th>
-                  <th className="px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-blue-600">
+                  <th className="pb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-blue-600">
                     What it does
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {c.tools.map((t, i) => (
-                  <tr key={t.name} className={i % 2 ? "bg-gray-50/50" : ""}>
-                    <td className="w-1/3 whitespace-nowrap border-t border-gray-100 px-4 py-2 align-top font-mono text-[12px] font-semibold text-green-600">
+                {c.tools.map((t) => (
+                  <tr key={t.name} className="border-b border-gray-100 last:border-0">
+                    <td className="whitespace-nowrap py-2.5 pr-4 align-top font-mono text-[12px] font-semibold text-green-600">
                       {t.name}
                     </td>
-                    <td className="border-t border-gray-100 px-4 py-2 align-top text-gray-600">
+                    <td className="py-2.5 align-top text-gray-600">
                       {t.desc}
                     </td>
                   </tr>
@@ -116,7 +116,7 @@ function inline(text: string): ReactNode[] {
       out.push(
         <code
           key={k++}
-          className="rounded-md bg-gray-100 px-1.5 py-0.5 font-mono text-[0.85em] text-indigo-600"
+          className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[0.85em] text-indigo-600"
         >
           {tok.slice(1, -1)}
         </code>,
@@ -129,7 +129,7 @@ function inline(text: string): ReactNode[] {
             key={k++}
             href={mm[2]}
             target="_top"
-            className="text-blue-600 underline underline-offset-4 decoration-blue-300 hover:text-blue-800 hover:decoration-blue-500"
+            className="text-blue-600 underline decoration-blue-300 underline-offset-4 hover:text-blue-800 hover:decoration-blue-500"
           >
             {mm[1]}
           </a>,
@@ -145,7 +145,7 @@ function Block({ b }: { b: DocBlock }) {
   switch (b.t) {
     case "h2":
       return (
-        <h2 className="mt-12 border-l-4 border-blue-500 pl-4 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+        <h2 className="mt-12 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
           {b.text}
         </h2>
       );
@@ -155,9 +155,9 @@ function Block({ b }: { b: DocBlock }) {
       return <p className="mt-4 leading-relaxed text-gray-600">{inline(b.text)}</p>;
     case "code":
       return (
-        <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-gray-950 shadow-sm">
+        <div className="mt-5 overflow-hidden rounded-lg bg-gray-950">
           {b.lang ? (
-            <div className="border-b border-gray-800 bg-gray-900 px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">
+            <div className="border-b border-gray-800 px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">
               {b.lang}
             </div>
           ) : null}
@@ -169,7 +169,7 @@ function Block({ b }: { b: DocBlock }) {
     case "list": {
       const Tag = b.ordered ? "ol" : "ul";
       return (
-        <Tag className={`mt-4 space-y-2 pl-1 ${b.ordered ? "list-none" : "list-none"}`}>
+        <Tag className={`mt-4 space-y-2 ${b.ordered ? "list-none" : "list-none"}`}>
           {b.items.map((it, i) => (
             <li key={i} className="flex gap-3 leading-relaxed text-gray-600">
               <span className="mt-[7px] shrink-0 font-mono text-[11px] text-blue-500">
@@ -183,14 +183,14 @@ function Block({ b }: { b: DocBlock }) {
     }
     case "table":
       return (
-        <div className="mt-5 overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="mt-5 overflow-x-auto">
           <table className="w-full min-w-[520px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
+              <tr className="border-b border-gray-200">
                 {b.head.map((h, i) => (
                   <th
                     key={i}
-                    className="px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-blue-600"
+                    className="pb-2 pr-4 font-mono text-[10px] uppercase tracking-[0.16em] text-blue-600"
                   >
                     {h}
                   </th>
@@ -199,11 +199,11 @@ function Block({ b }: { b: DocBlock }) {
             </thead>
             <tbody>
               {b.rows.map((r, i) => (
-                <tr key={i} className={i % 2 ? "bg-gray-50/50" : ""}>
+                <tr key={i} className="border-b border-gray-100 last:border-0">
                   {r.map((c, j) => (
                     <td
                       key={j}
-                      className="border-t border-gray-100 px-4 py-2.5 align-top text-gray-600"
+                      className="py-2.5 pr-4 align-top text-gray-600"
                     >
                       {inline(c)}
                     </td>
@@ -216,14 +216,14 @@ function Block({ b }: { b: DocBlock }) {
       );
     case "note": {
       const styles = {
-        info: "border-blue-300 bg-blue-50 text-blue-800",
-        warn: "border-amber-300 bg-amber-50 text-amber-800",
-        tip: "border-indigo-300 bg-indigo-50 text-indigo-800",
-        success: "border-green-300 bg-green-50 text-green-800",
+        info: "border-blue-400 text-blue-800",
+        warn: "border-amber-400 text-amber-800",
+        tip: "border-indigo-400 text-indigo-800",
+        success: "border-green-400 text-green-800",
       } as const;
       const icon = { info: "\u2139", warn: "\u26A0", tip: "\u2605", success: "\u2713" }[b.kind];
       return (
-        <div className={`mt-6 rounded-xl border px-4 py-3 ${styles[b.kind]}`}>
+        <div className={`mt-6 border-l-4 py-3 pl-4 ${styles[b.kind]}`}>
           <div className="flex gap-3">
             <span className="shrink-0 select-none font-mono text-lg">{icon}</span>
             <div>
@@ -286,7 +286,7 @@ export default function DocsShell({ slug }: { slug?: string }) {
                     <Link
                       key={p.slug}
                       to="/docs/$slug" params={{ slug: p.slug }}
-                      className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                      className="group border-b border-gray-100 py-4 no-underline transition-colors hover:border-blue-300"
                     >
                       <div className="flex items-center justify-between">
                         <div className="font-semibold text-gray-900 group-hover:text-blue-600">
@@ -332,7 +332,7 @@ export default function DocsShell({ slug }: { slug?: string }) {
             {prev ? (
               <Link
                 to="/docs/$slug" params={{ slug: prev.slug }}
-                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-300 hover:shadow-md"
+                className="border-b border-gray-100 py-4 no-underline transition-colors hover:border-blue-300"
               >
                 <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-gray-400">
                   &#8592; Previous
@@ -345,7 +345,7 @@ export default function DocsShell({ slug }: { slug?: string }) {
             {next ? (
               <Link
                 to="/docs/$slug" params={{ slug: next.slug }}
-                className="rounded-xl border border-gray-200 bg-white p-4 text-right shadow-sm transition-colors hover:border-blue-300 hover:shadow-md"
+                className="border-b border-gray-100 py-4 text-right no-underline transition-colors hover:border-blue-300"
               >
                 <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-gray-400">
                   Next &#8594;
@@ -374,7 +374,7 @@ function DocsShellFrame({
   const [open, setOpen] = useState(false);
   return (
     <div
-      className="min-h-screen bg-gray-50 text-gray-900"
+      className="min-h-screen bg-white text-gray-900"
       style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
     >
       <style>{`
@@ -477,7 +477,7 @@ function DocsShellFrame({
         </aside>
 
         {/* Content */}
-        <main className="min-w-0 flex-1 bg-gray-50 py-10 sm:py-12 px-6 sm:px-8">{children}</main>
+        <main className="min-w-0 flex-1 bg-white py-10 sm:py-12 px-6 sm:px-8">{children}</main>
       </div>
 
       {/* Footer */}

@@ -41,8 +41,8 @@ export const DOCS: DocPage[] = [
         head: ["Product", "Platform", "Description"],
         rows: [
           ["ZYRAXON Agent", "Windows, macOS, Linux", "Desktop AI agent with 9 modes, 552+ tools, eternal memory, self-healing"],
-          ["Myra Agent", "Android 8.0+", "All-in-one mobile AI assistant with voice, chat, WhatsApp auto-reply, gaming vision"],
-          ["ZYRAXON Code", "Windows, macOS, Linux", "Full VS Code-grade AI code editor built from source"],
+          ["Myra Agent", "Android 8.0+", "All-in-one mobile AI assistant with voice, gestures, real-time screen streaming"],
+          ["ZYRAXON Code", "Windows, macOS, Linux", "AI-native code editor built on VS Code with inline AI assistance"],
         ],
       },
       { t: "h2", text: "ZYRAXON Agent Highlights" },
@@ -51,7 +51,7 @@ export const DOCS: DocPage[] = [
         head: ["Capability", "Details"],
         rows: [
           ["Agent Modes", "Build, Plan, Beast, PRO, APEX PREDATOR, DARK EMPEROR, Vision, Pro Builder, General"],
-          ["Total Tools.*552+ (161 MCP + 31 built-in + 260+ physical-world X tools)"],
+          ["Total Tools", "552+ (353 X Tool classes + 156 MCP tools + 30 built-in agent tools)"],
           ["Memory", "Eternal -- SQLite WAL, ring buffer, 50K+ entries, survives reset"],
           ["Self-Healing", "Auto-installs missing tools and MCP servers at runtime"],
           ["Self-Evolution", "Builds its own tools when it detects repeated needs"],
@@ -195,9 +195,9 @@ export const DOCS: DocPage[] = [
     blocks: [
       {
         t: "p",
-        text: "ZYRAXON includes **552+ tools** across core engine and 30+ domain categories.",
+        text: "ZYRAXON includes **552+ tools** across three categories: 353 X Tool classes, 156 MCP server tools, and 30 built-in agent tools.",
       },
-      { t: "h2", text: "Core Engine (31 Tools)" },
+      { t: "h2", text: "Built-in Agent Tools (30)" },
       {
         t: "table",
         head: ["Tool", "Purpose"],
@@ -233,7 +233,7 @@ export const DOCS: DocPage[] = [
           ["invalid", "Fallback handler"],
         ],
       },
-      { t: "h2", text: "Domain Tools (521) -- 30+ Categories" },
+      { t: "h2", text: "X Tool Classes (353) -- 30+ Domain Categories" },
       {
         t: "table",
         head: ["Category", "Count"],
