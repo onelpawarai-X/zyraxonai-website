@@ -9,7 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ZslRouteImport } from './routes/zsl'
 import { Route as ReleasesRouteImport } from './routes/releases'
+import { Route as PublishRouteImport } from './routes/publish'
+import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
 import { Route as NebulaRouteImport } from './routes/nebula'
 import { Route as BuilderRouteImport } from './routes/builder'
@@ -23,6 +26,7 @@ import { Route as DownloadZyraxonAgentRouteImport } from './routes/download.zyra
 import { Route as DownloadMyraAgentRouteImport } from './routes/download.myra-agent'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as ApiMarketplaceSearchRouteImport } from './routes/api/marketplace-search'
+import { Route as ApiHelpAgentRouteImport } from './routes/api/help-agent'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
 import { Route as EcosystemItemIdRouteImport } from './routes/ecosystem/item/$id'
@@ -30,6 +34,7 @@ import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/publi
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
 import { Route as ApiPublicSiteContentRouteImport } from './routes/api/public/site-content'
+import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
 import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mcp-registry'
 import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public/github-releases'
@@ -70,9 +75,24 @@ import { Route as ApiPublicAuthGithubCallbackRouteImport } from './routes/api/pu
 import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/api/public/zyraxon/v1/chat/completions'
 import { Route as ApiGithubReposOwnerRepoPublishRouteImport } from './routes/api/github/repos/$owner/$repo/publish'
 
+const ZslRoute = ZslRouteImport.update({
+  id: '/zsl',
+  path: '/zsl',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReleasesRoute = ReleasesRouteImport.update({
   id: '/releases',
   path: '/releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublishRoute = PublishRouteImport.update({
+  id: '/publish',
+  path: '/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PackagesRoute = PackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NebulaCoreRoute = NebulaCoreRouteImport.update({
@@ -140,6 +160,11 @@ const ApiMarketplaceSearchRoute = ApiMarketplaceSearchRouteImport.update({
   path: '/api/marketplace-search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHelpAgentRoute = ApiHelpAgentRouteImport.update({
+  id: '/api/help-agent',
+  path: '/api/help-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
@@ -175,6 +200,11 @@ const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
 const ApiPublicSiteContentRoute = ApiPublicSiteContentRouteImport.update({
   id: '/api/public/site-content',
   path: '/api/public/site-content',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNpmPackagesRoute = ApiPublicNpmPackagesRouteImport.update({
+  id: '/api/public/npm-packages',
+  path: '/api/public/npm-packages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicNebulaRoute = ApiPublicNebulaRouteImport.update({
@@ -390,8 +420,12 @@ export interface FileRoutesByFullPath {
   '/builder': typeof BuilderRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
+  '/packages': typeof PackagesRoute
+  '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/myra-agent': typeof DownloadMyraAgentRoute
@@ -409,6 +443,7 @@ export interface FileRoutesByFullPath {
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
+  '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
@@ -452,8 +487,12 @@ export interface FileRoutesByTo {
   '/builder': typeof BuilderRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
+  '/packages': typeof PackagesRoute
+  '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/myra-agent': typeof DownloadMyraAgentRoute
@@ -471,6 +510,7 @@ export interface FileRoutesByTo {
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
+  '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
@@ -515,8 +555,12 @@ export interface FileRoutesById {
   '/builder': typeof BuilderRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
+  '/packages': typeof PackagesRoute
+  '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/myra-agent': typeof DownloadMyraAgentRoute
@@ -534,6 +578,7 @@ export interface FileRoutesById {
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
+  '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
@@ -579,8 +624,12 @@ export interface FileRouteTypes {
     | '/builder'
     | '/nebula'
     | '/nebula-core'
+    | '/packages'
+    | '/publish'
     | '/releases'
+    | '/zsl'
     | '/api/$'
+    | '/api/help-agent'
     | '/api/marketplace-search'
     | '/docs/$slug'
     | '/download/myra-agent'
@@ -598,6 +647,7 @@ export interface FileRouteTypes {
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
+    | '/api/public/npm-packages'
     | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
@@ -641,8 +691,12 @@ export interface FileRouteTypes {
     | '/builder'
     | '/nebula'
     | '/nebula-core'
+    | '/packages'
+    | '/publish'
     | '/releases'
+    | '/zsl'
     | '/api/$'
+    | '/api/help-agent'
     | '/api/marketplace-search'
     | '/docs/$slug'
     | '/download/myra-agent'
@@ -660,6 +714,7 @@ export interface FileRouteTypes {
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
+    | '/api/public/npm-packages'
     | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
@@ -703,8 +758,12 @@ export interface FileRouteTypes {
     | '/builder'
     | '/nebula'
     | '/nebula-core'
+    | '/packages'
+    | '/publish'
     | '/releases'
+    | '/zsl'
     | '/api/$'
+    | '/api/help-agent'
     | '/api/marketplace-search'
     | '/docs/$slug'
     | '/download/myra-agent'
@@ -722,6 +781,7 @@ export interface FileRouteTypes {
     | '/api/public/github-releases'
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
+    | '/api/public/npm-packages'
     | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
@@ -766,8 +826,12 @@ export interface RootRouteChildren {
   BuilderRoute: typeof BuilderRoute
   NebulaRoute: typeof NebulaRoute
   NebulaCoreRoute: typeof NebulaCoreRoute
+  PackagesRoute: typeof PackagesRoute
+  PublishRoute: typeof PublishRoute
   ReleasesRoute: typeof ReleasesRoute
+  ZslRoute: typeof ZslRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  ApiHelpAgentRoute: typeof ApiHelpAgentRoute
   ApiMarketplaceSearchRoute: typeof ApiMarketplaceSearchRoute
   DocsSlugRoute: typeof DocsSlugRoute
   DownloadMyraAgentRoute: typeof DownloadMyraAgentRoute
@@ -785,6 +849,7 @@ export interface RootRouteChildren {
   ApiPublicGithubReleasesRoute: typeof ApiPublicGithubReleasesRoute
   ApiPublicMcpRegistryRoute: typeof ApiPublicMcpRegistryRoute
   ApiPublicNebulaRoute: typeof ApiPublicNebulaRouteWithChildren
+  ApiPublicNpmPackagesRoute: typeof ApiPublicNpmPackagesRoute
   ApiPublicSiteContentRoute: typeof ApiPublicSiteContentRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
@@ -818,11 +883,32 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/zsl': {
+      id: '/zsl'
+      path: '/zsl'
+      fullPath: '/zsl'
+      preLoaderRoute: typeof ZslRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/releases': {
       id: '/releases'
       path: '/releases'
       fullPath: '/releases'
       preLoaderRoute: typeof ReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publish': {
+      id: '/publish'
+      path: '/publish'
+      fullPath: '/publish'
+      preLoaderRoute: typeof PublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/packages': {
+      id: '/packages'
+      path: '/packages'
+      fullPath: '/packages'
+      preLoaderRoute: typeof PackagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nebula-core': {
@@ -916,6 +1002,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMarketplaceSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/help-agent': {
+      id: '/api/help-agent'
+      path: '/api/help-agent'
+      fullPath: '/api/help-agent'
+      preLoaderRoute: typeof ApiHelpAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -963,6 +1056,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/site-content'
       fullPath: '/api/public/site-content'
       preLoaderRoute: typeof ApiPublicSiteContentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/npm-packages': {
+      id: '/api/public/npm-packages'
+      path: '/api/public/npm-packages'
+      fullPath: '/api/public/npm-packages'
+      preLoaderRoute: typeof ApiPublicNpmPackagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/nebula': {
@@ -1290,8 +1390,12 @@ const rootRouteChildren: RootRouteChildren = {
   BuilderRoute: BuilderRoute,
   NebulaRoute: NebulaRoute,
   NebulaCoreRoute: NebulaCoreRoute,
+  PackagesRoute: PackagesRoute,
+  PublishRoute: PublishRoute,
   ReleasesRoute: ReleasesRoute,
+  ZslRoute: ZslRoute,
   ApiSplatRoute: ApiSplatRoute,
+  ApiHelpAgentRoute: ApiHelpAgentRoute,
   ApiMarketplaceSearchRoute: ApiMarketplaceSearchRoute,
   DocsSlugRoute: DocsSlugRoute,
   DownloadMyraAgentRoute: DownloadMyraAgentRoute,
@@ -1309,6 +1413,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGithubReleasesRoute: ApiPublicGithubReleasesRoute,
   ApiPublicMcpRegistryRoute: ApiPublicMcpRegistryRoute,
   ApiPublicNebulaRoute: ApiPublicNebulaRouteWithChildren,
+  ApiPublicNpmPackagesRoute: ApiPublicNpmPackagesRoute,
   ApiPublicSiteContentRoute: ApiPublicSiteContentRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
