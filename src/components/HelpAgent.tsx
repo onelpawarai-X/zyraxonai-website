@@ -1,232 +1,354 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-interface Model { id: string; name: string; free: true }
-interface Message { role: "user" | "assistant"; content: string; image?: string; timestamp: number }
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  image?: string;
+  timestamp: number;
+}
+
+const QUICK_PROMPTS = [
+  "ZYRAXON AI কীভাবে ডাউনলোড করব?",
+  "Myra Agent এর কাজ কী?",
+  "GitHub Repository লিংক দিন",
+  "Windows এ কি এটা ফ্রি?",
+];
 
 export default function HelpAgent() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content: "স্বাগতম! আমি ZYRAXON AI অ্যাসিস্ট্যান্ট। যেকোনো প্রশ্ন করুন — ডাউনলোড, ফিচার, বা সেটআপ সংক্রান্ত যেকোনো বিষয়ে সাহায্য করতে পারি।",
+      timestamp: Date.now(),
+    },
+  ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState("");
-  const [location, setLocation] = useState<string | null>(null);
-  const [models, setModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState("big-pickle");
   const messagesEnd = useRef<HTMLDivElement>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  useEffect(() => { scrollToBottom(); }, [messages, streaming, scrollToBottom]);
-
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setLocation(`${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`),
-        () => setLocation(null),
-      );
-    }
-  }, []);
+    if (open) scrollToBottom();
+  }, [messages, streaming, open, scrollToBottom]);
 
-  useEffect(() => {
-    if (open && models.length === 0) {
-      fetch("/api/help-agent")
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.models) setModels(data.models);
-          if (data.defaultModel) setSelectedModel(data.defaultModel);
-        })
-        .catch(() => {});
-    }
-  }, [open, models.length]);
-
-  const sendMessage = async (text: string, image?: string) => {
-    if (!text.trim() && !image) return;
-    const userMsg: Message = { role: "user", content: text, image, timestamp: Date.now() };
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || loading) return;
+    const userMsg: Message = { role: "user", content: text, timestamp: Date.now() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
     setStreaming("");
 
     try {
-      const locationContext = location ? `\n[User location: ${location}]` : "";
-      const imageContext = image ? "\n[User shared a screenshot]" : "";
-      const history = [...messages, userMsg].slice(-10).map((m) => `${m.role}: ${m.content}`).join("\n");
+      const historyText = messages
+        .slice(-6)
+        .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+        .join("\n");
 
       const res = await fetch("/api/help-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text + locationContext + imageContext,
-          history,
-          model: selectedModel,
-        }),
+        body: JSON.stringify({ message: text, history: historyText }),
       });
 
-      if (!res.ok) throw new Error(`Server ${res.status}`);
-      const contentType = res.headers.get("content-type") || "";
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      if (contentType.includes("text/event-stream")) {
-        const reader = res.body?.getReader();
-        if (!reader) throw new Error("No reader");
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let fullText = "";
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response stream");
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith("data: ")) {
-              const dataPart = trimmed.slice(6);
-              if (dataPart === "[DONE]") break;
-              try {
-                const parsed = JSON.parse(dataPart);
-                const token = parsed.choices?.[0]?.delta?.content;
-                if (token) { fullText += token; setStreaming(fullText); }
-              } catch {}
-            }
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("data: ")) {
+            const dataStr = trimmed.slice(6);
+            if (dataStr === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(dataStr);
+              const delta = parsed.choices?.[0]?.delta?.content || "";
+              if (delta) {
+                fullText += delta;
+                setStreaming(fullText);
+              }
+            } catch {}
           }
         }
+      }
 
-        if (fullText) {
-          setMessages((prev) => [...prev, { role: "assistant", content: fullText, timestamp: Date.now() }]);
-        } else {
-          throw new Error("Empty stream");
-        }
-      } else {
-        const errData = await res.json().catch(() => null);
-        throw new Error(errData?.error || "Unexpected response");
+      if (fullText) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: fullText, timestamp: Date.now() },
+        ]);
       }
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, AI is temporarily unavailable. Please try again.", timestamp: Date.now() }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "দুঃখিত, সংযোগে সাময়িক সমস্যা হয়েছে। সরাসরি https://github.com/onelpawarai-X/ZYRAXON-AI দেখতে পারেন।",
+          timestamp: Date.now(),
+        },
+      ]);
     } finally {
       setLoading(false);
       setStreaming("");
     }
   };
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => sendMessage("I shared a screenshot. Can you help me with what I'm looking at?", reader.result as string);
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
-
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} style={{
-        position: "fixed", bottom: 24, left: 24, zIndex: 9999,
-        width: 56, height: 56, borderRadius: "50%",
-        background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-        border: "none", cursor: "pointer",
-        boxShadow: "0 4px 20px rgba(124,58,237,0.4)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        transition: "transform 0.2s",
-      }}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Open ZYRAXON AI Help"
+        style={{
+          position: "fixed",
+          bottom: 24,
+          left: 24,
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 18px",
+          borderRadius: 9999,
+          background: "linear-gradient(135deg, rgba(6,182,212,0.9), rgba(168,85,247,0.9))",
+          backdropFilter: "blur(16px)",
+          border: "1px solid rgba(255,255,255,0.25)",
+          color: "#03060f",
+          fontWeight: 700,
+          fontSize: 13,
+          cursor: "pointer",
+          boxShadow: "0 8px 32px rgba(6,182,212,0.35)",
+          transition: "transform 0.2s, box-shadow 0.2s",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
         onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-        </svg>
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: "#10b981",
+            boxShadow: "0 0 10px #10b981",
+          }}
+        />
+        <span>AI Help Agent</span>
       </button>
     );
   }
 
   return (
-    <div style={{
-      position: "fixed", bottom: 24, left: 24, zIndex: 9999,
-      width: 380, maxWidth: "calc(100vw - 48px)", height: 520, maxHeight: "calc(100vh - 48px)",
-      background: "white", borderRadius: 16,
-      boxShadow: "0 12px 48px rgba(0,0,0,0.15)",
-      display: "flex", flexDirection: "column", overflow: "hidden",
-      fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
-    }}>
-      <div style={{
-        padding: "14px 16px", background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-        color: "white", display: "flex", alignItems: "center", justifyContent: "space-between",
-      }}>
+    <div
+      style={{
+        position: "fixed",
+        bottom: 24,
+        left: 24,
+        zIndex: 9999,
+        width: 380,
+        maxWidth: "calc(100vw - 32px)",
+        height: 540,
+        maxHeight: "calc(100vh - 48px)",
+        background: "rgba(10, 14, 26, 0.95)",
+        backdropFilter: "blur(24px)",
+        border: "1px solid rgba(6,182,212,0.3)",
+        borderRadius: 20,
+        boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(6,182,212,0.15)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        color: "#e2e8f0",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          padding: "14px 18px",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          background: "linear-gradient(90deg, rgba(6,182,212,0.15), rgba(168,85,247,0.15))",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 10,
+              background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#03060f",
+              fontWeight: 800,
+              fontSize: 16,
+            }}
+          >
+            ⚡
           </div>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>ZYRAXON Help</p>
-            <p style={{ fontSize: 11, opacity: 0.8, margin: 0 }}>AI Assistant</p>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc" }}>ZYRAXON Assistant</div>
+            <div style={{ fontSize: 11, color: "#22d3ee", display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
+              Live Connected
+            </div>
           </div>
         </div>
-        <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer", padding: 4 }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        <button
+          onClick={() => setOpen(false)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#94a3b8",
+            cursor: "pointer",
+            fontSize: 18,
+            padding: "4px 8px",
+          }}
+        >
+          ✕
         </button>
       </div>
 
-      {models.length > 0 && (
-        <div style={{ padding: "6px 16px", borderTop: "1px solid #e5e7eb", background: "#f9fafb" }}>
-          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}
-            style={{ width: "100%", padding: "4px 8px", borderRadius: 6, border: "1px solid #e5e7eb", fontSize: 11, background: "white", color: "#374151", outline: "none" }}>
-            {models.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
-          </select>
-        </div>
-      )}
-
-      <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-            <div style={{
-              maxWidth: "85%", padding: "10px 14px", borderRadius: 12,
-              background: msg.role === "user" ? "#7c3aed" : "#f3f4f6",
-              color: msg.role === "user" ? "white" : "#1f2937",
-              fontSize: 13, lineHeight: 1.5, wordBreak: "break-word",
-            }}>
-              {msg.image && <img src={msg.image} alt="Screenshot" style={{ maxWidth: "100%", borderRadius: 8, marginBottom: 8, display: "block" }} />}
-              {msg.content.split("\n").map((line, j) => <span key={j}>{line}{j < msg.content.split("\n").length - 1 && <br />}</span>)}
-            </div>
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            style={{
+              alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+              maxWidth: "85%",
+              padding: "10px 14px",
+              borderRadius: 14,
+              fontSize: 12.5,
+              lineHeight: 1.5,
+              background:
+                m.role === "user"
+                  ? "linear-gradient(135deg, #0284c7, #2563eb)"
+                  : "rgba(255,255,255,0.06)",
+              border: m.role === "user" ? "none" : "1px solid rgba(255,255,255,0.08)",
+              color: "#f8fafc",
+              wordBreak: "break-word",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {m.content}
           </div>
         ))}
         {streaming && (
-          <div style={{ display: "flex", justifyContent: "flex-start" }}>
-            <div style={{ maxWidth: "85%", padding: "10px 14px", borderRadius: 12, background: "#f3f4f6", color: "#1f2937", fontSize: 13, lineHeight: 1.5, wordBreak: "break-word" }}>
-              {streaming.split("\n").map((line, j) => <span key={j}>{line}{j < streaming.split("\n").length - 1 && <br />}</span>)}
-              <span style={{ display: "inline-block", width: 2, height: 14, background: "#7c3aed", marginLeft: 2, animation: "helpCursor 1s infinite" }} />
-            </div>
+          <div
+            style={{
+              alignSelf: "flex-start",
+              maxWidth: "85%",
+              padding: "10px 14px",
+              borderRadius: 14,
+              fontSize: 12.5,
+              lineHeight: 1.5,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(6,182,212,0.3)",
+              color: "#f8fafc",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {streaming}
           </div>
         )}
         {loading && !streaming && (
-          <div style={{ display: "flex", justifyContent: "flex-start" }}>
-            <div style={{ padding: "10px 14px", borderRadius: 12, background: "#f3f4f6", display: "flex", gap: 4 }}>
-              {[0, 0.2, 0.4].map((d) => <span key={d} style={{ width: 6, height: 6, borderRadius: "50%", background: "#9ca3af", animation: `helpBounce 1.4s infinite ease-in-out ${d}s` }} />)}
-            </div>
-          </div>
+          <div style={{ color: "#22d3ee", fontSize: 11, paddingLeft: 6 }}>AI ভাবছে...</div>
         )}
         <div ref={messagesEnd} />
       </div>
 
-      <div style={{ padding: "12px 16px", borderTop: "1px solid #e5e7eb", display: "flex", gap: 8, alignItems: "center" }}>
-        <input ref={fileInput} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
-        <button onClick={() => fileInput.current?.click()} title="Upload screenshot"
-          style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #e5e7eb", background: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
-        </button>
-        <input value={input} onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
-          placeholder="Ask anything..."
-          style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13, outline: "none", fontFamily: "inherit" }} />
-        <button onClick={() => sendMessage(input)} disabled={!input.trim() || loading}
-          style={{ width: 36, height: 36, borderRadius: 8, background: input.trim() ? "#7c3aed" : "#e5e7eb", border: "none", cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={input.trim() ? "white" : "#9ca3af"} strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
-        </button>
+      {/* Quick Prompts */}
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          overflowX: "auto",
+          padding: "6px 12px",
+          borderTop: "1px solid rgba(255,255,255,0.05)",
+          background: "rgba(0,0,0,0.2)",
+        }}
+      >
+        {QUICK_PROMPTS.map((q) => (
+          <button
+            key={q}
+            onClick={() => sendMessage(q)}
+            style={{
+              whiteSpace: "nowrap",
+              fontSize: 11,
+              padding: "4px 10px",
+              borderRadius: 999,
+              background: "rgba(6,182,212,0.1)",
+              border: "1px solid rgba(6,182,212,0.25)",
+              color: "#67e8f9",
+              cursor: "pointer",
+            }}
+          >
+            {q}
+          </button>
+        ))}
       </div>
 
-      <style>{`@keyframes helpBounce{0%,80%,100%{transform:scale(0);opacity:0.5}40%{transform:scale(1);opacity:1}}@keyframes helpCursor{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+      {/* Input */}
+      <div
+        style={{
+          padding: 10,
+          borderTop: "1px solid rgba(255,255,255,0.08)",
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+        }}
+      >
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
+          placeholder="প্রশ্ন লিখুন..."
+          style={{
+            flex: 1,
+            padding: "9px 12px",
+            borderRadius: 10,
+            background: "rgba(0,0,0,0.4)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            color: "white",
+            fontSize: 12.5,
+            outline: "none",
+          }}
+        />
+        <button
+          onClick={() => sendMessage(input)}
+          disabled={loading || !input.trim()}
+          style={{
+            padding: "9px 16px",
+            borderRadius: 10,
+            background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+            color: "#03060f",
+            fontWeight: 700,
+            fontSize: 12,
+            border: "none",
+            cursor: "pointer",
+            opacity: loading || !input.trim() ? 0.5 : 1,
+          }}
+        >
+          পাঠান
+        </button>
+      </div>
     </div>
   );
 }
