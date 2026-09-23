@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-const BUILDER_URL = "https://zyraxon-pro.ai.studio/";
+const BUILDER_URL = "https://zyraxon-pro-x.lovable.app/";
 
 export const Route = createFileRoute("/builder")({
   head: () => ({

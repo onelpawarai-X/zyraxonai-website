@@ -839,7 +839,7 @@ export const DOCS: DocPage[] = [
           ["Discord", "discord.gg/h8mHvf45g"],
           ["YouTube", "youtube.com/@ZYRAXONAI"],
           ["Website", "zyraxonai.lovable.app"],
-          ["Cloud Agent", "zyraxon-pro.ai.studio"],
+          ["Cloud Agent", "zyraxon-pro-x.lovable.app"],
         ],
       },
     ],
