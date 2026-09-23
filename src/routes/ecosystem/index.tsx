@@ -9,8 +9,32 @@ import { PublishModal } from "../../components/ecosystem/PublishModal";
 export const Route = createFileRoute("/ecosystem/")({
   head: () => ({
     meta: [
-      { title: "ZYRAXON Ecosystem — AI Marketplace" },
-      { name: "description", content: "Explore plugins, AI bots, templates, and tools for the ZYRAXON ecosystem." },
+      { title: "ZYRAXON Ecosystem — AI Marketplace for Plugins, Bots, Templates & Tools" },
+      { name: "description", content: "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community. Browse, install and share AI-powered apps." },
+      { property: "og:title", content: "ZYRAXON Ecosystem — AI Marketplace" },
+      { property: "og:description", content: "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/ecosystem" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ZYRAXON Ecosystem — AI Marketplace" },
+      { name: "twitter:description", content: "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community." },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "ZYRAXON Ecosystem",
+          url: "https://zyraxonai.lovable.app/ecosystem",
+          description: "AI marketplace for plugins, bots, templates, extensions and developer tools.",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://zyraxonai.lovable.app/ecosystem?search={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }),
+      },
     ],
   }),
   component: EcosystemPage,
@@ -126,11 +150,12 @@ export default function EcosystemPage() {
               <input
                 type="text"
                 placeholder="Search ecosystem..."
+                aria-label="Search ecosystem"
                 value={searchQuery}
                 onChange={(e) => { handleSearch(e.target.value); if (e.target.value.length >= 2) setTab("search"); }}
                 style={{ width: 260, padding: "8px 12px 8px 36px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", fontSize: 13, outline: "none", fontFamily: "inherit" }}
               />
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" aria-hidden="true" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}>
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
             </div>

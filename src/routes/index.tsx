@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "The most powerful free & open-source desktop AI coding agent. 552+ tools, 9 agent modes, Screen Vision, Eternal Memory.",
+          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
       },
       {
         property: "og:title",
@@ -18,7 +18,32 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "The most powerful free & open-source desktop AI coding agent. 552+ tools, 9 agent modes, Screen Vision, Eternal Memory.",
+          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
+      {
+        name: "twitter:description",
+        content:
+          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "ZYRAXON AI",
+          applicationCategory: "DeveloperApplication",
+          operatingSystem: "Windows, macOS, Linux, Android",
+          description:
+            "Free and open-source desktop AI coding agent with 805+ tools, 224 control systems, 9 agent modes, screen vision and eternal memory.",
+          url: "https://zyraxonai.lovable.app",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        }),
       },
     ],
   }),
@@ -107,7 +132,7 @@ function Index() {
     const onMessage = (e: MessageEvent) => {
       if ((e.data as any)?.type === "zyraxon:nebula") setNebula(true);
       if ((e.data as any)?.type === "zyraxon:navigate" && (e.data as any).path) {
-        window.top.location.href = (e.data as any).path;
+        window.top!.location.href = (e.data as any).path;
       }
     };
     window.addEventListener("message", onMessage);

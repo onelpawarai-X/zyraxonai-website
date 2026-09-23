@@ -138,8 +138,8 @@ export const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onP
               {step === "error" && "Publish Failed"}
             </h2>
           </div>
-          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, background: "none", border: "1px solid #e5e7eb", color: "#6b7280", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          <button onClick={onClose} aria-label="Close publish dialog" style={{ width: 32, height: 32, borderRadius: 8, background: "none", border: "1px solid #e5e7eb", color: "#6b7280", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
 
@@ -269,7 +269,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onP
                     {sourceFiles.map((f, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", background: "#f3f4f6", borderRadius: 4, fontSize: 12 }}>
                         <span style={{ color: "#374151", fontFamily: "monospace" }}>{f.path}</span>
-                        <button onClick={() => setSourceFiles((prev) => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 14, padding: 0 }}>×</button>
+                        <button onClick={() => setSourceFiles((prev) => prev.filter((_, j) => j !== i))} aria-label={`Remove file ${f.path}`} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 14, padding: 0 }}>×</button>
                       </div>
                     ))}
                     <button onClick={() => setSourceFiles([])} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 12, textAlign: "left", padding: "2px 0" }}>Clear all</button>

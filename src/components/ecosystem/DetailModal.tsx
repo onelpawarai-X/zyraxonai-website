@@ -225,6 +225,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, onInsta
           </div>
           <button
             onClick={onClose}
+            aria-label="Close details dialog"
             style={{
               width: "32px",
               height: "32px",

@@ -4,7 +4,12 @@ export const Route = createFileRoute("/download/zyraxon-code")({
   head: () => ({
     meta: [
       { title: "Download Zyraxon Code" },
-      { name: "description", content: "Download the latest Zyraxon Code AI editor for your platform." },
+      { name: "description", content: "Download the latest Zyraxon Code AI editor for Windows, macOS or Linux. Monaco-based AI-powered code editor." },
+      { property: "og:title", content: "Download Zyraxon Code" },
+      { property: "og:description", content: "Download the latest Zyraxon Code AI editor for Windows, macOS or Linux. Monaco-based AI-powered code editor." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/download/zyraxon-code" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DownloadZyraxonCode,

@@ -52,6 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
       <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", padding: collapsed ? "16px 8px" : "16px", borderBottom: "1px solid #e5e7eb" }}>
         {!collapsed && <span style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>Ecosystem</span>}
         <button onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, background: "none", border: "1px solid #e5e7eb", borderRadius: 6, color: "#6b7280", cursor: "pointer", flexShrink: 0 }}>
           {collapsed ? "→" : "←"}
         </button>
@@ -62,6 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
         {!collapsed && <div style={{ padding: "8px 12px 4px", fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.5px" }}>Browse</div>}
         {mainNav.map((item) => (
           <button key={item.id} onClick={() => onViewChange(item.id)}
+            aria-label={item.label}
             style={navBtn(currentView === item.id)} title={collapsed ? item.label : undefined}>
             {item.icon}
             {!collapsed && <span>{item.label}</span>}

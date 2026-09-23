@@ -4,7 +4,12 @@ export const Route = createFileRoute("/download/zyraxon-agent")({
   head: () => ({
     meta: [
       { title: "Download ZYRAXON Agent" },
-      { name: "description", content: "Download the latest ZYRAXON Agent for your platform." },
+      { name: "description", content: "Download the latest ZYRAXON Agent for Windows, macOS or Linux. Free open-source desktop AI coding agent with 805+ tools." },
+      { property: "og:title", content: "Download ZYRAXON Agent" },
+      { property: "og:description", content: "Download the latest ZYRAXON Agent for Windows, macOS or Linux. Free open-source desktop AI coding agent." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/download/zyraxon-agent" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DownloadZyraxonAgent,
