@@ -2,7 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/releases")({
-  head: () => ({ meta: [{ title: "Releases — ZYRAXON AI" }] }),
+  head: () => ({
+    meta: [
+      { title: "Releases — ZYRAXON AI" },
+      { name: "description", content: "All GitHub releases for ZYRAXON Agent, Myra Agent and Zyraxon Code. Download the latest installers and changelogs." },
+      { property: "og:title", content: "Releases — ZYRAXON AI" },
+      { property: "og:description", content: "All GitHub releases for ZYRAXON Agent, Myra Agent and Zyraxon Code. Download the latest installers and changelogs." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/releases" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: ReleasesPage,
 });
 
@@ -47,7 +57,7 @@ function RepoSection({ repo }: { repo: typeof REPOS[0] }) {
       .finally(() => setLoading(false));
   }, [repo.owner, repo.name]);
 
-  const totalDownloads = releases.reduce((s, r) => s + (r.assets || []).reduce((s2, a) => s2 + (a.download_count || 0), 0), 0);
+  const totalDownloads = releases.reduce((s, r) => s + (r.assets || []).reduce((s2: number, a: any) => s2 + (a.download_count || 0), 0), 0);
 
   return (
     <div style={{ marginBottom: 48 }}>
@@ -65,7 +75,7 @@ function RepoSection({ repo }: { repo: typeof REPOS[0] }) {
       {!loading && releases.length === 0 && <div style={{ textAlign: "center", padding: 32, color: "#9ca3af", fontSize: 13, border: "1px dashed #d1d5db", borderRadius: 12 }}>No releases yet.</div>}
       {releases.map((r) => {
         const isOpen = expanded === r.id;
-        const rDownloads = (r.assets || []).reduce((s, a) => s + (a.download_count || 0), 0);
+        const rDownloads = (r.assets || []).reduce((s: number, a: any) => s + (a.download_count || 0), 0);
         return (
           <div key={r.id} style={{ border: "1px solid #e5e7eb", borderRadius: 12, marginBottom: 8, background: "white", overflow: "hidden" }}>
             <button onClick={() => setExpanded(isOpen ? null : r.id)} style={{ width: "100%", textAlign: "left", padding: "16px 20px", border: "none", background: "none", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -80,7 +90,7 @@ function RepoSection({ repo }: { repo: typeof REPOS[0] }) {
               <div style={{ padding: "0 20px 20px", borderTop: "1px solid #f3f4f6" }}>
                 {r.body && <pre style={{ background: "#f9fafb", padding: 12, borderRadius: 8, fontSize: 13, color: "#374151", whiteSpace: "pre-wrap", overflow: "auto", maxHeight: 200 }}>{r.body}</pre>}
                 <div style={{ marginTop: 12 }}>
-                  {(r.assets || []).map((a) => (
+                  {(r.assets || []).map((a: any) => (
                     <a key={a.name} href={a.browser_download_url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", border: "1px solid #f3f4f6", borderRadius: 8, marginBottom: 4, textDecoration: "none", transition: "border-color 0.15s" }}>
                       <span style={{ fontSize: 13, color: "#111827" }}>{a.name}</span>
                       <span style={{ fontSize: 12, color: "#6b7280" }}>{fmtSize(a.size)} · {a.download_count} dl</span>

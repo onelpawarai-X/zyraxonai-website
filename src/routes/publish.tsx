@@ -2,7 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 export const Route = createFileRoute("/publish")({
-  head: () => ({ meta: [{ title: "Publish — ZYRAXON AI" }] }),
+  head: () => ({
+    meta: [
+      { title: "Publish — ZYRAXON AI" },
+      { name: "description", content: "Publish your project to the ZYRAXON Ecosystem marketplace. Auto-scanned for security and shared with the community." },
+      { property: "og:title", content: "Publish — ZYRAXON AI" },
+      { property: "og:description", content: "Publish your project to the ZYRAXON Ecosystem marketplace. Auto-scanned for security and shared with the community." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/publish" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: PublishPage,
 });
 

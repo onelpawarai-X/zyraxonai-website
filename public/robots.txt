@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /nebula
+
+Sitemap: https://zyraxonai.lovable.app/sitemap.xml

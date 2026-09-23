@@ -484,9 +484,14 @@ function DocsShellFrame({
       <footer className="border-t border-gray-200 bg-white py-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-400 sm:flex-row sm:px-6">
           <span>ZYRAXON-AI // All in one. Anything. Nothing is impossible.</span>
-          <a href="/ecosystem" target="_top" className="no-underline hover:text-blue-600">
-            Ecosystem Marketplace
-          </a>
+          <div className="flex gap-6">
+            <a href="/ecosystem" target="_top" className="no-underline hover:text-blue-600">
+              Ecosystem Marketplace
+            </a>
+            <a href="/faq" target="_top" className="no-underline hover:text-blue-600">
+              FAQ
+            </a>
+          </div>
         </div>
       </footer>
     </div>

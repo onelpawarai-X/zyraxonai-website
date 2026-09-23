@@ -212,6 +212,7 @@ export default function HelpAgent() {
         </div>
         <button
           onClick={() => setOpen(false)}
+          aria-label="Close ZYRAXON AI Help"
           style={{
             background: "none",
             border: "none",
@@ -289,6 +290,7 @@ export default function HelpAgent() {
           <button
             key={q}
             onClick={() => sendMessage(q)}
+            aria-label={`Send quick prompt: ${q}`}
             style={{
               whiteSpace: "nowrap",
               fontSize: 11,
@@ -334,6 +336,7 @@ export default function HelpAgent() {
         <button
           onClick={() => sendMessage(input)}
           disabled={loading || !input.trim()}
+          aria-label="Send message to ZYRAXON AI Help"
           style={{
             padding: "9px 16px",
             borderRadius: 10,

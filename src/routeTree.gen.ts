@@ -9,105 +9,76 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ZslRouteImport } from './routes/zsl'
-import { Route as ReleasesRouteImport } from './routes/releases'
-import { Route as PublishRouteImport } from './routes/publish'
-import { Route as PackagesRouteImport } from './routes/packages'
-import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
-import { Route as NebulaRouteImport } from './routes/nebula'
-import { Route as BuilderRouteImport } from './routes/builder'
-import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as EcosystemIndexRouteImport } from './routes/ecosystem/index'
-import { Route as DocsIndexRouteImport } from './routes/docs.index'
-import { Route as ShareIdRouteImport } from './routes/share/$id'
-import { Route as DownloadZyraxonCodeRouteImport } from './routes/download.zyraxon-code'
-import { Route as DownloadZyraxonAgentRouteImport } from './routes/download.zyraxon-agent'
-import { Route as DownloadMyraAgentRouteImport } from './routes/download.myra-agent'
-import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
-import { Route as ApiMarketplaceSearchRouteImport } from './routes/api/marketplace-search'
-import { Route as ApiHelpAgentRouteImport } from './routes/api/help-agent'
+import { Route as BludarRouteImport } from './routes/bludar'
+import { Route as BuilderRouteImport } from './routes/builder'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as NebulaRouteImport } from './routes/nebula'
+import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
+import { Route as PackagesRouteImport } from './routes/packages'
+import { Route as PublishRouteImport } from './routes/publish'
+import { Route as ReleasesRouteImport } from './routes/releases'
+import { Route as ZslRouteImport } from './routes/zsl'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as ApiHelpAgentRouteImport } from './routes/api/help-agent'
+import { Route as ApiMarketplaceSearchRouteImport } from './routes/api/marketplace-search'
+import { Route as DocsIndexRouteImport } from './routes/docs.index'
+import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
+import { Route as DownloadMyraAgentRouteImport } from './routes/download.myra-agent'
+import { Route as DownloadZyraxonAgentRouteImport } from './routes/download.zyraxon-agent'
+import { Route as DownloadZyraxonCodeRouteImport } from './routes/download.zyraxon-code'
+import { Route as EcosystemIndexRouteImport } from './routes/ecosystem/index'
+import { Route as ShareIdRouteImport } from './routes/share/$id'
+import { Route as ApiGithubReposRouteImport } from './routes/api/github/repos'
+import { Route as ApiPublicSplatRouteImport } from './routes/api/public/$'
+import { Route as ApiPublicCommunityRouteImport } from './routes/api/public/community'
+import { Route as ApiPublicCommunityStoreRouteImport } from './routes/api/public/community-store'
+import { Route as ApiPublicDownloadsRouteImport } from './routes/api/public/downloads'
+import { Route as ApiPublicGithubDeviceRouteImport } from './routes/api/public/github-device'
+import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public/github-releases'
+import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mcp-registry'
+import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
+import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
+import { Route as ApiPublicSiteContentRouteImport } from './routes/api/public/site-content'
+import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
+import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
+import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/public/zyraxon-releases'
 import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
 import { Route as EcosystemItemIdRouteImport } from './routes/ecosystem/item/$id'
-import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/public/zyraxon-releases'
-import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
-import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
-import { Route as ApiPublicSiteContentRouteImport } from './routes/api/public/site-content'
-import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
-import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
-import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mcp-registry'
-import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public/github-releases'
-import { Route as ApiPublicGithubDeviceRouteImport } from './routes/api/public/github-device'
-import { Route as ApiPublicDownloadsRouteImport } from './routes/api/public/downloads'
-import { Route as ApiPublicCommunityStoreRouteImport } from './routes/api/public/community-store'
-import { Route as ApiPublicCommunityRouteImport } from './routes/api/public/community'
-import { Route as ApiPublicSplatRouteImport } from './routes/api/public/$'
-import { Route as ApiGithubReposRouteImport } from './routes/api/github/repos'
-import { Route as ApiSharesIdIndexRouteImport } from './routes/api/shares/$id/index'
-import { Route as ApiPublicSharesIndexRouteImport } from './routes/api/public/shares/index'
-import { Route as ApiPublicProvidersIndexRouteImport } from './routes/api/public/providers/index'
-import { Route as ApiSharesIdSyncRouteImport } from './routes/api/shares/$id/sync'
-import { Route as ApiSharesIdDataRouteImport } from './routes/api/shares/$id/data'
-import { Route as ApiPublicZyraxonSearchRouteImport } from './routes/api/public/zyraxon/search'
-import { Route as ApiPublicProvidersProviderRouteImport } from './routes/api/public/providers/$provider'
-import { Route as ApiPublicNebulaSearchRouteImport } from './routes/api/public/nebula/search'
-import { Route as ApiPublicNebulaGenerateRouteImport } from './routes/api/public/nebula/generate'
-import { Route as ApiPublicNebulaDownloadRouteImport } from './routes/api/public/nebula/download'
-import { Route as ApiPublicGithubPublishRouteImport } from './routes/api/public/github/publish'
-import { Route as ApiPublicDownloadMyraApkRouteImport } from './routes/api/public/download/myra-apk'
-import { Route as ApiPublicDownloadPlatformRouteImport } from './routes/api/public/download/$platform'
-import { Route as ApiPublicBuilderSitesRouteImport } from './routes/api/public/builder/sites'
-import { Route as ApiPublicBuilderSearchRouteImport } from './routes/api/public/builder/search'
-import { Route as ApiPublicBuilderPublishRouteImport } from './routes/api/public/builder/publish'
-import { Route as ApiPublicBuilderPowershellRouteImport } from './routes/api/public/builder/powershell'
-import { Route as ApiPublicBuilderEngineRouteImport } from './routes/api/public/builder/engine'
-import { Route as ApiPublicBuilderChatRouteImport } from './routes/api/public/builder/chat'
 import { Route as ApiPublicAuthGithubRouteImport } from './routes/api/public/auth/github'
-import { Route as ApiPublicSharesIdIndexRouteImport } from './routes/api/public/shares/$id/index'
-import { Route as ApiPublicZyraxonV1ModelsRouteImport } from './routes/api/public/zyraxon/v1/models'
-import { Route as ApiPublicSharesIdSyncRouteImport } from './routes/api/public/shares/$id/sync'
-import { Route as ApiPublicSharesIdDataRouteImport } from './routes/api/public/shares/$id/data'
-import { Route as ApiPublicDownloadZyraxonCodePlatformRouteImport } from './routes/api/public/download/zyraxon-code/$platform'
-import { Route as ApiPublicAuthGithubStartRouteImport } from './routes/api/public/auth/github/start'
-import { Route as ApiPublicAuthGithubLogoutRouteImport } from './routes/api/public/auth/github/logout'
+import { Route as ApiPublicBuilderChatRouteImport } from './routes/api/public/builder/chat'
+import { Route as ApiPublicBuilderEngineRouteImport } from './routes/api/public/builder/engine'
+import { Route as ApiPublicBuilderPowershellRouteImport } from './routes/api/public/builder/powershell'
+import { Route as ApiPublicBuilderPublishRouteImport } from './routes/api/public/builder/publish'
+import { Route as ApiPublicBuilderSearchRouteImport } from './routes/api/public/builder/search'
+import { Route as ApiPublicBuilderSitesRouteImport } from './routes/api/public/builder/sites'
+import { Route as ApiPublicDownloadPlatformRouteImport } from './routes/api/public/download/$platform'
+import { Route as ApiPublicDownloadMyraApkRouteImport } from './routes/api/public/download/myra-apk'
+import { Route as ApiPublicGithubPublishRouteImport } from './routes/api/public/github/publish'
+import { Route as ApiPublicNebulaDownloadRouteImport } from './routes/api/public/nebula/download'
+import { Route as ApiPublicNebulaGenerateRouteImport } from './routes/api/public/nebula/generate'
+import { Route as ApiPublicNebulaSearchRouteImport } from './routes/api/public/nebula/search'
+import { Route as ApiPublicProvidersIndexRouteImport } from './routes/api/public/providers/index'
+import { Route as ApiPublicProvidersProviderRouteImport } from './routes/api/public/providers/$provider'
+import { Route as ApiPublicSharesIndexRouteImport } from './routes/api/public/shares/index'
+import { Route as ApiPublicZyraxonSearchRouteImport } from './routes/api/public/zyraxon/search'
+import { Route as ApiSharesIdIndexRouteImport } from './routes/api/shares/$id/index'
+import { Route as ApiSharesIdDataRouteImport } from './routes/api/shares/$id/data'
+import { Route as ApiSharesIdSyncRouteImport } from './routes/api/shares/$id/sync'
 import { Route as ApiPublicAuthGithubCallbackRouteImport } from './routes/api/public/auth/github/callback'
-import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/api/public/zyraxon/v1/chat/completions'
+import { Route as ApiPublicAuthGithubLogoutRouteImport } from './routes/api/public/auth/github/logout'
+import { Route as ApiPublicAuthGithubStartRouteImport } from './routes/api/public/auth/github/start'
+import { Route as ApiPublicDownloadZyraxonCodePlatformRouteImport } from './routes/api/public/download/zyraxon-code/$platform'
+import { Route as ApiPublicSharesIdIndexRouteImport } from './routes/api/public/shares/$id/index'
+import { Route as ApiPublicSharesIdDataRouteImport } from './routes/api/public/shares/$id/data'
+import { Route as ApiPublicSharesIdSyncRouteImport } from './routes/api/public/shares/$id/sync'
+import { Route as ApiPublicZyraxonV1ModelsRouteImport } from './routes/api/public/zyraxon/v1/models'
 import { Route as ApiGithubReposOwnerRepoPublishRouteImport } from './routes/api/github/repos/$owner/$repo/publish'
+import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/api/public/zyraxon/v1/chat/completions'
 
-const ZslRoute = ZslRouteImport.update({
-  id: '/zsl',
-  path: '/zsl',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReleasesRoute = ReleasesRouteImport.update({
-  id: '/releases',
-  path: '/releases',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PublishRoute = PublishRouteImport.update({
-  id: '/publish',
-  path: '/publish',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PackagesRoute = PackagesRouteImport.update({
-  id: '/packages',
-  path: '/packages',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NebulaCoreRoute = NebulaCoreRouteImport.update({
-  id: '/nebula-core',
-  path: '/nebula-core',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NebulaRoute = NebulaRouteImport.update({
-  id: '/nebula',
-  path: '/nebula',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuilderRoute = BuilderRouteImport.update({
-  id: '/builder',
-  path: '/builder',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BludarRoute = BludarRouteImport.update({
@@ -115,54 +86,44 @@ const BludarRoute = BludarRouteImport.update({
   path: '/bludar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BuilderRoute = BuilderRouteImport.update({
+  id: '/builder',
+  path: '/builder',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EcosystemIndexRoute = EcosystemIndexRouteImport.update({
-  id: '/ecosystem/',
-  path: '/ecosystem/',
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocsIndexRoute = DocsIndexRouteImport.update({
-  id: '/docs/',
-  path: '/docs/',
+const NebulaRoute = NebulaRouteImport.update({
+  id: '/nebula',
+  path: '/nebula',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShareIdRoute = ShareIdRouteImport.update({
-  id: '/share/$id',
-  path: '/share/$id',
+const NebulaCoreRoute = NebulaCoreRouteImport.update({
+  id: '/nebula-core',
+  path: '/nebula-core',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DownloadZyraxonCodeRoute = DownloadZyraxonCodeRouteImport.update({
-  id: '/download/zyraxon-code',
-  path: '/download/zyraxon-code',
+const PackagesRoute = PackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DownloadZyraxonAgentRoute = DownloadZyraxonAgentRouteImport.update({
-  id: '/download/zyraxon-agent',
-  path: '/download/zyraxon-agent',
+const PublishRoute = PublishRouteImport.update({
+  id: '/publish',
+  path: '/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DownloadMyraAgentRoute = DownloadMyraAgentRouteImport.update({
-  id: '/download/myra-agent',
-  path: '/download/myra-agent',
+const ReleasesRoute = ReleasesRouteImport.update({
+  id: '/releases',
+  path: '/releases',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocsSlugRoute = DocsSlugRouteImport.update({
-  id: '/docs/$slug',
-  path: '/docs/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiMarketplaceSearchRoute = ApiMarketplaceSearchRouteImport.update({
-  id: '/api/marketplace-search',
-  path: '/api/marketplace-search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiHelpAgentRoute = ApiHelpAgentRouteImport.update({
-  id: '/api/help-agent',
-  path: '/api/help-agent',
+const ZslRoute = ZslRouteImport.update({
+  id: '/zsl',
+  path: '/zsl',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -170,6 +131,123 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHelpAgentRoute = ApiHelpAgentRouteImport.update({
+  id: '/api/help-agent',
+  path: '/api/help-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMarketplaceSearchRoute = ApiMarketplaceSearchRouteImport.update({
+  id: '/api/marketplace-search',
+  path: '/api/marketplace-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsIndexRoute = DocsIndexRouteImport.update({
+  id: '/docs/',
+  path: '/docs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsSlugRoute = DocsSlugRouteImport.update({
+  id: '/docs/$slug',
+  path: '/docs/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadMyraAgentRoute = DownloadMyraAgentRouteImport.update({
+  id: '/download/myra-agent',
+  path: '/download/myra-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadZyraxonAgentRoute = DownloadZyraxonAgentRouteImport.update({
+  id: '/download/zyraxon-agent',
+  path: '/download/zyraxon-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadZyraxonCodeRoute = DownloadZyraxonCodeRouteImport.update({
+  id: '/download/zyraxon-code',
+  path: '/download/zyraxon-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EcosystemIndexRoute = EcosystemIndexRouteImport.update({
+  id: '/ecosystem/',
+  path: '/ecosystem/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareIdRoute = ShareIdRouteImport.update({
+  id: '/share/$id',
+  path: '/share/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubReposRoute = ApiGithubReposRouteImport.update({
+  id: '/api/github/repos',
+  path: '/api/github/repos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSplatRoute = ApiPublicSplatRouteImport.update({
+  id: '/api/public/$',
+  path: '/api/public/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCommunityRoute = ApiPublicCommunityRouteImport.update({
+  id: '/api/public/community',
+  path: '/api/public/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCommunityStoreRoute = ApiPublicCommunityStoreRouteImport.update({
+  id: '/api/public/community-store',
+  path: '/api/public/community-store',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDownloadsRoute = ApiPublicDownloadsRouteImport.update({
+  id: '/api/public/downloads',
+  path: '/api/public/downloads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicGithubDeviceRoute = ApiPublicGithubDeviceRouteImport.update({
+  id: '/api/public/github-device',
+  path: '/api/public/github-device',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicGithubReleasesRoute = ApiPublicGithubReleasesRouteImport.update({
+  id: '/api/public/github-releases',
+  path: '/api/public/github-releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMcpRegistryRoute = ApiPublicMcpRegistryRouteImport.update({
+  id: '/api/public/mcp-registry',
+  path: '/api/public/mcp-registry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNebulaRoute = ApiPublicNebulaRouteImport.update({
+  id: '/api/public/nebula',
+  path: '/api/public/nebula',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNpmPackagesRoute = ApiPublicNpmPackagesRouteImport.update({
+  id: '/api/public/npm-packages',
+  path: '/api/public/npm-packages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSiteContentRoute = ApiPublicSiteContentRouteImport.update({
+  id: '/api/public/site-content',
+  path: '/api/public/site-content',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
+  id: '/api/public/stt',
+  path: '/api/public/stt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicVscodeMarketplaceRoute =
+  ApiPublicVscodeMarketplaceRouteImport.update({
+    id: '/api/public/vscode-marketplace',
+    path: '/api/public/vscode-marketplace',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicZyraxonReleasesRoute =
+  ApiPublicZyraxonReleasesRouteImport.update({
+    id: '/api/public/zyraxon-releases',
+    path: '/api/public/zyraxon-releases',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiSharesIndexRoute = ApiSharesIndexRouteImport.update({
   id: '/api/shares/',
   path: '/api/shares/',
@@ -180,159 +258,19 @@ const EcosystemItemIdRoute = EcosystemItemIdRouteImport.update({
   path: '/ecosystem/item/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicZyraxonReleasesRoute =
-  ApiPublicZyraxonReleasesRouteImport.update({
-    id: '/api/public/zyraxon-releases',
-    path: '/api/public/zyraxon-releases',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicVscodeMarketplaceRoute =
-  ApiPublicVscodeMarketplaceRouteImport.update({
-    id: '/api/public/vscode-marketplace',
-    path: '/api/public/vscode-marketplace',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
-  id: '/api/public/stt',
-  path: '/api/public/stt',
+const ApiPublicAuthGithubRoute = ApiPublicAuthGithubRouteImport.update({
+  id: '/api/public/auth/github',
+  path: '/api/public/auth/github',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicSiteContentRoute = ApiPublicSiteContentRouteImport.update({
-  id: '/api/public/site-content',
-  path: '/api/public/site-content',
+const ApiPublicBuilderChatRoute = ApiPublicBuilderChatRouteImport.update({
+  id: '/api/public/builder/chat',
+  path: '/api/public/builder/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicNpmPackagesRoute = ApiPublicNpmPackagesRouteImport.update({
-  id: '/api/public/npm-packages',
-  path: '/api/public/npm-packages',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicNebulaRoute = ApiPublicNebulaRouteImport.update({
-  id: '/api/public/nebula',
-  path: '/api/public/nebula',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicMcpRegistryRoute = ApiPublicMcpRegistryRouteImport.update({
-  id: '/api/public/mcp-registry',
-  path: '/api/public/mcp-registry',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicGithubReleasesRoute = ApiPublicGithubReleasesRouteImport.update({
-  id: '/api/public/github-releases',
-  path: '/api/public/github-releases',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicGithubDeviceRoute = ApiPublicGithubDeviceRouteImport.update({
-  id: '/api/public/github-device',
-  path: '/api/public/github-device',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicDownloadsRoute = ApiPublicDownloadsRouteImport.update({
-  id: '/api/public/downloads',
-  path: '/api/public/downloads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicCommunityStoreRoute = ApiPublicCommunityStoreRouteImport.update({
-  id: '/api/public/community-store',
-  path: '/api/public/community-store',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicCommunityRoute = ApiPublicCommunityRouteImport.update({
-  id: '/api/public/community',
-  path: '/api/public/community',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSplatRoute = ApiPublicSplatRouteImport.update({
-  id: '/api/public/$',
-  path: '/api/public/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiGithubReposRoute = ApiGithubReposRouteImport.update({
-  id: '/api/github/repos',
-  path: '/api/github/repos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSharesIdIndexRoute = ApiSharesIdIndexRouteImport.update({
-  id: '/api/shares/$id/',
-  path: '/api/shares/$id/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSharesIndexRoute = ApiPublicSharesIndexRouteImport.update({
-  id: '/api/public/shares/',
-  path: '/api/public/shares/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicProvidersIndexRoute = ApiPublicProvidersIndexRouteImport.update({
-  id: '/api/public/providers/',
-  path: '/api/public/providers/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSharesIdSyncRoute = ApiSharesIdSyncRouteImport.update({
-  id: '/api/shares/$id/sync',
-  path: '/api/shares/$id/sync',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSharesIdDataRoute = ApiSharesIdDataRouteImport.update({
-  id: '/api/shares/$id/data',
-  path: '/api/shares/$id/data',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicZyraxonSearchRoute = ApiPublicZyraxonSearchRouteImport.update({
-  id: '/api/public/zyraxon/search',
-  path: '/api/public/zyraxon/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicProvidersProviderRoute =
-  ApiPublicProvidersProviderRouteImport.update({
-    id: '/api/public/providers/$provider',
-    path: '/api/public/providers/$provider',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicNebulaSearchRoute = ApiPublicNebulaSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => ApiPublicNebulaRoute,
-} as any)
-const ApiPublicNebulaGenerateRoute = ApiPublicNebulaGenerateRouteImport.update({
-  id: '/generate',
-  path: '/generate',
-  getParentRoute: () => ApiPublicNebulaRoute,
-} as any)
-const ApiPublicNebulaDownloadRoute = ApiPublicNebulaDownloadRouteImport.update({
-  id: '/download',
-  path: '/download',
-  getParentRoute: () => ApiPublicNebulaRoute,
-} as any)
-const ApiPublicGithubPublishRoute = ApiPublicGithubPublishRouteImport.update({
-  id: '/api/public/github/publish',
-  path: '/api/public/github/publish',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicDownloadMyraApkRoute =
-  ApiPublicDownloadMyraApkRouteImport.update({
-    id: '/api/public/download/myra-apk',
-    path: '/api/public/download/myra-apk',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicDownloadPlatformRoute =
-  ApiPublicDownloadPlatformRouteImport.update({
-    id: '/api/public/download/$platform',
-    path: '/api/public/download/$platform',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicBuilderSitesRoute = ApiPublicBuilderSitesRouteImport.update({
-  id: '/api/public/builder/sites',
-  path: '/api/public/builder/sites',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicBuilderSearchRoute = ApiPublicBuilderSearchRouteImport.update({
-  id: '/api/public/builder/search',
-  path: '/api/public/builder/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicBuilderPublishRoute = ApiPublicBuilderPublishRouteImport.update({
-  id: '/api/public/builder/publish',
-  path: '/api/public/builder/publish',
+const ApiPublicBuilderEngineRoute = ApiPublicBuilderEngineRouteImport.update({
+  id: '/api/public/builder/engine',
+  path: '/api/public/builder/engine',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBuilderPowershellRoute =
@@ -341,52 +279,93 @@ const ApiPublicBuilderPowershellRoute =
     path: '/api/public/builder/powershell',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicBuilderEngineRoute = ApiPublicBuilderEngineRouteImport.update({
-  id: '/api/public/builder/engine',
-  path: '/api/public/builder/engine',
+const ApiPublicBuilderPublishRoute = ApiPublicBuilderPublishRouteImport.update({
+  id: '/api/public/builder/publish',
+  path: '/api/public/builder/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicBuilderChatRoute = ApiPublicBuilderChatRouteImport.update({
-  id: '/api/public/builder/chat',
-  path: '/api/public/builder/chat',
+const ApiPublicBuilderSearchRoute = ApiPublicBuilderSearchRouteImport.update({
+  id: '/api/public/builder/search',
+  path: '/api/public/builder/search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicAuthGithubRoute = ApiPublicAuthGithubRouteImport.update({
-  id: '/api/public/auth/github',
-  path: '/api/public/auth/github',
+const ApiPublicBuilderSitesRoute = ApiPublicBuilderSitesRouteImport.update({
+  id: '/api/public/builder/sites',
+  path: '/api/public/builder/sites',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicSharesIdIndexRoute = ApiPublicSharesIdIndexRouteImport.update({
-  id: '/api/public/shares/$id/',
-  path: '/api/public/shares/$id/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicZyraxonV1ModelsRoute =
-  ApiPublicZyraxonV1ModelsRouteImport.update({
-    id: '/api/public/zyraxon/v1/models',
-    path: '/api/public/zyraxon/v1/models',
+const ApiPublicDownloadPlatformRoute =
+  ApiPublicDownloadPlatformRouteImport.update({
+    id: '/api/public/download/$platform',
+    path: '/api/public/download/$platform',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicSharesIdSyncRoute = ApiPublicSharesIdSyncRouteImport.update({
-  id: '/api/public/shares/$id/sync',
-  path: '/api/public/shares/$id/sync',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSharesIdDataRoute = ApiPublicSharesIdDataRouteImport.update({
-  id: '/api/public/shares/$id/data',
-  path: '/api/public/shares/$id/data',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicDownloadZyraxonCodePlatformRoute =
-  ApiPublicDownloadZyraxonCodePlatformRouteImport.update({
-    id: '/api/public/download/zyraxon-code/$platform',
-    path: '/api/public/download/zyraxon-code/$platform',
+const ApiPublicDownloadMyraApkRoute =
+  ApiPublicDownloadMyraApkRouteImport.update({
+    id: '/api/public/download/myra-apk',
+    path: '/api/public/download/myra-apk',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicAuthGithubStartRoute =
-  ApiPublicAuthGithubStartRouteImport.update({
-    id: '/start',
-    path: '/start',
+const ApiPublicGithubPublishRoute = ApiPublicGithubPublishRouteImport.update({
+  id: '/api/public/github/publish',
+  path: '/api/public/github/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNebulaDownloadRoute = ApiPublicNebulaDownloadRouteImport.update({
+  id: '/download',
+  path: '/download',
+  getParentRoute: () => ApiPublicNebulaRoute,
+} as any)
+const ApiPublicNebulaGenerateRoute = ApiPublicNebulaGenerateRouteImport.update({
+  id: '/generate',
+  path: '/generate',
+  getParentRoute: () => ApiPublicNebulaRoute,
+} as any)
+const ApiPublicNebulaSearchRoute = ApiPublicNebulaSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => ApiPublicNebulaRoute,
+} as any)
+const ApiPublicProvidersIndexRoute = ApiPublicProvidersIndexRouteImport.update({
+  id: '/api/public/providers/',
+  path: '/api/public/providers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicProvidersProviderRoute =
+  ApiPublicProvidersProviderRouteImport.update({
+    id: '/api/public/providers/$provider',
+    path: '/api/public/providers/$provider',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSharesIndexRoute = ApiPublicSharesIndexRouteImport.update({
+  id: '/api/public/shares/',
+  path: '/api/public/shares/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicZyraxonSearchRoute = ApiPublicZyraxonSearchRouteImport.update({
+  id: '/api/public/zyraxon/search',
+  path: '/api/public/zyraxon/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSharesIdIndexRoute = ApiSharesIdIndexRouteImport.update({
+  id: '/api/shares/$id/',
+  path: '/api/shares/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSharesIdDataRoute = ApiSharesIdDataRouteImport.update({
+  id: '/api/shares/$id/data',
+  path: '/api/shares/$id/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSharesIdSyncRoute = ApiSharesIdSyncRouteImport.update({
+  id: '/api/shares/$id/sync',
+  path: '/api/shares/$id/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuthGithubCallbackRoute =
+  ApiPublicAuthGithubCallbackRouteImport.update({
+    id: '/callback',
+    path: '/callback',
     getParentRoute: () => ApiPublicAuthGithubRoute,
   } as any)
 const ApiPublicAuthGithubLogoutRoute =
@@ -395,16 +374,37 @@ const ApiPublicAuthGithubLogoutRoute =
     path: '/logout',
     getParentRoute: () => ApiPublicAuthGithubRoute,
   } as any)
-const ApiPublicAuthGithubCallbackRoute =
-  ApiPublicAuthGithubCallbackRouteImport.update({
-    id: '/callback',
-    path: '/callback',
+const ApiPublicAuthGithubStartRoute =
+  ApiPublicAuthGithubStartRouteImport.update({
+    id: '/start',
+    path: '/start',
     getParentRoute: () => ApiPublicAuthGithubRoute,
   } as any)
-const ApiPublicZyraxonV1ChatCompletionsRoute =
-  ApiPublicZyraxonV1ChatCompletionsRouteImport.update({
-    id: '/api/public/zyraxon/v1/chat/completions',
-    path: '/api/public/zyraxon/v1/chat/completions',
+const ApiPublicDownloadZyraxonCodePlatformRoute =
+  ApiPublicDownloadZyraxonCodePlatformRouteImport.update({
+    id: '/api/public/download/zyraxon-code/$platform',
+    path: '/api/public/download/zyraxon-code/$platform',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSharesIdIndexRoute = ApiPublicSharesIdIndexRouteImport.update({
+  id: '/api/public/shares/$id/',
+  path: '/api/public/shares/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSharesIdDataRoute = ApiPublicSharesIdDataRouteImport.update({
+  id: '/api/public/shares/$id/data',
+  path: '/api/public/shares/$id/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSharesIdSyncRoute = ApiPublicSharesIdSyncRouteImport.update({
+  id: '/api/public/shares/$id/sync',
+  path: '/api/public/shares/$id/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicZyraxonV1ModelsRoute =
+  ApiPublicZyraxonV1ModelsRouteImport.update({
+    id: '/api/public/zyraxon/v1/models',
+    path: '/api/public/zyraxon/v1/models',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiGithubReposOwnerRepoPublishRoute =
@@ -413,11 +413,18 @@ const ApiGithubReposOwnerRepoPublishRoute =
     path: '/$owner/$repo/publish',
     getParentRoute: () => ApiGithubReposRoute,
   } as any)
+const ApiPublicZyraxonV1ChatCompletionsRoute =
+  ApiPublicZyraxonV1ChatCompletionsRouteImport.update({
+    id: '/api/public/zyraxon/v1/chat/completions',
+    path: '/api/public/zyraxon/v1/chat/completions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
@@ -485,6 +492,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
@@ -553,6 +561,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
@@ -622,6 +631,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/faq'
     | '/nebula'
     | '/nebula-core'
     | '/packages'
@@ -689,6 +699,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/faq'
     | '/nebula'
     | '/nebula-core'
     | '/packages'
@@ -756,6 +767,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/faq'
     | '/nebula'
     | '/nebula-core'
     | '/packages'
@@ -824,6 +836,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
+  FaqRoute: typeof FaqRoute
   NebulaRoute: typeof NebulaRoute
   NebulaCoreRoute: typeof NebulaCoreRoute
   PackagesRoute: typeof PackagesRoute
@@ -883,53 +896,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/zsl': {
-      id: '/zsl'
-      path: '/zsl'
-      fullPath: '/zsl'
-      preLoaderRoute: typeof ZslRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/releases': {
-      id: '/releases'
-      path: '/releases'
-      fullPath: '/releases'
-      preLoaderRoute: typeof ReleasesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/publish': {
-      id: '/publish'
-      path: '/publish'
-      fullPath: '/publish'
-      preLoaderRoute: typeof PublishRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/packages': {
-      id: '/packages'
-      path: '/packages'
-      fullPath: '/packages'
-      preLoaderRoute: typeof PackagesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nebula-core': {
-      id: '/nebula-core'
-      path: '/nebula-core'
-      fullPath: '/nebula-core'
-      preLoaderRoute: typeof NebulaCoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nebula': {
-      id: '/nebula'
-      path: '/nebula'
-      fullPath: '/nebula'
-      preLoaderRoute: typeof NebulaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/builder': {
-      id: '/builder'
-      path: '/builder'
-      fullPath: '/builder'
-      preLoaderRoute: typeof BuilderRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bludar': {
@@ -939,67 +910,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BludarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/builder': {
+      id: '/builder'
+      path: '/builder'
+      fullPath: '/builder'
+      preLoaderRoute: typeof BuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ecosystem/': {
-      id: '/ecosystem/'
-      path: '/ecosystem'
-      fullPath: '/ecosystem/'
-      preLoaderRoute: typeof EcosystemIndexRouteImport
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/docs/': {
-      id: '/docs/'
-      path: '/docs'
-      fullPath: '/docs/'
-      preLoaderRoute: typeof DocsIndexRouteImport
+    '/nebula': {
+      id: '/nebula'
+      path: '/nebula'
+      fullPath: '/nebula'
+      preLoaderRoute: typeof NebulaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/share/$id': {
-      id: '/share/$id'
-      path: '/share/$id'
-      fullPath: '/share/$id'
-      preLoaderRoute: typeof ShareIdRouteImport
+    '/nebula-core': {
+      id: '/nebula-core'
+      path: '/nebula-core'
+      fullPath: '/nebula-core'
+      preLoaderRoute: typeof NebulaCoreRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/download/zyraxon-code': {
-      id: '/download/zyraxon-code'
-      path: '/download/zyraxon-code'
-      fullPath: '/download/zyraxon-code'
-      preLoaderRoute: typeof DownloadZyraxonCodeRouteImport
+    '/packages': {
+      id: '/packages'
+      path: '/packages'
+      fullPath: '/packages'
+      preLoaderRoute: typeof PackagesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/download/zyraxon-agent': {
-      id: '/download/zyraxon-agent'
-      path: '/download/zyraxon-agent'
-      fullPath: '/download/zyraxon-agent'
-      preLoaderRoute: typeof DownloadZyraxonAgentRouteImport
+    '/publish': {
+      id: '/publish'
+      path: '/publish'
+      fullPath: '/publish'
+      preLoaderRoute: typeof PublishRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/download/myra-agent': {
-      id: '/download/myra-agent'
-      path: '/download/myra-agent'
-      fullPath: '/download/myra-agent'
-      preLoaderRoute: typeof DownloadMyraAgentRouteImport
+    '/releases': {
+      id: '/releases'
+      path: '/releases'
+      fullPath: '/releases'
+      preLoaderRoute: typeof ReleasesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/docs/$slug': {
-      id: '/docs/$slug'
-      path: '/docs/$slug'
-      fullPath: '/docs/$slug'
-      preLoaderRoute: typeof DocsSlugRouteImport
+    '/zsl': {
+      id: '/zsl'
+      path: '/zsl'
+      fullPath: '/zsl'
+      preLoaderRoute: typeof ZslRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/marketplace-search': {
-      id: '/api/marketplace-search'
-      path: '/api/marketplace-search'
-      fullPath: '/api/marketplace-search'
-      preLoaderRoute: typeof ApiMarketplaceSearchRouteImport
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/help-agent': {
@@ -1009,11 +980,158 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHelpAgentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/$': {
-      id: '/api/$'
-      path: '/api/$'
-      fullPath: '/api/$'
-      preLoaderRoute: typeof ApiSplatRouteImport
+    '/api/marketplace-search': {
+      id: '/api/marketplace-search'
+      path: '/api/marketplace-search'
+      fullPath: '/api/marketplace-search'
+      preLoaderRoute: typeof ApiMarketplaceSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/': {
+      id: '/docs/'
+      path: '/docs'
+      fullPath: '/docs/'
+      preLoaderRoute: typeof DocsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/$slug': {
+      id: '/docs/$slug'
+      path: '/docs/$slug'
+      fullPath: '/docs/$slug'
+      preLoaderRoute: typeof DocsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/myra-agent': {
+      id: '/download/myra-agent'
+      path: '/download/myra-agent'
+      fullPath: '/download/myra-agent'
+      preLoaderRoute: typeof DownloadMyraAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/zyraxon-agent': {
+      id: '/download/zyraxon-agent'
+      path: '/download/zyraxon-agent'
+      fullPath: '/download/zyraxon-agent'
+      preLoaderRoute: typeof DownloadZyraxonAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/zyraxon-code': {
+      id: '/download/zyraxon-code'
+      path: '/download/zyraxon-code'
+      fullPath: '/download/zyraxon-code'
+      preLoaderRoute: typeof DownloadZyraxonCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ecosystem/': {
+      id: '/ecosystem/'
+      path: '/ecosystem'
+      fullPath: '/ecosystem/'
+      preLoaderRoute: typeof EcosystemIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$id': {
+      id: '/share/$id'
+      path: '/share/$id'
+      fullPath: '/share/$id'
+      preLoaderRoute: typeof ShareIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/repos': {
+      id: '/api/github/repos'
+      path: '/api/github/repos'
+      fullPath: '/api/github/repos'
+      preLoaderRoute: typeof ApiGithubReposRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/$': {
+      id: '/api/public/$'
+      path: '/api/public/$'
+      fullPath: '/api/public/$'
+      preLoaderRoute: typeof ApiPublicSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/community': {
+      id: '/api/public/community'
+      path: '/api/public/community'
+      fullPath: '/api/public/community'
+      preLoaderRoute: typeof ApiPublicCommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/community-store': {
+      id: '/api/public/community-store'
+      path: '/api/public/community-store'
+      fullPath: '/api/public/community-store'
+      preLoaderRoute: typeof ApiPublicCommunityStoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/downloads': {
+      id: '/api/public/downloads'
+      path: '/api/public/downloads'
+      fullPath: '/api/public/downloads'
+      preLoaderRoute: typeof ApiPublicDownloadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/github-device': {
+      id: '/api/public/github-device'
+      path: '/api/public/github-device'
+      fullPath: '/api/public/github-device'
+      preLoaderRoute: typeof ApiPublicGithubDeviceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/github-releases': {
+      id: '/api/public/github-releases'
+      path: '/api/public/github-releases'
+      fullPath: '/api/public/github-releases'
+      preLoaderRoute: typeof ApiPublicGithubReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/mcp-registry': {
+      id: '/api/public/mcp-registry'
+      path: '/api/public/mcp-registry'
+      fullPath: '/api/public/mcp-registry'
+      preLoaderRoute: typeof ApiPublicMcpRegistryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/nebula': {
+      id: '/api/public/nebula'
+      path: '/api/public/nebula'
+      fullPath: '/api/public/nebula'
+      preLoaderRoute: typeof ApiPublicNebulaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/npm-packages': {
+      id: '/api/public/npm-packages'
+      path: '/api/public/npm-packages'
+      fullPath: '/api/public/npm-packages'
+      preLoaderRoute: typeof ApiPublicNpmPackagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/site-content': {
+      id: '/api/public/site-content'
+      path: '/api/public/site-content'
+      fullPath: '/api/public/site-content'
+      preLoaderRoute: typeof ApiPublicSiteContentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/stt': {
+      id: '/api/public/stt'
+      path: '/api/public/stt'
+      fullPath: '/api/public/stt'
+      preLoaderRoute: typeof ApiPublicSttRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/vscode-marketplace': {
+      id: '/api/public/vscode-marketplace'
+      path: '/api/public/vscode-marketplace'
+      fullPath: '/api/public/vscode-marketplace'
+      preLoaderRoute: typeof ApiPublicVscodeMarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zyraxon-releases': {
+      id: '/api/public/zyraxon-releases'
+      path: '/api/public/zyraxon-releases'
+      fullPath: '/api/public/zyraxon-releases'
+      preLoaderRoute: typeof ApiPublicZyraxonReleasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/shares/': {
@@ -1030,228 +1148,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EcosystemItemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/zyraxon-releases': {
-      id: '/api/public/zyraxon-releases'
-      path: '/api/public/zyraxon-releases'
-      fullPath: '/api/public/zyraxon-releases'
-      preLoaderRoute: typeof ApiPublicZyraxonReleasesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/vscode-marketplace': {
-      id: '/api/public/vscode-marketplace'
-      path: '/api/public/vscode-marketplace'
-      fullPath: '/api/public/vscode-marketplace'
-      preLoaderRoute: typeof ApiPublicVscodeMarketplaceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/stt': {
-      id: '/api/public/stt'
-      path: '/api/public/stt'
-      fullPath: '/api/public/stt'
-      preLoaderRoute: typeof ApiPublicSttRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/site-content': {
-      id: '/api/public/site-content'
-      path: '/api/public/site-content'
-      fullPath: '/api/public/site-content'
-      preLoaderRoute: typeof ApiPublicSiteContentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/npm-packages': {
-      id: '/api/public/npm-packages'
-      path: '/api/public/npm-packages'
-      fullPath: '/api/public/npm-packages'
-      preLoaderRoute: typeof ApiPublicNpmPackagesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/nebula': {
-      id: '/api/public/nebula'
-      path: '/api/public/nebula'
-      fullPath: '/api/public/nebula'
-      preLoaderRoute: typeof ApiPublicNebulaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/mcp-registry': {
-      id: '/api/public/mcp-registry'
-      path: '/api/public/mcp-registry'
-      fullPath: '/api/public/mcp-registry'
-      preLoaderRoute: typeof ApiPublicMcpRegistryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/github-releases': {
-      id: '/api/public/github-releases'
-      path: '/api/public/github-releases'
-      fullPath: '/api/public/github-releases'
-      preLoaderRoute: typeof ApiPublicGithubReleasesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/github-device': {
-      id: '/api/public/github-device'
-      path: '/api/public/github-device'
-      fullPath: '/api/public/github-device'
-      preLoaderRoute: typeof ApiPublicGithubDeviceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/downloads': {
-      id: '/api/public/downloads'
-      path: '/api/public/downloads'
-      fullPath: '/api/public/downloads'
-      preLoaderRoute: typeof ApiPublicDownloadsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/community-store': {
-      id: '/api/public/community-store'
-      path: '/api/public/community-store'
-      fullPath: '/api/public/community-store'
-      preLoaderRoute: typeof ApiPublicCommunityStoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/community': {
-      id: '/api/public/community'
-      path: '/api/public/community'
-      fullPath: '/api/public/community'
-      preLoaderRoute: typeof ApiPublicCommunityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/$': {
-      id: '/api/public/$'
-      path: '/api/public/$'
-      fullPath: '/api/public/$'
-      preLoaderRoute: typeof ApiPublicSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/github/repos': {
-      id: '/api/github/repos'
-      path: '/api/github/repos'
-      fullPath: '/api/github/repos'
-      preLoaderRoute: typeof ApiGithubReposRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/shares/$id/': {
-      id: '/api/shares/$id/'
-      path: '/api/shares/$id'
-      fullPath: '/api/shares/$id/'
-      preLoaderRoute: typeof ApiSharesIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/shares/': {
-      id: '/api/public/shares/'
-      path: '/api/public/shares'
-      fullPath: '/api/public/shares/'
-      preLoaderRoute: typeof ApiPublicSharesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/providers/': {
-      id: '/api/public/providers/'
-      path: '/api/public/providers'
-      fullPath: '/api/public/providers/'
-      preLoaderRoute: typeof ApiPublicProvidersIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/shares/$id/sync': {
-      id: '/api/shares/$id/sync'
-      path: '/api/shares/$id/sync'
-      fullPath: '/api/shares/$id/sync'
-      preLoaderRoute: typeof ApiSharesIdSyncRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/shares/$id/data': {
-      id: '/api/shares/$id/data'
-      path: '/api/shares/$id/data'
-      fullPath: '/api/shares/$id/data'
-      preLoaderRoute: typeof ApiSharesIdDataRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/zyraxon/search': {
-      id: '/api/public/zyraxon/search'
-      path: '/api/public/zyraxon/search'
-      fullPath: '/api/public/zyraxon/search'
-      preLoaderRoute: typeof ApiPublicZyraxonSearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/providers/$provider': {
-      id: '/api/public/providers/$provider'
-      path: '/api/public/providers/$provider'
-      fullPath: '/api/public/providers/$provider'
-      preLoaderRoute: typeof ApiPublicProvidersProviderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/nebula/search': {
-      id: '/api/public/nebula/search'
-      path: '/search'
-      fullPath: '/api/public/nebula/search'
-      preLoaderRoute: typeof ApiPublicNebulaSearchRouteImport
-      parentRoute: typeof ApiPublicNebulaRoute
-    }
-    '/api/public/nebula/generate': {
-      id: '/api/public/nebula/generate'
-      path: '/generate'
-      fullPath: '/api/public/nebula/generate'
-      preLoaderRoute: typeof ApiPublicNebulaGenerateRouteImport
-      parentRoute: typeof ApiPublicNebulaRoute
-    }
-    '/api/public/nebula/download': {
-      id: '/api/public/nebula/download'
-      path: '/download'
-      fullPath: '/api/public/nebula/download'
-      preLoaderRoute: typeof ApiPublicNebulaDownloadRouteImport
-      parentRoute: typeof ApiPublicNebulaRoute
-    }
-    '/api/public/github/publish': {
-      id: '/api/public/github/publish'
-      path: '/api/public/github/publish'
-      fullPath: '/api/public/github/publish'
-      preLoaderRoute: typeof ApiPublicGithubPublishRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/download/myra-apk': {
-      id: '/api/public/download/myra-apk'
-      path: '/api/public/download/myra-apk'
-      fullPath: '/api/public/download/myra-apk'
-      preLoaderRoute: typeof ApiPublicDownloadMyraApkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/download/$platform': {
-      id: '/api/public/download/$platform'
-      path: '/api/public/download/$platform'
-      fullPath: '/api/public/download/$platform'
-      preLoaderRoute: typeof ApiPublicDownloadPlatformRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/builder/sites': {
-      id: '/api/public/builder/sites'
-      path: '/api/public/builder/sites'
-      fullPath: '/api/public/builder/sites'
-      preLoaderRoute: typeof ApiPublicBuilderSitesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/builder/search': {
-      id: '/api/public/builder/search'
-      path: '/api/public/builder/search'
-      fullPath: '/api/public/builder/search'
-      preLoaderRoute: typeof ApiPublicBuilderSearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/builder/publish': {
-      id: '/api/public/builder/publish'
-      path: '/api/public/builder/publish'
-      fullPath: '/api/public/builder/publish'
-      preLoaderRoute: typeof ApiPublicBuilderPublishRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/builder/powershell': {
-      id: '/api/public/builder/powershell'
-      path: '/api/public/builder/powershell'
-      fullPath: '/api/public/builder/powershell'
-      preLoaderRoute: typeof ApiPublicBuilderPowershellRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/builder/engine': {
-      id: '/api/public/builder/engine'
-      path: '/api/public/builder/engine'
-      fullPath: '/api/public/builder/engine'
-      preLoaderRoute: typeof ApiPublicBuilderEngineRouteImport
+    '/api/public/auth/github': {
+      id: '/api/public/auth/github'
+      path: '/api/public/auth/github'
+      fullPath: '/api/public/auth/github'
+      preLoaderRoute: typeof ApiPublicAuthGithubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/builder/chat': {
@@ -1261,53 +1162,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBuilderChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/auth/github': {
-      id: '/api/public/auth/github'
-      path: '/api/public/auth/github'
-      fullPath: '/api/public/auth/github'
-      preLoaderRoute: typeof ApiPublicAuthGithubRouteImport
+    '/api/public/builder/engine': {
+      id: '/api/public/builder/engine'
+      path: '/api/public/builder/engine'
+      fullPath: '/api/public/builder/engine'
+      preLoaderRoute: typeof ApiPublicBuilderEngineRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/shares/$id/': {
-      id: '/api/public/shares/$id/'
-      path: '/api/public/shares/$id'
-      fullPath: '/api/public/shares/$id/'
-      preLoaderRoute: typeof ApiPublicSharesIdIndexRouteImport
+    '/api/public/builder/powershell': {
+      id: '/api/public/builder/powershell'
+      path: '/api/public/builder/powershell'
+      fullPath: '/api/public/builder/powershell'
+      preLoaderRoute: typeof ApiPublicBuilderPowershellRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/zyraxon/v1/models': {
-      id: '/api/public/zyraxon/v1/models'
-      path: '/api/public/zyraxon/v1/models'
-      fullPath: '/api/public/zyraxon/v1/models'
-      preLoaderRoute: typeof ApiPublicZyraxonV1ModelsRouteImport
+    '/api/public/builder/publish': {
+      id: '/api/public/builder/publish'
+      path: '/api/public/builder/publish'
+      fullPath: '/api/public/builder/publish'
+      preLoaderRoute: typeof ApiPublicBuilderPublishRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/shares/$id/sync': {
-      id: '/api/public/shares/$id/sync'
-      path: '/api/public/shares/$id/sync'
-      fullPath: '/api/public/shares/$id/sync'
-      preLoaderRoute: typeof ApiPublicSharesIdSyncRouteImport
+    '/api/public/builder/search': {
+      id: '/api/public/builder/search'
+      path: '/api/public/builder/search'
+      fullPath: '/api/public/builder/search'
+      preLoaderRoute: typeof ApiPublicBuilderSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/shares/$id/data': {
-      id: '/api/public/shares/$id/data'
-      path: '/api/public/shares/$id/data'
-      fullPath: '/api/public/shares/$id/data'
-      preLoaderRoute: typeof ApiPublicSharesIdDataRouteImport
+    '/api/public/builder/sites': {
+      id: '/api/public/builder/sites'
+      path: '/api/public/builder/sites'
+      fullPath: '/api/public/builder/sites'
+      preLoaderRoute: typeof ApiPublicBuilderSitesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/download/zyraxon-code/$platform': {
-      id: '/api/public/download/zyraxon-code/$platform'
-      path: '/api/public/download/zyraxon-code/$platform'
-      fullPath: '/api/public/download/zyraxon-code/$platform'
-      preLoaderRoute: typeof ApiPublicDownloadZyraxonCodePlatformRouteImport
+    '/api/public/download/$platform': {
+      id: '/api/public/download/$platform'
+      path: '/api/public/download/$platform'
+      fullPath: '/api/public/download/$platform'
+      preLoaderRoute: typeof ApiPublicDownloadPlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/auth/github/start': {
-      id: '/api/public/auth/github/start'
-      path: '/start'
-      fullPath: '/api/public/auth/github/start'
-      preLoaderRoute: typeof ApiPublicAuthGithubStartRouteImport
+    '/api/public/download/myra-apk': {
+      id: '/api/public/download/myra-apk'
+      path: '/api/public/download/myra-apk'
+      fullPath: '/api/public/download/myra-apk'
+      preLoaderRoute: typeof ApiPublicDownloadMyraApkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/github/publish': {
+      id: '/api/public/github/publish'
+      path: '/api/public/github/publish'
+      fullPath: '/api/public/github/publish'
+      preLoaderRoute: typeof ApiPublicGithubPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/nebula/download': {
+      id: '/api/public/nebula/download'
+      path: '/download'
+      fullPath: '/api/public/nebula/download'
+      preLoaderRoute: typeof ApiPublicNebulaDownloadRouteImport
+      parentRoute: typeof ApiPublicNebulaRoute
+    }
+    '/api/public/nebula/generate': {
+      id: '/api/public/nebula/generate'
+      path: '/generate'
+      fullPath: '/api/public/nebula/generate'
+      preLoaderRoute: typeof ApiPublicNebulaGenerateRouteImport
+      parentRoute: typeof ApiPublicNebulaRoute
+    }
+    '/api/public/nebula/search': {
+      id: '/api/public/nebula/search'
+      path: '/search'
+      fullPath: '/api/public/nebula/search'
+      preLoaderRoute: typeof ApiPublicNebulaSearchRouteImport
+      parentRoute: typeof ApiPublicNebulaRoute
+    }
+    '/api/public/providers/': {
+      id: '/api/public/providers/'
+      path: '/api/public/providers'
+      fullPath: '/api/public/providers/'
+      preLoaderRoute: typeof ApiPublicProvidersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/providers/$provider': {
+      id: '/api/public/providers/$provider'
+      path: '/api/public/providers/$provider'
+      fullPath: '/api/public/providers/$provider'
+      preLoaderRoute: typeof ApiPublicProvidersProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/shares/': {
+      id: '/api/public/shares/'
+      path: '/api/public/shares'
+      fullPath: '/api/public/shares/'
+      preLoaderRoute: typeof ApiPublicSharesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zyraxon/search': {
+      id: '/api/public/zyraxon/search'
+      path: '/api/public/zyraxon/search'
+      fullPath: '/api/public/zyraxon/search'
+      preLoaderRoute: typeof ApiPublicZyraxonSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shares/$id/': {
+      id: '/api/shares/$id/'
+      path: '/api/shares/$id'
+      fullPath: '/api/shares/$id/'
+      preLoaderRoute: typeof ApiSharesIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shares/$id/data': {
+      id: '/api/shares/$id/data'
+      path: '/api/shares/$id/data'
+      fullPath: '/api/shares/$id/data'
+      preLoaderRoute: typeof ApiSharesIdDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shares/$id/sync': {
+      id: '/api/shares/$id/sync'
+      path: '/api/shares/$id/sync'
+      fullPath: '/api/shares/$id/sync'
+      preLoaderRoute: typeof ApiSharesIdSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/auth/github/callback': {
+      id: '/api/public/auth/github/callback'
+      path: '/callback'
+      fullPath: '/api/public/auth/github/callback'
+      preLoaderRoute: typeof ApiPublicAuthGithubCallbackRouteImport
       parentRoute: typeof ApiPublicAuthGithubRoute
     }
     '/api/public/auth/github/logout': {
@@ -1317,18 +1302,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthGithubLogoutRouteImport
       parentRoute: typeof ApiPublicAuthGithubRoute
     }
-    '/api/public/auth/github/callback': {
-      id: '/api/public/auth/github/callback'
-      path: '/callback'
-      fullPath: '/api/public/auth/github/callback'
-      preLoaderRoute: typeof ApiPublicAuthGithubCallbackRouteImport
+    '/api/public/auth/github/start': {
+      id: '/api/public/auth/github/start'
+      path: '/start'
+      fullPath: '/api/public/auth/github/start'
+      preLoaderRoute: typeof ApiPublicAuthGithubStartRouteImport
       parentRoute: typeof ApiPublicAuthGithubRoute
     }
-    '/api/public/zyraxon/v1/chat/completions': {
-      id: '/api/public/zyraxon/v1/chat/completions'
-      path: '/api/public/zyraxon/v1/chat/completions'
-      fullPath: '/api/public/zyraxon/v1/chat/completions'
-      preLoaderRoute: typeof ApiPublicZyraxonV1ChatCompletionsRouteImport
+    '/api/public/download/zyraxon-code/$platform': {
+      id: '/api/public/download/zyraxon-code/$platform'
+      path: '/api/public/download/zyraxon-code/$platform'
+      fullPath: '/api/public/download/zyraxon-code/$platform'
+      preLoaderRoute: typeof ApiPublicDownloadZyraxonCodePlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/shares/$id/': {
+      id: '/api/public/shares/$id/'
+      path: '/api/public/shares/$id'
+      fullPath: '/api/public/shares/$id/'
+      preLoaderRoute: typeof ApiPublicSharesIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/shares/$id/data': {
+      id: '/api/public/shares/$id/data'
+      path: '/api/public/shares/$id/data'
+      fullPath: '/api/public/shares/$id/data'
+      preLoaderRoute: typeof ApiPublicSharesIdDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/shares/$id/sync': {
+      id: '/api/public/shares/$id/sync'
+      path: '/api/public/shares/$id/sync'
+      fullPath: '/api/public/shares/$id/sync'
+      preLoaderRoute: typeof ApiPublicSharesIdSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zyraxon/v1/models': {
+      id: '/api/public/zyraxon/v1/models'
+      path: '/api/public/zyraxon/v1/models'
+      fullPath: '/api/public/zyraxon/v1/models'
+      preLoaderRoute: typeof ApiPublicZyraxonV1ModelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/github/repos/$owner/$repo/publish': {
@@ -1337,6 +1350,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/github/repos/$owner/$repo/publish'
       preLoaderRoute: typeof ApiGithubReposOwnerRepoPublishRouteImport
       parentRoute: typeof ApiGithubReposRoute
+    }
+    '/api/public/zyraxon/v1/chat/completions': {
+      id: '/api/public/zyraxon/v1/chat/completions'
+      path: '/api/public/zyraxon/v1/chat/completions'
+      fullPath: '/api/public/zyraxon/v1/chat/completions'
+      preLoaderRoute: typeof ApiPublicZyraxonV1ChatCompletionsRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -1388,6 +1408,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
+  FaqRoute: FaqRoute,
   NebulaRoute: NebulaRoute,
   NebulaCoreRoute: NebulaCoreRoute,
   PackagesRoute: PackagesRoute,

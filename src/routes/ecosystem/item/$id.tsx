@@ -110,15 +110,38 @@ function PlatformBadge({ platform }: { platform: string }) {
 }
 
 export const Route = createFileRoute("/ecosystem/item/$id")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `ZYRAXON Ecosystem Item` },
-      { name: "description", content: "View details about this ZYRAXON ecosystem item." },
-      { property: "og:title", content: `ZYRAXON Ecosystem Item` },
-      { property: "og:description", content: "View details about this ZYRAXON ecosystem item." },
-      { property: "og:type", content: "website" },
-    ],
-  }),
+  head: ({ params }) => {
+    const title = `ZYRAXON Ecosystem Item — ${params.id}`;
+    const description = `View details, ratings, install command and download links for this ZYRAXON ecosystem item. Browse community-published AI plugins, templates and tools.`;
+    const url = `https://zyraxonai.lovable.app/ecosystem/item/${params.id}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: params.id,
+            applicationCategory: "DeveloperApplication",
+            operatingSystem: "Web",
+            description,
+            url,
+          }),
+        },
+      ],
+    };
+  },
   component: EcosystemItemPage,
 });
 

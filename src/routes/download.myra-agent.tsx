@@ -4,7 +4,12 @@ export const Route = createFileRoute("/download/myra-agent")({
   head: () => ({
     meta: [
       { title: "Download Myra Agent" },
-      { name: "description", content: "Download the latest Myra Agent APK for Android." },
+      { name: "description", content: "Download the latest Myra Agent APK for Android. Voice-enabled mobile AI agent by ZYRAXON AI." },
+      { property: "og:title", content: "Download Myra Agent" },
+      { property: "og:description", content: "Download the latest Myra Agent APK for Android. Voice-enabled mobile AI agent by ZYRAXON AI." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/download/myra-agent" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DownloadMyraAgent,

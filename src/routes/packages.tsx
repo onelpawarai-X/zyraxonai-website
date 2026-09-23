@@ -2,7 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/packages")({
-  head: () => ({ meta: [{ title: "NPM Packages — ZYRAXON AI" }] }),
+  head: () => ({
+    meta: [
+      { title: "NPM Packages — ZYRAXON AI" },
+      { name: "description", content: "Browse all @zyraxon-ai NPM packages: SDKs, core libraries, plugins and TypeScript types for building with ZYRAXON AI." },
+      { property: "og:title", content: "NPM Packages — ZYRAXON AI" },
+      { property: "og:description", content: "Browse all @zyraxon-ai NPM packages: SDKs, core libraries, plugins and TypeScript types for building with ZYRAXON AI." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/packages" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: PackagesPage,
 });
 

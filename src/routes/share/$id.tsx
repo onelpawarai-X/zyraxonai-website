@@ -18,6 +18,7 @@ export const Route = createFileRoute("/share/$id")({
     const title = `ZYRAXON Shared Session — ${params.id}`;
     const description =
       "A published ZYRAXON AI coding session: prompts, AI responses, code and file diffs.";
+    const url = `https://zyraxonai.lovable.app/share/${params.id}`;
     return {
       meta: [
         { title },
@@ -25,7 +26,25 @@ export const Route = createFileRoute("/share/$id")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "article" },
+        { property: "og:url", content: url },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: title,
+            description,
+            url,
+            author: { "@type": "Organization", name: "ZYRAXON AI" },
+            publisher: { "@type": "Organization", name: "ZYRAXON AI" },
+            datePublished: new Date().toISOString(),
+          }),
+        },
       ],
     };
   },

@@ -35,7 +35,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -83,9 +83,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory.",
+          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
       },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "ZYRAXON AI" },
       {
         property: "og:title",
         content: "ZYRAXON AI — All in One. Anything. Nothing is Impossible.",
@@ -93,11 +93,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory.",
+          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@onelpawarai" },
       {
         name: "twitter:title",
         content: "ZYRAXON AI — All in One. Anything. Nothing is Impossible.",
@@ -105,7 +106,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "twitter:description",
         content:
-          "The most powerful free & open-source desktop AI coding agent. 50+ tools, Beast Mode, Screen Vision, Unlimited Memory.",
+          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
       },
       {
         property: "og:image",

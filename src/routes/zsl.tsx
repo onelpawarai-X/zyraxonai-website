@@ -6,6 +6,13 @@ export const Route = createFileRoute("/zsl")({
     meta: [
       { title: "ZSL — Zyraxon Sovereign License" },
       { name: "description", content: "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era. Commercial freedom, patent protection, identity safety." },
+      { property: "og:title", content: "ZSL — Zyraxon Sovereign License" },
+      { property: "og:description", content: "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era. Commercial freedom, patent protection, identity safety." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/zsl" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "ZSL — Zyraxon Sovereign License" },
+      { name: "twitter:description", content: "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era." },
     ],
   }),
   component: ZSLPage,
@@ -466,6 +473,7 @@ Licensed under the Zyraxon Sovereign License
           </div>
           <div style={{ display: "flex", gap: 20, fontSize: 13 }}>
             <a href="/" style={{ color: "#6b7280", textDecoration: "none" }}>Home</a>
+            <a href="/faq" style={{ color: "#6b7280", textDecoration: "none" }}>FAQ</a>
             <a href="https://github.com/onelpawarai-X/ZSL" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>GitHub</a>
             <a href="https://github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE.txt" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>ZSL-X</a>
             <a href="https://github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE.txt" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>MEKRA-X</a>
