@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
+          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
       },
       {
         property: "og:title",
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
+          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app" },
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
       {
         name: "twitter:description",
         content:
-          "The most powerful free & open-source desktop AI coding agent. 805+ tools, 224 control systems, 9 agent modes, Screen Vision, Eternal Memory.",
+          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
       },
     ],
     scripts: [
@@ -38,9 +38,9 @@ export const Route = createFileRoute("/")({
           "@type": "SoftwareApplication",
           name: "ZYRAXON AI",
           applicationCategory: "DeveloperApplication",
-          operatingSystem: "Windows, macOS, Linux, Android",
+          operatingSystem: "Windows, macOS, Linux",
           description:
-            "Free and open-source desktop AI coding agent with 805+ tools, 224 control systems, 9 agent modes, screen vision and eternal memory.",
+            "Free and open-source desktop AI agent with 805 tools across 63 categories, 10 agent modes, screen vision and eternal memory.",
           url: "https://zyraxonai.lovable.app",
           offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         }),

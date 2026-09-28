@@ -137,7 +137,7 @@ export default function EcosystemPage() {
               <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>
                 {tab === "home" && `${appCount} apps published via ZYRAXON Hub`}
                 {tab === "published" && "Projects published to the marketplace"}
-                {tab === "extensions" && "ZYRAXON Code extension marketplace"}
+                {tab === "extensions" && "ZYRAXON Agent extension marketplace"}
                 {tab === "releases" && "All GitHub releases across repos"}
                 {tab === "featured" && "Top rated and popular apps"}
                 {tab === "search" && `${searchResults.length} results found`}

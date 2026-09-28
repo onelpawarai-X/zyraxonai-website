@@ -35,7 +35,7 @@ const DEFAULT_FEATURES: ContentRow[] = [
     kind: "feature",
     title: "Dual Core Engine v19",
     subtitle: "Real-time Autonomous Coding Agent",
-    body: "Powered by 552+ tools and 9 specialized agent modes with screen vision and eternal memory.",
+    body: "Powered by 805 tools across 63 categories and 10 agent modes with screen vision and eternal memory.",
     badge: "CORE",
     accent: "#06b6d4",
     link_url: `https://github.com/${GITHUB_REPO}`,
@@ -46,7 +46,7 @@ const DEFAULT_FEATURES: ContentRow[] = [
     id: "f-2",
     kind: "announcement",
     title: "Official Native Desktop Binaries",
-    subtitle: "Windows EXE, Linux DEB & Android APK",
+    subtitle: "Windows EXE, Linux DEB & macOS DMG",
     body: "Download pre-compiled builds directly synced from GitHub Releases.",
     badge: "RELEASE",
     accent: "#a855f7",
@@ -360,7 +360,7 @@ export function NebulaStandalonePage() {
                     <label style={{ display: "block", fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>শিরোনাম (Title)*</label>
                     <input
                       type="text"
-                      placeholder="e.g. Myra Voice Intelligence v3"
+                      placeholder="e.g. ZYRAXON Voice Bridge v3"
                       value={form.title}
                       onChange={(e) => setForm({ ...form, title: e.target.value })}
                       required

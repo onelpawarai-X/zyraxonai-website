@@ -701,7 +701,7 @@ const ReleaseDetail: React.FC<{ r: GitHubReleaseItem | null; onClose: () => void
               <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 1a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5h-5.5a.75.75 0 0 1 0-1.5h5.5v-5.5A.75.75 0 0 1 8 1z" />
               </svg>
-              {openInApp ? "Opening ZYRAXON Code…" : "Open in ZYRAXON Code"}
+              {openInApp ? "Opening ZYRAXON Agent…" : "Open in ZYRAXON Agent"}
             </button>
             {r.downloadUrl ? (
               <a

@@ -233,7 +233,7 @@ const MCP_TOOLS: CatalogEntry[] = [
     capabilities: ["Sends context to an AI model", "Clipboard access"],
     repository: null,
     homepage: null,
-    license: "BSL-1.1",
+    license: "ZSL-X",
     lastUpdated: NOW,
     color: "#7ee787",
     readme:
@@ -315,7 +315,7 @@ const AGENT_MODES: CatalogEntry[] = (
   capabilities: ["Sends context to an AI model", "Workspace file access"],
   repository: "https://github.com/PsychoCoderX/ZYRAXON-AI",
   homepage: "https://zyraxonai.lovable.app",
-  license: "BSL-1.1",
+  license: "ZSL-X",
   lastUpdated: NOW,
   color,
   readme: `# ${name}\n\n${desc}\n\n## Built for\nZYRAXON AI 4.x with 136+ MCP tools.\n\n## Activation\nInstall, then pick **${name}** from the mode switcher in the app.`,

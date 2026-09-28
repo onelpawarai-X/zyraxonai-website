@@ -1,12 +1,12 @@
 /**
- * ZYRAXON Code — Marketplace install engine
+ * ZYRAXON Agent — Marketplace install engine
  * -------------------------------------------------------------
- * Manages extension install/uninstall flow through ZYRAXON Code.
+ * Manages extension install/uninstall flow through ZYRAXON Agent.
  *
  * Detection flow:
  *   1. Check if zyraxon-code:// deep link is reachable (app installed)
  *   2. If yes → open app via deep link, extension installs automatically
- *   3. If no → show "Install ZYRAXON Code" modal with download links
+ *   3. If no → show "Install ZYRAXON Agent" modal with download links
  *
  * The website keeps its own mirror of the installed set in
  * localStorage so the UI is instant and survives reloads.
@@ -55,7 +55,7 @@ const APP_CHECK_TTL = 5 * 60 * 1000; // 5 minutes
 /* ------------------------------------------------------------------ */
 
 /**
- * Detect if ZYRAXON Code is installed by trying to open a deep link.
+ * Detect if ZYRAXON Agent is installed by trying to open a deep link.
  * Uses an iframe + timeout trick — if the app is installed, the
  * iframe loads instantly; if not, it times out.
  */
@@ -183,7 +183,7 @@ export function openDeepLink(url: string): void {
   }
 }
 
-/** Open ZYRAXON Code app (general) */
+/** Open ZYRAXON Agent app (general) */
 export function openApp(): void {
   if (typeof window === "undefined") return;
   try {
@@ -252,7 +252,7 @@ export async function install(t: InstallTarget): Promise<InstalledRecord> {
     if (result) {
       openDeepLink(installDeepLink(t));
     }
-    // If not detected, caller should show the "Install ZYRAXON Code" modal
+    // If not detected, caller should show the "Install ZYRAXON Agent" modal
   }
   // If detected === false, caller should show the modal
 

@@ -10,8 +10,8 @@ import { SecurityBadge } from "./SecurityBadge";
  * ZYRAXON AI Extension Marketplace
  * -------------------------------------------------------------
  * A modern, rebranded extension browser for the ZYRAXON ecosystem.
- * Extensions are rendered the way they look inside ZYRAXON Code,
- * and every install is handed to the ZYRAXON Code desktop app via
+ * Extensions are rendered the way they look inside ZYRAXON Agent,
+ * and every install is handed to the ZYRAXON Agent desktop app via
  * the `zyraxon-code://` deep-link protocol.
  *
  * All data comes from /api/public/vscode-marketplace (server-side proxy).
@@ -112,7 +112,7 @@ function zyraxonInstallUrl(id: string): string {
 }
 
 /**
- * Launch ZYRAXON Code via its registered deep-link protocol.
+ * Launch ZYRAXON Agent via its registered deep-link protocol.
  * If the app is not installed the browser navigation is
  * a silent no-op, so we fall back to the website product page.
  */
@@ -403,7 +403,7 @@ export const ExtensionDotMenu: React.FC<DotMenuProps> = ({
             <svg width="15" height="15" viewBox="0 0 16 16" fill="#8957e5">
               <path d="M1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0zm6.5 3.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zM4.75 7.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm6.5 0a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zM8 4.75a1.75 1.75 0 0 0-1.61 1.146l.002.002a2.94 2.94 0 0 0-.13.352h3.476a2.94 2.94 0 0 0-.13-.352A1.75 1.75 0 0 0 8 4.75z" />
             </svg>
-            Open in ZYRAXON Code
+            Open in ZYRAXON Agent
           </button>
           <button
             onClick={copyCommand}
@@ -736,7 +736,7 @@ const Detail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) =>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <InstallButton target={installTarget(ext)} size="md" />
             <button onClick={() => launchZyraxon(ext.id)} style={ghostBtn}>
-              Open in ZYRAXON Code
+              Open in ZYRAXON Agent
             </button>
             <a href={ext.websiteUrl} target="_blank" rel="noopener noreferrer" style={ghostBtn}>
               View on Website

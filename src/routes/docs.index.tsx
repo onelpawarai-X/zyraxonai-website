@@ -8,13 +8,13 @@ export const Route = createFileRoute("/docs/")({
       {
         name: "description",
         content:
-          "Complete technical reference for ZYRAXON-AI: 3 platforms, 9 agent modes, 805+ tools, 224 control systems, vision system, eternal memory, self-healing, build guides and more.",
+          "Complete technical reference for ZYRAXON-AI: the desktop AI agent with 805 tools across 63 categories, 10 agent modes, vision system, eternal memory, self-healing, build guides and more.",
       },
       { property: "og:title", content: "Documentation — ZYRAXON AI" },
       {
         property: "og:description",
         content:
-          "Complete technical reference for ZYRAXON-AI: 3 platforms, 9 agent modes, 805+ tools, 224 control systems, vision system, eternal memory and build guides.",
+          "Complete technical reference for ZYRAXON-AI: the desktop AI agent with 805 tools across 63 categories, 10 agent modes, vision system, eternal memory and build guides.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/docs" },
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/docs/")({
       {
         name: "twitter:description",
         content:
-          "Complete technical reference for ZYRAXON-AI: 3 platforms, 9 agent modes, 805+ tools, 224 control systems and build guides.",
+          "Complete technical reference for ZYRAXON-AI: the desktop AI agent with 805 tools across 63 categories, 10 agent modes and build guides.",
       },
     ],
   }),

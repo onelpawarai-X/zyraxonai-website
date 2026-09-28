@@ -51,8 +51,7 @@ function DownloadZyraxonAgent() {
                   const releases = await res.json();
                   const ua = (navigator.userAgent || '') + ' ' + (navigator.platform || '');
                   let os = 'windows';
-                  if (/android/i.test(ua)) os = 'android';
-                  else if (/mac|iphone|ipad/i.test(ua)) os = 'mac-arm';
+                  if (/mac|iphone|ipad/i.test(ua)) os = 'mac-arm';
                   else if (/linux|x11/i.test(ua)) os = 'linux';
 
                   const patterns = {

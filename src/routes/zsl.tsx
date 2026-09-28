@@ -69,9 +69,7 @@ const FAQ = [
 ];
 
 const PROJECTS_USING_ZSL = [
-  { name: "ZYRAXON-AI", desc: "Main AI platform with 552+ tools", repo: "onelpawarai-X/ZYRAXON-AI", color: "#2563eb" },
-  { name: "Myra Agent", desc: "Android voice AI agent", repo: "onelpawarai-X/Myra-Agent", color: "#f59e0b" },
-  { name: "Zyraxon Code", desc: "AI-powered code editor", repo: "onelpawarai-X/Zyraxon-Code", color: "#7c3aed" },
+  { name: "ZYRAXON-AI", desc: "Main AI platform with 805 tools across 63 categories", repo: "onelpawarai-X/ZYRAXON-AI", color: "#2563eb" },
 ];
 
 const TIMELINE = [
@@ -402,7 +400,7 @@ function ZSLPage() {
           <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 32px", textAlign: "center" }}>
             All official ZYRAXON projects are licensed under ZSL.
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
             {PROJECTS_USING_ZSL.map((p) => (
               <a key={p.name} href={`https://github.com/${p.repo}`} target="_blank" rel="noopener noreferrer"
                 style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, textDecoration: "none", display: "block", transition: "all 0.15s" }}

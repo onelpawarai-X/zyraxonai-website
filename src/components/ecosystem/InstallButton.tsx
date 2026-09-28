@@ -14,9 +14,9 @@ import {
 } from "@/lib/marketplace-install";
 
 /**
- * ZYRAXON Code install control.
+ * ZYRAXON Agent install control.
  * - If app detected → install directly via deep link
- * - If app NOT detected → show "Install ZYRAXON Code" modal
+ * - If app NOT detected → show "Install ZYRAXON Agent" modal
  * - Local state mirror for instant UI
  */
 export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md" }> = ({
@@ -200,7 +200,7 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
         )}
       </div>
 
-      {/* ZYRAXON Code not installed modal */}
+      {/* ZYRAXON Agent not installed modal */}
       {showAppModal && (
         <div
           onClick={() => setShowAppModal(false)}
@@ -223,7 +223,7 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
               </div>
               <div>
-                <h3 style={{ fontSize: 17, fontWeight: 700, color: "#111827", margin: 0 }}>ZYRAXON Code Required</h3>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: "#111827", margin: 0 }}>ZYRAXON Agent Required</h3>
                 <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>Install the app to manage extensions</p>
               </div>
             </div>
@@ -231,13 +231,13 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
             {/* Body */}
             <div style={{ padding: 24 }}>
               <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.6, margin: "0 0 16px" }}>
-                To install <strong>{target.displayName}</strong>, you need <strong>ZYRAXON Code</strong> — the AI-powered code editor with built-in extension support.
+                To install <strong>{target.displayName}</strong>, you need <strong>ZYRAXON Agent</strong> — the AI-powered desktop agent with a built-in extension marketplace.
               </p>
 
               <div style={{ background: "#f9fafb", borderRadius: 10, padding: 16, marginBottom: 20 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: "#111827", margin: "0 0 10px" }}>Quick setup:</p>
                 <ol style={{ fontSize: 13, color: "#6b7280", margin: 0, paddingLeft: 18, lineHeight: 2 }}>
-                  <li>Download ZYRAXON Code from GitHub</li>
+                  <li>Download ZYRAXON Agent from GitHub</li>
                   <li>Install and open the application</li>
                   <li>Come back and click <strong>Install</strong> again</li>
                   <li>The extension will install automatically</li>
@@ -259,7 +259,7 @@ export const InstallButton: React.FC<{ target: InstallTarget; size?: "sm" | "md"
                   Download from GitHub
                 </a>
                 <a
-                  href="/download/zyraxon-code"
+                  href="/download/zyraxon-agent"
                   style={{
                     display: "flex", alignItems: "center", gap: 10, padding: "12px 16px",
                     borderRadius: 10, border: "1px solid #e5e7eb", background: "white", color: "#374151",

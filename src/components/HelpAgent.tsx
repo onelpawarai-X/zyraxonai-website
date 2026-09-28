@@ -9,7 +9,7 @@ interface Message {
 
 const QUICK_PROMPTS = [
   "ZYRAXON AI কীভাবে ডাউনলোড করব?",
-  "Myra Agent এর কাজ কী?",
+  "ZYRAXON AI এর কয়টি টুল আছে?",
   "GitHub Repository লিংক দিন",
   "Windows এ কি এটা ফ্রি?",
 ];

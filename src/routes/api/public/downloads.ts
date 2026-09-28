@@ -47,7 +47,6 @@ export const PLATFORM_PATTERNS: Record<string, RegExp[]> = {
     /linux.*(x64|x86_64|amd64).*\.tar\.gz$/i,
     /linux.*\.tar\.gz$/i,
   ],
-  android: [/\.apk$/i],
 };
 
 export type ResolvedAsset = {

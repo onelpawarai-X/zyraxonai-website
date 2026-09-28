@@ -267,8 +267,8 @@ export default function DocsShell({ slug }: { slug?: string }) {
             Official Documentation
           </h1>
           <p className="mt-4 max-w-2xl leading-relaxed text-gray-500">
-            Complete technical reference for ZYRAXON-AI — the open-source desktop AI agent with 9
-            agent modes, 805+ tools, 224 control systems, eternal memory, self-healing and real-time screen vision.
+            Complete technical reference for ZYRAXON-AI — the open-source desktop AI agent with 10
+            agent modes, 805 tools across 63 categories, eternal memory, self-healing and real-time screen vision.
           </p>
           {DOC_GROUPS.map((g) => {
             const pages = DOCS.filter((d) => d.group === g);

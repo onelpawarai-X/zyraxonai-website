@@ -3,23 +3,23 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 const FAQS = [
   {
     q: "What is ZYRAXON AI?",
-    a: "ZYRAXON AI is a free and open-source desktop AI coding agent with 805+ tools, 224 control systems, 9 agent modes, screen vision, eternal memory and support for 25+ AI providers.",
+    a: "ZYRAXON AI is a free and open-source desktop AI coding agent with 805 tools across 63 categories, 10 agent modes, screen vision, eternal memory and support for 25+ AI providers.",
   },
   {
     q: "Is ZYRAXON AI free to use?",
-    a: "Yes. The Free tier includes 57 tools at $0. Paid tiers (Pro $5, Max $15, Ultra $99) unlock more tools and features, but the core agent is free and open-source.",
+    a: "Yes. The Free tier includes 126 tools at $0. Paid tiers (Pro $5, Max $15, Ultra $99) unlock more tools and features, but the core agent is free and open-source.",
   },
   {
     q: "Which platforms does ZYRAXON AI support?",
-    a: "ZYRAXON Agent runs on Windows, macOS and Linux (Electron desktop app). Myra Agent is the Android companion. Zyraxon Code is the AI code editor built on Monaco.",
+    a: "ZYRAXON Agent runs on Windows, macOS and Linux (Electron desktop app). One app for everything — coding, automation, vision, voice and a built-in Monaco AI editor.",
   },
   {
     q: "How do I download ZYRAXON AI?",
     a: "Visit the Download page, pick your platform (Windows, macOS or Linux) and run the installer. You can also clone the GitHub repository and build from source with Bun.",
   },
   {
-    q: "What are the 9 agent modes?",
-    a: "General, Build, Plan, Beast, PRO, APEX PREDATOR, DARK EMPEROR, VISION and PRO BUILDER. Each mode unlocks different capabilities from read-only planning to autonomous multi-file editing.",
+    q: "What are the agent modes?",
+    a: "10 modes: General, Build, Plan, Beast, PRO, APEX PREDATOR, DARK EMPEROR, Vision, Pro Builder and AUTO. Each mode unlocks different capabilities from read-only planning to autonomous multi-file editing.",
   },
   {
     q: "What is the ZYRAXON Ecosystem?",

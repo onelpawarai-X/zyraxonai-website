@@ -5,9 +5,9 @@ export const Route = createFileRoute("/releases")({
   head: () => ({
     meta: [
       { title: "Releases — ZYRAXON AI" },
-      { name: "description", content: "All GitHub releases for ZYRAXON Agent, Myra Agent and Zyraxon Code. Download the latest installers and changelogs." },
+      { name: "description", content: "All GitHub releases for ZYRAXON Agent. Download the latest installers and changelogs." },
       { property: "og:title", content: "Releases — ZYRAXON AI" },
-      { property: "og:description", content: "All GitHub releases for ZYRAXON Agent, Myra Agent and Zyraxon Code. Download the latest installers and changelogs." },
+      { property: "og:description", content: "All GitHub releases for ZYRAXON Agent. Download the latest installers and changelogs." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/releases" },
       { name: "twitter:card", content: "summary" },
@@ -17,9 +17,7 @@ export const Route = createFileRoute("/releases")({
 });
 
 const REPOS = [
-  { owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", desc: "Desktop AI agent with 9 modes, 552+ tools" },
-  { owner: "onelpawarai-X", name: "Myra-Agent", label: "Myra Agent", color: "#f59e0b", desc: "Android voice AI agent" },
-  { owner: "onelpawarai-X", name: "Zyraxon-Code", label: "ZYRAXON Code", color: "#7c3aed", desc: "AI-powered code editor" },
+  { owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", desc: "Desktop AI agent with 10 agent modes, 805 tools across 63 categories" },
 ];
 
 function ReleasesPage() {

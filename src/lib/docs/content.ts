@@ -15,7 +15,7 @@ export type DocPage = {
   blocks: DocBlock[];
 };
 
-export const DOC_GROUPS = ["Start", "ZYRAXON Agent", "Myra Agent", "ZYRAXON Code", "Features", "Development", "Reference"] as const;
+export const DOC_GROUPS = ["Start", "ZYRAXON Agent", "Features", "Development", "Reference"] as const;
 
 export const DOCS: DocPage[] = [
   // ─── START ───
@@ -35,14 +35,12 @@ export const DOCS: DocPage[] = [
         title: "Mission",
         text: "All in one. Anything. Nothing is impossible.",
       },
-      { t: "h2", text: "Three Products, One Ecosystem" },
+      { t: "h2", text: "One Product, One Ecosystem" },
       {
         t: "table",
         head: ["Product", "Platform", "Description"],
         rows: [
-          ["ZYRAXON Agent", "Windows, macOS, Linux", "Desktop AI agent with 9 modes, 805+ tools, 224 control systems, eternal memory, self-healing"],
-          ["Myra Agent", "Android 8.0+", "All-in-one mobile AI assistant with voice, gestures, real-time screen streaming"],
-          ["ZYRAXON Code", "Windows, macOS, Linux", "AI-native code editor built on VS Code with inline AI assistance"],
+          ["ZYRAXON Agent", "Windows, macOS, Linux", "Desktop AI agent with 10 agent modes, 805 tools across 63 categories, eternal memory, self-healing, built-in Monaco AI editor"],
         ],
       },
       { t: "h2", text: "ZYRAXON Agent Highlights" },
@@ -50,8 +48,8 @@ export const DOCS: DocPage[] = [
         t: "table",
         head: ["Capability", "Details"],
         rows: [
-          ["Agent Modes", "Build, Plan, Beast, PRO, APEX PREDATOR, DARK EMPEROR, Vision, Pro Builder, General"],
-          ["Total Tools", "805+ (31 core + 521 domain + 224 real control systems + 8 ULTRA)"],
+          ["Agent Modes", "General, Build, Plan, Beast, PRO, APEX PREDATOR, DARK EMPEROR, Vision, Pro Builder, AUTO (10 total)"],
+          ["Total Tools", "805 tools across 63 categories (31 core + 521 domain + 224 real control systems + 8 ULTRA)"],
           ["Control Systems", "224 real algorithms -- Aircraft (63), Car (18), Drone (15), Boat (15), Rocket (12), Robot (10), Algorithms (10), Core Tools (68), Systems (19)"],
           ["Memory", "Eternal -- SQLite WAL, ring buffer, 50K+ entries, survives reset"],
           ["Self-Healing", "Auto-installs missing tools and MCP servers at runtime"],
@@ -68,10 +66,10 @@ export const DOCS: DocPage[] = [
         t: "table",
         head: ["Tier", "Price", "Tools", "Features"],
         rows: [
-          ["Free", "$0 / forever", "57", "Core tools + basic AI"],
-          ["Pro", "$5 / 15 days", "113", "+ Screen Vision, Self-Healing, Memory"],
-          ["Max", "$15 / 2 months", "370", "+ All domain tools, DARK EMPEROR, ULTRA"],
-          ["Ultra", "$99 / year", "805+", "Everything. Forever."],
+          ["Free", "$0 / forever", "126", "General, build, plan, explore, vision modes + core tools"],
+          ["Pro", "$5 / 15 days", "304", "+ Pro and Pro Builder modes"],
+          ["Max", "$15 / 2 months", "337", "+ Beast mode"],
+          ["Ultra", "$99 / year", "38 ULTRA + everything", "All modes incl. AUTO, APEX PREDATOR, DARK EMPEROR"],
         ],
       },
       {
@@ -104,31 +102,13 @@ export const DOCS: DocPage[] = [
           ["Linux", "zyraxon-linux-arm64.tar.gz", "arm64"],
         ],
       },
-      { t: "h2", text: "Myra Agent (Android)" },
-      {
-        t: "p",
-        text: "Download [MYRA-assistant.apk](https://github.com/onelpawarai-X/Myra-Agent/releases) from Releases. Enable 'Install from unknown sources' on your Android device, grant microphone permission, and start talking.",
-      },
-      { t: "h2", text: "ZYRAXON Code (Standalone Editor)" },
-      {
-        t: "p",
-        text: "Available for Windows, macOS, and Linux from [Releases](https://github.com/onelpawarai-X/Zyraxon-Code/releases).",
-      },
       { t: "h2", text: "Prerequisites (Building From Source)" },
       {
         t: "list",
         items: [
           "Bun 1.3.14+ -- JavaScript runtime and package manager",
-          "Node.js 22+ -- required for ZYRAXON Code editor build",
-          "npm -- comes with Node.js; used for ZYRAXON Code only",
           "Git -- version control",
         ],
-      },
-      {
-        t: "note",
-        kind: "warn",
-        title: "Two Package Managers",
-        text: "The main project uses bun. ZYRAXON Code MUST be installed with npm -- the VS Code build system requires lifecycle scripts that bun skips.",
       },
       { t: "h2", text: "Quick Start (Development)" },
       {
@@ -144,11 +124,11 @@ export const DOCS: DocPage[] = [
     slug: "agent-modes",
     title: "Agent Modes",
     group: "ZYRAXON Agent",
-    desc: "All 9 agent modes and what each one unlocks.",
+    desc: "All 10 agent modes and what each one unlocks.",
     blocks: [
       {
         t: "p",
-        text: "ZYRAXON ships with nine purpose-built agent modes. Each mode changes the system prompt, available tools, permissions, and behavior.",
+        text: "ZYRAXON ships with ten purpose-built agent modes. Each mode changes the system prompt, available tools, permissions, and behavior.",
       },
       { t: "h2", text: "Build" },
       { t: "p", text: "The reliable workhorse. Full filesystem access, persistent memory, reads/writes files, runs commands, browses the web, and remembers everything." },
@@ -198,6 +178,8 @@ export const DOCS: DocPage[] = [
       { t: "p", text: "Website genesis intelligence -- creates complete, production-ready websites from natural language, auto-deploys to GitHub Pages, includes live preview and SEO optimization." },
       { t: "h2", text: "General" },
       { t: "p", text: "Subagent used for delegated tasks from other modes." },
+      { t: "h2", text: "AUTO" },
+      { t: "p", text: "Autonomous mode -- works through an entire task pipeline end-to-end with minimal steering, choosing the right tools and subagents at each stage." },
     ],
   },
   {
@@ -208,7 +190,7 @@ export const DOCS: DocPage[] = [
     blocks: [
       {
         t: "p",
-        text: "ZYRAXON includes **805+ tools** across three categories: 31 core tools, 521 domain tools, and 224 real control systems.",
+        text: "ZYRAXON includes **805 tools** across 63 categories: 31 core tools, 521 domain tools, 224 real control systems, and 8 ULTRA tools.",
       },
       { t: "h2", text: "Core Engine (31 Tools)" },
       {
@@ -524,180 +506,6 @@ export const DOCS: DocPage[] = [
     ],
   },
 
-  // ─── MYRA AGENT ───
-  {
-    slug: "myra-overview",
-    title: "Myra Agent Overview",
-    group: "Myra Agent",
-    desc: "All-in-one mobile AI assistant for Android.",
-    blocks: [
-      { t: "p", text: "MYRA is a full-featured Android voice assistant that listens, speaks, and acts -- like a personal AI companion in your pocket. It combines a rich, multi-personality conversational AI with real-time voice, smart chat, auto-reply, gaming assistance, and premium features -- all powered by free AI models. Package: `com.myra.voice`. Android 8.0+ required." },
-      { t: "h2", text: "Features" },
-      {
-        t: "table",
-        head: ["Feature", "Description"],
-        rows: [
-          ["Multi-Personality AI", "6 distinct modes: GF, Friend, Nautanki, Funny, Hungry, Normal"],
-          ["Real-Time Voice", "Gemini Live streaming conversation (speak and it answers)"],
-          ["Free AI Models", "OpenCode Zen free models built in, no API key required"],
-          ["Smart Chat", "Context-aware conversations with memory"],
-          ["AutoReply", "Smart WhatsApp auto-reply engine"],
-          ["Gaming Vision", "Vision-based game assistance"],
-          ["Premium Unlock", "Local, server-free activation (no internet needed)"],
-          ["Multi-Language", "Adapts to the user's language naturally"],
-        ],
-      },
-      { t: "h2", text: "AI Models" },
-      {
-        t: "p",
-        text: "MYRA uses a fallback chain: Groq to OpenRouter (Zen) to Gemini to DeepSeek. Free models include: laguna-s-2.1-free, deepseek-v4-flash-free, big-pickle, hy3-free, mimo-v2.5-free, nemotron-3-ultra-free, nemotron-3.5-lightning-free. API base: `https://opencode.ai/zen/v1/chat/completions`",
-      },
-      { t: "h2", text: "Permissions" },
-      {
-        t: "list",
-        items: [
-          "RECORD_AUDIO -- voice input",
-          "CAMERA -- gaming vision and screen analysis",
-          "INTERNET -- AI model communication",
-          "READ/WRITE_EXTERNAL_STORAGE -- file access",
-          "ACCESS_FINE_LOCATION -- location-based features",
-          "READ_SMS / SEND_SMS -- messaging integration",
-          "QUERY_ALL_PACKAGES -- app awareness",
-        ],
-      },
-      { t: "h2", text: "Source Structure" },
-      {
-        t: "code",
-        lang: "text",
-        code: "MyraAssistant/\n  AndroidManifest.xml   # App manifest\n  apktool.yml           # Apktool config\n  assets/               # Bundled assets\n  res/                  # Resources (layouts, drawables, strings)\n  smali/                # DEX bytecode (classes.dex)\n  smali_classes2/       # DEX bytecode (classes2.dex)\n  original/             # Original APK metadata",
-      },
-      { t: "note", kind: "info", title: "Notes", text: "Fully rebuilt with apktool 2.11.1. Signed with APK Signature Scheme v2 + v3 (apksigner) -- clean install on all modern Android. All AI models are free-tier; an optional personal API key can be added in API Cloud Settings for even better availability." },
-    ],
-  },
-  {
-    slug: "myra-installation",
-    title: "Myra Installation",
-    group: "Myra Agent",
-    desc: "Install the APK or build from source.",
-    blocks: [
-      { t: "h2", text: "Option 1: Install APK" },
-      {
-        t: "list",
-        ordered: true,
-        items: [
-          "Download MYRA-assistant.apk from [Releases](https://github.com/onelpawarai-X/Myra-Agent/releases)",
-          "Open the APK on your Android device (allow 'Install from unknown sources')",
-          "Grant microphone permission",
-          "Start talking to MYRA",
-        ],
-      },
-      { t: "h2", text: "Option 2: Build From Source" },
-      {
-        t: "p",
-        text: "The repo contains full apktool-decoded source. To rebuild:",
-      },
-      {
-        t: "code",
-        lang: "bash",
-        code: "# Install apktool 2.11.1+\napktool b MyraAssistant -o MYRA-assistant.apk\n\n# Create keystore (first time)\nkeytool -genkeypair -v -keystore myra-release.keystore -alias myra \\\n  -keyalg RSA -keysize 2048 -validity 10000 -storepass myra123456\n\n# Align and sign\nzipalign -f 4 MYRA-assistant.apk MYRA-aligned.apk\napksigner sign --ks myra-release.keystore --ks-key-alias myra \\\n  --ks-pass pass:myra123456 --key-pass pass:myra123456 \\\n  --out MYRA-assistant.apk MYRA-aligned.apk",
-      },
-      { t: "h2", text: "Premium Unlock" },
-      { t: "p", text: "Open the app, go to LICENSE & SUBSCRIPTION, enter the secret code. All premium features unlock instantly -- locally, no server, no internet." },
-      { t: "h2", text: "Tech Stack" },
-      {
-        t: "table",
-        head: ["Component", "Detail"],
-        rows: [
-          ["Text AI", "SmartLlmApi -- fallback chain: Groq to OpenRouter to Gemini to DeepSeek"],
-          ["Voice AI", "Google Gemini Live (WebSocket streaming)"],
-          ["API Base", "https://opencode.ai/zen/v1/chat/completions"],
-          ["License", "Local validation -- isPremium() checks stored token + key"],
-        ],
-      },
-    ],
-  },
-
-  // ─── ZYRAXON CODE ───
-  {
-    slug: "code-overview",
-    title: "ZYRAXON Code Overview",
-    group: "ZYRAXON Code",
-    desc: "Full VS Code-grade AI code editor built from source.",
-    blocks: [
-      { t: "p", text: "ZYRAXON Code is a distribution of the ZYRAXON Code repository with ZYRAXON-specific customizations. It combines the simplicity of a code editor with what developers need for their core edit-build-debug cycle. Version 1.133.0. BSL licensed." },
-      { t: "h2", text: "What You Get" },
-      {
-        t: "table",
-        head: ["Capability", "Detail"],
-        rows: [
-          ["Real Editor", "Full Monaco: IntelliSense, multi-cursor, find and replace, minimap, breadcrumbs, peek definitions"],
-          ["Language Intelligence", "TypeScript/JS, Python, C/C++, Java, C#, HTML/CSS, JSON, Markdown, Git, dozens more"],
-          ["Extensions", "Complete VS Code extension pipeline -- bundled and native, compiled with 0 errors"],
-          ["Integrated Git", "Source control panel, diffs, staging, blame, history -- right in the app"],
-          ["AI Agent Bridge", "Agents operate the editor directly -- same workspace, real edits"],
-          ["Cross-Platform", "Windows (x64, arm64), macOS (x64, arm64), Linux (x64, arm64)"],
-        ],
-      },
-      { t: "h2", text: "Monaco AI Editor" },
-      {
-        t: "list",
-        items: [
-          "Double-click in the editor to activate AI",
-          "Floating AI button appears",
-          "Click -- AI generates code with live streaming",
-          "Supports: EN, BN, AR, JA, ZH, RU, KO, HI",
-        ],
-      },
-      { t: "h2", text: "Editor Stack" },
-      {
-        t: "code",
-        lang: "text",
-        code: "ZYRAXON Code (VS Code fork)\n  Monaco editor core (syntax, IntelliSense, theming)\n  100+ bundled language extensions (esbuild-compiled, 0 errors)\n  Native extensions: Git + Microsoft Authentication\n  Electron runtime (auto-downloaded)\n  Embedded via editor-server to desktop shell",
-      },
-    ],
-  },
-  {
-    slug: "code-installation",
-    title: "ZYRAXON Code Installation",
-    group: "ZYRAXON Code",
-    desc: "Download or build the standalone editor.",
-    blocks: [
-      { t: "h2", text: "Download" },
-      { t: "p", text: "Download from [Releases](https://github.com/onelpawarai-X/Zyraxon-Code/releases) for Windows, macOS, and Linux." },
-      { t: "h2", text: "Build From Source" },
-      {
-        t: "code",
-        lang: "bash",
-        code: "cd packages/zyraxon-code\nnpm install\nnpm run build           # Windows x64\nnpm run build:linux     # Linux x64\nnpm run build:mac       # macOS ARM64",
-      },
-      { t: "h2", text: "Build Commands" },
-      {
-        t: "table",
-        head: ["Command", "Platform"],
-        rows: [
-          ["npm run build:win", "Windows x64"],
-          ["npm run build:linux", "Linux x64"],
-          ["npm run build:mac", "macOS ARM64"],
-          ["npm run build:win-arm64", "Windows ARM64"],
-          ["npm run build:linux-arm64", "Linux ARM64"],
-          ["npm run build:mac-x64", "macOS Intel"],
-        ],
-      },
-      { t: "h2", text: "Product Identity" },
-      {
-        t: "table",
-        head: ["Property", "Value"],
-        rows: [
-          ["Name", "ZYRAXON Code"],
-          ["License", "BSL (Business Source License)"],
-          ["Bundle ID (macOS)", "com.zyraxon.code"],
-          ["Data Folder", ".zyraxon-code"],
-          ["Server App", "zyraxon-code-server"],
-        ],
-      },
-    ],
-  },
-
   // ─── FEATURES ───
   {
     slug: "architecture",
@@ -730,7 +538,7 @@ export const DOCS: DocPage[] = [
       {
         t: "code",
         lang: "text",
-        code: "ZYRAXON-AI/\n├── packages/\n│   ├── zyraxon/          # Core AI engine (805+ tools)\n│   │   ├── src/\n│   │   │   ├── agent/    # 9 agent modes\n│   │   │   ├── mcp/      # MCP servers + tools\n│   │   │   ├── tool/     # Core tools\n│   │   │   ├── x/        # 758+ domain tools\n│   │   │   ├── session/  # LLM streaming\n│   │   │   ├── screen/   # Vision system\n│   │   │   └── memory/   # Eternal memory\n│   ├── desktop/          # Electron app\n│   ├── app/              # SolidJS UI\n│   ├── ui/               # Shared components\n│   ├── core/             # Database, utilities\n│   ├── llm/              # 25+ provider routing\n│   └── session-ui/       # Session UI",
+        code: "ZYRAXON-AI/\n├── packages/\n│   ├── zyraxon/          # Core AI engine (805 tools, 63 categories)\n│   │   ├── src/\n│   │   │   ├── agent/    # 10 agent modes\n│   │   │   ├── mcp/      # MCP servers + tools\n│   │   │   ├── tool/     # Core tools\n│   │   │   ├── x/        # 758+ domain tools\n│   │   │   ├── session/  # LLM streaming\n│   │   │   ├── screen/   # Vision system\n│   │   │   └── memory/   # Eternal memory\n│   ├── desktop/          # Electron app\n│   ├── app/              # SolidJS UI\n│   ├── ui/               # Shared components\n│   ├── core/             # Database, utilities\n│   ├── llm/              # 25+ provider routing\n│   └── session-ui/       # Session UI",
       },
     ],
   },
@@ -796,17 +604,17 @@ export const DOCS: DocPage[] = [
         rows: [
           ["Desktop App", "Yes", "Yes", "No", "No", "No"],
           ["Embedded VS Code Editor", "Yes", "Yes", "Yes", "No", "No"],
-          ["9 Agent Modes", "Yes", "No", "No", "No", "No"],
+          ["10 Agent Modes", "Yes", "No", "No", "No", "No"],
           ["Self-Healing", "Yes", "No", "No", "Limited", "Limited"],
           ["Self-Evolution", "Yes", "No", "No", "No", "No"],
           ["Eternal Memory (50K+)", "Yes", "Limited", "Limited", "Limited", "Limited"],
           ["Desktop Automation", "Yes", "No", "No", "No", "No"],
           ["Screen Vision", "Yes", "No", "No", "Limited", "No"],
           ["Voice Communication", "Yes", "No", "No", "No", "No"],
-          ["805+ Tools Built-in", "Yes", "Limited", "Limited", "Limited", "Limited"],
+          ["805 Tools Built-in (63 categories)", "Yes", "Limited", "Limited", "Limited", "Limited"],
           ["224 Control Systems", "Yes", "No", "No", "No", "No"],
           ["25+ AI Providers", "Yes", "Limited", "Limited", "Limited", "Limited"],
-          ["Free & Open Source", "BSL 1.1", "Paid", "Paid", "Paid", "Yes"],
+          ["Free & Source-Available", "ZSL-X", "Paid", "Paid", "Paid", "Yes"],
         ],
       },
     ],
@@ -911,8 +719,8 @@ export const DOCS: DocPage[] = [
         t: "table",
         head: ["Status", "Feature"],
         rows: [
-          ["Shipped", "Beast / APEX / DARK EMPEROR modes, 805+ tools, 224 control systems, Vision, Eternal Memory, Self-Healing, YouTube streaming, Pro Builder"],
-          ["Planned", "Mobile companion app, Plugin marketplace, Team collaboration, Optional cloud sync"],
+          ["Shipped", "10 agent modes (incl. Beast / APEX / DARK EMPEROR / AUTO), 805 tools, 224 control systems, Vision, Eternal Memory, Self-Healing, YouTube streaming, Pro Builder"],
+          ["Planned", "Plugin marketplace, Team collaboration, Optional cloud sync"],
         ],
       },
     ],

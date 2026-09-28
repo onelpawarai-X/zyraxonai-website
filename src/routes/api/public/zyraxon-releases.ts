@@ -7,9 +7,7 @@ const CORS = {
 };
 
 const REPOS = [
-  { id: "zyraxon-agent", owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", description: "Desktop AI agent with 9 modes, 552+ tools, eternal memory, screen vision" },
-  { id: "myra-agent", owner: "onelpawarai-X", name: "Myra-Agent", label: "Myra Agent", color: "#f59e0b", description: "Android voice AI agent with multi-personality, Gemini Live, WhatsApp auto-reply" },
-  { id: "zyraxon-code", owner: "onelpawarai-X", name: "Zyraxon-Code", label: "ZYRAXON Code", color: "#7c3aed", description: "AI-powered code editor — VS Code fork with built-in AI assistant" },
+  { id: "zyraxon-agent", owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", description: "Desktop AI agent with 10 agent modes, 805 tools across 63 categories, eternal memory, screen vision" },
 ];
 
 type GhRelease = {

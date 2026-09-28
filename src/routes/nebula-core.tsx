@@ -41,7 +41,7 @@ const DEFAULT_FEATURES: ContentRow[] = [
     kind: "feature",
     title: "Dual Core Engine v19",
     subtitle: "Real-time Autonomous Coding Agent",
-    body: "Powered by 552+ tools and 9 specialized agent modes with screen vision and eternal memory.",
+    body: "Powered by 805 tools across 63 categories and 10 agent modes with screen vision and eternal memory.",
     badge: "CORE",
     accent: "#06b6d4",
     link_url: "https://github.com/onelpawarai-X/ZYRAXON-AI",
@@ -1135,13 +1135,6 @@ function ReleasesHubPanel() {
       ext: ".deb / .AppImage",
       arch: "x86_64",
       desc: "Ubuntu, Debian, Fedora, Arch",
-    },
-    {
-      os: "Android Mobile",
-      icon: "📱",
-      ext: ".apk",
-      arch: "Universal ARM",
-      desc: "Android 9.0+ Companion App",
     },
   ];
 
