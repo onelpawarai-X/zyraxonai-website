@@ -329,11 +329,13 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
       <a href="/ecosystem">Ecosystem</a>
       <a href="/publish">Publish</a>
       <a href="/releases">Releases</a>
+      <a href="/updates">Updates</a>
       <a href="/docs">Documentation</a>
       <a href="/bludar" class="accent">AI Bludar</a>
       <a href="/nebula" class="accent">NEBULA</a>
       <a href="https://onelpawarai.lovable.app" target="_blank" rel="noopener" class="accent">Founder</a>
       <a href="/zsl" class="accent">ZSL License</a>
+      <a href="/privacy-policy" class="accent">Privacy</a>
     </div>
     <button class="nav-mobile-toggle" id="navToggle" aria-label="Menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -399,40 +401,110 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
 
 <!-- LIVE FEATURES -->
 <style>
+.zx-live{padding:80px 0}
+.zx-live-top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:36px;flex-wrap:wrap}
+.zx-live-top .section-head{margin:0}
+.zx-live-all{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);text-decoration:none;padding:11px 20px;border:1px solid var(--border);border-radius:999px;transition:border-color .2s,transform .2s}
+.zx-live-all:hover{border-color:var(--accent);transform:translateX(3px)}
+.zx-live-all svg{width:15px;height:15px;stroke:var(--accent)}
+.zx-live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px}
+.zx-live-card{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface);transition:transform .25s,box-shadow .25s,border-color .25s}
+.zx-live-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:var(--border2)}
+.zx-live-media{position:relative;width:100%;background:var(--bg2);border-bottom:1px solid var(--border)}
+.zx-live-media img{width:100%;height:210px;object-fit:cover;display:block}
+.zx-live-media video{width:100%;display:block;max-height:340px;background:#000}
+.zx-live-frame{position:relative;width:100%;padding-top:56.25%;background:#000}
+.zx-live-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.zx-live-audio{padding:18px 20px;background:var(--bg2)}
+.zx-live-audio audio{width:100%}
+.zx-live-audio iframe{width:100%;height:132px;border:0}
+.zx-live-body{padding:22px 24px 24px;display:flex;flex-direction:column;gap:10px;flex:1}
+.zx-live-badge{align-self:flex-start;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid currentColor;opacity:.95}
+.zx-live-title{font-size:19px;font-weight:700;line-height:1.3}
+.zx-live-title a{color:inherit;text-decoration:none}
+.zx-live-sub{font-size:13.5px;color:var(--text-muted);line-height:1.5}
+.zx-live-text{font-size:14px;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.zx-live-foot{margin-top:auto;padding-top:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.zx-live-link{font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.zx-live-link:hover{text-decoration:underline}
+.zx-live-link svg{width:14px;height:14px;stroke:currentColor}
+.zx-live-perma{font-size:11px;color:var(--text-muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:none;border-bottom:1px dashed var(--border);transition:color .2s}
+.zx-live-perma:hover{color:var(--accent);border-color:var(--accent)}
 </style>
 <section id="live-features" class="zx-live" style="display:none">
   <div class="container">
-    <div class="section-head reveal">
-      <h2>Latest from <span class="gradient-text">ZYRAXON</span></h2>
-      <p>Fresh features, screenshots and announcements from the team.</p>
+    <div class="zx-live-top reveal">
+      <div class="section-head">
+        <h2>Latest from <span class="gradient-text">ZYRAXON</span></h2>
+        <p>Features, demos and announcements from the team. Every post has its own permanent link.</p>
+      </div>
+      <a class="zx-live-all" href="/updates">View all updates
+        <svg viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
     </div>
     <div class="zx-live-grid" id="zxLiveGrid"></div>
   </div>
 </section>
 <script>
-(async function(){
-  try{
-    const r=await fetch('/api/public/site-content');
-    const d=await r.json();
-    const items=(d&&d.items)||[];
-    if(!items.length) return;
-    const grid=document.getElementById('zxLiveGrid');
-    grid.innerHTML=items.map(function(it){
-      const accent=it.accent?('style="border-color:'+it.accent+';color:'+it.accent+'"'):'';
-      return '<article class="zx-live-card reveal">'
-        +(it.imageUrl?('<img src="'+it.imageUrl+'" alt="'+(it.title||'')+'" loading="lazy">'):'')
-        +'<div class="zx-live-body">'
-        +(it.badge?('<span class="zx-live-badge" '+accent+'>'+it.badge+'</span>'):'')
-        +'<div class="zx-live-title">'+(it.title||'')+'</div>'
-        +(it.subtitle?('<div class="zx-live-sub">'+it.subtitle+'</div>'):'')
-        +(it.body?('<div class="zx-live-text">'+it.body+'</div>'):'')
-        +(it.linkUrl?('<a class="zx-live-link" href="'+it.linkUrl+'" target="_blank" rel="noopener">Learn more</a>'):'')
-        +'</div></article>';
-    }).join('');
-    document.getElementById('live-features').style.display='block';
-  }catch(e){}
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  function media(it){
+    // 1) a pasted link that renders in place (YouTube, Vimeo, Loom, TikTok, X, Spotify, direct media)
+    if(it.embedUrl&&it.embedKind==='video'){
+      return '<div class="zx-live-media"><div class="zx-live-frame">'
+        +'<iframe src="'+esc(it.embedUrl)+'" title="'+esc(it.title)+'" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+        +'</div></div>';
+    }
+    if(it.embedUrl&&it.embedKind==='audio'){
+      return '<div class="zx-live-audio"><iframe src="'+esc(it.embedUrl)+'" title="'+esc(it.title)+'" loading="lazy" frameborder="no" scrolling="no" allow="autoplay; clipboard-write; encrypted-media; fullscreen"></iframe></div>';
+    }
+    if(it.embedUrl&&it.embedKind==='image'){
+      return '<div class="zx-live-media"><img src="'+esc(it.embedUrl)+'" alt="'+esc(it.title)+'" loading="lazy"></div>';
+    }
+    // 2) an uploaded file
+    if(it.imageUrl){
+      if(it.mediaType==='video'){
+        return '<div class="zx-live-media"><video src="'+esc(it.imageUrl)+'" controls playsinline preload="metadata"></video></div>';
+      }
+      if(it.mediaType==='audio'){
+        return '<div class="zx-live-audio"><audio src="'+esc(it.imageUrl)+'" controls preload="metadata"></audio></div>';
+      }
+      return '<div class="zx-live-media"><img src="'+esc(it.imageUrl)+'" alt="'+esc(it.title)+'" loading="lazy"></div>';
+    }
+    return '';
+  }
+
+  function card(it){
+    var accent=it.accent?' style="border-color:'+esc(it.accent)+';color:'+esc(it.accent)+'"':'';
+    var page=it.publicUrl||'';
+    var title=page?('<a href="'+esc(page)+'">'+esc(it.title)+'</a>'):esc(it.title);
+    return '<article class="zx-live-card reveal">'
+      +media(it)
+      +'<div class="zx-live-body">'
+      +(it.badge?'<span class="zx-live-badge"'+accent+'>'+esc(it.badge)+'</span>':'')
+      +'<div class="zx-live-title">'+title+'</div>'
+      +(it.subtitle?'<div class="zx-live-sub">'+esc(it.subtitle)+'</div>':'')
+      +(it.body?'<div class="zx-live-text">'+esc(it.body)+'</div>':'')
+      +'<div class="zx-live-foot">'
+      +(page?'<a class="zx-live-link" href="'+esc(page)+'">Read full update<svg viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></a>':'<span></span>')
+      +(page?'<a class="zx-live-perma" href="'+esc(page)+'" title="Permanent link — hand this to any AI to get the full record">'+esc(page.replace(/^https?:\/\/[^/]+/,''))+'</a>':'')
+      +'</div></div></article>';
+  }
+
+  fetch('/api/public/site-content')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var items=(d&&d.items)||[];
+      if(!items.length) return;
+      document.getElementById('zxLiveGrid').innerHTML=items.map(card).join('');
+      document.getElementById('live-features').style.display='block';
+    })
+    .catch(function(){});
 })();
 </script>
+
 
 <!-- FEATURES -->
 <section id="features">
@@ -812,7 +884,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
   <div class="container">
     <div class="oss reveal">
       <h2>Free &amp; <span class="gradient-text">Source-Available</span></h2>
-      <p>ZSL-X License v1.0.0 (Zyraxon Sovereign License) -- free to use, read and modify for commercial use. Expanded under MEKRA-X for enterprises.</p>
+      <p>ZSL-X License v2.0.0 (Zyraxon Sovereign License) -- free to use, read and modify for commercial use. Auto-transitions to MEKRA-X v2.0.0 in 2028.</p>
       <div class="oss-badges">
         <img alt="stars" src="https://img.shields.io/github/stars/onelpawarai-X/ZYRAXON-AI?style=for-the-badge&color=2563eb&labelColor=f8f9fb"/>
         <img alt="license" src="https://img.shields.io/badge/License-ZSL--X-7c3aed?style=for-the-badge&labelColor=f8f9fb"/>
@@ -917,6 +989,7 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
         <a href="/releases">All Releases</a>
         <a href="/docs">Documentation</a>
         <a href="/zsl">ZSL License</a>
+        <a href="/privacy-policy">Privacy Policy</a>
         <a href="https://zyraxonai-license.lovable.app" target="_blank" rel="noopener">License Portal</a>
         <a href="/nebula">NEBULA</a>
         <a href="/bludar">AI Bludar</a>
@@ -928,9 +1001,9 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
         <span class="footer-tagline">this will never own a domain. freedom doesn't need an address.</span>
       </div>
       <div class="footer-bottom-links">
+        <a href="/privacy-policy">Privacy</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/blob/main/LICENSE" target="_blank" rel="noopener">Terms</a>
-        <a href="#">Privacy</a>
-        <a href="#">Sitemap</a>
+        <a href="/docs">Docs</a>
       </div>
     </div>
   </div>

@@ -27,7 +27,7 @@ const FAQS = [
   },
   {
     q: "What is ZSL License?",
-    a: "ZSL (Zyraxon Source License) is our custom source-available license. ZSL-X v1.0.0 covers 2026-2028 and governs how ZYRAXON source code can be used and redistributed.",
+    a: "ZSL (Zyraxon Sovereign License) is our custom source-available license. ZSL-X v2.0.0 covers 2026-2028 and governs how ZYRAXON source code can be used and redistributed.",
   },
   {
     q: "Can I publish my own app to the marketplace?",

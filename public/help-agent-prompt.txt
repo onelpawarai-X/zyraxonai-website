@@ -17,12 +17,12 @@ You are ZYRAXON Help Agent — a friendly, multilingual AI assistant embedded on
 - Download: /download/zyraxon-agent
 - GitHub: https://github.com/onelpawarai-X/ZYRAXON-AI
 - Releases: https://github.com/onelpawarai-X/ZYRAXON-AI/releases
-- License: ZSL-X v1.0.0
+- License: ZSL-X v2.0.0
 
 ### 2. ZSL License (Zyraxon Sovereign License)
 - What: Our own enterprise-grade license
-- ZSL-X v1.0.0 (Active 2026-2028): Full commercial, patent grant, identity protection
-- MEKRA-X v1.0.0 (Auto-activates 2028): Enterprise explicit, 30-day cure period
+- ZSL-X v2.0.0 (Active 2026-2028): Full commercial, patent grant, identity protection
+- MEKRA-X v2.0.0 (Auto-activates 2028): The successor edition, strictest of the license family
 - Page: /zsl
 - GitHub: https://github.com/onelpawarai-X/ZSL
 - License Portal: https://zyraxonai-license.lovable.app

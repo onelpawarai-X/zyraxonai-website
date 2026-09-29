@@ -49,7 +49,7 @@ export const DOCS: DocPage[] = [
         head: ["Capability", "Details"],
         rows: [
           ["Agent Modes", "General, Build, Plan, Beast, PRO, APEX PREDATOR, DARK EMPEROR, Vision, Pro Builder, AUTO (10 total)"],
-          ["Total Tools", "805 tools across 63 categories (31 core + 521 domain + 224 real control systems + 8 ULTRA)"],
+          ["Total Tools", "805 registered tools across 63 categories (Free 126 + Pro 304 + Max 337 + Ultra 38)"],
           ["Control Systems", "224 real algorithms -- Aircraft (63), Car (18), Drone (15), Boat (15), Rocket (12), Robot (10), Algorithms (10), Core Tools (68), Systems (19)"],
           ["Memory", "Eternal -- SQLite WAL, ring buffer, 50K+ entries, survives reset"],
           ["Self-Healing", "Auto-installs missing tools and MCP servers at runtime"],
@@ -190,9 +190,9 @@ export const DOCS: DocPage[] = [
     blocks: [
       {
         t: "p",
-        text: "ZYRAXON includes **805 tools** across 63 categories: 31 core tools, 521 domain tools, 224 real control systems, and 8 ULTRA tools.",
+        text: "ZYRAXON includes **805 registered tools** across 63 categories. A 28-tool core engine powers the agent, while tier-gated domain tools unlock more as you go: Free (126), Pro (304), Max (337), and Ultra (38). Categories span aircraft, cars, drones, boats, rockets, robots, vehicles, security, aviation, marine, agriculture, construction, industrial, medical, sensors, SDR, space, and more.",
       },
-      { t: "h2", text: "Core Engine (31 Tools)" },
+      { t: "h2", text: "Core Engine (28 Tools)" },
       {
         t: "table",
         head: ["Tool", "Purpose"],
@@ -228,7 +228,7 @@ export const DOCS: DocPage[] = [
           ["invalid", "Fallback handler"],
         ],
       },
-      { t: "h2", text: "Domain Tools (521) -- 30+ Categories" },
+      { t: "h2", text: "Domain Tools -- 63 Categories" },
       {
         t: "table",
         head: ["Category", "Count"],
@@ -677,13 +677,13 @@ export const DOCS: DocPage[] = [
         ],
       },
       { t: "h2", text: "Licenses" },
-      { t: "h3", text: "ZSL-X v1.0.0 (Active 2026-2028)" },
+      { t: "h3", text: "ZSL-X v2.0.0 (Active 2026-2028)" },
       { t: "p", text: "The active license for all ZYRAXON projects. Full commercial rights, modification and fork rights, redistribution with attribution, patent grant from contributors, project identity protection, auto-transitions to MEKRA-X in 2028." },
-      { t: "h3", text: "MEKRA-X v1.0.0 (Auto-activates 2028)" },
-      { t: "p", text: "The next-generation license with enhanced enterprise rights (50+ employees), 30-day cure period for breaches, enhanced contributor protections, 72-hour security acknowledgment, and future transition path to NEXUS-X." },
+      { t: "h3", text: "MEKRA-X v2.0.0 (Auto-activates 2028)" },
+      { t: "p", text: "The successor edition and the strictest of the license family. Keeps the same generous core, adds explicit paid-tier protection, and keeps automatic termination for resale or rebranding." },
       { t: "h2", text: "How to Use" },
       { t: "p", text: "Reference in your project:" },
-      { t: "code", code: 'Licensed under the Zyraxon Sovereign License\n— X Edition (ZSL-X v1.0.0)\nSee https://github.com/onelpawarai-X/ZSL' },
+      { t: "code", code: 'Licensed under the Zyraxon Sovereign License\n— X Edition (ZSL-X v2.0.0)\nSee https://github.com/onelpawarai-X/ZSL' },
       { t: "p", text: "Or include the full license file from GitHub." },
       { t: "h2", text: "Links" },
       {
@@ -692,8 +692,8 @@ export const DOCS: DocPage[] = [
         rows: [
           ["Full License Page", "/zsl"],
           ["GitHub Repository", "github.com/onelpawarai-X/ZSL"],
-          ["ZSL-X Full Text", "github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE.txt"],
-          ["MEKRA-X Full Text", "github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE.txt"],
+          ["ZSL-X Full Text", "github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE"],
+          ["MEKRA-X Full Text", "github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE"],
         ],
       },
     ],

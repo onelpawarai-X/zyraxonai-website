@@ -27,9 +27,9 @@ const COMPARISON = [
   { feature: "Attribution required", zsl: true, mit: true, apache: true, gpl: true },
   { feature: "Identity protection", zsl: true, mit: false, apache: false, gpl: false },
   { feature: "Auto-transition to next-gen", zsl: true, mit: false, apache: false, gpl: false },
+  { feature: "Selling / rebranding prohibited", zsl: true, mit: false, apache: false, gpl: false },
   { feature: "Contributor protection", zsl: true, mit: false, apache: "Basic", gpl: "Basic" },
   { feature: "Security disclosure framework", zsl: true, mit: false, apache: false, gpl: false },
-  { feature: "Cure period (30 days)", zsl: "MEKRA-X", mit: false, apache: false, gpl: false },
   { feature: "Patent retaliation clause", zsl: true, mit: false, apache: true, gpl: true },
 ];
 
@@ -48,11 +48,11 @@ const FAQ = [
   },
   {
     q: "What happens on January 1, 2028?",
-    a: "All software under ZSL-X automatically transitions to MEKRA-X v1.0.0. No action needed. Software obtained before 2028 can stay under ZSL-X if you prefer.",
+    a: "All software under ZSL-X automatically transitions to MEKRA-X v2.0.0. No action needed. Software obtained before 2028 can stay under ZSL-X if you prefer.",
   },
   {
     q: "What if I breach the license?",
-    a: "Under MEKRA-X, you get a 30-day cure period to fix the breach. Under ZSL-X, termination is automatic.",
+    a: "Both editions terminate automatically on a material breach (Section 12) — for example selling the software or republishing a modified version as your own product. On termination you must stop distributing the software.",
   },
   {
     q: "Is there a patent risk?",
@@ -73,8 +73,8 @@ const PROJECTS_USING_ZSL = [
 ];
 
 const TIMELINE = [
-  { year: "2026", event: "ZSL-X v1.0.0 released", desc: "Active license for all ZYRAXON projects", active: true },
-  { year: "2028", event: "MEKRA-X v1.0.0 auto-activates", desc: "Enhanced enterprise rights, 30-day cure period, security framework", active: false },
+  { year: "2026", event: "ZSL-X v2.0.0 released", desc: "Active license for all ZYRAXON projects", active: true },
+  { year: "2028", event: "MEKRA-X v2.0.0 auto-activates", desc: "The successor edition — the strictest of the license family", active: false },
   { year: "2030+", event: "NEXUS-X transition available", desc: "Future-proof path with 180-day notice period", active: false },
 ];
 
@@ -138,7 +138,7 @@ function ZSLPage() {
         <div style={{ position: "relative", zIndex: 1, maxWidth: 700, margin: "0 auto" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 20, background: "#f3f0ff", border: "1px solid #e9e5ff", marginBottom: 24 }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#7c3aed", display: "inline-block", animation: "pulse 2s infinite" }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>ZSL-X v1.0.0 — Active 2026–2028</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>ZSL-X v2.0.0 — Active 2026–2028</span>
           </div>
           <h1 style={{ fontSize: 48, fontWeight: 800, color: "#111827", margin: "0 0 16px", letterSpacing: "-1.5px", lineHeight: 1.1 }}>
             Zyraxon Sovereign<br />License
@@ -164,7 +164,7 @@ function ZSLPage() {
           {[
             { value: "100%", label: "Commercial Freedom", color: "#059669" },
             { value: "Patent", label: "Grant Included", color: "#2563eb" },
-            { value: "30-Day", label: "Cure Period (MEKRA-X)", color: "#f59e0b" },
+            { value: "2", label: "Editions (ZSL-X + MEKRA-X)", color: "#f59e0b" },
             { value: "2028", label: "Auto-Transition", color: "#7c3aed" },
           ].map((s) => (
             <div key={s.label} style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, textAlign: "center" }}>
@@ -250,10 +250,10 @@ function ZSLPage() {
         {/* Tabs */}
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 32 }}>
           <button onClick={() => setActiveTab("zsl-x")} style={{ padding: "10px 24px", borderRadius: 8, border: "1px solid #e5e7eb", background: activeTab === "zsl-x" ? "#7c3aed" : "white", color: activeTab === "zsl-x" ? "white" : "#374151", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            ZSL-X v1.0.0
+            ZSL-X v2.0.0
           </button>
           <button onClick={() => setActiveTab("mekra-x")} style={{ padding: "10px 24px", borderRadius: 8, border: "1px solid #e5e7eb", background: activeTab === "mekra-x" ? "#7c3aed" : "white", color: activeTab === "mekra-x" ? "white" : "#374151", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            MEKRA-X v1.0.0
+            MEKRA-X v2.0.0
           </button>
         </div>
 
@@ -264,7 +264,7 @@ function ZSLPage() {
               <span style={{ padding: "4px 12px", borderRadius: 6, background: "#f3f0ff", color: "#7c3aed", fontSize: 12, fontWeight: 700 }}>ACTIVE</span>
               <span style={{ fontSize: 13, color: "#6b7280" }}>Valid 2026–2028</span>
             </div>
-            <h3 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 16px" }}>ZSL-X v1.0.0</h3>
+            <h3 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 16px" }}>ZSL-X v2.0.0</h3>
             <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 24px", lineHeight: 1.6 }}>
               The active license for all ZYRAXON projects. Grants full commercial, modification, and redistribution rights while protecting project identity and origin.
             </p>
@@ -284,7 +284,7 @@ function ZSLPage() {
               ))}
             </div>
             <div style={{ display: "flex", gap: 12 }}>
-              <a href="https://github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE.txt" target="_blank" rel="noopener noreferrer"
+              <a href="https://github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE" target="_blank" rel="noopener noreferrer"
                 style={{ padding: "10px 20px", borderRadius: 8, background: "#7c3aed", color: "white", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
                 Read Full Text
               </a>
@@ -301,18 +301,18 @@ function ZSLPage() {
               <span style={{ padding: "4px 12px", borderRadius: 6, background: "#fef3c7", color: "#b45309", fontSize: 12, fontWeight: 700 }}>SUCCESSOR</span>
               <span style={{ fontSize: 13, color: "#6b7280" }}>Auto-activates January 1, 2028</span>
             </div>
-            <h3 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 16px" }}>MEKRA-X v1.0.0</h3>
+            <h3 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 16px" }}>MEKRA-X v2.0.0</h3>
             <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 24px", lineHeight: 1.6 }}>
-              The next-generation license with enhanced enterprise rights, contributor protections, and a structured security disclosure framework.
+              The successor edition and the strictest of the license family. Keeps the same generous core as ZSL-X and preserves the same protections, with clear wording on tier protection, paid products around the software, and stricter scope.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginBottom: 24 }}>
               {[
                 "Everything in ZSL-X, plus:",
-                "Explicit enterprise use rights (50+ employees)",
-                "30-day cure period for breaches",
-                "Enhanced contributor protections",
-                "72-hour security acknowledgment",
-                "Future transition path to NEXUS-X",
+                "Explicit paid-tier protection (Section 2.2)",
+                "Clear line for paid products built around ZYRAXON",
+                "Contributor ownership with patent grant",
+                "Private security disclosure encouraged",
+                "Same automatic termination for resellers",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <CheckIcon />
@@ -321,7 +321,7 @@ function ZSLPage() {
               ))}
             </div>
             <div style={{ display: "flex", gap: 12 }}>
-              <a href="https://github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE.txt" target="_blank" rel="noopener noreferrer"
+              <a href="https://github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE" target="_blank" rel="noopener noreferrer"
                 style={{ padding: "10px 20px", borderRadius: 8, background: "#f59e0b", color: "white", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
                 Read Full Text
               </a>
@@ -369,12 +369,12 @@ function ZSLPage() {
             {
               title: "Reference in Your Project",
               desc: "Add a one-line reference to your LICENSE file or package.json.",
-              code: 'Licensed under the Zyraxon Sovereign License\n— X Edition (ZSL-X v1.0.0)\nSee https://github.com/onelpawarai-X/ZSL',
+              code: 'Licensed under the Zyraxon Sovereign License\n— X Edition (ZSL-X v2.0.0)\nSee https://github.com/onelpawarai-X/ZSL',
             },
             {
               title: "Include Full License",
-              desc: "Copy ZSL-X-LICENSE.txt into your project root as your LICENSE file.",
-              code: "curl -o LICENSE https://raw.githubusercontent.com/\nonelpawarai-X/ZSL/main/\nZSL-X-LICENSE.txt",
+              desc: "Copy ZSL-X-LICENSE into your project root as your LICENSE file.",
+              code: "curl -o LICENSE https://raw.githubusercontent.com/\nonelpawarai-X/ZSL/main/\nZSL-X-LICENSE",
             },
             {
               title: "npm / package.json",
@@ -411,7 +411,7 @@ function ZSLPage() {
                   <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{p.name}</span>
                 </div>
                 <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 12px" }}>{p.desc}</p>
-                <span style={{ fontSize: 11, fontWeight: 600, color: p.color, background: `${p.color}10`, padding: "3px 10px", borderRadius: 4 }}>ZSL-X v1.0.0</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: p.color, background: `${p.color}10`, padding: "3px 10px", borderRadius: 4 }}>ZSL-X v2.0.0</span>
               </a>
             ))}
           </div>
@@ -457,7 +457,7 @@ originally created by onelpawarai.
 Modifications have been made.
 
 Licensed under the Zyraxon Sovereign License
-— X Edition (ZSL-X v1.0.0).`}
+— X Edition (ZSL-X v2.0.0).`}
           </pre>
         </div>
       </section>
@@ -473,8 +473,8 @@ Licensed under the Zyraxon Sovereign License
             <a href="/" style={{ color: "#6b7280", textDecoration: "none" }}>Home</a>
             <a href="/faq" style={{ color: "#6b7280", textDecoration: "none" }}>FAQ</a>
             <a href="https://github.com/onelpawarai-X/ZSL" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>GitHub</a>
-            <a href="https://github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE.txt" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>ZSL-X</a>
-            <a href="https://github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE.txt" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>MEKRA-X</a>
+            <a href="https://github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>ZSL-X</a>
+            <a href="https://github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>MEKRA-X</a>
           </div>
         </div>
         <div style={{ maxWidth: 900, margin: "24px auto 0", paddingTop: 20, borderTop: "1px solid #f3f4f6", textAlign: "center" }}>

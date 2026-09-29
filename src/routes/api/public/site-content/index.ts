@@ -1,10 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { embedFor, mediaTypeOf, publicUrl } from "@/lib/content";
 
 /**
  * Public feed of everything the owner publishes from the Nebula "Feature Studio":
- * features, screenshots, announcements, changelog notes.
- * Images live in the private `site-content` bucket and are handed out as
- * short-lived signed URLs so the bucket never has to be public.
+ * features, screenshots, videos, audio, announcements, changelog notes.
+ *
+ * Media lives in the private `site-content` bucket and is handed out as
+ * short-lived signed URLs so the bucket never has to be public. `embedUrl` is
+ * resolved here so every surface (home page, permalink page, AI readers) gets
+ * the same rendered video/audio/link without duplicating the logic.
  */
 
 const HEADERS = {
@@ -12,7 +16,7 @@ const HEADERS = {
   "Cache-Control": "public, max-age=30",
 };
 
-export const Route = createFileRoute("/api/public/site-content")({
+export const Route = createFileRoute("/api/public/site-content/")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: HEADERS }),
@@ -51,7 +55,11 @@ export const Route = createFileRoute("/api/public/site-content")({
                 accent: row.accent,
                 linkUrl: row.link_url,
                 imageUrl: image,
+                embedUrl: embedFor(row.link_url),
+                mediaType: mediaTypeOf(row.image_url),
+                publicUrl: publicUrl(row),
                 createdAt: row.created_at,
+                updatedAt: row.updated_at,
               };
             }),
           );

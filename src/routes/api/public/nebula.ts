@@ -184,6 +184,7 @@ async function contentList() {
     .order("created_at", { ascending: false })
     .limit(300);
   if (error) return { items: [], error: error.message };
+  const { publicUrl, embedFor, mediaTypeOf } = await import("@/lib/content");
   const items = await Promise.all(
     ((data ?? []) as any[]).map(async (row) => {
       let preview = row.image_url as string | null;
@@ -191,7 +192,13 @@ async function contentList() {
         const s = await db.storage.from("site-content").createSignedUrl(preview, 3600);
         preview = s.data?.signedUrl ?? null;
       }
-      return { ...row, previewUrl: preview };
+      return {
+        ...row,
+        previewUrl: preview,
+        mediaType: mediaTypeOf(row.image_url),
+        publicUrl: publicUrl(row),
+        embedUrl: embedFor(row.link_url),
+      };
     }),
   );
   return { items };
@@ -225,7 +232,9 @@ async function contentSave(body: any) {
         .select()
         .single();
   const { data, error } = await q;
-  return error ? { error: error.message } : { ok: true, item: data };
+  if (error) return { error: error.message };
+  const { publicUrl } = await import("@/lib/content");
+  return { ok: true, item: data, publicUrl: data ? publicUrl(data) : null };
 }
 
 async function contentDelete(body: any) {
@@ -256,6 +265,60 @@ async function contentUpload(body: any) {
   return { ok: true, path: key, previewUrl: signed.data?.signedUrl ?? null };
 }
 
+const UPLOAD_EXT = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/avif": "avif",
+  "image/svg+xml": "svg",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
+  "video/ogg": "ogv",
+  "audio/mpeg": "mp3",
+  "audio/mp4": "m4a",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+  "audio/ogg": "ogg",
+  "audio/webm": "weba",
+  "audio/aac": "aac",
+  "audio/flac": "flac",
+} as Record<string, string>;
+
+/**
+ * Hands the browser a one-time signed upload URL so the raw file streams
+ * straight into the private `site-content` bucket. Video and audio never pass
+ * through this worker, which keeps them off the request body size limit.
+ */
+async function contentUploadTicket(body: any) {
+  const db = await admin();
+  const mime = String(body.mime || "").toLowerCase();
+  const ext = UPLOAD_EXT[mime] ?? String(body.ext || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  if (!ext) return { error: `Unsupported media type: ${mime || "unknown"}` };
+
+  const safeName = String(body.name || "upload")
+    .replace(/\.[^.]*$/, "")
+    .replace(/[^a-z0-9-]/gi, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 40)
+    .toLowerCase() || "upload";
+
+  const key = `uploads/${Date.now()}-${safeName}.${ext}`;
+  const { data, error } = await db.storage
+    .from("site-content")
+    .createSignedUploadUrl(key);
+  if (error) return { error: error.message };
+  if (!data?.signedUrl || !data.token) return { error: "Could not create upload URL" };
+
+  return {
+    ok: true,
+    path: key,
+    token: data.token,
+    signedUrl: data.signedUrl.replace("/upload/sign/", "/upload/sign/"),
+  };
+}
+
 async function handlePost(request: Request) {
   const body: any = await request.json().catch(() => ({}));
 
@@ -263,6 +326,8 @@ async function handlePost(request: Request) {
   if (body.action === "content.save") return Response.json(await contentSave(body), { headers: HEADERS });
   if (body.action === "content.delete") return Response.json(await contentDelete(body), { headers: HEADERS });
   if (body.action === "content.upload") return Response.json(await contentUpload(body), { headers: HEADERS });
+  if (body.action === "content.uploadTicket")
+    return Response.json(await contentUploadTicket(body), { headers: HEADERS });
 
   if (body.action !== "save") {
     return Response.json({ error: "Unknown action" }, { status: 400, headers: HEADERS });
