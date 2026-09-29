@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { loadPublishedContent, SITE_ORIGIN } from "@/lib/content.server";
+import { loadPublishedContent, SITE_ORIGIN, type PublicItem } from "@/lib/content.server";
 import { UpdateMedia, UpdateShell } from "./_ui";
 
 export const Route = createFileRoute("/updates/")({
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/updates/")({
 });
 
 function UpdatesIndex() {
-  const { items } = Route.useLoaderData();
+  const { items = [] } = Route.useLoaderData() ?? { items: [] };
 
   return (
     <UpdateShell>
@@ -48,8 +48,8 @@ function UpdatesIndex() {
           <p className="text-slate-600">No updates published yet.</p>
         </div>
       ) : (
-        <div className="grid gap-8 pb-16 sm:grid-cols-2">
-          {items.map((item) => (
+          <div className="grid gap-8 pb-16 sm:grid-cols-2">
+          {items.map((item: PublicItem) => (
             <article
               key={item.id}
               className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-lg"

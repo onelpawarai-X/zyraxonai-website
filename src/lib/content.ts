@@ -60,7 +60,7 @@ export function mediaTypeOf(value: string | null | undefined): MediaType {
 
 const ACCEPTED_MEDIA = "image/*,video/*,audio/*";
 
-export function acceptAttrFor(kind: "image" | "video" | "audio") {
+function acceptAttrFor(kind: "image" | "video" | "audio") {
   if (kind === "image") return "image/*";
   if (kind === "video") return "video/*";
   return "audio/*";

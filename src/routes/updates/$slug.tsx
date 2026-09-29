@@ -82,7 +82,7 @@ export const Route = createFileRoute("/updates/$slug")({
 });
 
 function UpdateDetail() {
-  const { item } = Route.useLoaderData();
+  const { item } = Route.useLoaderData() ?? { item: null };
 
   if (!item) return null;
 
