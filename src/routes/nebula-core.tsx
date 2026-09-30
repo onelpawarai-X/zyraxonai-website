@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import UpdatesStudio from "@/components/updates-studio";
 
 export const Route = createFileRoute("/nebula-core")({
   head: () => ({
@@ -17,9 +18,14 @@ export const Route = createFileRoute("/nebula-core")({
 });
 
 const KEY_STORAGE = "nebula.key";
-const FEATURES_STORAGE = "zyraxon.features.v2";
 const GITHUB_REPO = "onelpawarai-X/ZYRAXON-AI";
 const FALLBACK_REPO = "onelpawarai/ZYRAXON-AI";
+
+/** The unlocked access key, read by the shared content studio. */
+function getAccessKey() {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(KEY_STORAGE) ?? "";
+}
 
 export type ContentRow = {
   id: string;
@@ -34,33 +40,6 @@ export type ContentRow = {
   published: boolean;
   updatedAt: string;
 };
-
-const DEFAULT_FEATURES: ContentRow[] = [
-  {
-    id: "f-1",
-    kind: "feature",
-    title: "Dual Core Engine v19",
-    subtitle: "Real-time Autonomous Coding Agent",
-    body: "Powered by 805 tools across 63 categories and 10 agent modes with screen vision and eternal memory.",
-    badge: "CORE",
-    accent: "#06b6d4",
-    link_url: "https://github.com/onelpawarai-X/ZYRAXON-AI",
-    published: true,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "f-2",
-    kind: "announcement",
-    title: "Official Windows & Linux Support",
-    subtitle: "High-performance native desktop binaries",
-    body: "Download the latest pre-compiled installers directly from GitHub Releases.",
-    badge: "RELEASE",
-    accent: "#a855f7",
-    link_url: "https://github.com/onelpawarai-X/ZYRAXON-AI/releases",
-    published: true,
-    updatedAt: new Date().toISOString(),
-  },
-];
 
 type Tab = "studio" | "docs" | "explorer" | "releases" | "telemetry";
 
@@ -131,49 +110,41 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
 
   if (!unlocked) {
     return (
-      <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#02050e] px-4 font-sans text-cyan-50">
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/15 blur-[160px]" />
-        <div className="pointer-events-none absolute -bottom-32 right-10 h-[500px] w-[500px] rounded-full bg-fuchsia-600/15 blur-[160px]" />
-
-        <div className="relative w-full max-w-md rounded-3xl border border-cyan-400/25 bg-white/[0.04] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
+      <main className="flex min-h-screen w-full items-center justify-center bg-slate-50 px-4 font-sans text-slate-900">
+        <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           {onClose && (
             <button
               onClick={onClose}
-              className="absolute right-4 top-4 h-8 w-8 rounded-full border border-white/10 bg-white/5 text-sm text-cyan-200/60 transition hover:bg-white/10 hover:text-white"
+              aria-label="Close"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-900"
             >
-              ✕
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
             </button>
           )}
 
-          <div className="mb-6 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/40 bg-gradient-to-tr from-cyan-500/20 via-sky-500/10 to-fuchsia-500/20 shadow-[0_0_30px_rgba(6,182,212,0.3)]">
-              <span className="text-2xl">⚡</span>
-            </div>
-            <h1 className="bg-gradient-to-r from-cyan-300 via-sky-200 to-fuchsia-300 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
-              ZYRAXON NEBULA
-            </h1>
-            <p className="mt-1 text-xs uppercase tracking-widest text-cyan-200/60">
-              Autonomous Command Deck
-            </p>
-          </div>
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </span>
 
-          <form onSubmit={handleUnlock} className="space-y-4">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-cyan-200/70">
-                Security Passkey
-              </label>
-              <input
-                type="password"
-                value={key}
-                autoFocus
-                onChange={(e) => setKey(e.target.value)}
-                placeholder="Enter password (e.g. ZYRAXON)"
-                className="w-full rounded-xl border border-cyan-400/25 bg-black/60 px-4 py-3 text-sm text-cyan-50 outline-none placeholder:text-cyan-200/30 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.25)]"
-              />
-            </div>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900">Nebula Command Deck</h1>
+          <p className="mt-1.5 text-sm text-slate-600">Enter the access key to continue.</p>
+
+          <form onSubmit={handleUnlock} className="mt-6 space-y-4">
+            <input
+              type="password"
+              value={key}
+              autoFocus
+              onChange={(e) => setKey(e.target.value)}
+              placeholder="Access key"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10"
+            />
 
             {error && (
-              <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-2 text-center text-xs text-rose-300">
+              <p className="rounded-lg bg-rose-50 px-3 py-2 text-center text-xs font-semibold text-rose-700">
                 {error}
               </p>
             )}
@@ -181,70 +152,58 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
             <button
               type="submit"
               disabled={checking}
-              className="w-full rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 py-3 text-sm font-semibold tracking-wide text-black shadow-[0_0_25px_rgba(6,182,212,0.4)] transition hover:brightness-110 disabled:opacity-50"
+              className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
             >
-              {checking ? "Verifying..." : "Initialize Command Center"}
+              {checking ? "Verifying…" : "Unlock deck"}
             </button>
           </form>
 
-          <div className="mt-6 border-t border-white/5 pt-4 text-center">
-            <span className="text-[11px] text-cyan-200/40">
-              Direct GitHub sync target:{" "}
-              <code className="text-cyan-300">{GITHUB_REPO}</code>
-            </span>
-          </div>
+          <p className="mt-6 border-t border-slate-100 pt-4 text-center text-[11px] text-slate-400">
+            Connected to <code className="text-slate-500">{GITHUB_REPO}</code>
+          </p>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#02050e] font-sans text-cyan-50 selection:bg-cyan-500/30 selection:text-white">
-      {/* Background neon flares */}
-      <div className="pointer-events-none fixed -top-40 left-1/4 h-[650px] w-[650px] rounded-full bg-cyan-500/10 blur-[180px]" />
-      <div className="pointer-events-none fixed bottom-0 right-10 h-[550px] w-[550px] rounded-full bg-fuchsia-600/10 blur-[180px]" />
-
-      {/* Top HUD Header */}
-      <header className="sticky top-0 z-50 border-b border-cyan-400/20 bg-[#02050e]/85 px-6 py-3.5 backdrop-blur-2xl">
+    <main className="flex min-h-screen w-full flex-col overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased">
+      {/* Top header */}
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/85 px-6 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/40 bg-gradient-to-tr from-cyan-500/20 to-fuchsia-500/20">
-              <span className="text-sm">⚡</span>
-            </div>
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+            </span>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold tracking-wider text-white">
-                  ZYRAXON NEBULA
-                </span>
-                <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                  ONLINE · {ping}ms
-                </span>
-              </div>
-              <p className="text-[11px] text-cyan-200/50">
-                Connected to GitHub:{" "}
-                <span className="text-cyan-300 font-mono">{GITHUB_REPO}</span>
+              <p className="text-[15px] font-bold leading-tight tracking-tight text-slate-900">
+                Nebula Command Deck
+              </p>
+              <p className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Connected to <span className="font-mono">{GITHUB_REPO}</span>
               </p>
             </div>
           </div>
 
           {/* Tab Navigation */}
-          <nav className="flex flex-wrap items-center gap-1 rounded-2xl border border-cyan-400/20 bg-white/[0.04] p-1.5 backdrop-blur-xl">
+          <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-1">
             {(
               [
-                { id: "studio", label: "🚀 Feature Studio" },
-                { id: "docs", label: "📚 Live Docs (Auto)" },
-                { id: "releases", label: "📦 Releases & OS" },
-                { id: "explorer", label: "💻 Repo Explorer" },
-                { id: "telemetry", label: "⚡ Telemetry" },
+                { id: "studio", label: "Content Studio" },
+                { id: "docs", label: "Live Docs" },
+                { id: "releases", label: "Releases" },
+                { id: "explorer", label: "Repo Explorer" },
+                { id: "telemetry", label: "Health" },
               ] as const
             ).map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`rounded-xl px-3.5 py-1.5 text-xs font-medium transition ${
-                  tab === t.id
-                    ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                    : "text-cyan-100/70 hover:bg-white/5 hover:text-white"
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
+                  tab === t.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 {t.label}
@@ -256,10 +215,10 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
           <div className="flex items-center gap-2">
             <button
               onClick={handleLock}
-              className="rounded-xl border border-cyan-400/25 bg-white/5 px-3 py-1.5 text-xs text-cyan-200 hover:bg-white/10"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
               title="Lock deck"
             >
-              🔒 Lock
+              Lock
             </button>
             {onClose && (
               <button
@@ -290,410 +249,7 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
 /* ========================================================================== */
 
 function FeatureStudioPanel() {
-  const [items, setItems] = useState<ContentRow[]>([]);
-  const [form, setForm] = useState<Partial<ContentRow>>({
-    kind: "feature",
-    title: "",
-    subtitle: "",
-    body: "",
-    badge: "NEW",
-    accent: "#06b6d4",
-    link_url: "",
-    image_url: "",
-    published: true,
-  });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [statusMsg, setStatusMsg] = useState<string | null>(null);
-
-  // Load features from LocalStorage or Backend
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FEATURES_STORAGE);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setItems(parsed);
-          return;
-        }
-      }
-    } catch {}
-    setItems(DEFAULT_FEATURES);
-  }, []);
-
-  const saveFeaturesList = (updated: ContentRow[]) => {
-    setItems(updated);
-    try {
-      localStorage.setItem(FEATURES_STORAGE, JSON.stringify(updated));
-      window.dispatchEvent(new Event("zyraxon:content_updated"));
-    } catch {}
-
-    // Broadcast update across tabs
-    if (typeof BroadcastChannel !== "undefined") {
-      try {
-        const bc = new BroadcastChannel("zyraxon_live_sync");
-        bc.postMessage({ type: "features_updated", data: updated });
-        bc.close();
-      } catch {}
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title?.trim()) {
-      setStatusMsg("Please enter a title");
-      return;
-    }
-
-    if (editingId) {
-      const updated = items.map((it) =>
-        it.id === editingId
-          ? {
-              ...it,
-              ...form,
-              updatedAt: new Date().toISOString(),
-            }
-          : it
-      );
-      saveFeaturesList(updated as ContentRow[]);
-      setStatusMsg("Feature updated successfully!");
-      setEditingId(null);
-    } else {
-      const newItem: ContentRow = {
-        id: "feat-" + Date.now(),
-        kind: form.kind || "feature",
-        title: form.title || "",
-        subtitle: form.subtitle || "",
-        body: form.body || "",
-        badge: form.badge || "",
-        accent: form.accent || "#06b6d4",
-        link_url: form.link_url || "",
-        image_url: form.image_url || "",
-        published: form.published ?? true,
-        updatedAt: new Date().toISOString(),
-      };
-      saveFeaturesList([newItem, ...items]);
-      setStatusMsg("New feature published live!");
-    }
-
-    // Reset Form
-    setForm({
-      kind: "feature",
-      title: "",
-      subtitle: "",
-      body: "",
-      badge: "NEW",
-      accent: "#06b6d4",
-      link_url: "",
-      image_url: "",
-      published: true,
-    });
-    setTimeout(() => setStatusMsg(null), 3000);
-  };
-
-  const handleEdit = (it: ContentRow) => {
-    setEditingId(it.id);
-    setForm({ ...it });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleDelete = (id: string) => {
-    const filtered = items.filter((x) => x.id !== id);
-    saveFeaturesList(filtered);
-    setStatusMsg("Item deleted.");
-    setTimeout(() => setStatusMsg(null), 2500);
-  };
-
-  const handleToggle = (id: string) => {
-    const updated = items.map((x) =>
-      x.id === id ? { ...x, published: !x.published } : x
-    );
-    saveFeaturesList(updated);
-  };
-
-  return (
-    <div className="grid gap-6 lg:grid-cols-[440px_1fr]">
-      {/* Creation / Edit Form */}
-      <section className="rounded-3xl border border-cyan-400/25 bg-white/[0.03] p-6 shadow-2xl backdrop-blur-2xl">
-        <div className="mb-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white">
-              {editingId ? "Edit Item" : "Publish to Website"}
-            </h2>
-            <span className="rounded-full bg-cyan-400/10 px-2.5 py-0.5 text-[10px] font-mono uppercase text-cyan-300">
-              Live Instant Sync
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-cyan-200/50">
-            Publish announcements, models, and features. Syncs immediately across the app.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] font-medium text-cyan-200/60">Category</label>
-              <select
-                value={form.kind}
-                onChange={(e) => setForm({ ...form, kind: e.target.value as any })}
-                className="mt-1 w-full rounded-xl border border-cyan-400/20 bg-black/60 px-3 py-2 text-xs text-cyan-100 outline-none"
-              >
-                <option value="feature">Feature</option>
-                <option value="announcement">Announcement</option>
-                <option value="update">Update</option>
-                <option value="model">AI Model</option>
-                <option value="highlight">Highlight</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] font-medium text-cyan-200/60">Badge Text</label>
-              <input
-                type="text"
-                value={form.badge}
-                onChange={(e) => setForm({ ...form, badge: e.target.value })}
-                placeholder="e.g. NEW, PRO, V19"
-                className="mt-1 w-full rounded-xl border border-cyan-400/20 bg-black/60 px-3 py-2 text-xs text-cyan-100 outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] font-medium text-cyan-200/60">Title *</label>
-            <input
-              type="text"
-              required
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="e.g. Deep Code Synthesis v4"
-              className="mt-1 w-full rounded-xl border border-cyan-400/20 bg-black/60 px-3 py-2 text-xs text-cyan-100 outline-none focus:border-cyan-400"
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-medium text-cyan-200/60">Subtitle</label>
-            <input
-              type="text"
-              value={form.subtitle}
-              onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-              placeholder="Short one-line description"
-              className="mt-1 w-full rounded-xl border border-cyan-400/20 bg-black/60 px-3 py-2 text-xs text-cyan-100 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-medium text-cyan-200/60">Detailed Content</label>
-            <textarea
-              rows={3}
-              value={form.body}
-              onChange={(e) => setForm({ ...form, body: e.target.value })}
-              placeholder="Describe what's new, benefits, architecture..."
-              className="mt-1 w-full resize-none rounded-xl border border-cyan-400/20 bg-black/60 p-3 text-xs text-cyan-100 outline-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-[1fr_80px] gap-3">
-            <div>
-              <label className="text-[11px] font-medium text-cyan-200/60">Link URL</label>
-              <input
-                type="text"
-                value={form.link_url}
-                onChange={(e) => setForm({ ...form, link_url: e.target.value })}
-                placeholder="https://..."
-                className="mt-1 w-full rounded-xl border border-cyan-400/20 bg-black/60 px-3 py-2 text-xs text-cyan-100 outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-medium text-cyan-200/60">Accent</label>
-              <input
-                type="color"
-                value={form.accent || "#06b6d4"}
-                onChange={(e) => setForm({ ...form, accent: e.target.value })}
-                className="mt-1 h-9 w-full cursor-pointer rounded-xl border border-cyan-400/20 bg-black/60 p-1"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] font-medium text-cyan-200/60">Image URL (Optional)</label>
-            <input
-              type="text"
-              value={form.image_url}
-              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              placeholder="https://images.unsplash.com/... or media link"
-              className="mt-1 w-full rounded-xl border border-cyan-400/20 bg-black/60 px-3 py-2 text-xs text-cyan-100 outline-none"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type="checkbox"
-              id="pubToggle"
-              checked={form.published}
-              onChange={(e) => setForm({ ...form, published: e.target.checked })}
-              className="h-4 w-4 rounded accent-cyan-400"
-            />
-            <label htmlFor="pubToggle" className="text-xs text-cyan-200/80 cursor-pointer">
-              Publish immediately (visible to visitors)
-            </label>
-          </div>
-
-          {statusMsg && (
-            <p className="rounded-lg border border-cyan-400/30 bg-cyan-400/10 p-2 text-center text-xs text-cyan-300">
-              {statusMsg}
-            </p>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            <button
-              type="submit"
-              className="flex-1 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-fuchsia-400 py-2.5 text-xs font-semibold text-black transition hover:brightness-110"
-            >
-              {editingId ? "Update Feature" : "⚡ Publish Now"}
-            </button>
-            {editingId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setForm({
-                    kind: "feature",
-                    title: "",
-                    subtitle: "",
-                    body: "",
-                    badge: "NEW",
-                    accent: "#06b6d4",
-                    link_url: "",
-                    image_url: "",
-                    published: true,
-                  });
-                }}
-                className="rounded-xl border border-white/20 bg-white/5 px-4 text-xs text-cyan-200"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-      </section>
-
-      {/* Live Active Cards List & Preview */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <div>
-            <h3 className="text-sm font-semibold text-white">
-              Active Website Content ({items.length})
-            </h3>
-            <p className="text-xs text-cyan-200/50">
-              Real-time feed showing what visitors see on the main homepage
-            </p>
-          </div>
-          <button
-            onClick={() => saveFeaturesList([...DEFAULT_FEATURES])}
-            className="rounded-lg border border-cyan-400/20 bg-white/5 px-2.5 py-1 text-[11px] text-cyan-300 hover:bg-white/10"
-          >
-            Reset Defaults
-          </button>
-        </div>
-
-        {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-cyan-400/20 p-8 text-center text-sm text-cyan-200/50">
-            No features added yet. Use the form on the left to add one!
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {items.map((it) => (
-              <div
-                key={it.id}
-                style={{ borderColor: `${it.accent || "#06b6d4"}40` }}
-                className="group relative flex flex-col justify-between rounded-2xl border bg-white/[0.03] p-5 backdrop-blur-xl transition hover:border-cyan-400/60 hover:bg-white/[0.05]"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      style={{
-                        backgroundColor: `${it.accent || "#06b6d4"}20`,
-                        color: it.accent || "#06b6d4",
-                      }}
-                      className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                    >
-                      {it.kind}
-                    </span>
-
-                    <div className="flex items-center gap-1.5">
-                      {it.badge && (
-                        <span className="rounded-md border border-fuchsia-400/30 bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-300">
-                          {it.badge}
-                        </span>
-                      )}
-                      <button
-                        onClick={() => handleToggle(it.id)}
-                        className={`rounded-full px-2 py-0.5 text-[10px] ${
-                          it.published
-                            ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
-                            : "bg-rose-500/10 text-rose-300 border border-rose-500/30"
-                        }`}
-                      >
-                        {it.published ? "Active" : "Hidden"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <h4 className="mt-3 text-base font-semibold text-white">
-                    {it.title}
-                  </h4>
-                  {it.subtitle && (
-                    <p className="mt-0.5 text-xs text-cyan-200/70">{it.subtitle}</p>
-                  )}
-                  {it.body && (
-                    <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-cyan-200/50">
-                      {it.body}
-                    </p>
-                  )}
-
-                  {it.image_url && (
-                    <img
-                      src={it.image_url}
-                      alt={it.title}
-                      className="mt-3 max-h-32 w-full rounded-xl object-cover border border-white/10"
-                    />
-                  )}
-                </div>
-
-                <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3">
-                  {it.link_url ? (
-                    <a
-                      href={it.link_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[11px] text-cyan-300 hover:underline"
-                    >
-                      Visit link ↗
-                    </a>
-                  ) : (
-                    <span className="text-[11px] text-white/30">Local card</span>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEdit(it)}
-                      className="rounded-lg border border-cyan-400/30 bg-white/5 px-2.5 py-1 text-[11px] text-cyan-200 hover:bg-white/10"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(it.id)}
-                      className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-[11px] text-rose-300 hover:bg-rose-500/20"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
-  );
+  return <UpdatesStudio accessKey={getAccessKey()} />;
 }
 
 /* ========================================================================== */

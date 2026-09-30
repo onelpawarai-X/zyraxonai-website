@@ -39,7 +39,6 @@ import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public
 import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mcp-registry'
 import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
-import { Route as ApiPublicSiteContentRouteImport } from './routes/api/public/site-content'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
 import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/public/zyraxon-releases'
@@ -59,6 +58,8 @@ import { Route as ApiPublicNebulaSearchRouteImport } from './routes/api/public/n
 import { Route as ApiPublicProvidersIndexRouteImport } from './routes/api/public/providers/index'
 import { Route as ApiPublicProvidersProviderRouteImport } from './routes/api/public/providers/$provider'
 import { Route as ApiPublicSharesIndexRouteImport } from './routes/api/public/shares/index'
+import { Route as ApiPublicSiteContentIndexRouteImport } from './routes/api/public/site-content/index'
+import { Route as ApiPublicSiteContentSlugRouteImport } from './routes/api/public/site-content/$slug'
 import { Route as ApiPublicZyraxonSearchRouteImport } from './routes/api/public/zyraxon/search'
 import { Route as ApiSharesIdIndexRouteImport } from './routes/api/shares/$id/index'
 import { Route as ApiSharesIdDataRouteImport } from './routes/api/shares/$id/data'
@@ -223,11 +224,6 @@ const ApiPublicNpmPackagesRoute = ApiPublicNpmPackagesRouteImport.update({
   path: '/api/public/npm-packages',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicSiteContentRoute = ApiPublicSiteContentRouteImport.update({
-  id: '/api/public/site-content',
-  path: '/api/public/site-content',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
   id: '/api/public/stt',
   path: '/api/public/stt',
@@ -327,6 +323,18 @@ const ApiPublicSharesIndexRoute = ApiPublicSharesIndexRouteImport.update({
   path: '/api/public/shares/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSiteContentIndexRoute =
+  ApiPublicSiteContentIndexRouteImport.update({
+    id: '/api/public/site-content/',
+    path: '/api/public/site-content/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSiteContentSlugRoute =
+  ApiPublicSiteContentSlugRouteImport.update({
+    id: '/api/public/site-content/$slug',
+    path: '/api/public/site-content/$slug',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicZyraxonSearchRoute = ApiPublicZyraxonSearchRouteImport.update({
   id: '/api/public/zyraxon/search',
   path: '/api/public/zyraxon/search',
@@ -430,7 +438,6 @@ export interface FileRoutesByFullPath {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
-  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
@@ -448,11 +455,13 @@ export interface FileRoutesByFullPath {
   '/api/public/nebula/generate': typeof ApiPublicNebulaGenerateRoute
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
+  '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
   '/api/public/providers/': typeof ApiPublicProvidersIndexRoute
   '/api/public/shares/': typeof ApiPublicSharesIndexRoute
+  '/api/public/site-content/': typeof ApiPublicSiteContentIndexRoute
   '/api/shares/$id/': typeof ApiSharesIdIndexRoute
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
   '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
@@ -495,7 +504,6 @@ export interface FileRoutesByTo {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
-  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
@@ -513,11 +521,13 @@ export interface FileRoutesByTo {
   '/api/public/nebula/generate': typeof ApiPublicNebulaGenerateRoute
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
+  '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
   '/api/public/providers': typeof ApiPublicProvidersIndexRoute
   '/api/public/shares': typeof ApiPublicSharesIndexRoute
+  '/api/public/site-content': typeof ApiPublicSiteContentIndexRoute
   '/api/shares/$id': typeof ApiSharesIdIndexRoute
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
   '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
@@ -561,7 +571,6 @@ export interface FileRoutesById {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
-  '/api/public/site-content': typeof ApiPublicSiteContentRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
@@ -579,11 +588,13 @@ export interface FileRoutesById {
   '/api/public/nebula/generate': typeof ApiPublicNebulaGenerateRoute
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
+  '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
   '/api/public/providers/': typeof ApiPublicProvidersIndexRoute
   '/api/public/shares/': typeof ApiPublicSharesIndexRoute
+  '/api/public/site-content/': typeof ApiPublicSiteContentIndexRoute
   '/api/shares/$id/': typeof ApiSharesIdIndexRoute
   '/api/public/auth/github/callback': typeof ApiPublicAuthGithubCallbackRoute
   '/api/public/auth/github/logout': typeof ApiPublicAuthGithubLogoutRoute
@@ -628,7 +639,6 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
-    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
@@ -646,11 +656,13 @@ export interface FileRouteTypes {
     | '/api/public/nebula/generate'
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
+    | '/api/public/site-content/$slug'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
     | '/api/public/providers/'
     | '/api/public/shares/'
+    | '/api/public/site-content/'
     | '/api/shares/$id/'
     | '/api/public/auth/github/callback'
     | '/api/public/auth/github/logout'
@@ -693,7 +705,6 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
-    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
@@ -711,11 +722,13 @@ export interface FileRouteTypes {
     | '/api/public/nebula/generate'
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
+    | '/api/public/site-content/$slug'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
     | '/api/public/providers'
     | '/api/public/shares'
+    | '/api/public/site-content'
     | '/api/shares/$id'
     | '/api/public/auth/github/callback'
     | '/api/public/auth/github/logout'
@@ -758,7 +771,6 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
-    | '/api/public/site-content'
     | '/api/public/stt'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
@@ -776,11 +788,13 @@ export interface FileRouteTypes {
     | '/api/public/nebula/generate'
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
+    | '/api/public/site-content/$slug'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
     | '/api/public/providers/'
     | '/api/public/shares/'
+    | '/api/public/site-content/'
     | '/api/shares/$id/'
     | '/api/public/auth/github/callback'
     | '/api/public/auth/github/logout'
@@ -824,7 +838,6 @@ export interface RootRouteChildren {
   ApiPublicMcpRegistryRoute: typeof ApiPublicMcpRegistryRoute
   ApiPublicNebulaRoute: typeof ApiPublicNebulaRouteWithChildren
   ApiPublicNpmPackagesRoute: typeof ApiPublicNpmPackagesRoute
-  ApiPublicSiteContentRoute: typeof ApiPublicSiteContentRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
   ApiPublicZyraxonReleasesRoute: typeof ApiPublicZyraxonReleasesRoute
@@ -839,11 +852,13 @@ export interface RootRouteChildren {
   ApiPublicBuilderSitesRoute: typeof ApiPublicBuilderSitesRoute
   ApiPublicGithubPublishRoute: typeof ApiPublicGithubPublishRoute
   ApiPublicProvidersProviderRoute: typeof ApiPublicProvidersProviderRoute
+  ApiPublicSiteContentSlugRoute: typeof ApiPublicSiteContentSlugRoute
   ApiPublicZyraxonSearchRoute: typeof ApiPublicZyraxonSearchRoute
   ApiSharesIdDataRoute: typeof ApiSharesIdDataRoute
   ApiSharesIdSyncRoute: typeof ApiSharesIdSyncRoute
   ApiPublicProvidersIndexRoute: typeof ApiPublicProvidersIndexRoute
   ApiPublicSharesIndexRoute: typeof ApiPublicSharesIndexRoute
+  ApiPublicSiteContentIndexRoute: typeof ApiPublicSiteContentIndexRoute
   ApiSharesIdIndexRoute: typeof ApiSharesIdIndexRoute
   ApiPublicSharesIdDataRoute: typeof ApiPublicSharesIdDataRoute
   ApiPublicSharesIdSyncRoute: typeof ApiPublicSharesIdSyncRoute
@@ -1064,13 +1079,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNpmPackagesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/site-content': {
-      id: '/api/public/site-content'
-      path: '/api/public/site-content'
-      fullPath: '/api/public/site-content'
-      preLoaderRoute: typeof ApiPublicSiteContentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/stt': {
       id: '/api/public/stt'
       path: '/api/public/stt'
@@ -1202,6 +1210,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/shares'
       fullPath: '/api/public/shares/'
       preLoaderRoute: typeof ApiPublicSharesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/site-content/': {
+      id: '/api/public/site-content/'
+      path: '/api/public/site-content'
+      fullPath: '/api/public/site-content/'
+      preLoaderRoute: typeof ApiPublicSiteContentIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/site-content/$slug': {
+      id: '/api/public/site-content/$slug'
+      path: '/api/public/site-content/$slug'
+      fullPath: '/api/public/site-content/$slug'
+      preLoaderRoute: typeof ApiPublicSiteContentSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/zyraxon/search': {
@@ -1372,7 +1394,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMcpRegistryRoute: ApiPublicMcpRegistryRoute,
   ApiPublicNebulaRoute: ApiPublicNebulaRouteWithChildren,
   ApiPublicNpmPackagesRoute: ApiPublicNpmPackagesRoute,
-  ApiPublicSiteContentRoute: ApiPublicSiteContentRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
   ApiPublicZyraxonReleasesRoute: ApiPublicZyraxonReleasesRoute,
@@ -1387,11 +1408,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBuilderSitesRoute: ApiPublicBuilderSitesRoute,
   ApiPublicGithubPublishRoute: ApiPublicGithubPublishRoute,
   ApiPublicProvidersProviderRoute: ApiPublicProvidersProviderRoute,
+  ApiPublicSiteContentSlugRoute: ApiPublicSiteContentSlugRoute,
   ApiPublicZyraxonSearchRoute: ApiPublicZyraxonSearchRoute,
   ApiSharesIdDataRoute: ApiSharesIdDataRoute,
   ApiSharesIdSyncRoute: ApiSharesIdSyncRoute,
   ApiPublicProvidersIndexRoute: ApiPublicProvidersIndexRoute,
   ApiPublicSharesIndexRoute: ApiPublicSharesIndexRoute,
+  ApiPublicSiteContentIndexRoute: ApiPublicSiteContentIndexRoute,
   ApiSharesIdIndexRoute: ApiSharesIdIndexRoute,
   ApiPublicSharesIdDataRoute: ApiPublicSharesIdDataRoute,
   ApiPublicSharesIdSyncRoute: ApiPublicSharesIdSyncRoute,
