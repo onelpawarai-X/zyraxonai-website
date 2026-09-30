@@ -91,37 +91,32 @@ export function deleteContent(key: string, id: string) {
   return call(key, { action: "content.delete", id }) as Promise<{ ok?: boolean; error?: string }>;
 }
 
-export type UploadProgress = { phase: "preparing" | "uploading" | "done" };
+export type UploadProgress = { phase: "uploading" };
 
 /**
- * Streams the file straight into the private storage bucket using a one-time
- * signed URL, so video and audio never pass through the server request body.
+ * Sends the raw file to the server as multipart form-data.
+ *
+ * Earlier this went out as a base64 data URL in a JSON body, which inflated
+ * every file by a third and blew past the request body limit for anything but
+ * small images — that is why video and audio uploads never completed.
  */
 export async function uploadMedia(
   key: string,
   file: File,
   onProgress?: (p: UploadProgress) => void,
 ) {
-  onProgress?.({ phase: "preparing" });
-  const ticket = await call(key, {
-    action: "content.uploadTicket",
-    mime: file.type,
-    name: file.name,
-    ext: file.name.split(".").pop(),
-  }) as { error?: string; path?: string; token?: string; signedUrl?: string };
-
-  if (ticket.error || !ticket.signedUrl) throw new Error(ticket.error || "Could not start upload");
-
   onProgress?.({ phase: "uploading" });
-  const put = await fetch(ticket.signedUrl, {
-    method: "PUT",
-    headers: { "Content-Type": file.type, "x-upsert": "true" },
-    body: file,
-  });
-  if (!put.ok) throw new Error(`Upload failed (${put.status})`);
+  const body = new FormData();
+  body.append("file", file, file.name);
 
-  onProgress?.({ phase: "done" });
-  return ticket.path!;
+  const res = await fetch(ENDPOINT, {
+    method: "POST",
+    headers: { "x-nebula-key": key },
+    body,
+  });
+  const json = await res.json().catch(() => ({ error: "Unexpected response" }));
+  if (!res.ok || json.error) throw new Error(json.error || `Upload failed (${res.status})`);
+  return json.path as string;
 }
 
 /** Bucket paths are shown through the signed URL the API hands back. */

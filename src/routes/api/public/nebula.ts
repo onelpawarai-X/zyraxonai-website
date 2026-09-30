@@ -225,7 +225,9 @@ async function contentSave(body: any) {
         .select()
         .single();
   const { data, error } = await q;
-  return error ? { error: error.message } : { ok: true, item: data };
+  if (error) return { error: error.message };
+  const { publicUrl } = await import("@/lib/content");
+  return { ok: true, item: data, publicUrl: data ? publicUrl(data) : null };
 }
 
 async function contentDelete(body: any) {
@@ -237,32 +239,80 @@ async function contentDelete(body: any) {
   return error ? { error: error.message } : { ok: true };
 }
 
-async function contentUpload(body: any) {
+const UPLOAD_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/avif": "avif",
+  "image/svg+xml": "svg",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
+  "video/ogg": "ogv",
+  "audio/mpeg": "mp3",
+  "audio/mp3": "mp3",
+  "audio/mp4": "m4a",
+  "audio/x-m4a": "m4a",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+  "audio/ogg": "ogg",
+  "audio/webm": "weba",
+  "audio/aac": "aac",
+  "audio/flac": "flac",
+  "audio/x-flac": "flac",
+};
+
+/**
+ * Uploads one media file into the private `site-content` bucket.
+ *
+ * The browser posts raw bytes as multipart form-data instead of a base64 data
+ * URL: video and audio stay roughly a third of the size and skip the JSON body
+ * limit that made large uploads fail outright before.
+ */
+async function contentUploadForm(request: Request) {
   const db = await admin();
-  const raw = String(body.dataUrl || "");
-  const m = /^data:([^;]+);base64,(.+)$/.exec(raw);
-  if (!m) return { error: "Expected a base64 data URL" };
-  const mime = m[1]!;
-  const bin = atob(m[2]!);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  const ext = (mime.split("/")[1] || "bin").replace(/[^a-z0-9]/gi, "");
-  const key = `uploads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const form = await request.formData().catch(() => null);
+  const file = form?.get("file");
+  if (!(file instanceof File)) return { error: "No file received" };
+  if (file.size === 0) return { error: "The file is empty" };
+  if (file.size > 200 * 1024 * 1024) return { error: "File is larger than 200 MB" };
+
+  const mime = (file.type || "application/octet-stream").toLowerCase();
+  const ext = UPLOAD_EXT[mime];
+  if (!ext) return { error: `Unsupported media type: ${mime}` };
+
+  const safeName =
+    file.name
+      .replace(/\.[^.]*$/, "")
+      .replace(/[^a-z0-9-]/gi, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 40)
+      .toLowerCase() || "upload";
+
+  const key = `uploads/${Date.now()}-${safeName}.${ext}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
   const { error } = await db.storage
     .from("site-content")
     .upload(key, bytes, { contentType: mime, upsert: false });
   if (error) return { error: error.message };
+
   const signed = await db.storage.from("site-content").createSignedUrl(key, 3600);
   return { ok: true, path: key, previewUrl: signed.data?.signedUrl ?? null };
 }
 
 async function handlePost(request: Request) {
+  // Media arrives as multipart/form-data; every other command is JSON.
+  if ((request.headers.get("content-type") || "").includes("multipart/form-data")) {
+    return Response.json(await contentUploadForm(request), { headers: HEADERS });
+  }
+
   const body: any = await request.json().catch(() => ({}));
 
   if (body.action === "content.list") return Response.json(await contentList(), { headers: HEADERS });
   if (body.action === "content.save") return Response.json(await contentSave(body), { headers: HEADERS });
   if (body.action === "content.delete") return Response.json(await contentDelete(body), { headers: HEADERS });
-  if (body.action === "content.upload") return Response.json(await contentUpload(body), { headers: HEADERS });
 
   if (body.action !== "save") {
     return Response.json({ error: "Unknown action" }, { status: 400, headers: HEADERS });

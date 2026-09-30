@@ -128,7 +128,7 @@ export default function UpdatesStudio({ accessKey }: { accessKey: string }) {
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
-    setUploadPhase("preparing");
+    setUploadPhase("uploading");
     try {
       const path = await uploadMedia(accessKey, file, (p) => setUploadPhase(p.phase));
       setDraft((d) => ({ ...d, image_url: path }));
@@ -334,9 +334,7 @@ export default function UpdatesStudio({ accessKey }: { accessKey: string }) {
               ))}
             </div>
             {uploadPhase && (
-              <p className="mt-2 text-xs font-medium text-cyan-700">
-                {uploadPhase === "preparing" ? "Preparing secure upload…" : "Uploading to the cloud…"}
-              </p>
+              <p className="mt-2 text-xs font-medium text-cyan-700">Uploading to the cloud…</p>
             )}
             {draft.image_url && (
               <div className="mt-3 space-y-2">
