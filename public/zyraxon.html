@@ -188,6 +188,47 @@ tbody tr:hover{background:var(--bg2)}
 .com-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.06);border-color:rgba(0,0,0,.08)}
 .com-card .card-icon{margin:0 auto 18px}
 
+/* COMMUNITY ACT */
+.community-act{padding:80px 0}
+.ca-shell{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:48px;align-items:start}
+.ca-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px}
+.ca-panel h3{font-size:22px;font-weight:700;margin:0 0 6px}
+.ca-panel>p{font-size:14px;color:var(--text-secondary);line-height:1.65;margin:0 0 24px}
+.ca-field{display:block;margin-bottom:16px}
+.ca-field>span{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:7px}
+.ca-input{width:100%;padding:12px 14px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;outline:none;transition:border-color .2s,box-shadow .2s}
+.ca-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,0,0,.05)}
+.ca-input::placeholder{color:var(--text-muted)}
+.ca-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ca-consent{display:flex;align-items:flex-start;gap:10px;margin:4px 0 20px;font-size:12.5px;color:var(--text-secondary);line-height:1.6;cursor:pointer}
+.ca-consent input{width:16px;height:16px;margin-top:1px;accent-color:var(--accent);flex-shrink:0}
+.ca-submit{width:100%;padding:14px;font-size:14px;font-weight:700;font-family:inherit;color:#fff;background:var(--text);border:none;border-radius:10px;cursor:pointer;transition:opacity .2s,transform .2s}
+.ca-submit:hover{opacity:.88;transform:translateY(-1px)}
+.ca-submit:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.ca-msg{display:none;margin-top:14px;padding:11px 14px;border-radius:9px;font-size:13px;font-weight:600}
+.ca-msg.ok{display:block;background:rgba(16,185,129,.12);color:#047857}
+.ca-msg.err{display:block;background:rgba(239,68,68,.12);color:#b91c1c}
+.ca-right{min-width:0}
+.ca-count{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.ca-count b{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.ca-count span{font-size:13px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.1em}
+.ca-roster-title{font-size:24px;font-weight:700;margin:0 0 4px}
+.ca-roster-sub{font-size:14px;color:var(--text-secondary);margin:0 0 24px;line-height:1.6}
+.ca-marquee{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.ca-track{display:flex;gap:14px;width:max-content;animation:caScroll 42s linear infinite}
+.ca-marquee:hover .ca-track{animation-play-state:paused}
+@keyframes caScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ca-chip{display:flex;align-items:center;gap:11px;padding:11px 18px 11px 11px;background:var(--surface);border:1px solid var(--border);border-radius:999px;white-space:nowrap;transition:border-color .2s,transform .2s}
+.ca-chip:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ca-avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.ca-meta{display:flex;flex-direction:column;gap:1px}
+.ca-name{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.25}
+.ca-tag{font-size:11px;color:var(--text-muted);line-height:1.25}
+.ca-empty{padding:26px 22px;background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius-lg);font-size:14px;color:var(--text-secondary);line-height:1.65}
+@media(max-width:980px){.ca-shell{grid-template-columns:1fr;gap:32px}}
+@media(max-width:520px){.ca-row{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.ca-track{animation:none}}
+
 /* FOOTER */
 footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
 .footer-grid{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:32px;margin-bottom:48px}
@@ -850,9 +891,158 @@ footer{padding:60px 0 0;border-top:1px solid var(--border);background:var(--bg)}
         <h3>Contributing</h3>
         <p>Help build the future of AI coding. PRs welcome.</p>
       </a>
+      <a class="com-card reveal" href="#community-act">
+        <div class="card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>Community Act</h3>
+        <p>Join the official roster and stand with people building the future.</p>
+      </a>
     </div>
   </div>
 </section>
+
+<!-- COMMUNITY ACT -->
+<section id="community-act" class="community-act">
+  <div class="container">
+    <div class="ca-shell">
+      <div class="ca-panel reveal">
+        <h3>Join Community Act</h3>
+        <p>Register with your Gmail and appear in the official roster below — your profile goes live the moment you submit.</p>
+        <form id="caForm" novalidate>
+          <label class="ca-field">
+            <span>Full name</span>
+            <input class="ca-input" type="text" name="name" placeholder="Your name" autocomplete="name" required>
+          </label>
+          <label class="ca-field">
+            <span>Gmail address</span>
+            <input class="ca-input" type="email" name="email" placeholder="you@gmail.com" autocomplete="email" required>
+          </label>
+          <div class="ca-row">
+            <label class="ca-field">
+              <span>Role</span>
+              <input class="ca-input" type="text" name="role" placeholder="Developer" autocomplete="organization-title">
+            </label>
+            <label class="ca-field">
+              <span>Country</span>
+              <input class="ca-input" type="text" name="country" placeholder="Bangladesh" autocomplete="country-name">
+            </label>
+          </div>
+          <label class="ca-field">
+            <span>What do you build?</span>
+            <input class="ca-input" type="text" name="skills" placeholder="Agents, MCP tools, design...">
+          </label>
+          <label class="ca-consent">
+            <input type="checkbox" id="caConsent" required>
+            <span>My name, role and profile details will be shown publicly in the Community Act roster.</span>
+          </label>
+          <button class="ca-submit" type="submit" id="caSubmit">Join the roster</button>
+          <div class="ca-msg" id="caMsg"></div>
+        </form>
+      </div>
+
+      <div class="ca-right reveal">
+        <div class="ca-count">
+          <b id="caCount">0</b>
+          <span>people taking part</span>
+        </div>
+        <h3 class="ca-roster-title">Community Act roster</h3>
+        <p class="ca-roster-sub">Everyone who has joined, in the order they arrived.</p>
+        <div class="ca-marquee" id="caMarquee" style="display:none">
+          <div class="ca-track" id="caTrack"></div>
+        </div>
+        <div class="ca-empty" id="caEmpty">No members yet. Be the first to join Community Act.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+  var track=document.getElementById('caTrack');
+  var marquee=document.getElementById('caMarquee');
+  var empty=document.getElementById('caEmpty');
+  var countEl=document.getElementById('caCount');
+
+  var PALETTE=['#06b6d4','#7c3aed','#2563eb','#059669','#d97706','#db2777','#0ea5e9','#a855f7','#16a34a','#ea580c'];
+
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  function colourFor(id){
+    var n=0;var s=String(id||'');
+    for(var i=0;i<s.length;i++){n=(n+s.charCodeAt(i))%997;}
+    return PALETTE[n%PALETTE.length];
+  }
+
+  function chip(m){
+    var tag=[m.role||'Member'];
+    if(m.country) tag.push(m.country);
+    return '<div class="ca-chip">'
+      +'<span class="ca-avatar" style="background:'+colourFor(m.id)+'">'+esc(m.initial||'?')+'</span>'
+      +'<span class="ca-meta">'
+      +'<span class="ca-name">'+esc(m.name)+'</span>'
+      +'<span class="ca-tag">'+esc(tag.join(' · '))+'</span>'
+      +'</span></div>';
+  }
+
+  function render(members){
+    countEl.textContent=members.length;
+    if(!members.length){marquee.style.display='none';empty.style.display='block';return;}
+    empty.style.display='none';
+    marquee.style.display='block';
+    // Duplicated once so the -50% translation loops seamlessly.
+    var row=members.map(chip).join('');
+    track.innerHTML=row+row;
+  }
+
+  function load(){
+    fetch('/api/public/community-act')
+      .then(function(r){return r.json();})
+      .then(function(d){render((d&&d.members)||[]);})
+      .catch(function(){});
+  }
+
+  var form=document.getElementById('caForm');
+  var msg=document.getElementById('caMsg');
+  var submit=document.getElementById('caSubmit');
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    msg.className='ca-msg';
+
+    var fd=new FormData(form);
+    var payload={
+      name:fd.get('name'),
+      email:fd.get('email'),
+      role:fd.get('role'),
+      country:fd.get('country'),
+      skills:fd.get('skills'),
+      consent:document.getElementById('caConsent').checked
+    };
+
+    if(!payload.name||!payload.email){msg.textContent='Name and Gmail are required.';msg.className='ca-msg err';return;}
+
+    submit.disabled=true;
+    submit.textContent='Joining…';
+
+    fetch('/api/public/community-act',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    })
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.error){msg.textContent=d.error;msg.className='ca-msg err';return;}
+        form.reset();
+        msg.textContent='Welcome to Community Act, '+payload.name+'!';
+        msg.className='ca-msg ok';
+        load();
+      })
+      .catch(function(){msg.textContent='Could not save right now. Please try again.';msg.className='ca-msg err';})
+      .finally(function(){submit.disabled=false;submit.textContent='Join the roster';});
+  });
+
+  load();
+})();
+</script>
 
 <!-- FOOTER -->
 <footer>

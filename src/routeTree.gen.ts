@@ -32,6 +32,7 @@ import { Route as UpdatesIndexRouteImport } from './routes/updates/index'
 import { Route as UpdatesSlugRouteImport } from './routes/updates/$slug'
 import { Route as ApiGithubReposRouteImport } from './routes/api/github/repos'
 import { Route as ApiPublicCommunityRouteImport } from './routes/api/public/community'
+import { Route as ApiPublicCommunityActRouteImport } from './routes/api/public/community-act'
 import { Route as ApiPublicCommunityStoreRouteImport } from './routes/api/public/community-store'
 import { Route as ApiPublicDownloadsRouteImport } from './routes/api/public/downloads'
 import { Route as ApiPublicGithubDeviceRouteImport } from './routes/api/public/github-device'
@@ -187,6 +188,11 @@ const ApiGithubReposRoute = ApiGithubReposRouteImport.update({
 const ApiPublicCommunityRoute = ApiPublicCommunityRouteImport.update({
   id: '/api/public/community',
   path: '/api/public/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCommunityActRoute = ApiPublicCommunityActRouteImport.update({
+  id: '/api/public/community-act',
+  path: '/api/public/community-act',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicCommunityStoreRoute = ApiPublicCommunityStoreRouteImport.update({
@@ -431,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/updates/': typeof UpdatesIndexRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/community': typeof ApiPublicCommunityRoute
+  '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
@@ -497,6 +504,7 @@ export interface FileRoutesByTo {
   '/updates': typeof UpdatesIndexRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/community': typeof ApiPublicCommunityRoute
+  '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
@@ -564,6 +572,7 @@ export interface FileRoutesById {
   '/updates/': typeof UpdatesIndexRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/community': typeof ApiPublicCommunityRoute
+  '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
@@ -632,6 +641,7 @@ export interface FileRouteTypes {
     | '/updates/'
     | '/api/github/repos'
     | '/api/public/community'
+    | '/api/public/community-act'
     | '/api/public/community-store'
     | '/api/public/downloads'
     | '/api/public/github-device'
@@ -698,6 +708,7 @@ export interface FileRouteTypes {
     | '/updates'
     | '/api/github/repos'
     | '/api/public/community'
+    | '/api/public/community-act'
     | '/api/public/community-store'
     | '/api/public/downloads'
     | '/api/public/github-device'
@@ -764,6 +775,7 @@ export interface FileRouteTypes {
     | '/updates/'
     | '/api/github/repos'
     | '/api/public/community'
+    | '/api/public/community-act'
     | '/api/public/community-store'
     | '/api/public/downloads'
     | '/api/public/github-device'
@@ -831,6 +843,7 @@ export interface RootRouteChildren {
   UpdatesIndexRoute: typeof UpdatesIndexRoute
   ApiGithubReposRoute: typeof ApiGithubReposRouteWithChildren
   ApiPublicCommunityRoute: typeof ApiPublicCommunityRoute
+  ApiPublicCommunityActRoute: typeof ApiPublicCommunityActRoute
   ApiPublicCommunityStoreRoute: typeof ApiPublicCommunityStoreRoute
   ApiPublicDownloadsRoute: typeof ApiPublicDownloadsRoute
   ApiPublicGithubDeviceRoute: typeof ApiPublicGithubDeviceRoute
@@ -1028,6 +1041,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/community'
       fullPath: '/api/public/community'
       preLoaderRoute: typeof ApiPublicCommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/community-act': {
+      id: '/api/public/community-act'
+      path: '/api/public/community-act'
+      fullPath: '/api/public/community-act'
+      preLoaderRoute: typeof ApiPublicCommunityActRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/community-store': {
@@ -1387,6 +1407,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpdatesIndexRoute: UpdatesIndexRoute,
   ApiGithubReposRoute: ApiGithubReposRouteWithChildren,
   ApiPublicCommunityRoute: ApiPublicCommunityRoute,
+  ApiPublicCommunityActRoute: ApiPublicCommunityActRoute,
   ApiPublicCommunityStoreRoute: ApiPublicCommunityStoreRoute,
   ApiPublicDownloadsRoute: ApiPublicDownloadsRoute,
   ApiPublicGithubDeviceRoute: ApiPublicGithubDeviceRoute,
