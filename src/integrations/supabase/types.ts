@@ -151,39 +151,6 @@ export type Database = {
           },
         ]
       }
-      community_members: {
-        Row: {
-          consented_at: string | null
-          country: string | null
-          email: string
-          id: string
-          joined_at: string
-          name: string
-          role: string
-          skills: string | null
-        }
-        Insert: {
-          consented_at?: string | null
-          country?: string | null
-          email: string
-          id?: string
-          joined_at?: string
-          name: string
-          role?: string
-          skills?: string | null
-        }
-        Update: {
-          consented_at?: string | null
-          country?: string | null
-          email?: string
-          id?: string
-          joined_at?: string
-          name?: string
-          role?: string
-          skills?: string | null
-        }
-        Relationships: []
-      }
       ecosystem_items: {
         Row: {
           author_id: string
