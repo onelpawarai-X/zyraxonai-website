@@ -8,7 +8,7 @@ export const Route = createFileRoute("/updates/$slug")({
     return { item };
   },
   head: ({ loaderData }) => {
-    const item = loaderData.item;
+    const item = loaderData?.item;
     if (!item) {
       return {
         meta: [
