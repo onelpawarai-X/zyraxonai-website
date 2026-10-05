@@ -226,7 +226,7 @@ async function contentSave(body: any) {
         .single();
   const { data, error } = await q;
   if (error) return { error: error.message };
-  const saved = data as { id: string; title?: string | null } | null;
+  const saved = data as unknown as { id: string; title?: string | null } | null;
   const { publicUrl } = await import("@/lib/content");
   return { ok: true, item: saved, publicUrl: saved ? publicUrl(saved) : null };
 }
