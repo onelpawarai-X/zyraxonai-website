@@ -792,5 +792,5 @@ TOTALS
 
 --------------------------------------------------------------------------------
   END OF CATALOG - zyraxonai.lovable.app/docs/x-tools
-  (c) 2026 ZYRAXON-AI. ZSL-X License.
+  (c) 2026 ZYRAXON AI Inc. ZSL-X License.
 --------------------------------------------------------------------------------

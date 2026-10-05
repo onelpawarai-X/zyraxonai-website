@@ -110,13 +110,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ef568549-6bed-4ed5-9272-cf34647dd9d2",
+        content: "https://zyraxonai.lovable.app/zyraxon-logo.png",
       },
       {
         name: "twitter:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ef568549-6bed-4ed5-9272-cf34647dd9d2",
+        content: "https://zyraxonai.lovable.app/zyraxon-logo.png",
       },
     ],
     links: [
@@ -124,6 +122,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", href: "/zyraxon-logo.png" },
     ],
   }),
   shellComponent: RootShell,
