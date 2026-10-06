@@ -3,6 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 const REPO = "https://github.com/onelpawarai-X/SWE-bench-ZYRAXON-AI";
 const PAPER = "/swebench/zyraxon-swebench-verified.pdf";
 const PAPER_TEX = "/swebench/zyraxon-swebench-verified.tex";
+const SITE = "https://zyraxonai.lovable.app/swebench-verified";
+const POLICY = "https://github.com/swe-bench/experiments#-swe-bench-lite-verified-multilingual";
 
 export const Route = createFileRoute("/swebench-verified")({
   head: () => ({
@@ -128,9 +130,18 @@ function SwePage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href={PAPER}
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
             >
-              Download the paper (PDF)
+              Read the paper (PDF)
+            </a>
+            <a
+              href={PAPER}
+              download
+              className="rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700"
+            >
+              Download PDF
             </a>
             <a
               href={REPO}
@@ -178,8 +189,8 @@ function SwePage() {
             <h3 className="mt-2 text-xl font-bold text-slate-900">Deluar Husen Sayidi</h3>
             <p className="mt-1 text-sm text-slate-500">দেলোয়ার হুসেন সাইদি</p>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Lead author and maintainer of the ZYRAXON-AI SWE-bench Verified submission.
-              Responsible for the agent design, the evaluation harness and the results reported here.
+              First and corresponding author. Designed the ZYRAXON-AI agent, built the evaluation
+              harness and produced the results reported here.
             </p>
             <p className="mt-3 text-sm text-slate-600">
               ZYRAXON AI, Inc.
@@ -195,9 +206,7 @@ function SwePage() {
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <p className="text-xs font-bold tracking-widest text-cyan-600 uppercase">
-              Organization
-            </p>
+            <p className="text-xs font-bold tracking-widest text-cyan-600 uppercase">Organization</p>
             <h3 className="mt-2 text-xl font-bold text-slate-900">ZYRAXON AI, Inc.</h3>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
               The organization behind ZYRAXON-AI — a free, open-source desktop AI agent. It provides
@@ -216,14 +225,43 @@ function SwePage() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
-          <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">
-            Academic affiliation
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
+            <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">
+              Co-authors &amp; contributors
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Additional co-authors and contributors are being finalized and will be listed here and
+              in <code className={CODE}>metadata.yaml</code> before the leaderboard submission is
+              opened.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
+            <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">
+              Academic / research affiliation
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              SWE-bench Verified now requires at least one author affiliated with an academic
+              institution or established research lab. The affiliation is being finalized and will
+              appear here and in <code className={CODE}>metadata.yaml</code>.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50 p-6">
+          <p className="text-xs font-bold tracking-widest text-cyan-700 uppercase">
+            Leaderboard policy
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            This work is carried out in affiliation with an academic institution. The institution
-            name and the full contributor list are being finalized and will appear here and in{" "}
-            <code className={CODE}>metadata.yaml</code> before the leaderboard submission is opened.
+          <p className="mt-2 text-sm leading-relaxed text-cyan-900">
+            As of 18 November 2025, SWE-bench Verified accepts submissions only from academic teams
+            and research institutions with an open research publication (arXiv preprint or technical
+            report) and at least one author affiliated with an academic institution or established
+            research lab.{" "}
+            <a className="underline" href={POLICY} target="_blank" rel="noopener noreferrer">
+              Read the policy
+            </a>
+            . This submission provides the technical report (below) and is finalizing its academic
+            affiliation.
           </p>
         </div>
 
