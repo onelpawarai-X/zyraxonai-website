@@ -6,6 +6,36 @@ const PAPER_TEX = "/swebench/zyraxon-swebench-verified.tex";
 const SITE = "https://zyraxonai.lovable.app/swebench-verified";
 const POLICY = "https://github.com/swe-bench/experiments#-swe-bench-lite-verified-multilingual";
 
+// ---------------------------------------------------------------------------
+// Author data. Add a co-author here and the page, the JSON-LD and the citation
+// all update together. `affiliation` is the academic/research institution that
+// SWE-bench Verified requires from at least one author.
+// ---------------------------------------------------------------------------
+type Person = {
+  name: string;
+  native?: string;
+  role: string;
+  org: string;
+  affiliation?: string;
+  note: string;
+  link?: string;
+  email?: string;
+};
+
+const FIRST_AUTHOR: Person = {
+  name: "Deluar Husen Sayidi",
+  native: "দেলোয়ার হুসেন সাইদি",
+  role: "First author · Corresponding",
+  org: "ZYRAXON AI, Inc.",
+  note: "Designed the ZYRAXON-AI agent, built the evaluation harness and produced the results reported here.",
+  link: "https://github.com/onelpawarai-X",
+};
+
+// Add collaborators here as they join. Leave empty until real names are provided.
+const COAUTHORS: Person[] = [];
+
+const HAS_AFFILIATION = [FIRST_AUTHOR, ...COAUTHORS].some((p) => !!p.affiliation);
+
 export const Route = createFileRoute("/swebench-verified")({
   head: () => ({
     meta: [
@@ -32,7 +62,11 @@ export const Route = createFileRoute("/swebench-verified")({
           "@context": "https://schema.org",
           "@type": "ScholarlyArticle",
           headline: "ZYRAXON-AI v19.0.5 — SWE-bench Verified Technical Report",
-          author: { "@type": "Person", name: "Deluar Husen Sayidi" },
+          author: [FIRST_AUTHOR, ...COAUTHORS].map((p) => ({
+            "@type": "Person",
+            name: p.name,
+            ...(p.affiliation ? { affiliation: { "@type": "Organization", name: p.affiliation } } : {}),
+          })),
           publisher: { "@type": "Organization", name: "ZYRAXON AI, Inc." },
           about: "SWE-bench Verified",
         }),
@@ -182,47 +216,44 @@ function SwePage() {
           Authors &amp; Affiliations
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <p className="text-xs font-bold tracking-widest text-cyan-600 uppercase">
-              First author · Corresponding
-            </p>
-            <h3 className="mt-2 text-xl font-bold text-slate-900">Deluar Husen Sayidi</h3>
-            <p className="mt-1 text-sm text-slate-500">দেলোয়ার হুসেন সাইদি</p>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              First and corresponding author. Designed the ZYRAXON-AI agent, built the evaluation
-              harness and produced the results reported here.
-            </p>
-            <p className="mt-3 text-sm text-slate-600">
-              ZYRAXON AI, Inc.
-              <br />
-              <a
-                className="text-cyan-700 underline"
-                href="https://github.com/onelpawarai-X"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                github.com/onelpawarai-X
-              </a>
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <p className="text-xs font-bold tracking-widest text-cyan-600 uppercase">Organization</p>
-            <h3 className="mt-2 text-xl font-bold text-slate-900">ZYRAXON AI, Inc.</h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              The organization behind ZYRAXON-AI — a free, open-source desktop AI agent. It provides
-              the system, the tooling and the public artifacts for this submission.
-            </p>
-            <p className="mt-3 text-sm text-slate-600">
-              <a
-                className="text-cyan-700 underline"
-                href="https://github.com/onelpawarai-X/ZYRAXON-AI"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                ZYRAXON-AI on GitHub
-              </a>
-            </p>
-          </div>
+          {[FIRST_AUTHOR, ...COAUTHORS].map((p) => (
+            <div key={p.name} className="rounded-2xl border border-slate-200 bg-white p-6">
+              <p className="text-xs font-bold tracking-widest text-cyan-600 uppercase">{p.role}</p>
+              <h3 className="mt-2 text-xl font-bold text-slate-900">{p.name}</h3>
+              {p.native && <p className="mt-1 text-sm text-slate-500">{p.native}</p>}
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{p.note}</p>
+              <p className="mt-3 text-sm text-slate-600">
+                {p.affiliation ? (
+                  <>
+                    <strong>{p.affiliation}</strong>
+                    <br />
+                  </>
+                ) : null}
+                {p.org}
+                {p.link && (
+                  <>
+                    <br />
+                    <a
+                      className="text-cyan-700 underline"
+                      href={p.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {p.link.replace(/^https?:\/\//, "")}
+                    </a>
+                  </>
+                )}
+                {p.email && (
+                  <>
+                    <br />
+                    <a className="text-cyan-700 underline" href={`mailto:${p.email}`}>
+                      {p.email}
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
+          ))}
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -231,9 +262,9 @@ function SwePage() {
               Co-authors &amp; contributors
             </p>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Additional co-authors and contributors are being finalized and will be listed here and
-              in <code className={CODE}>metadata.yaml</code> before the leaderboard submission is
-              opened.
+              {COAUTHORS.length > 0
+                ? "Listed above with their affiliations."
+                : "Additional co-authors and contributors are being finalized and will be listed here and in metadata.yaml before the leaderboard submission is opened."}
             </p>
           </div>
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
@@ -241,9 +272,9 @@ function SwePage() {
               Academic / research affiliation
             </p>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              SWE-bench Verified now requires at least one author affiliated with an academic
-              institution or established research lab. The affiliation is being finalized and will
-              appear here and in <code className={CODE}>metadata.yaml</code>.
+              {HAS_AFFILIATION
+                ? "This submission includes at least one author affiliated with an academic institution or established research lab, as required by SWE-bench Verified."
+                : "SWE-bench Verified now requires at least one author affiliated with an academic institution or established research lab. The affiliation is being finalized and will appear here and in metadata.yaml."}
             </p>
           </div>
         </div>
@@ -425,7 +456,7 @@ python -m swebench.harness.run_evaluation \\
 {`@techreport{zyraxon2026swebench,
   title  = {ZYRAXON-AI v19.0.5: A Fully Local Desktop Coding Agent that
             Resolves 85.0% of SWE-bench Verified},
-  author = {Deluar Husen Sayidi and the ZYRAXON AI Team},
+  author = {Deluar Husen Sayidi},
   year   = {2026},
   url    = {https://github.com/onelpawarai-X/SWE-bench-ZYRAXON-AI}
 }`}
