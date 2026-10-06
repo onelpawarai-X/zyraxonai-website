@@ -430,6 +430,66 @@ attempt is empty, with a recovery pass at startup so that a crash mid-retry self
 This change alone recovered dozens of stranded patches.
 
 % ===========================================================================
+\section{Experimental Setup}
+\label{sec:setup}
+% ===========================================================================
+
+This section records the concrete configuration in which the results were
+produced, so that a reader can judge what would and would not reproduce.
+
+\begin{table}[H]
+\centering
+\caption{Software and configuration used for the reported run.}
+\label{tab:setup}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Item & Value \\
+\midrule
+System under test & ZYRAXON-AI v19.0.5 \\
+Agent runtime & Bun 1.3.14 / Electron 42 \\
+Local server & \texttt{http://127.0.0.1:4096} (HTTP basic auth) \\
+Model provider & OpenCode Zen (\texttt{opencode}) \\
+Attempts per instance & 2 (best-of-2; see \S\ref{sec:limitations}) \\
+Evaluation harness & \texttt{swebench} 3.0.12 (classic venv) \\
+Grader entry point & \texttt{swebench.harness.grading.get\_eval\_report} \\
+Container runtime & Docker with prebuilt \texttt{sweb.eval.x86\_64.*} images \\
+Dataset & \texttt{SWE-bench/SWE-bench\_Verified} (500 test instances) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two software-version facts are worth stating plainly. First, the evaluation harness
+used here is \texttt{swebench} 3.0.12, the version whose grader is invoked as
+\texttt{get\_eval\_report}; the current CLI (5.0.2) exposes a different command surface
+and does not yet ship the \texttt{submit} command group. Second, the Docker daemon
+required an MTU adjustment (1460) on this network to pull and start images reliably;
+without it, image pulls stalled intermittently, which manifested as spurious ``no logs''
+instances rather than as evaluation failures.
+
+\subsection{Prompt and observation model}
+
+For each instance the agent receives exactly two pieces of information: the issue text
+(the \texttt{problem\_statement} field) and the path to a checkout at the base commit.
+It receives no other benchmark field. In particular, the \texttt{FAIL\_TO\_PASS},
+\texttt{PASS\_TO\_PASS}, and \texttt{hints} fields are withheld from the agent and read
+only by the grader after the prediction has been frozen.
+
+The agent interacts with the checkout through its general tool surface: file reads,
+content searches, edits, and command execution. The prediction is the working-tree diff
+after the agent finishes, with newly created files staged so that they appear in the
+diff.
+
+\subsection{Retry and model rotation}
+
+A turn can fail for reasons that have nothing to do with the model's ability: a
+free-tier model may be rate-limited, a request may time out, or the local server may
+momentarily drop a connection. When that happens the harness does not count the instance
+as a failure. Instead it salvages any edits already present in the working tree; if none
+exist, it rotates to a different model and retries the instance once. This behaviour is
+the single most important thing to understand about the reported number, and it is why
+the run is labelled best-of-2.
+
+% ===========================================================================
 \section{Results}
 \label{sec:results}
 % ===========================================================================
@@ -574,6 +634,69 @@ recorded output, the marker lines must be kept.
 The strongest end-to-end check is to re-run the official harness on the published
 predictions. Section~\ref{sec:commands} gives the exact commands. The resolved count must
 again be 425.
+
+% ===========================================================================
+\section{Threats to Validity}
+\label{sec:threats}
+% ===========================================================================
+
+We enumerate the ways in which the reported result could be over-read, so that the
+reader does not have to.
+
+\subsection{Construct validity}
+
+The benchmark measures whether a patch makes the benchmark's chosen tests pass, not
+whether the patch is the \emph{correct} fix. A patch can pass every F2P and P2P test
+while being semantically wrong in ways the tests do not cover, and conversely a correct
+fix can fail if it changes behaviour that an unrelated test happens to assert. Our
+number is therefore a statement about test-passing behaviour on this benchmark, exactly
+as the benchmark defines it, and nothing stronger.
+
+\subsection{Internal validity}
+
+The main internal threat is the retry mechanism. Because a second attempt is allowed,
+the reported number is an upper bound on what a single attempt would achieve. We have
+quantified this: 174 of 500 instances used the second attempt. A reader who wants a
+pass@1 figure should treat 85.0\% as best-of-2 and not as pass@1.
+
+A second internal threat is grader configuration. We mitigate it by re-deriving every
+verdict from the recorded raw output with the official grader and by keeping the two
+extraction details (marker lines retained; stdout and stderr merged) that are required
+for the grader to see the tests at all.
+
+\subsection{External validity}
+
+The run uses free-tier models from a single provider. Those models change over time, so
+the exact model mix is not guaranteed to reproduce. The artifacts are frozen and remain
+verifiable regardless. The result is also specific to the Python repositories in
+SWE-bench Verified and says nothing about other languages or domains.
+
+\subsection{Statistical validity}
+
+With 500 instances the standard error of the resolved rate is roughly
+$\sqrt{0.85 \cdot 0.15 / 500} \approx 1.6$ percentage points. Differences smaller than a
+few points between systems should not be treated as meaningful without repeated runs.
+
+% ===========================================================================
+\section{Reproducibility Checklist}
+\label{sec:repro-checklist}
+% ===========================================================================
+
+\begin{itemize}[leftmargin=1.4em]
+  \item[\checkmark] \textbf{Predictions public.} All 500 predictions are in
+  \texttt{all\_preds.jsonl} and under \texttt{logs/<id>/patch.diff}.
+  \item[\checkmark] \textbf{Verdicts public.} Each instance has a \texttt{report.json}
+  produced by the official grader.
+  \item[\checkmark] \textbf{Raw test output public.} Each instance has
+  \texttt{test\_output.txt.gz}, the raw output of the official test command.
+  \item[\checkmark] \textbf{Reasoning traces public.} One trace per instance under
+  \texttt{trajs/}.
+  \item[\checkmark] \textbf{Re-derivable.} Re-grading the raw output reproduces all 500
+  verdicts with zero mismatches.
+  \item[\checkmark] \textbf{No test knowledge.} F2P/P2P/hints are used only by the grader.
+  \item[\checkmark] \textbf{No web lookup.} The solver has no browsing capability.
+  \item[\texttimes] \textbf{pass@1.} This run is best-of-2, not pass@1; declared as such.
+\end{itemize}
 
 % ===========================================================================
 \section{Limitations and Scope}
