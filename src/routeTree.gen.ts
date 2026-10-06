@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as BuilderRouteImport } from './routes/builder'
+import { Route as CommunityArtRouteImport } from './routes/community-art'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as NebulaRouteImport } from './routes/nebula'
 import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
@@ -19,6 +20,7 @@ import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as ReleasesRouteImport } from './routes/releases'
+import { Route as SwebenchVerifiedRouteImport } from './routes/swebench-verified'
 import { Route as ZslRouteImport } from './routes/zsl'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiHelpAgentRouteImport } from './routes/api/help-agent'
@@ -91,6 +93,11 @@ const BuilderRoute = BuilderRouteImport.update({
   path: '/builder',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityArtRoute = CommunityArtRouteImport.update({
+  id: '/community-art',
+  path: '/community-art',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
@@ -124,6 +131,11 @@ const PublishRoute = PublishRouteImport.update({
 const ReleasesRoute = ReleasesRouteImport.update({
   id: '/releases',
   path: '/releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SwebenchVerifiedRoute = SwebenchVerifiedRouteImport.update({
+  id: '/swebench-verified',
+  path: '/swebench-verified',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZslRoute = ZslRouteImport.update({
@@ -423,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/community-art': typeof CommunityArtRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
@@ -430,6 +443,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
@@ -491,6 +505,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/community-art': typeof CommunityArtRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
@@ -498,6 +513,7 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
@@ -560,6 +576,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
+  '/community-art': typeof CommunityArtRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
@@ -567,6 +584,7 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
@@ -630,6 +648,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/community-art'
     | '/faq'
     | '/nebula'
     | '/nebula-core'
@@ -637,6 +656,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
+    | '/swebench-verified'
     | '/zsl'
     | '/api/$'
     | '/api/help-agent'
@@ -698,6 +718,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/community-art'
     | '/faq'
     | '/nebula'
     | '/nebula-core'
@@ -705,6 +726,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
+    | '/swebench-verified'
     | '/zsl'
     | '/api/$'
     | '/api/help-agent'
@@ -766,6 +788,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bludar'
     | '/builder'
+    | '/community-art'
     | '/faq'
     | '/nebula'
     | '/nebula-core'
@@ -773,6 +796,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
+    | '/swebench-verified'
     | '/zsl'
     | '/api/$'
     | '/api/help-agent'
@@ -835,6 +859,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
+  CommunityArtRoute: typeof CommunityArtRoute
   FaqRoute: typeof FaqRoute
   NebulaRoute: typeof NebulaRoute
   NebulaCoreRoute: typeof NebulaCoreRoute
@@ -842,6 +867,7 @@ export interface RootRouteChildren {
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   PublishRoute: typeof PublishRoute
   ReleasesRoute: typeof ReleasesRoute
+  SwebenchVerifiedRoute: typeof SwebenchVerifiedRoute
   ZslRoute: typeof ZslRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiHelpAgentRoute: typeof ApiHelpAgentRoute
@@ -916,6 +942,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community-art': {
+      id: '/community-art'
+      path: '/community-art'
+      fullPath: '/community-art'
+      preLoaderRoute: typeof CommunityArtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/faq': {
       id: '/faq'
       path: '/faq'
@@ -963,6 +996,13 @@ declare module '@tanstack/react-router' {
       path: '/releases'
       fullPath: '/releases'
       preLoaderRoute: typeof ReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/swebench-verified': {
+      id: '/swebench-verified'
+      path: '/swebench-verified'
+      fullPath: '/swebench-verified'
+      preLoaderRoute: typeof SwebenchVerifiedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zsl': {
@@ -1407,6 +1447,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
+  CommunityArtRoute: CommunityArtRoute,
   FaqRoute: FaqRoute,
   NebulaRoute: NebulaRoute,
   NebulaCoreRoute: NebulaCoreRoute,
@@ -1414,6 +1455,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   PublishRoute: PublishRoute,
   ReleasesRoute: ReleasesRoute,
+  SwebenchVerifiedRoute: SwebenchVerifiedRoute,
   ZslRoute: ZslRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiHelpAgentRoute: ApiHelpAgentRoute,
