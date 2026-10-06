@@ -151,6 +151,60 @@ export type Database = {
           },
         ]
       }
+      community_members: {
+        Row: {
+          address: string | null
+          consented_at: string | null
+          country: string | null
+          email: string
+          email_verified: boolean
+          id: string
+          institution: string | null
+          joined_at: string
+          name: string
+          participation: string | null
+          phone: string | null
+          role: string
+          skills: string | null
+          social_links: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          consented_at?: string | null
+          country?: string | null
+          email: string
+          email_verified?: boolean
+          id?: string
+          institution?: string | null
+          joined_at?: string
+          name: string
+          participation?: string | null
+          phone?: string | null
+          role?: string
+          skills?: string | null
+          social_links?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          consented_at?: string | null
+          country?: string | null
+          email?: string
+          email_verified?: boolean
+          id?: string
+          institution?: string | null
+          joined_at?: string
+          name?: string
+          participation?: string | null
+          phone?: string | null
+          role?: string
+          skills?: string | null
+          social_links?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ecosystem_items: {
         Row: {
           author_id: string
@@ -447,6 +501,57 @@ export type Database = {
           position?: number
           published?: boolean
           subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      swebench_report: {
+        Row: {
+          authors: string | null
+          code_url: string | null
+          contribution: string | null
+          download_url: string | null
+          first_run: string | null
+          id: number
+          links_public: boolean
+          methodology: string | null
+          report_url: string | null
+          rerun: string | null
+          results_url: string | null
+          score: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          authors?: string | null
+          code_url?: string | null
+          contribution?: string | null
+          download_url?: string | null
+          first_run?: string | null
+          id?: number
+          links_public?: boolean
+          methodology?: string | null
+          report_url?: string | null
+          rerun?: string | null
+          results_url?: string | null
+          score?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          authors?: string | null
+          code_url?: string | null
+          contribution?: string | null
+          download_url?: string | null
+          first_run?: string | null
+          id?: number
+          links_public?: boolean
+          methodology?: string | null
+          report_url?: string | null
+          rerun?: string | null
+          results_url?: string | null
+          score?: string | null
           title?: string
           updated_at?: string
         }
