@@ -41,6 +41,7 @@ import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mc
 import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
+import { Route as ApiPublicSwebenchRouteImport } from './routes/api/public/swebench'
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
 import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/public/zyraxon-releases'
 import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
@@ -233,6 +234,11 @@ const ApiPublicNpmPackagesRoute = ApiPublicNpmPackagesRouteImport.update({
 const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
   id: '/api/public/stt',
   path: '/api/public/stt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSwebenchRoute = ApiPublicSwebenchRouteImport.update({
+  id: '/api/public/swebench',
+  path: '/api/public/swebench',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicVscodeMarketplaceRoute =
@@ -446,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
+  '/api/public/swebench': typeof ApiPublicSwebenchRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -513,6 +520,7 @@ export interface FileRoutesByTo {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
+  '/api/public/swebench': typeof ApiPublicSwebenchRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -581,6 +589,7 @@ export interface FileRoutesById {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
+  '/api/public/swebench': typeof ApiPublicSwebenchRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -650,6 +659,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
+    | '/api/public/swebench'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -717,6 +727,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
+    | '/api/public/swebench'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -784,6 +795,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
+    | '/api/public/swebench'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -852,6 +864,7 @@ export interface RootRouteChildren {
   ApiPublicNebulaRoute: typeof ApiPublicNebulaRouteWithChildren
   ApiPublicNpmPackagesRoute: typeof ApiPublicNpmPackagesRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
+  ApiPublicSwebenchRoute: typeof ApiPublicSwebenchRoute
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
   ApiPublicZyraxonReleasesRoute: typeof ApiPublicZyraxonReleasesRoute
   EcosystemItemIdRoute: typeof EcosystemItemIdRoute
@@ -1104,6 +1117,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/stt'
       fullPath: '/api/public/stt'
       preLoaderRoute: typeof ApiPublicSttRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/swebench': {
+      id: '/api/public/swebench'
+      path: '/api/public/swebench'
+      fullPath: '/api/public/swebench'
+      preLoaderRoute: typeof ApiPublicSwebenchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/vscode-marketplace': {
@@ -1416,6 +1436,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicNebulaRoute: ApiPublicNebulaRouteWithChildren,
   ApiPublicNpmPackagesRoute: ApiPublicNpmPackagesRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
+  ApiPublicSwebenchRoute: ApiPublicSwebenchRoute,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
   ApiPublicZyraxonReleasesRoute: ApiPublicZyraxonReleasesRoute,
   EcosystemItemIdRoute: EcosystemItemIdRoute,
