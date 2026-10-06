@@ -1089,37 +1089,8 @@ section{scroll-margin-top:80px}
     <div class="ca-shell">
       <div class="ca-panel reveal">
         <h3>Join Community Act</h3>
-        <p>Register with your Gmail and appear in the official roster below — your profile goes live the moment you submit.</p>
-        <form id="caForm" novalidate>
-          <label class="ca-field">
-            <span>Full name</span>
-            <input class="ca-input" type="text" name="name" placeholder="Your name" autocomplete="name" required>
-          </label>
-          <label class="ca-field">
-            <span>Gmail address</span>
-            <input class="ca-input" type="email" name="email" placeholder="you@gmail.com" autocomplete="email" required>
-          </label>
-          <div class="ca-row">
-            <label class="ca-field">
-              <span>Role</span>
-              <input class="ca-input" type="text" name="role" placeholder="Developer" autocomplete="organization-title">
-            </label>
-            <label class="ca-field">
-              <span>Country</span>
-              <input class="ca-input" type="text" name="country" placeholder="Bangladesh" autocomplete="country-name">
-            </label>
-          </div>
-          <label class="ca-field">
-            <span>What do you build?</span>
-            <input class="ca-input" type="text" name="skills" placeholder="Agents, MCP tools, design...">
-          </label>
-          <label class="ca-consent">
-            <input type="checkbox" id="caConsent" required>
-            <span>My name, role and profile details will be shown publicly in the Community Act roster.</span>
-          </label>
-          <button class="ca-submit" type="submit" id="caSubmit">Join the roster</button>
-          <div class="ca-msg" id="caMsg"></div>
-        </form>
+        <p>Verify your email, share how you contribute, and appear in the official roster.</p>
+        <a class="ca-submit" href="/community-art" target="_top" style="display:inline-block;text-align:center;text-decoration:none">Verify email &amp; join</a>
       </div>
 
       <div class="ca-right reveal">
@@ -1182,46 +1153,6 @@ section{scroll-margin-top:80px}
       .then(function(d){render((d&&d.members)||[]);})
       .catch(function(){});
   }
-
-  var form=document.getElementById('caForm');
-  var msg=document.getElementById('caMsg');
-  var submit=document.getElementById('caSubmit');
-
-  form.addEventListener('submit',function(e){
-    e.preventDefault();
-    msg.className='ca-msg';
-
-    var fd=new FormData(form);
-    var payload={
-      name:fd.get('name'),
-      email:fd.get('email'),
-      role:fd.get('role'),
-      country:fd.get('country'),
-      skills:fd.get('skills'),
-      consent:document.getElementById('caConsent').checked
-    };
-
-    if(!payload.name||!payload.email){msg.textContent='Name and Gmail are required.';msg.className='ca-msg err';return;}
-
-    submit.disabled=true;
-    submit.textContent='Joining…';
-
-    fetch('/api/public/community-act',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    })
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(d.error){msg.textContent=d.error;msg.className='ca-msg err';return;}
-        form.reset();
-        msg.textContent='Welcome to Community Act, '+payload.name+'!';
-        msg.className='ca-msg ok';
-        load();
-      })
-      .catch(function(){msg.textContent='Could not save right now. Please try again.';msg.className='ca-msg err';})
-      .finally(function(){submit.disabled=false;submit.textContent='Join the roster';});
-  });
 
   load();
 })();
