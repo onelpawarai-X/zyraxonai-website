@@ -107,7 +107,18 @@ const BY_YEAR: Row[] = [
   ["2023", 29, 30],
 ];
 
-const MODELS = ["deepseek-v4.1-flash", "deepseek-v4-flash"];
+const MODELS: [string, number][] = [
+  ["deepseek-v4.1-flash", 148],
+  ["deepseek-v4-flash", 83],
+  ["nemotron-3-ultra-free", 25],
+  ["fledge-alpha-free", 15],
+  ["nemotron-3.5-lightning-free", 12],
+  ["longcat-2.5-preview-free", 4],
+  ["ling-3.1-flash-free", 3],
+  ["mimo-v2.6-flash-free", 2],
+  ["space-bunny-free", 2],
+  ["big-pickle", 1],
+];
 
 const H2 = "mt-12 text-2xl font-bold tracking-tight text-slate-900";
 const P = "mt-3 text-[15px] leading-relaxed text-slate-600";
@@ -267,11 +278,11 @@ function SwePage() {
             Honesty note — this is best-of-2, not pass@1
           </h2>
           <p className="mt-2 text-[15px] leading-relaxed text-amber-900">
-            When a model turn fails for infrastructure reasons (timeout or dropped connection), the
-            harness rotates to a different model and retries once.{" "}
-            <strong>105 of the 300 instances used the second attempt.</strong> We therefore report
-            this run as best-of-2 and set the leaderboard field{" "}
-            <code className={CODE}>system.attempts</code> to <code className={CODE}>"2+"</code>. No
+            Each instance is attempted from a fresh checkout and, if the first model turn stalls
+            (timeout or dropped connection), the harness rotates to a different model and retries
+            once. <strong>105 of the 300 instances used the second attempt.</strong> The reported
+            96.67% is therefore best-of-2, not strict pass@1. We set the leaderboard field{" "}
+            <code className={CODE}>system.attempts</code> to <code className={CODE}>"2"</code>. No
             benchmark test knowledge is used to choose between attempts.
           </p>
         </div>
@@ -308,17 +319,19 @@ function SwePage() {
 
         <h2 className={H2}>Models actually used</h2>
         <p className={P}>
-          The provider is queried live and the model rotates on failure. Because more than one model
-          produced patches, the leaderboard reports{" "}
+          The provider is queried live and the model rotates on failure, so patches were produced by
+          several different models. The table below counts, for each model, how many of the 300
+          instances had their final frozen patch produced by that model; because more than one model
+          contributed, the leaderboard reports{" "}
           <code className={CODE}>model_display: Multiple</code>.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {MODELS.map((m) => (
+          {MODELS.map(([m, n]) => (
             <span
               key={m}
               className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-mono text-xs text-slate-700"
             >
-              {m}
+              {m} <span className="text-slate-400">×{n}</span>
             </span>
           ))}
         </div>

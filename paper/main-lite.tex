@@ -291,15 +291,29 @@ provider offers a rotating set of free models, and the agent queries the provide
 configuration to discover which models are currently active. At the time of this run the
 active models included:
 
+\begin{multicols}{2}
 \begin{itemize}[leftmargin=1.2em]
-  \item \texttt{deepseek-v4.1-flash}
-  \item \texttt{deepseek-v4-flash}
+  \item \texttt{deepseek-v4.1-flash} (148)
+  \item \texttt{deepseek-v4-flash} (83)
+  \item \texttt{nemotron-3-ultra-free} (25)
+  \item \texttt{fledge-alpha-free} (15)
+  \item \texttt{nemotron-3.5-lightning-free} (12)
+  \item \texttt{longcat-2.5-preview-free} (4)
+  \item \texttt{ling-3.1-flash-free} (3)
+  \item \texttt{mimo-v2.6-flash-free} (2)
+  \item \texttt{space-bunny-free} (2)
+  \item \texttt{big-pickle} (1)
 \end{itemize}
+\end{multicols}
+
+\noindent The number in parentheses is how many of the 300 instances had their
+final frozen patch produced by that model; the model provider is probed live and
+the harness rotates models on failure, so patches are multi-model.
 
 Free-tier models are rate-limited and occasionally stop responding. The agent therefore
 treats the model as a pool, not a constant: it probes candidates, caches a healthy
-winner, and rotates on failure. The models that actually produced patches during this run were
-\texttt{deepseek-v4.1-flash} (primary) and \texttt{deepseek-v4-flash} (second attempt). Because more than one model was used, the leaderboard
+winner, and rotates on failure. The models that actually produced the final frozen patch during this run, with the
+number of instances each was responsible for, are listed above. Because more than one model was used, the leaderboard
 metadata reports \texttt{model\_display: Multiple} and lists the models under
 \texttt{tags.model}.
 
