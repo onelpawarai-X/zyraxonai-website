@@ -325,6 +325,15 @@ function SwePage() {
           contributed, the leaderboard reports{" "}
           <code className={CODE}>model_display: Multiple</code>.
         </p>
+        <p className={P}>
+          All ten identifiers are standard <strong>OpenCode Zen</strong> catalogue entries (the same
+          provider, endpoint and <code className={CODE}>OPENCODE_API_KEY</code> as the rest of the
+          app): the eight with a <code className={CODE}>-free</code> suffix and{" "}
+          <code className={CODE}>big-pickle</code> are free-tier, while{" "}
+          <code className={CODE}>deepseek-v4.1-flash</code> and{" "}
+          <code className={CODE}>deepseek-v4-flash</code> are paid-tier models on the same provider.
+          ZYRAXON-AI trains and hosts none of them.
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {MODELS.map(([m, n]) => (
             <span

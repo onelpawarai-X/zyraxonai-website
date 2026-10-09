@@ -287,7 +287,7 @@ of its own; the only outbound traffic is the model provider's API calls.
 ZYRAXON-AI does not train its own model. It is a \emph{scaffold} that drives externally
 provided language models. The provider used for this run is \textbf{OpenCode Zen}
 (provider id \texttt{opencode}, authenticated with \texttt{OPENCODE\_API\_KEY}). The
-provider offers a rotating set of free models, and the agent queries the provider's live
+provider offers a rotating catalogue of free and paid models, and the agent queries the provider's live
 configuration to discover which models are currently active. At the time of this run the
 active models included:
 
@@ -310,7 +310,14 @@ active models included:
 final frozen patch produced by that model; the model provider is probed live and
 the harness rotates models on failure, so patches are multi-model.
 
-Free-tier models are rate-limited and occasionally stop responding. The agent therefore
+\noindent All ten identifiers are standard OpenCode Zen catalogue entries, listed in
+OpenCode's public model documentation: the eight with a \texttt{-free} suffix (and
+\texttt{big-pickle}) are offered at no cost, while \texttt{deepseek-v4.1-flash} and
+\texttt{deepseek-v4-flash} are paid-tier models on the same provider and endpoint
+(\texttt{https://opencode.ai/zen/v1}). No model is trained or hosted by ZYRAXON-AI;
+the agent's access to a given model is bounded only by the account's entitlements.
+
+Some models are rate-limited or occasionally stop responding. The agent therefore
 treats the model as a pool, not a constant: it probes candidates, caches a healthy
 winner, and rotates on failure. The models that actually produced the final frozen patch during this run, with the
 number of instances each was responsible for, are listed above. Because more than one model was used, the leaderboard
@@ -484,7 +491,7 @@ diff.
 \subsection{Retry and model rotation}
 
 A turn can fail for reasons that have nothing to do with the model's ability: a
-free-tier model may be rate-limited, a request may time out, or the local server may
+model may be rate-limited, a request may time out, or the local server may
 momentarily drop a connection. When that happens the harness does not count the instance
 as a failure. Instead it salvages any edits already present in the working tree; if none
 exist, it rotates to a different model and retries the instance once. This behaviour is
@@ -668,7 +675,7 @@ for the grader to see the tests at all.
 
 \subsection{External validity}
 
-The run uses free-tier models from a single provider. Those models change over time, so
+The run draws its models from a single provider, OpenCode Zen (a mix of free and paid tiers). Those models change over time, so
 the exact model mix is not guaranteed to reproduce. The artifacts are frozen and remain
 verifiable regardless. The result is also specific to the Python repositories in
 SWE-bench Lite and says nothing about other languages or domains.
@@ -721,7 +728,7 @@ used to choose between attempts.
 
 \subsection{Provider dependence}
 
-The agent depends on the OpenCode Zen free tier. Free models are rate-limited and change
+The agent depends on the OpenCode Zen provider. Models are rate-limited and change
 over time, so an exact replication of this run may not reproduce the identical model mix.
 The artifacts (patches, logs, verdicts) are frozen and fully verifiable regardless; what
 cannot be guaranteed is that a fresh run today will use the same models.
@@ -745,7 +752,7 @@ of task; mini-SWE-agent is a minimal reference implementation. ZYRAXON-AI differ
 these in that it is a general desktop agent whose tool surface and interface are built
 for interactive local use, and the benchmark run reported here is an application of that
 general agent rather than a purpose-built benchmark harness. On the model side, the
-free-tier models used here are drawn from the OpenCode Zen provider; the broader trend of
+models used here are drawn from the OpenCode Zen provider; the broader trend of
 open-weight coding models is what makes a fully local agent viable.
 
 % ===========================================================================
