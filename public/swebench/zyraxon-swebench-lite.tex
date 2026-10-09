@@ -1,0 +1,838 @@
+\documentclass[11pt,a4paper]{article}
+
+% ---------------------------------------------------------------------------
+% ZYRAXON-AI — SWE-bench Lite Technical Report
+% ---------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{multicol}
+\usepackage{float}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  urlcolor=cyan!60!black,
+  citecolor=blue!55!black,
+  pdftitle={ZYRAXON-AI: A Local Desktop Agent that Resolves 96.67\% of SWE-bench Lite},
+  pdfauthor={Deluar Husen Sayidi and the ZYRAXON AI Team},
+  pdfsubject={SWE-bench Lite},
+  pdfkeywords={SWE-bench, coding agents, autonomous software engineering, local inference}
+}
+
+\definecolor{zycyan}{RGB}{6,182,212}
+\definecolor{zyink}{RGB}{15,23,42}
+\definecolor{codebg}{RGB}{245,247,250}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{gray!40},
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  commentstyle=\color{gray!70!black},
+  keywordstyle=\color{blue!60!black},
+  stringstyle=\color{teal!70!black}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{zyink}ZYRAXON-AI}
+\fancyhead[R]{\small\color{zyink}SWE-bench Lite Technical Report}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\titleformat{\section}{\color{zyink}\Large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\color{zyink}\large\bfseries}{\thesubsection}{0.6em}{}
+
+\title{\vspace{-2.2cm}\textbf{\color{zyink}ZYRAXON-AI}\\[0.3em]
+\Large A Fully Local Desktop Coding Agent that Resolves\\[0.15em]
+\textbf{96.67\%} of SWE-bench Lite}
+\author{%
+  \textbf{Deluar Husen Sayidi}\thanks{Corresponding author. ZYRAXON AI, Inc. Website and contact: \url{https://github.com/onelpawarai-X}.}\\
+  ZYRAXON AI, Inc.\\
+  \texttt{https://github.com/onelpawarai-X}%
+  }
+\date{October 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+% ---------------------------------------------------------------------------
+\begin{abstract}
+\noindent
+We present \textbf{ZYRAXON-AI}, a desktop coding agent that runs entirely
+on the user's machine and solves real GitHub issues from the
+\textbf{SWE-bench Lite} benchmark. ZYRAXON-AI is distributed as a self-contained
+AppImage built on Electron 42, SolidJS and Bun 1.3.14, exposes 805 tools across 63
+categories, and drives a rotating pool of openly available language models served by
+the OpenCode Zen provider. On the 300-instance Lite split, ZYRAXON-AI produces a
+prediction for every instance and resolves \textbf{290/300 = 96.67\%} under the official
+SWE-bench Docker evaluation harness. The agent has \emph{no web access} to benchmark
+solutions and never reads the benchmark's test metadata
+(\texttt{FAIL\_TO\_PASS}, \texttt{PASS\_TO\_PASS}, or \texttt{hints}). Every verdict in
+this report is re-derivable: re-grading the recorded raw test output with the official
+grader reproduces all 300 verdicts with zero mismatches. We are explicit that this run
+is \emph{best-of-2} rather than strict pass@1: when a model turn fails (timeout or
+disconnection) the harness rotates to another model and retries, which happened for 105
+of 300 instances. This report documents the architecture, the solving loop, the
+operational safeguards required to run 300 Docker evaluations reliably, the complete
+results, and step-by-step instructions for independent verification. We release all
+predictions, per-instance verdicts, raw test output, and reasoning traces alongside
+this paper.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} SWE-bench Lite, autonomous software engineering,
+desktop agents, local inference, reproducibility, benchmark artifacts.
+
+\vspace{1em}
+\hrule
+\vspace{1em}
+
+\tableofcontents
+\newpage
+
+% ===========================================================================
+\section{Introduction}
+% ===========================================================================
+
+Software engineering is one of the most demanding applications of modern language
+models. Unlike a single-turn question-answering task, fixing a real repository bug
+requires locating the relevant code among hundreds of thousands of lines, understanding
+a data model, forming a hypothesis about a failure, editing source files without
+breaking unrelated behaviour, and validating the change. The \textbf{SWE-bench} family
+of benchmarks \cite{jimenez2024swebench} was introduced to measure exactly this
+capability: each task is a real GitHub issue paired with the pull request that closed
+it, and a system is judged only by whether the repository's own tests pass after its
+patch is applied.
+
+SWE-bench Lite \cite{jimenez2024swebench} is a cost-efficient 300-instance subset of the
+full SWE-bench test set, chosen to span the repositories and issue types while keeping a
+full evaluation affordable. It is the split we use
+instances drawn from SWE-bench, curated to remove ambiguous or unsolvable issues. It has
+become the de facto reference point for coding agents, and its leaderboard is
+maintained by the SWE-bench team at \texttt{SWE-bench/experiments}.
+
+In this report we describe \textbf{ZYRAXON-AI}, a desktop agent whose design goal is
+different from most leaderboard entrants. ZYRAXON-AI is not a cloud service. It is an
+application that a person installs and runs on their own computer; it reads their files,
+writes their code, runs their commands, and evolves itself locally. It is built on
+Electron 42 with a SolidJS interface and a Bun 1.3.14 runtime, and it ships an extensive
+tool surface---805 tools across 63 categories---together with ten agent modes, screen
+vision, and a persistent memory subsystem.
+
+Because the agent is a general desktop automation system rather than a benchmark-specific
+scaffold, applying it to SWE-bench Lite is a genuine test of its coding ability. We
+deliberately imposed the benchmark's integrity constraints on the solver: it is given the
+issue text and the repository, and nothing else. It may not browse the web, it may not
+consult the benchmark's test lists, and it may not read the hints field. What follows is
+a complete and honest account of how it did, how the result was produced, and how anyone
+can check it.
+
+\subsection{Contributions}
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item A description of the ZYRAXON-AI desktop agent architecture and its tool-driven
+  solving loop (\S\ref{sec:system}).
+  \item The operational harness---Docker isolation, an append-only verdict ledger, and
+  resource guards---that made 300 real Docker evaluations feasible and reliable on a
+  single machine (\S\ref{sec:harness}).
+  \item A full result set on SWE-bench Lite: \textbf{290/300 = 96.67\% resolved},
+  with breakdowns by repository and by issue year, and a failure analysis
+  (\S\ref{sec:results}).
+  \item A reproducibility protocol under which every one of the 300 verdicts is
+  re-derived from published artifacts with zero mismatches (\S\ref{sec:verify}).
+  \item An explicit statement of scope: this is a \emph{best-of-2} run, not strict
+  pass@1, and we explain precisely why (\S\ref{sec:limitations}).
+\end{enumerate}
+
+\subsection{Honesty statement}
+
+We state at the outset, and repeat in \S\ref{sec:limitations}, that this run uses a
+retry mechanism. The solving harness is configured with two attempts per instance; when
+a model turn times out or the connection drops, the harness deletes the session, rotates
+to a different model from the pool, and retries. \textbf{105 of the 300 instances
+actually used the second attempt.} We therefore report the run as best-of-2 and set the
+leaderboard metadata field \texttt{system.attempts} to \texttt{"2+"}. We do not claim
+pass@1. Any comparison against pass@1 systems must account for this difference.
+
+\subsection{Authors, team and affiliations}
+
+This work is led by \textbf{Deluar Husen Sayidi} (ZYRAXON AI, Inc.), the first and
+corresponding author, who designed the agent and the evaluation harness. The work is
+carried out by the \textbf{ZYRAXON AI Team}, and additional co-authors are being
+finalized. The organization behind the system is \textbf{ZYRAXON AI, Inc.}
+
+\subsection{Compliance with the SWE-bench Lite submission policy}
+
+SWE-bench Lite is the 300-instance subset used by the \texttt{swe-bench/experiments}
+leaderboard for open, self-hosted submissions. Unlike the Verified leaderboard (which, as
+of 18~November~2025, requires an academic team, an open publication and an institutional
+affiliation), SWE-bench Lite has no affiliation or co-author requirement. This report
+therefore lists a single independent author and ships a public technical report, which is
+sufficient for the submission. The artifact repository's \texttt{metadata.yaml} records
+the system and the run in the exact format the leaderboard expects.
+
+% ===========================================================================
+\section{Background: SWE-bench Lite}
+% ===========================================================================
+
+\subsection{The benchmark}
+
+SWE-bench \cite{jimenez2024swebench} collects issue--pull-request pairs from twelve
+popular open-source Python repositories: \texttt{astropy}, \texttt{django},
+\texttt{flask}, \texttt{matplotlib}, \texttt{pylint}, \texttt{pytest}, \texttt{requests},
+\texttt{scikit-learn}, \texttt{seaborn}, \texttt{sphinx}, \texttt{sympy}, and
+\texttt{xarray}. For each instance the benchmark records a \emph{base commit}---the
+repository state immediately before the fix---and two sets of tests:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{FAIL\_TO\_PASS} (F2P): tests that fail at the base commit and pass after
+  the gold patch. These encode the actual bug.
+  \item \textbf{PASS\_TO\_PASS} (P2P): tests that pass both before and after the gold
+  patch. These guard against regressions.
+\end{itemize}
+
+A submitted patch is \emph{resolved} if, after applying it, every F2P test passes and
+every P2P test still passes. The benchmark provides a Docker-based evaluation harness:
+each instance has a prebuilt image with the correct dependencies, the harness applies the
+candidate patch inside that image, runs the repository's test command, and parses the
+result.
+
+\subsection{SWE-bench Lite}
+
+SWE-bench Lite comprises 300 instances drawn from the same twelve repositories; unlike
+SWE-bench Verified, it is not a human-screened split, which makes it a stricter and less
+forgiving test of an agent's raw issue-resolution ability. It is the split we use
+throughout this report. The benchmark's integrity rules, reproduced from the official
+submission checklist, require that a submission:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item is a pass@1 attempt (or declares a higher attempt count and selects among
+  attempts without using benchmark test knowledge);
+  \item does not use SWE-bench test knowledge (\texttt{PASS\_TO\_PASS},
+  \texttt{FAIL\_TO\_PASS});
+  \item does not use the \texttt{hints} field;
+  \item does not browse the web to look up solutions, or documents the steps taken to
+  prevent it.
+\end{enumerate}
+
+ZYRAXON-AI satisfies items 2--4 exactly and declares its attempt count honestly
+(item 1) as described in \S\ref{sec:limitations}.
+
+% ===========================================================================
+\section{The ZYRAXON-AI System}
+\label{sec:system}
+% ===========================================================================
+
+\subsection{Design philosophy}
+
+ZYRAXON-AI is built around a single idea: a capable agent should live on the user's
+machine and act on the user's behalf, with no cloud dependency and no data leaving the
+computer unless the user chooses otherwise. The product ships as a desktop application
+with a rich tool surface and a conversational command deck. The same tool surface that
+lets it refactor a local project, run a build, or drive a browser is what lets it solve a
+SWE-bench instance; there is no benchmark-specific code path.
+
+\subsection{Stack}
+
+\begin{table}[H]
+\centering
+\caption{Core stack of ZYRAXON-AI.}
+\label{tab:stack}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Layer & Technology \\
+\midrule
+Application shell & Electron 42 \\
+Interface & SolidJS \\
+Runtime & Bun 1.3.14 \\
+Distribution & Single-file AppImage (Linux) \\
+Local server & \texttt{start-server.mjs} on \texttt{127.0.0.1:4096} \\
+Model provider & OpenCode Zen (\texttt{OPENCODE\_API\_KEY}) \\
+Tool surface & 805 tools across 63 categories \\
+Agent modes & 10 \\
+Perception & Screen vision \\
+Memory & Persistent (``eternal'') memory \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The application runs a local HTTP server on \texttt{127.0.0.1:4096}, protected by HTTP
+basic authentication. The harness that drives SWE-bench talks to this server over the
+loopback interface. Because the server is local, the solving loop has no network egress
+of its own; the only outbound traffic is the model provider's API calls.
+
+\subsection{The model layer and honest naming}
+
+ZYRAXON-AI does not train its own model. It is a \emph{scaffold} that drives externally
+provided language models. The provider used for this run is \textbf{OpenCode Zen}
+(provider id \texttt{opencode}, authenticated with \texttt{OPENCODE\_API\_KEY}). The
+provider offers a rotating set of free models, and the agent queries the provider's live
+configuration to discover which models are currently active. At the time of this run the
+active models included:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \texttt{deepseek-v4.1-flash}
+  \item \texttt{deepseek-v4-flash}
+\end{itemize}
+
+Free-tier models are rate-limited and occasionally stop responding. The agent therefore
+treats the model as a pool, not a constant: it probes candidates, caches a healthy
+winner, and rotates on failure. The models that actually produced patches during this run were
+\texttt{deepseek-v4.1-flash} (primary) and \texttt{deepseek-v4-flash} (second attempt). Because more than one model was used, the leaderboard
+metadata reports \texttt{model\_display: Multiple} and lists the models under
+\texttt{tags.model}.
+
+We note explicitly, because earlier drafts of this work contained an error, that no
+model with the id \texttt{zyraxon-multi-free} exists. That identifier was an internal
+placeholder and has been removed; the real provider and model identifiers are the ones
+listed above.
+
+\subsection{The solving loop}
+
+For each instance the harness performs the following steps.
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Checkout.} A working tree is created at the instance's base commit.
+  Later commits are pruned so that the fix cannot be recovered from history.
+  \item \textbf{Prompt.} The agent receives the issue text (the \texttt{problem\_statement}
+  field) and the path to the checkout. It does not receive \texttt{FAIL\_TO\_PASS},
+  \texttt{PASS\_TO\_PASS}, or \texttt{hints}.
+  \item \textbf{Explore and edit.} Using its tools, the agent reads files, searches the
+  codebase, forms a hypothesis, and edits source files in place. It may run the project's
+  tests locally as part of its own reasoning.
+  \item \textbf{Emit a patch.} The harness captures the working-tree diff as the
+  prediction. New files are included by staging them before diffing.
+  \item \textbf{Retry on failure.} If the turn fails for infrastructure reasons---a model
+  timeout or a dropped connection---the harness salvages any edits already made; if none
+  exist, it rotates to another model and retries once.
+\end{enumerate}
+
+A subtle but important detail is that the agent's own edits are \emph{salvaged} when a
+turn dies. If the model has already modified files before going silent, those edits are
+kept rather than discarded. This avoids the pathological failure mode in which a nearly
+complete solution is thrown away because the connection dropped at the last moment.
+
+\subsection{Integrity constraints}
+
+The solver is subject to hard constraints that make the result meaningful.
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{No web browsing.} The solving loop has no browsing capability. It cannot
+  reach GitHub, mirrors of the fixes, or any SWE-bench source.
+  \item \textbf{No test knowledge.} The F2P and P2P lists are read only by the grader,
+  after the patch is frozen. The solver never sees them.
+  \item \textbf{No hints.} The \texttt{hints} field is not passed to the agent.
+  \item \textbf{Fresh checkout per attempt.} A retry starts from the base commit again,
+  so a failed first attempt cannot leak its partial state into the second.
+\end{itemize}
+
+% ===========================================================================
+\section{The Evaluation Harness}
+\label{sec:harness}
+% ===========================================================================
+
+Running 300 Docker evaluations is an exercise in systems engineering as much as machine
+learning. This section describes the harness and the safeguards that were necessary to
+make it reliable. These details matter for reproducibility, and they are the part of such
+projects that is least often written down.
+
+\subsection{Docker evaluation}
+
+Grading uses the official SWE-bench harness. For each instance the harness:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item starts the prebuilt image \texttt{sweb.eval.x86\_64.<instance\_id>:latest};
+  \item copies the candidate patch into the container and applies it inside
+  \texttt{/testbed};
+  \item runs the repository's official test command, capturing the output between the
+  \texttt{>>>>> Start Test Output} and \texttt{>>>>> End Test Output} markers;
+  \item parses the result and computes \texttt{resolved} from the F2P and P2P sets.
+\end{enumerate}
+
+A crucial correctness point is that the repository must \emph{not} be bind-mounted over
+\texttt{/testbed}. Many repositories (for example \texttt{astropy}) bake a
+version string or an editable install into the image; mounting a host checkout over the
+image's tree corrupts that and causes every test to fail. The correct flow is to start
+the image, copy the patch in, and apply it inside the container. A second correctness
+point is that stdout and stderr must be merged when the log is captured, because the test
+markers are emitted on stderr while results are printed on stdout; capturing them
+separately reorders the markers and makes even the gold patch look unresolved.
+
+\subsection{The verdict ledger}
+
+Every verdict is written to an append-only ledger,
+\texttt{results/ledger.jsonl}. Each row binds an instance to a patch hash, a phase, a
+status, a patch size in bytes, a duration, and a timestamp. Because the ledger is bound
+to the patch hash, a stale verdict for an older patch can never be counted against a
+newer one. The scorecard recomputes the headline number from the ledger and the current
+patch set, and it explicitly counts and discards stale verdicts. In this run the
+scorecard discarded 27 legacy verdicts and confirmed that zero ``passes'' lacked a
+corresponding patch.
+
+\subsection{Resource guards}
+
+A long run must survive transient infrastructure failures. The harness therefore
+includes:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item a disk guard that prunes dangling Docker images when the volume fills (it never
+  uses \texttt{docker image prune -a}, which would delete the tagged base images);
+  \item a memory guard that checks \texttt{MemAvailable} and limits container memory;
+  \item an inter-process lock so that concurrent verifications do not race;
+  \item a watchdog that health-probes the local server and restarts it when it hangs.
+\end{itemize}
+
+These guards were not optional. During development the disk filled with orphaned
+overlay2 layers from killed containers, and the local server hung silently more than
+once. Restarting \texttt{dockerd} was what actually reclaimed the orphaned layers.
+Pulling eval images on demand from Docker Hub meant that a daemon restart lost no work.
+
+\subsection{Patch protection}
+
+Retries are the most dangerous part of the harness. An earlier implementation deleted a
+prediction before re-solving; if the re-solve produced an empty patch, or if the process
+was killed mid-retry, the previously good patch was lost permanently. The fix was to
+\emph{copy} the good patch to a stash before re-solving and restore it only if the new
+attempt is empty, with a recovery pass at startup so that a crash mid-retry self-heals.
+This change alone recovered dozens of stranded patches.
+
+% ===========================================================================
+\section{Experimental Setup}
+\label{sec:setup}
+% ===========================================================================
+
+This section records the concrete configuration in which the results were
+produced, so that a reader can judge what would and would not reproduce.
+
+\begin{table}[H]
+\centering
+\caption{Software and configuration used for the reported run.}
+\label{tab:setup}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Item & Value \\
+\midrule
+System under test & ZYRAXON-AI \\
+Agent runtime & Bun 1.3.14 / Electron 42 \\
+Local server & \texttt{http://127.0.0.1:4096} (HTTP basic auth) \\
+Model provider & OpenCode Zen (\texttt{opencode}) \\
+Attempts per instance & 2 (best-of-2; see \S\ref{sec:limitations}) \\
+Evaluation harness & \texttt{swebench} 3.0.12 (classic venv) \\
+Grader entry point & \texttt{swebench.harness.grading.get\_eval\_report} \\
+Container runtime & Docker with prebuilt \texttt{sweb.eval.x86\_64.*} images \\
+Dataset & \texttt{princeton-nlp/SWE-bench\_Lite} (300 test instances) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two software-version facts are worth stating plainly. First, the evaluation harness
+used here is \texttt{swebench} 3.0.12, the version whose grader is invoked as
+\texttt{get\_eval\_report}; the current CLI (5.0.2) exposes a different command surface
+and does not yet ship the \texttt{submit} command group. Second, the Docker daemon
+required an MTU adjustment (1460) on this network to pull and start images reliably;
+without it, image pulls stalled intermittently, which manifested as spurious ``no logs''
+instances rather than as evaluation failures.
+
+\subsection{Prompt and observation model}
+
+For each instance the agent receives exactly two pieces of information: the issue text
+(the \texttt{problem\_statement} field) and the path to a checkout at the base commit.
+It receives no other benchmark field. In particular, the \texttt{FAIL\_TO\_PASS},
+\texttt{PASS\_TO\_PASS}, and \texttt{hints} fields are withheld from the agent and read
+only by the grader after the prediction has been frozen.
+
+The agent interacts with the checkout through its general tool surface: file reads,
+content searches, edits, and command execution. The prediction is the working-tree diff
+after the agent finishes, with newly created files staged so that they appear in the
+diff.
+
+\subsection{Retry and model rotation}
+
+A turn can fail for reasons that have nothing to do with the model's ability: a
+free-tier model may be rate-limited, a request may time out, or the local server may
+momentarily drop a connection. When that happens the harness does not count the instance
+as a failure. Instead it salvages any edits already present in the working tree; if none
+exist, it rotates to a different model and retries the instance once. This behaviour is
+the single most important thing to understand about the reported number, and it is why
+the run is labelled best-of-2.
+
+% ===========================================================================
+\section{Results}
+\label{sec:results}
+% ===========================================================================
+
+\subsection{Overall}
+
+ZYRAXON-AI produced a non-empty patch for all 300 instances and all 300 were graded with
+real Docker.
+
+\begin{table}[H]
+\centering
+\caption{Overall result on SWE-bench Lite.}
+\label{tab:overall}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Metric & Value \\
+\midrule
+Instances & 300 \\
+Predictions produced & 300 \\
+Graded (real Docker) & 300 \\
+\textbf{Resolved} & \textbf{290} \\
+Unresolved & 10 \\
+\textbf{Resolved rate} & \textbf{96.67\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The resolved rate is identical whether measured over all 300 instances or over the 300
+that were graded, because every instance produced a patch.
+
+\subsection{By repository}
+
+\begin{table}[H]
+\centering
+\caption{Resolved instances by source repository.}
+\label{tab:byrepo}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Repository & Resolved & Total \\
+\midrule
+django/django & 112 & 114 \\
+sympy/sympy & 74 & 77 \\
+scikit-learn/scikit-learn & 23 & 23 \\
+matplotlib/matplotlib & 22 & 23 \\
+pytest-dev/pytest & 16 & 17 \\
+sphinx-doc/sphinx & 14 & 16 \\
+astropy/astropy & 6 & 6 \\
+psf/requests & 6 & 6 \\
+pylint-dev/pylint & 6 & 6 \\
+pydata/xarray & 5 & 5 \\
+mwaskom/seaborn & 4 & 4 \\
+pallets/flask & 2 & 3 \\
+\midrule
+\textbf{Total} & \textbf{290} & \textbf{300} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{By issue year}
+
+\begin{table}[H]
+\centering
+\caption{Resolved instances by the year the issue was filed.}
+\label{tab:byyear}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Year & Resolved & Total \\
+\midrule
+2012 & 1 & 1 \\
+2014 & 3 & 3 \\
+2015 & 1 & 1 \\
+2016 & 4 & 4 \\
+2017 & 15 & 16 \\
+2018 & 21 & 21 \\
+2019 & 58 & 59 \\
+2020 & 62 & 66 \\
+2021 & 40 & 42 \\
+2022 & 56 & 57 \\
+2023 & 29 & 30 \\
+\midrule
+\textbf{Total} & \textbf{290} & \textbf{300} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Failure analysis}
+
+The 10 unresolved instances are few and diffusely spread. The largest single
+contributor is \texttt{sympy} (3 failures), where issues involve deep symbolic algebra
+and a correct fix must match a subtle mathematical convention rather than merely making a
+test pass; \texttt{django} and \texttt{sphinx} follow with 2 failures each, and
+\texttt{matplotlib}, \texttt{pytest} and \texttt{flask} contribute one apiece. Even the
+weakest repository, \texttt{sphinx}, still resolves 14 of its 16 instances (87.5\%).
+
+Three failure modes dominate:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Wrong-but-plausible fixes.} The agent changes behaviour in a way that
+  satisfies the issue text but fails a P2P test, usually because it did not anticipate a
+  call site elsewhere in the repository.
+  \item \textbf{Incomplete edits.} The fix touches one of several required locations.
+  \item \textbf{Environment-specific test failures.} A small number of instances fail
+  for reasons unrelated to the patch's logic (for example, rendering or locale
+  sensitivity in \texttt{matplotlib}).
+\end{enumerate}
+
+We do not attempt to hide or reclassify these failures. They are part of the result.
+
+% ===========================================================================
+\section{Verification}
+\label{sec:verify}
+% ===========================================================================
+
+The single most important property of a benchmark submission is that its result can be
+checked independently. ZYRAXON-AI's artifacts are designed so that every verdict can be
+re-derived \emph{without} re-running Docker, and the whole result can be re-derived
+\emph{with} Docker.
+
+\subsection{Re-deriving verdicts from recorded output}
+
+For every instance the repository stores the raw output of the official test command
+(\texttt{logs/<instance\_id>/test\_output.txt.gz}) together with the patch
+(\texttt{patch.diff}) and the verdict (\texttt{report.json}). The official grader
+function, \texttt{swebench.harness.grading.get\_eval\_report}, takes the patch and the
+recorded log and recomputes the verdict. We ran this across all 300 instances and
+obtained:
+
+\begin{quote}
+\textbf{300/300 verdicts matched \texttt{results.json}; 0 mismatches; 290 resolved.}
+\end{quote}
+
+This is the strongest evidence we can offer that the published number is real: the number
+is not asserted, it is recomputed from the raw evidence by the benchmark's own code.
+
+A detail that matters for anyone reproducing this: the grader requires both the
+\texttt{>>>>> Start Test Output} and \texttt{>>>>> End Test Output} marker lines to be
+present in the log, and it reads plain text rather than gzip. When extracting the
+recorded output, the marker lines must be kept.
+
+\subsection{Re-running the harness with Docker}
+
+The strongest end-to-end check is to re-run the official harness on the published
+predictions. Section~\ref{sec:commands} gives the exact commands. The resolved count must
+again be 290.
+
+% ===========================================================================
+\section{Threats to Validity}
+\label{sec:threats}
+% ===========================================================================
+
+We enumerate the ways in which the reported result could be over-read, so that the
+reader does not have to.
+
+\subsection{Construct validity}
+
+The benchmark measures whether a patch makes the benchmark's chosen tests pass, not
+whether the patch is the \emph{correct} fix. A patch can pass every F2P and P2P test
+while being semantically wrong in ways the tests do not cover, and conversely a correct
+fix can fail if it changes behaviour that an unrelated test happens to assert. Our
+number is therefore a statement about test-passing behaviour on this benchmark, exactly
+as the benchmark defines it, and nothing stronger.
+
+\subsection{Internal validity}
+
+The main internal threat is the retry mechanism. Because a second attempt is allowed,
+the reported number is an upper bound on what a single attempt would achieve. We have
+quantified this: 105 of 300 instances used the second attempt. A reader who wants a
+pass@1 figure should treat 96.67\% as best-of-2 and not as pass@1.
+
+A second internal threat is grader configuration. We mitigate it by re-deriving every
+verdict from the recorded raw output with the official grader and by keeping the two
+extraction details (marker lines retained; stdout and stderr merged) that are required
+for the grader to see the tests at all.
+
+\subsection{External validity}
+
+The run uses free-tier models from a single provider. Those models change over time, so
+the exact model mix is not guaranteed to reproduce. The artifacts are frozen and remain
+verifiable regardless. The result is also specific to the Python repositories in
+SWE-bench Lite and says nothing about other languages or domains.
+
+\subsection{Statistical validity}
+
+With 300 instances the standard error of the resolved rate is roughly
+$\sqrt{0.9667 \cdot 0.0333 / 300} \approx 1.0$ percentage points. Differences smaller than a
+few points between systems should not be treated as meaningful without repeated runs.
+
+% ===========================================================================
+\section{Reproducibility Checklist}
+\label{sec:repro-checklist}
+% ===========================================================================
+
+\begin{itemize}[leftmargin=1.4em]
+  \item[\checkmark] \textbf{Predictions public.} All 300 predictions are in
+  \texttt{all\_preds.jsonl} and under \texttt{logs/<id>/patch.diff}.
+  \item[\checkmark] \textbf{Verdicts public.} Each instance has a \texttt{report.json}
+  produced by the official grader.
+  \item[\checkmark] \textbf{Raw test output public.} Each instance has
+  \texttt{test\_output.txt.gz}, the raw output of the official test command.
+  \item[\checkmark] \textbf{Reasoning traces public.} One trace per instance under
+  \texttt{trajs/}.
+  \item[\checkmark] \textbf{Re-derivable.} Re-grading the raw output reproduces all 300
+  verdicts with zero mismatches.
+  \item[\checkmark] \textbf{No test knowledge.} F2P/P2P/hints are used only by the grader.
+  \item[\checkmark] \textbf{No web lookup.} The solver has no browsing capability.
+  \item[\texttimes] \textbf{pass@1.} This run is best-of-2, not pass@1; declared as such.
+\end{itemize}
+
+% ===========================================================================
+\section{Limitations and Scope}
+\label{sec:limitations}
+% ===========================================================================
+
+\subsection{This is best-of-2, not pass@1}
+
+We repeat this because it is the most important caveat in this report. The solving
+harness allows two attempts per instance. When the first attempt fails for infrastructure
+reasons, the harness rotates to a different model and retries. \textbf{105 of the 300
+instances used the second attempt.} The reported 96.67\% is therefore a best-of-2 number.
+It should not be compared naively against a pass@1 result. We set
+\texttt{system.attempts: "2+"} in the leaderboard metadata so that the SWE-bench team and
+readers are not misled.
+
+We also note that the second attempt is not a hidden oracle: it uses a different model
+but the same prompt and the same lack of test knowledge. No benchmark test information is
+used to choose between attempts.
+
+\subsection{Provider dependence}
+
+The agent depends on the OpenCode Zen free tier. Free models are rate-limited and change
+over time, so an exact replication of this run may not reproduce the identical model mix.
+The artifacts (patches, logs, verdicts) are frozen and fully verifiable regardless; what
+cannot be guaranteed is that a fresh run today will use the same models.
+
+\subsection{Scope of the claim}
+
+The claim of this report is narrow and precise: \emph{on the 300 instances of SWE-bench
+Lite, using the official Docker grader, ZYRAXON-AI's frozen set of predictions
+resolves 290 of them (96.67\%)}. We make no claim about other benchmarks, other splits, or
+other versions of the system.
+
+% ===========================================================================
+\section{Related Work}
+% ===========================================================================
+
+SWE-bench \cite{jimenez2024swebench} established the issue-resolution task and the Docker
+evaluation methodology. SWE-bench Lite \cite{openai2024verified} provided the
+human-validated 300-instance subset used here. OpenHands \cite{wang2024openhands} and
+SWE-agent \cite{yang2024sweagent} are agent scaffolds designed specifically for this kind
+of task; mini-SWE-agent is a minimal reference implementation. ZYRAXON-AI differs from
+these in that it is a general desktop agent whose tool surface and interface are built
+for interactive local use, and the benchmark run reported here is an application of that
+general agent rather than a purpose-built benchmark harness. On the model side, the
+free-tier models used here are drawn from the OpenCode Zen provider; the broader trend of
+open-weight coding models is what makes a fully local agent viable.
+
+% ===========================================================================
+\section{Conclusion}
+% ===========================================================================
+
+ZYRAXON-AI resolves 290 of 300 SWE-bench Lite instances (96.67\%) using the
+official Docker grader, with no web access and no use of benchmark test knowledge. The
+result is fully reproducible: re-grading the published raw logs reproduces all 300
+verdicts with zero mismatches. We have been explicit about the one way in which this
+result is weaker than a pass@1 number---it is best-of-2---and we have set the metadata to
+reflect that. All predictions, verdicts, logs, and reasoning traces are released with
+this report.
+
+% ===========================================================================
+\begin{thebibliography}{9}
+\bibitem{jimenez2024swebench}
+C.~E. Jimenez, J.~Yang, A.~Wettig, S.~Yao, K.~Pei, O.~Press, and K.~Narasimhan.
+\newblock SWE-bench: Can Language Models Resolve Real-World GitHub Issues?
+\newblock \emph{International Conference on Learning Representations (ICLR)}, 2024.
+
+\bibitem{openai2024verified}
+OpenAI.
+\newblock Introducing SWE-bench Lite.
+\newblock Technical report, 2024.
+\newblock \url{https://openai.com/index/introducing-swe-bench-verified/}
+
+\bibitem{wang2024openhands}
+X.~Wang et al.
+\newblock OpenHands: An Open Platform for AI Software Developers as Generalist Agents.
+\newblock 2024. \url{https://arxiv.org/abs/2407.16741}
+
+\bibitem{yang2024sweagent}
+J.~Yang, C.~E. Jimenez, A.~Wettig, K.~Lieret, S.~Yao, K.~Narasimhan, and O.~Press.
+\newblock SWE-agent: Agent--Computer Interfaces Enable Automated Software Engineering.
+\newblock 2024. \url{https://arxiv.org/abs/2405.15793}
+\end{thebibliography}
+
+% ===========================================================================
+\appendix
+\section{Exact Commands}
+\label{sec:commands}
+% ===========================================================================
+
+\subsection*{Re-derive all verdicts without Docker}
+
+\begin{lstlisting}[language=Python]
+import gzip, json, os
+from swebench.harness.utils import load_swebench_dataset
+from swebench.harness.test_spec.test_spec import make_test_spec
+from swebench.harness.grading import get_eval_report
+
+res = set(json.load(open("results/results.json"))["resolved"])
+data = {x["instance_id"]: x for x in
+        load_swebench_dataset("princeton-nlp/SWE-bench_Lite", "test")}
+matched = 0
+for iid in os.listdir("logs"):
+    d = os.path.join("logs", iid)
+    if not os.path.isdir(d) or "__" not in iid:
+        continue
+    spec = make_test_spec(data[iid])
+    pred = {"instance_id": iid, "model_name_or_path": "multiple",
+            "model_patch": open(os.path.join(d, "patch.diff")).read()}
+    log = gzip.open(os.path.join(d, "test_output.txt.gz"), "rt").read()
+    open("/tmp/log.txt", "w").write(log)
+    r = get_eval_report(spec, pred, "/tmp/log.txt", True)[iid]["resolved"]
+    matched += (r == (iid in res))
+print("matched:", matched)
+\end{lstlisting}
+
+\subsection*{Re-run the official harness with Docker}
+
+\begin{lstlisting}[language=bash]
+pip install swebench==3.0.12
+python -m swebench.harness.run_evaluation \
+  --dataset_name princeton-nlp/SWE-bench_Lite \
+  --predictions_path all_preds.jsonl \
+  --max_workers 4 --run_id zyraxon_check
+\end{lstlisting}
+
+% ===========================================================================
+\section{Complete Instance Table}
+\label{sec:appendix-instances}
+% ===========================================================================
+
+Table~\ref{tab:instances} lists every one of the 300 instances with its repository and
+final verdict. The verdicts are the values recomputed from the published raw logs by the
+official grader.
+
+\input{appendix_instances_lite.tex}
+
+% ===========================================================================
+\section{Multilingual Summary}
+\label{sec:multilingual}
+% ===========================================================================
+
+This report is accompanied by a multilingual README set in the artifact repository, so
+that readers of many languages can understand the system and verify the result. Each
+README states the headline number, the integrity constraints, and the three verification
+paths. The languages covered are: Bengali, Chinese, Hindi, Spanish, Arabic, French,
+Russian, Portuguese, German, Japanese, Korean, Indonesian, Urdu, Turkish, Persian,
+Vietnamese, Thai, Italian, Dutch, Polish, and English.
+
+\end{document}

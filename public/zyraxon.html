@@ -426,6 +426,7 @@ section{scroll-margin-top:80px}
       <a href="/publish">Publish</a>
       <a href="/releases">Releases</a>
       <a href="/docs">Documentation</a>
+      <a href="/swebench-lite">SWE-bench Lite</a>
       <a href="/swebench-verified">SWE-bench</a>
       <a href="/bludar" class="accent">AI Bludar</a>
       <a href="/nebula" class="accent">NEBULA</a>
@@ -467,7 +468,7 @@ section{scroll-margin-top:80px}
 <section id="swebench" class="alt-section">
   <div class="container">
     <div class="section-head reveal">
-      <h2>85.0% on <span class="gradient-text">SWE-bench Verified</span></h2>
+      <h2>96.67% on <span class="gradient-text">SWE-bench Lite</span></h2>
       <p>Real GitHub issues. Real Docker grading. Fully reproducible.</p>
     </div>
     <div class="grid grid-2">
@@ -475,20 +476,34 @@ section{scroll-margin-top:80px}
         <div class="card-icon" style="color:var(--accent);border-color:rgba(37,99,235,.1);background:rgba(37,99,235,.04)">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
-        <h3>425 / 500 resolved</h3>
-        <p>ZYRAXON-AI v19.0.5 resolves 425 of 500 SWE-bench Verified instances (85.0%) under the official SWE-bench Docker grader. The agent runs fully locally: no web browsing, and no access to the benchmark's test metadata (<code>FAIL_TO_PASS</code>, <code>PASS_TO_PASS</code>, <code>hints</code>).</p>
+        <h3>290 / 300 resolved</h3>
+        <p>ZYRAXON-AI resolves 290 of 300 SWE-bench Lite instances (96.67%) under the official SWE-bench Docker grader. The agent runs fully locally: no web browsing, and no access to the benchmark's test metadata (<code>FAIL_TO_PASS</code>, <code>PASS_TO_PASS</code>, <code>hints</code>).</p>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
+          <a class="btn btn-primary" style="font-size:13px;padding:8px 16px" href="/swebench-lite">Read the Lite report</a>
+          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="/swebench/zyraxon-swebench-lite.pdf" target="_blank" rel="noopener">Paper (PDF)</a>
+        </div>
         <div style="margin-top:12px;font-size:12px;color:var(--accent);font-weight:600">Best-of-2 &middot; declared honestly, not pass@1</div>
+      </div>
+      <div class="card motion-surface reveal">
+        <div class="card-icon" style="color:var(--accent);border-color:rgba(37,99,235,.1);background:rgba(37,99,235,.04)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3>425 / 500 on Verified</h3>
+        <p>On the human-validated SWE-bench Verified split, ZYRAXON-AI resolves 425 of 500 instances (85.0%) under the same official Docker grader.</p>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
+          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="/swebench-verified">Verified report</a>
+        </div>
       </div>
       <div class="card motion-surface reveal">
         <div class="card-icon" style="color:var(--accent3);border-color:rgba(16,185,129,.1);background:rgba(16,185,129,.04)">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
         </div>
         <h3>Open report &amp; artifacts</h3>
-        <p>Read the full 24-page technical report, or check every verdict yourself: re-grading the published raw logs reproduces all 500 verdicts with zero mismatches. Predictions, execution logs and reasoning traces are all public.</p>
+        <p>Read the full technical report, or check every verdict yourself: re-grading the published raw logs reproduces all 300 Lite verdicts with zero mismatches. Predictions, execution logs and reasoning traces are all public.</p>
         <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
-          <a class="btn btn-primary" style="font-size:13px;padding:8px 16px" href="/swebench-verified">Read the report</a>
-          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="/swebench/zyraxon-swebench-verified.pdf" target="_blank" rel="noopener">Paper (PDF)</a>
-          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="https://github.com/onelpawarai-X/SWE-bench-ZYRAXON-AI" target="_blank" rel="noopener">Artifacts on GitHub</a>
+          <a class="btn btn-primary" style="font-size:13px;padding:8px 16px" href="/swebench-lite">Read the report</a>
+          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="/swebench/zyraxon-swebench-lite.pdf" target="_blank" rel="noopener">Paper (PDF)</a>
+          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="https://github.com/onelpawarai-X/SWE-bench-Lite-ZYRAXON-AI" target="_blank" rel="noopener">Artifacts on GitHub</a>
         </div>
       </div>
     </div>
@@ -1235,6 +1250,8 @@ section{scroll-margin-top:80px}
       <div class="footer-col">
         <h4>Developers</h4>
         <a href="/docs">Documentation</a>
+        <a href="/swebench-lite">SWE-bench Lite</a>
+        <a href="/swebench/zyraxon-swebench-lite.pdf" target="_blank" rel="noopener">Lite Report (PDF)</a>
         <a href="/swebench-verified">SWE-bench Verified</a>
         <a href="/swebench/zyraxon-swebench-verified.pdf" target="_blank" rel="noopener">Technical Report (PDF)</a>
         <a href="https://github.com/onelpawarai-X/SWE-bench-ZYRAXON-AI" target="_blank" rel="noopener">SWE-bench Artifacts</a>

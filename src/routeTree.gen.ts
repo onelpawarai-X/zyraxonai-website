@@ -20,6 +20,7 @@ import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as ReleasesRouteImport } from './routes/releases'
+import { Route as SwebenchLiteRouteImport } from './routes/swebench-lite'
 import { Route as SwebenchVerifiedRouteImport } from './routes/swebench-verified'
 import { Route as ZslRouteImport } from './routes/zsl'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
@@ -131,6 +132,11 @@ const PublishRoute = PublishRouteImport.update({
 const ReleasesRoute = ReleasesRouteImport.update({
   id: '/releases',
   path: '/releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SwebenchLiteRoute = SwebenchLiteRouteImport.update({
+  id: '/swebench-lite',
+  path: '/swebench-lite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SwebenchVerifiedRoute = SwebenchVerifiedRouteImport.update({
@@ -443,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/swebench-lite': typeof SwebenchLiteRoute
   '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
@@ -513,6 +520,7 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/swebench-lite': typeof SwebenchLiteRoute
   '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
@@ -584,6 +592,7 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
+  '/swebench-lite': typeof SwebenchLiteRoute
   '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
@@ -656,6 +665,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
+    | '/swebench-lite'
     | '/swebench-verified'
     | '/zsl'
     | '/api/$'
@@ -726,6 +736,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
+    | '/swebench-lite'
     | '/swebench-verified'
     | '/zsl'
     | '/api/$'
@@ -796,6 +807,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
+    | '/swebench-lite'
     | '/swebench-verified'
     | '/zsl'
     | '/api/$'
@@ -867,6 +879,7 @@ export interface RootRouteChildren {
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   PublishRoute: typeof PublishRoute
   ReleasesRoute: typeof ReleasesRoute
+  SwebenchLiteRoute: typeof SwebenchLiteRoute
   SwebenchVerifiedRoute: typeof SwebenchVerifiedRoute
   ZslRoute: typeof ZslRoute
   ApiSplatRoute: typeof ApiSplatRoute
@@ -996,6 +1009,13 @@ declare module '@tanstack/react-router' {
       path: '/releases'
       fullPath: '/releases'
       preLoaderRoute: typeof ReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/swebench-lite': {
+      id: '/swebench-lite'
+      path: '/swebench-lite'
+      fullPath: '/swebench-lite'
+      preLoaderRoute: typeof SwebenchLiteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/swebench-verified': {
@@ -1455,6 +1475,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   PublishRoute: PublishRoute,
   ReleasesRoute: ReleasesRoute,
+  SwebenchLiteRoute: SwebenchLiteRoute,
   SwebenchVerifiedRoute: SwebenchVerifiedRoute,
   ZslRoute: ZslRoute,
   ApiSplatRoute: ApiSplatRoute,
