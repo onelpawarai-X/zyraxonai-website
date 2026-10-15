@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as CommunityArtRouteImport } from './routes/community-art'
+import { Route as DesktopFeedbackRouteImport } from './routes/desktop-feedback'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as NebulaRouteImport } from './routes/nebula'
 import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
@@ -20,12 +21,11 @@ import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as ReleasesRouteImport } from './routes/releases'
-import { Route as SwebenchLiteRouteImport } from './routes/swebench-lite'
-import { Route as SwebenchVerifiedRouteImport } from './routes/swebench-verified'
 import { Route as ZslRouteImport } from './routes/zsl'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiHelpAgentRouteImport } from './routes/api/help-agent'
 import { Route as ApiMarketplaceSearchRouteImport } from './routes/api/marketplace-search'
+import { Route as CommunityIdRouteImport } from './routes/community/$id'
 import { Route as DocsIndexRouteImport } from './routes/docs.index'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as DownloadZyraxonAgentRouteImport } from './routes/download.zyraxon-agent'
@@ -37,6 +37,7 @@ import { Route as ApiGithubReposRouteImport } from './routes/api/github/repos'
 import { Route as ApiPublicCommunityRouteImport } from './routes/api/public/community'
 import { Route as ApiPublicCommunityActRouteImport } from './routes/api/public/community-act'
 import { Route as ApiPublicCommunityStoreRouteImport } from './routes/api/public/community-store'
+import { Route as ApiPublicDesktopFeedbackRouteImport } from './routes/api/public/desktop-feedback'
 import { Route as ApiPublicDownloadsRouteImport } from './routes/api/public/downloads'
 import { Route as ApiPublicGithubDeviceRouteImport } from './routes/api/public/github-device'
 import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public/github-releases'
@@ -44,7 +45,6 @@ import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mc
 import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
-import { Route as ApiPublicSwebenchRouteImport } from './routes/api/public/swebench'
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
 import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/public/zyraxon-releases'
 import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
@@ -99,6 +99,11 @@ const CommunityArtRoute = CommunityArtRouteImport.update({
   path: '/community-art',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DesktopFeedbackRoute = DesktopFeedbackRouteImport.update({
+  id: '/desktop-feedback',
+  path: '/desktop-feedback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
@@ -134,16 +139,6 @@ const ReleasesRoute = ReleasesRouteImport.update({
   path: '/releases',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SwebenchLiteRoute = SwebenchLiteRouteImport.update({
-  id: '/swebench-lite',
-  path: '/swebench-lite',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SwebenchVerifiedRoute = SwebenchVerifiedRouteImport.update({
-  id: '/swebench-verified',
-  path: '/swebench-verified',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ZslRoute = ZslRouteImport.update({
   id: '/zsl',
   path: '/zsl',
@@ -162,6 +157,11 @@ const ApiHelpAgentRoute = ApiHelpAgentRouteImport.update({
 const ApiMarketplaceSearchRoute = ApiMarketplaceSearchRouteImport.update({
   id: '/api/marketplace-search',
   path: '/api/marketplace-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityIdRoute = CommunityIdRouteImport.update({
+  id: '/community/$id',
+  path: '/community/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsIndexRoute = DocsIndexRouteImport.update({
@@ -219,6 +219,12 @@ const ApiPublicCommunityStoreRoute = ApiPublicCommunityStoreRouteImport.update({
   path: '/api/public/community-store',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDesktopFeedbackRoute =
+  ApiPublicDesktopFeedbackRouteImport.update({
+    id: '/api/public/desktop-feedback',
+    path: '/api/public/desktop-feedback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicDownloadsRoute = ApiPublicDownloadsRouteImport.update({
   id: '/api/public/downloads',
   path: '/api/public/downloads',
@@ -252,11 +258,6 @@ const ApiPublicNpmPackagesRoute = ApiPublicNpmPackagesRouteImport.update({
 const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
   id: '/api/public/stt',
   path: '/api/public/stt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSwebenchRoute = ApiPublicSwebenchRouteImport.update({
-  id: '/api/public/swebench',
-  path: '/api/public/swebench',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicVscodeMarketplaceRoute =
@@ -442,6 +443,7 @@ export interface FileRoutesByFullPath {
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
+  '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
@@ -449,12 +451,11 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
-  '/swebench-lite': typeof SwebenchLiteRoute
-  '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
   '/share/$id': typeof ShareIdRoute
@@ -466,6 +467,7 @@ export interface FileRoutesByFullPath {
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
+  '/api/public/desktop-feedback': typeof ApiPublicDesktopFeedbackRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
@@ -473,7 +475,6 @@ export interface FileRoutesByFullPath {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
-  '/api/public/swebench': typeof ApiPublicSwebenchRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -513,6 +514,7 @@ export interface FileRoutesByTo {
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
+  '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
@@ -520,12 +522,11 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
-  '/swebench-lite': typeof SwebenchLiteRoute
-  '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
   '/share/$id': typeof ShareIdRoute
@@ -537,6 +538,7 @@ export interface FileRoutesByTo {
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
+  '/api/public/desktop-feedback': typeof ApiPublicDesktopFeedbackRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
@@ -544,7 +546,6 @@ export interface FileRoutesByTo {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
-  '/api/public/swebench': typeof ApiPublicSwebenchRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -585,6 +586,7 @@ export interface FileRoutesById {
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
+  '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
   '/nebula-core': typeof NebulaCoreRoute
@@ -592,12 +594,11 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
-  '/swebench-lite': typeof SwebenchLiteRoute
-  '/swebench-verified': typeof SwebenchVerifiedRoute
   '/zsl': typeof ZslRoute
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
   '/share/$id': typeof ShareIdRoute
@@ -609,6 +610,7 @@ export interface FileRoutesById {
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
+  '/api/public/desktop-feedback': typeof ApiPublicDesktopFeedbackRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
   '/api/public/github-releases': typeof ApiPublicGithubReleasesRoute
@@ -616,7 +618,6 @@ export interface FileRoutesById {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
-  '/api/public/swebench': typeof ApiPublicSwebenchRoute
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -658,6 +659,7 @@ export interface FileRouteTypes {
     | '/bludar'
     | '/builder'
     | '/community-art'
+    | '/desktop-feedback'
     | '/faq'
     | '/nebula'
     | '/nebula-core'
@@ -665,12 +667,11 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
-    | '/swebench-lite'
-    | '/swebench-verified'
     | '/zsl'
     | '/api/$'
     | '/api/help-agent'
     | '/api/marketplace-search'
+    | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
     | '/share/$id'
@@ -682,6 +683,7 @@ export interface FileRouteTypes {
     | '/api/public/community'
     | '/api/public/community-act'
     | '/api/public/community-store'
+    | '/api/public/desktop-feedback'
     | '/api/public/downloads'
     | '/api/public/github-device'
     | '/api/public/github-releases'
@@ -689,7 +691,6 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
-    | '/api/public/swebench'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -729,6 +730,7 @@ export interface FileRouteTypes {
     | '/bludar'
     | '/builder'
     | '/community-art'
+    | '/desktop-feedback'
     | '/faq'
     | '/nebula'
     | '/nebula-core'
@@ -736,12 +738,11 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
-    | '/swebench-lite'
-    | '/swebench-verified'
     | '/zsl'
     | '/api/$'
     | '/api/help-agent'
     | '/api/marketplace-search'
+    | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
     | '/share/$id'
@@ -753,6 +754,7 @@ export interface FileRouteTypes {
     | '/api/public/community'
     | '/api/public/community-act'
     | '/api/public/community-store'
+    | '/api/public/desktop-feedback'
     | '/api/public/downloads'
     | '/api/public/github-device'
     | '/api/public/github-releases'
@@ -760,7 +762,6 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
-    | '/api/public/swebench'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -800,6 +801,7 @@ export interface FileRouteTypes {
     | '/bludar'
     | '/builder'
     | '/community-art'
+    | '/desktop-feedback'
     | '/faq'
     | '/nebula'
     | '/nebula-core'
@@ -807,12 +809,11 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/publish'
     | '/releases'
-    | '/swebench-lite'
-    | '/swebench-verified'
     | '/zsl'
     | '/api/$'
     | '/api/help-agent'
     | '/api/marketplace-search'
+    | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
     | '/share/$id'
@@ -824,6 +825,7 @@ export interface FileRouteTypes {
     | '/api/public/community'
     | '/api/public/community-act'
     | '/api/public/community-store'
+    | '/api/public/desktop-feedback'
     | '/api/public/downloads'
     | '/api/public/github-device'
     | '/api/public/github-releases'
@@ -831,7 +833,6 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
-    | '/api/public/swebench'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -872,6 +873,7 @@ export interface RootRouteChildren {
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
   CommunityArtRoute: typeof CommunityArtRoute
+  DesktopFeedbackRoute: typeof DesktopFeedbackRoute
   FaqRoute: typeof FaqRoute
   NebulaRoute: typeof NebulaRoute
   NebulaCoreRoute: typeof NebulaCoreRoute
@@ -879,12 +881,11 @@ export interface RootRouteChildren {
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   PublishRoute: typeof PublishRoute
   ReleasesRoute: typeof ReleasesRoute
-  SwebenchLiteRoute: typeof SwebenchLiteRoute
-  SwebenchVerifiedRoute: typeof SwebenchVerifiedRoute
   ZslRoute: typeof ZslRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiHelpAgentRoute: typeof ApiHelpAgentRoute
   ApiMarketplaceSearchRoute: typeof ApiMarketplaceSearchRoute
+  CommunityIdRoute: typeof CommunityIdRoute
   DocsSlugRoute: typeof DocsSlugRoute
   DownloadZyraxonAgentRoute: typeof DownloadZyraxonAgentRoute
   ShareIdRoute: typeof ShareIdRoute
@@ -896,6 +897,7 @@ export interface RootRouteChildren {
   ApiPublicCommunityRoute: typeof ApiPublicCommunityRoute
   ApiPublicCommunityActRoute: typeof ApiPublicCommunityActRoute
   ApiPublicCommunityStoreRoute: typeof ApiPublicCommunityStoreRoute
+  ApiPublicDesktopFeedbackRoute: typeof ApiPublicDesktopFeedbackRoute
   ApiPublicDownloadsRoute: typeof ApiPublicDownloadsRoute
   ApiPublicGithubDeviceRoute: typeof ApiPublicGithubDeviceRoute
   ApiPublicGithubReleasesRoute: typeof ApiPublicGithubReleasesRoute
@@ -903,7 +905,6 @@ export interface RootRouteChildren {
   ApiPublicNebulaRoute: typeof ApiPublicNebulaRouteWithChildren
   ApiPublicNpmPackagesRoute: typeof ApiPublicNpmPackagesRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
-  ApiPublicSwebenchRoute: typeof ApiPublicSwebenchRoute
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
   ApiPublicZyraxonReleasesRoute: typeof ApiPublicZyraxonReleasesRoute
   EcosystemItemIdRoute: typeof EcosystemItemIdRoute
@@ -962,6 +963,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityArtRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/desktop-feedback': {
+      id: '/desktop-feedback'
+      path: '/desktop-feedback'
+      fullPath: '/desktop-feedback'
+      preLoaderRoute: typeof DesktopFeedbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/faq': {
       id: '/faq'
       path: '/faq'
@@ -1011,20 +1019,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReleasesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/swebench-lite': {
-      id: '/swebench-lite'
-      path: '/swebench-lite'
-      fullPath: '/swebench-lite'
-      preLoaderRoute: typeof SwebenchLiteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/swebench-verified': {
-      id: '/swebench-verified'
-      path: '/swebench-verified'
-      fullPath: '/swebench-verified'
-      preLoaderRoute: typeof SwebenchVerifiedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/zsl': {
       id: '/zsl'
       path: '/zsl'
@@ -1051,6 +1045,13 @@ declare module '@tanstack/react-router' {
       path: '/api/marketplace-search'
       fullPath: '/api/marketplace-search'
       preLoaderRoute: typeof ApiMarketplaceSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/$id': {
+      id: '/community/$id'
+      path: '/community/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof CommunityIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/': {
@@ -1130,6 +1131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCommunityStoreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/desktop-feedback': {
+      id: '/api/public/desktop-feedback'
+      path: '/api/public/desktop-feedback'
+      fullPath: '/api/public/desktop-feedback'
+      preLoaderRoute: typeof ApiPublicDesktopFeedbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/downloads': {
       id: '/api/public/downloads'
       path: '/api/public/downloads'
@@ -1177,13 +1185,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/stt'
       fullPath: '/api/public/stt'
       preLoaderRoute: typeof ApiPublicSttRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/swebench': {
-      id: '/api/public/swebench'
-      path: '/api/public/swebench'
-      fullPath: '/api/public/swebench'
-      preLoaderRoute: typeof ApiPublicSwebenchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/vscode-marketplace': {
@@ -1468,6 +1469,7 @@ const rootRouteChildren: RootRouteChildren = {
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
   CommunityArtRoute: CommunityArtRoute,
+  DesktopFeedbackRoute: DesktopFeedbackRoute,
   FaqRoute: FaqRoute,
   NebulaRoute: NebulaRoute,
   NebulaCoreRoute: NebulaCoreRoute,
@@ -1475,12 +1477,11 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   PublishRoute: PublishRoute,
   ReleasesRoute: ReleasesRoute,
-  SwebenchLiteRoute: SwebenchLiteRoute,
-  SwebenchVerifiedRoute: SwebenchVerifiedRoute,
   ZslRoute: ZslRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiHelpAgentRoute: ApiHelpAgentRoute,
   ApiMarketplaceSearchRoute: ApiMarketplaceSearchRoute,
+  CommunityIdRoute: CommunityIdRoute,
   DocsSlugRoute: DocsSlugRoute,
   DownloadZyraxonAgentRoute: DownloadZyraxonAgentRoute,
   ShareIdRoute: ShareIdRoute,
@@ -1492,6 +1493,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCommunityRoute: ApiPublicCommunityRoute,
   ApiPublicCommunityActRoute: ApiPublicCommunityActRoute,
   ApiPublicCommunityStoreRoute: ApiPublicCommunityStoreRoute,
+  ApiPublicDesktopFeedbackRoute: ApiPublicDesktopFeedbackRoute,
   ApiPublicDownloadsRoute: ApiPublicDownloadsRoute,
   ApiPublicGithubDeviceRoute: ApiPublicGithubDeviceRoute,
   ApiPublicGithubReleasesRoute: ApiPublicGithubReleasesRoute,
@@ -1499,7 +1501,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicNebulaRoute: ApiPublicNebulaRouteWithChildren,
   ApiPublicNpmPackagesRoute: ApiPublicNpmPackagesRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
-  ApiPublicSwebenchRoute: ApiPublicSwebenchRoute,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
   ApiPublicZyraxonReleasesRoute: ApiPublicZyraxonReleasesRoute,
   EcosystemItemIdRoute: EcosystemItemIdRoute,

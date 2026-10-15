@@ -151,9 +151,49 @@ export type Database = {
           },
         ]
       }
+      desktop_feedback: {
+        Row: {
+          app_version: string | null
+          category: string
+          created_at: string
+          delivered_email: boolean
+          email: string
+          github: string | null
+          id: string
+          message: string
+          name: string
+          os: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          category?: string
+          created_at?: string
+          delivered_email?: boolean
+          email: string
+          github?: string | null
+          id?: string
+          message: string
+          name: string
+          os?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          category?: string
+          created_at?: string
+          delivered_email?: boolean
+          email?: string
+          github?: string | null
+          id?: string
+          message?: string
+          name?: string
+          os?: string | null
+        }
+        Relationships: []
+      }
       community_members: {
         Row: {
           address: string | null
+          avatar_url: string | null
           consented_at: string | null
           country: string | null
           email: string
@@ -161,6 +201,7 @@ export type Database = {
           id: string
           institution: string | null
           joined_at: string
+          links: string | null
           name: string
           participation: string | null
           phone: string | null
@@ -171,6 +212,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          avatar_url?: string | null
           consented_at?: string | null
           country?: string | null
           email: string
@@ -178,6 +220,7 @@ export type Database = {
           id?: string
           institution?: string | null
           joined_at?: string
+          links?: string | null
           name: string
           participation?: string | null
           phone?: string | null
@@ -188,6 +231,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          avatar_url?: string | null
           consented_at?: string | null
           country?: string | null
           email?: string
@@ -195,6 +239,7 @@ export type Database = {
           id?: string
           institution?: string | null
           joined_at?: string
+          links?: string | null
           name?: string
           participation?: string | null
           phone?: string | null
@@ -501,57 +546,6 @@ export type Database = {
           position?: number
           published?: boolean
           subtitle?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      swebench_report: {
-        Row: {
-          authors: string | null
-          code_url: string | null
-          contribution: string | null
-          download_url: string | null
-          first_run: string | null
-          id: number
-          links_public: boolean
-          methodology: string | null
-          report_url: string | null
-          rerun: string | null
-          results_url: string | null
-          score: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          authors?: string | null
-          code_url?: string | null
-          contribution?: string | null
-          download_url?: string | null
-          first_run?: string | null
-          id?: number
-          links_public?: boolean
-          methodology?: string | null
-          report_url?: string | null
-          rerun?: string | null
-          results_url?: string | null
-          score?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Update: {
-          authors?: string | null
-          code_url?: string | null
-          contribution?: string | null
-          download_url?: string | null
-          first_run?: string | null
-          id?: number
-          links_public?: boolean
-          methodology?: string | null
-          report_url?: string | null
-          rerun?: string | null
-          results_url?: string | null
-          score?: string | null
           title?: string
           updated_at?: string
         }

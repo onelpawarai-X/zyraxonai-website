@@ -1,0 +1,50 @@
+name: Desktop feedback
+description: Report a bug, request a feature, or ask a question about the ZYRAXON desktop agent.
+title: "[Desktop] "
+labels: ["needs:issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve ZYRAXON AI. You can also submit this from the
+        website at https://zyraxonai.lovable.app/desktop-feedback
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Bug report
+        - Feature request
+        - Question
+        - Documentation
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Windows 11 / macOS 15 / Ubuntu 24.04"
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "e.g. 19.0.5"
+    validations:
+      required: false
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What happened, what you expected, and the steps to reproduce it.
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: Contact email (optional)
+      placeholder: "you@gmail.com"
+    validations:
+      required: false
