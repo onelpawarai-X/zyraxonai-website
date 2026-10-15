@@ -65,7 +65,8 @@ async function saveAvatar(
   const mime = match[1].toLowerCase();
   const ext = IMAGE_TYPES[mime];
   if (!ext) throw new Error("Unsupported image type");
-  const bytes = Buffer.from(match[2].replace(/\s/g, ""), "base64");
+  const binary = atob(match[2].replace(/\s/g, ""));
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
   if (!bytes.length || bytes.length > MAX_AVATAR_BYTES) throw new Error("Image must be under 2 MB");
   const path = `${userId}/${Date.now()}.${ext}`;
   const { error } = await supabaseAdmin.storage

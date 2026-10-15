@@ -4,12 +4,13 @@ import { createFileRoute } from "@tanstack/react-router";
  * Desktop feedback intake.
  *
  * Two delivery channels, chosen by the client:
- *   - "issue"  -> opens a GitHub issue on the ZYRAXON-AI repository.
- *   - "email"  -> emails the team, or falls back to a durable GitHub-backed
- *                 inbox when no mail provider is configured.
+ *   - "issue" -> opens a GitHub issue on the ZYRAXON-AI repository.
+ *   - "email" -> emails the team. When a mail provider is configured the message
+ *                is sent server-side; otherwise the response carries a prefilled
+ *                mailto: link that the browser opens directly.
  *
- * The endpoint is public, so every field is length-capped and validated, and a
- * honeypot field is used to drop trivial spam.
+ * Nothing is stored in a database. The endpoint is public, so every field is
+ * length-capped and validated, and a honeypot field drops trivial spam.
  */
 
 const HEADERS = {
@@ -20,7 +21,7 @@ const HEADERS = {
 };
 
 const REPO = "onelpawarai-X/ZYRAXON-AI";
-const TEAM_EMAIL = "team@zyraxonai.com";
+const TEAM_EMAIL = "sayidilxs@gmail.com";
 
 const CATEGORIES: Record<string, { label: string; title: string }> = {
   bug: { label: "bug", title: "Bug report" },
@@ -49,13 +50,6 @@ function gh(token: string) {
     "User-Agent": "zyraxon-website",
     "Content-Type": "application/json",
   };
-}
-
-/* Base64 helper that works on the Cloudflare Worker runtime (no Buffer). */
-function b64decode(b64: string) {
-  const bin = atob(b64.replace(/\s/g, ""));
-  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
 }
 
 function buildIssueBody(entry: {
@@ -106,20 +100,6 @@ async function createIssue(
   return { number: data.number, url: data.html_url };
 }
 
-async function appendToBucket(entry: Parameters<typeof buildIssueBody>[0]) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const record = { ...entry, at: new Date().toISOString() };
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const safe = (entry.name || "anonymous").replace(/[^a-zA-Z0-9]+/g, "-").slice(0, 40);
-  const { error } = await supabaseAdmin.storage
-    .from("community-avatars")
-    .upload(`feedback/${stamp}-${safe}.json`, JSON.stringify(record, null, 2), {
-      contentType: "application/json",
-      upsert: false,
-    });
-  if (error) throw error;
-}
-
 async function sendEmail(entry: {
   name: string;
   email: string;
@@ -146,26 +126,19 @@ async function sendEmail(entry: {
   return true;
 }
 
-async function saveToDatabase(
-  entry: Parameters<typeof buildIssueBody>[0],
-  deliveredEmail: boolean,
-): Promise<boolean> {
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("desktop_feedback").insert({
-      name: entry.name,
-      email: entry.email,
-      category: entry.category,
-      os: entry.os || null,
-      app_version: entry.appVersion || null,
-      github: entry.github || null,
-      message: entry.message,
-      delivered_email: deliveredEmail,
-    } as any);
-    return !error;
-  } catch {
-    return false;
-  }
+/** Prefilled mail-client link, used when no mail provider is configured. */
+function mailtoLink(entry: {
+  name: string;
+  email: string;
+  category: string;
+  os: string;
+  appVersion: string;
+  message: string;
+  github: string;
+}) {
+  const subject = `[Desktop] ${CATEGORIES[entry.category]?.title ?? "Feedback"} from ${entry.name}`;
+  const body = buildIssueBody(entry);
+  return `mailto:${TEAM_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 export const Route = createFileRoute("/api/public/desktop-feedback")({
@@ -246,23 +219,14 @@ export const Route = createFileRoute("/api/public/desktop-feedback")({
           } catch {
             emailed = false;
           }
-          const stored = await saveToDatabase(entry, emailed);
-          if (!emailed) {
-            try {
-              await appendToBucket(entry);
-            } catch {
-              /* durable copy is best-effort */
-            }
-          }
-          if (!emailed && !stored)
-            return Response.json(
-              {
-                error:
-                  "Could not deliver your feedback right now. Please use the GitHub issue option.",
-              },
-              { status: 503, headers: HEADERS },
-            );
-          return Response.json({ ok: true, channel: "email" }, { headers: HEADERS });
+          // No mail provider configured: hand the browser a prefilled mailto
+          // link so the message still goes straight to the team inbox.
+          return Response.json(
+            emailed
+              ? { ok: true, channel: "email" }
+              : { ok: true, channel: "email", mailto: mailtoLink(entry) },
+            { headers: HEADERS },
+          );
         } catch (err) {
           const message = err instanceof Error ? err.message : "Could not send your feedback.";
           return Response.json({ error: message }, { status: 502, headers: HEADERS });

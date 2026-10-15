@@ -24,7 +24,7 @@ export const Route = createFileRoute("/desktop-feedback")({
 });
 
 const REPO = "https://github.com/onelpawarai-X/ZYRAXON-AI";
-const TEAM_EMAIL = "team@zyraxonai.com";
+const TEAM_EMAIL = "sayidilxs@gmail.com";
 
 const CATEGORIES = [
   { value: "bug", label: "Bug report" },
@@ -78,11 +78,15 @@ function DesktopFeedback() {
     setBusy(false);
     if (!r.ok) return setMsg(d.error || "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।");
     setResult({ channel: d.channel, issue: d.issue });
-    setMsg(
-      channel === "issue"
-        ? "আপনার GitHub ইস্যু তৈরি হয়েছে। ধন্যবাদ!"
-        : "আপনার ফিডব্যাক পাঠানো হয়েছে। ধন্যবাদ!",
-    );
+    if (channel === "issue") {
+      setMsg("আপনার GitHub ইস্যু তৈরি হয়েছে। ধন্যবাদ!");
+    } else if (d.mailto) {
+      // No server-side mail provider: open the prefilled mail draft.
+      window.location.href = d.mailto;
+      setMsg(`আপনার ইমেইল অ্যাপ খোলা হচ্ছে — মেসেজটি ${TEAM_EMAIL} ঠিকানায় পাঠিয়ে দিন।`);
+    } else {
+      setMsg("আপনার ফিডব্যাক পাঠানো হয়েছে। ধন্যবাদ!");
+    }
   }
 
   const disabled = busy || !f.name || !f.message || f.message.length < 10 || !f.consent;

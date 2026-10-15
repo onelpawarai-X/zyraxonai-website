@@ -151,45 +151,6 @@ export type Database = {
           },
         ]
       }
-      desktop_feedback: {
-        Row: {
-          app_version: string | null
-          category: string
-          created_at: string
-          delivered_email: boolean
-          email: string
-          github: string | null
-          id: string
-          message: string
-          name: string
-          os: string | null
-        }
-        Insert: {
-          app_version?: string | null
-          category?: string
-          created_at?: string
-          delivered_email?: boolean
-          email: string
-          github?: string | null
-          id?: string
-          message: string
-          name: string
-          os?: string | null
-        }
-        Update: {
-          app_version?: string | null
-          category?: string
-          created_at?: string
-          delivered_email?: boolean
-          email?: string
-          github?: string | null
-          id?: string
-          message?: string
-          name?: string
-          os?: string | null
-        }
-        Relationships: []
-      }
       community_members: {
         Row: {
           address: string | null
