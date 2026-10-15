@@ -268,9 +268,9 @@ tbody tr:hover{background:var(--bg2)}
 .ca-track{display:flex;gap:14px;width:max-content;animation:caScroll 42s linear infinite}
 .ca-marquee:hover .ca-track{animation-play-state:paused}
 @keyframes caScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.ca-chip{display:flex;align-items:center;gap:11px;padding:11px 18px 11px 11px;background:var(--surface);border:1px solid var(--border);border-radius:999px;white-space:nowrap;transition:border-color .2s,transform .2s}
+.ca-chip{display:inline-flex;align-items:center;text-decoration:none;color:inherit;gap:11px;padding:11px 18px 11px 11px;background:var(--surface);border:1px solid var(--border);border-radius:999px;white-space:nowrap;transition:border-color .2s,transform .2s}
 .ca-chip:hover{border-color:var(--accent);transform:translateY(-2px)}
-.ca-avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.ca-avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;letter-spacing:-.02em;object-fit:cover}
 .ca-meta{display:flex;flex-direction:column;gap:1px}
 .ca-name{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.25}
 .ca-tag{font-size:11px;color:var(--text-muted);line-height:1.25}
@@ -415,7 +415,6 @@ section{scroll-margin-top:80px}
     </a>
     <div class="nav-links" id="navLinks">
       <a href="#features">Features</a>
-      <a href="#swebench">SWE-bench</a>
       <a href="#modes">Modes</a>
       <a href="#models">Models</a>
       <a href="#compare">Compare</a>
@@ -426,8 +425,7 @@ section{scroll-margin-top:80px}
       <a href="/publish">Publish</a>
       <a href="/releases">Releases</a>
       <a href="/docs">Documentation</a>
-      <a href="/swebench-lite">SWE-bench Lite</a>
-      <a href="/swebench-verified">SWE-bench</a>
+      <a href="/desktop-feedback">Desktop Feedback</a>
       <a href="/bludar" class="accent">AI Bludar</a>
       <a href="/nebula" class="accent">NEBULA</a>
       <a href="https://onelpawarai.lovable.app" target="_blank" rel="noopener" class="accent">Founder</a>
@@ -463,55 +461,6 @@ section{scroll-margin-top:80px}
     </div>
   </div>
 </header>
-
-<!-- SWE-BENCH SPOTLIGHT -->
-<section id="swebench" class="alt-section">
-  <div class="container">
-    <div class="section-head reveal">
-      <h2>96.67% on <span class="gradient-text">SWE-bench Lite</span></h2>
-      <p>Real GitHub issues. Real Docker grading. Fully reproducible.</p>
-    </div>
-    <div class="grid grid-2">
-      <div class="card motion-surface reveal">
-        <div class="card-icon" style="color:var(--accent);border-color:rgba(37,99,235,.1);background:rgba(37,99,235,.04)">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
-        <h3>290 / 300 resolved</h3>
-        <p>ZYRAXON-AI resolves 290 of 300 SWE-bench Lite instances (96.67%) under the official SWE-bench Docker grader. The agent runs fully locally: no web browsing, and no access to the benchmark's test metadata (<code>FAIL_TO_PASS</code>, <code>PASS_TO_PASS</code>, <code>hints</code>).</p>
-        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
-          <a class="btn btn-primary" style="font-size:13px;padding:8px 16px" href="/swebench-lite">Read the Lite report</a>
-          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="/swebench/zyraxon-swebench-lite.pdf" target="_blank" rel="noopener">Paper (PDF)</a>
-        </div>
-        <div style="margin-top:12px;font-size:12px;color:var(--accent);font-weight:600">Best-of-2 &middot; declared honestly, not pass@1</div>
-      </div>
-      <div class="card motion-surface reveal">
-        <div class="card-icon" style="color:var(--accent);border-color:rgba(37,99,235,.1);background:rgba(37,99,235,.04)">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
-        <h3>425 / 500 on Verified</h3>
-        <p>On the human-validated SWE-bench Verified split, ZYRAXON-AI resolves 425 of 500 instances (85.0%) under the same official Docker grader.</p>
-        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
-          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="/swebench-verified">Verified report</a>
-        </div>
-      </div>
-      <div class="card motion-surface reveal">
-        <div class="card-icon" style="color:var(--accent3);border-color:rgba(16,185,129,.1);background:rgba(16,185,129,.04)">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-        </div>
-        <h3>Open report &amp; artifacts</h3>
-        <p>Read the full technical report, or check every verdict yourself: re-grading the published raw logs reproduces all 300 Lite verdicts with zero mismatches. Predictions, execution logs and reasoning traces are all public.</p>
-        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
-          <a class="btn btn-primary" style="font-size:13px;padding:8px 16px" href="/swebench-lite">Read the report</a>
-          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="/swebench/zyraxon-swebench-lite.pdf" target="_blank" rel="noopener">Paper (PDF)</a>
-          <a class="btn btn-outline" style="font-size:13px;padding:8px 16px" href="https://github.com/onelpawarai-X/SWE-bench-Lite-ZYRAXON-AI" target="_blank" rel="noopener">Artifacts on GitHub</a>
-        </div>
-      </div>
-    </div>
-    <p class="reveal" style="text-align:center;margin-top:22px;font-size:13px;color:var(--text-secondary)">
-      First author: <strong>Deluar Husen Sayidi</strong> (দেলোয়ার হুসেন সাইদি), ZYRAXON AI, Inc.
-    </p>
-  </div>
-</section>
 
 <div class="section-divider"></div>
 
@@ -1180,15 +1129,20 @@ section{scroll-margin-top:80px}
     return PALETTE[n%PALETTE.length];
   }
 
+  function avatar(m){
+    if(m.avatarUrl){return '<img class="ca-avatar" src="'+esc(m.avatarUrl)+'" alt="'+esc(m.name)+'" loading="lazy">';}
+    return '<span class="ca-avatar" style="background:'+colourFor(m.id)+'">'+esc(m.initial||'?')+'</span>';
+  }
+
   function chip(m){
     var tag=[m.role||'Member'];
     if(m.country) tag.push(m.country);
-    return '<div class="ca-chip">'
-      +'<span class="ca-avatar" style="background:'+colourFor(m.id)+'">'+esc(m.initial||'?')+'</span>'
+    return '<a class="ca-chip" href="/community/'+encodeURIComponent(m.id)+'">'
+      +avatar(m)
       +'<span class="ca-meta">'
       +'<span class="ca-name">'+esc(m.name)+'</span>'
       +'<span class="ca-tag">'+esc(tag.join(' · '))+'</span>'
-      +'</span></div>';
+      +'</span></a>';
   }
 
   function render(members){
@@ -1250,11 +1204,6 @@ section{scroll-margin-top:80px}
       <div class="footer-col">
         <h4>Developers</h4>
         <a href="/docs">Documentation</a>
-        <a href="/swebench-lite">SWE-bench Lite</a>
-        <a href="/swebench/zyraxon-swebench-lite.pdf" target="_blank" rel="noopener">Lite Report (PDF)</a>
-        <a href="/swebench-verified">SWE-bench Verified</a>
-        <a href="/swebench/zyraxon-swebench-verified.pdf" target="_blank" rel="noopener">Technical Report (PDF)</a>
-        <a href="https://github.com/onelpawarai-X/SWE-bench-ZYRAXON-AI" target="_blank" rel="noopener">SWE-bench Artifacts</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/releases" target="_blank" rel="noopener">Releases</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
@@ -1264,6 +1213,7 @@ section{scroll-margin-top:80px}
         <a href="https://discord.gg/h8mHvf45g" target="_blank" rel="noopener">Discord</a>
         <a href="https://www.youtube.com/@ZYRAXONAI" target="_blank" rel="noopener">YouTube</a>
         <a href="https://groups.google.com/g/onelpawarai-x" target="_blank" rel="noopener">Google Group</a>
+        <a href="/desktop-feedback">Desktop Feedback</a>
         <a href="https://github.com/onelpawarai-X/ZYRAXON-AI/issues" target="_blank" rel="noopener">Report Issues</a>
       </div>
       <div class="footer-col">
