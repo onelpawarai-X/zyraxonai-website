@@ -4,7 +4,10 @@ import { createFileRoute } from "@tanstack/react-router";
  * Desktop feedback intake.
  *
  * Two delivery channels, chosen by the client:
- *   - "issue" -> opens a GitHub issue on the ZYRAXON-AI repository.
+ *   - "issue" -> returns a prefilled GitHub "new issue" link. The visitor opens
+ *                it while signed in to their OWN GitHub account and submits the
+ *                issue themselves, so the site never needs a GitHub token and
+ *                the issue is authored by the reporter.
  *   - "email" -> emails the team. When a mail provider is configured the message
  *                is sent server-side; otherwise the response carries a prefilled
  *                mailto: link that the browser opens directly.
@@ -21,7 +24,11 @@ const HEADERS = {
 };
 
 const REPO = "onelpawarai-X/ZYRAXON-AI";
+const NEW_ISSUE = `https://github.com/${REPO}/issues/new`;
 const TEAM_EMAIL = "sayidilxs@gmail.com";
+
+/** GitHub rejects overly long query strings; keep the prefilled body bounded. */
+const MAX_URL_BODY = 5000;
 
 const CATEGORIES: Record<string, { label: string; title: string }> = {
   bug: { label: "bug", title: "Bug report" },
@@ -31,9 +38,29 @@ const CATEGORIES: Record<string, { label: string; title: string }> = {
   other: { label: "", title: "Feedback" },
 };
 
+type Entry = {
+  name: string;
+  email: string;
+  category: string;
+  os: string;
+  appVersion: string;
+  message: string;
+  github: string;
+};
+
+/** Drop control characters (keeping tab, newline and carriage return). */
+function stripControl(value: string) {
+  let out = "";
+  for (const ch of value) {
+    const code = ch.charCodeAt(0);
+    if (code < 32 && code !== 9 && code !== 10 && code !== 13) continue;
+    out += ch;
+  }
+  return out;
+}
+
 function clean(value: unknown, max: number) {
-  return String(value ?? "")
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, " ")
+  return stripControl(String(value ?? ""))
     .trim()
     .slice(0, max);
 }
@@ -42,31 +69,18 @@ function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
 }
 
-function gh(token: string) {
-  return {
-    Accept: "application/vnd.github+json",
-    Authorization: `Bearer ${token}`,
-    "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "zyraxon-website",
-    "Content-Type": "application/json",
-  };
+function issueTitle(entry: Entry) {
+  const meta = CATEGORIES[entry.category] ?? CATEGORIES.other;
+  return `[Desktop] ${meta.title}: ${entry.message.split("\n")[0].slice(0, 90)}`;
 }
 
-function buildIssueBody(entry: {
-  name: string;
-  email: string;
-  category: string;
-  os: string;
-  appVersion: string;
-  message: string;
-  github: string;
-}) {
+function buildIssueBody(entry: Entry) {
   const lines = [
     "### Desktop feedback",
     "",
     `**Category:** ${CATEGORIES[entry.category]?.title ?? "Feedback"}`,
     `**From:** ${entry.name}${entry.github ? ` (@${entry.github})` : ""}`,
-    `**Contact email:** ${entry.email}`,
+    ...(entry.email ? [`**Contact email:** ${entry.email}`] : []),
     "",
     "### Environment",
     `- **OS:** ${entry.os || "not specified"}`,
@@ -81,34 +95,29 @@ function buildIssueBody(entry: {
   return lines.join("\n");
 }
 
-async function createIssue(
-  token: string,
-  entry: Parameters<typeof buildIssueBody>[0],
-): Promise<{ number: number; url: string }> {
+/**
+ * Prefilled "new issue" link. The visitor is signed in to their own GitHub
+ * account, so they author the issue and this endpoint needs no write token.
+ */
+function newIssueLink(entry: Entry) {
   const meta = CATEGORIES[entry.category] ?? CATEGORIES.other;
-  const res = await fetch(`https://api.github.com/repos/${REPO}/issues`, {
-    method: "POST",
-    headers: gh(token),
-    body: JSON.stringify({
-      title: `[Desktop] ${meta.title}: ${entry.message.split("\n")[0].slice(0, 90)}`,
-      body: buildIssueBody(entry),
-      ...(meta.label ? { labels: [meta.label] } : {}),
-    }),
-  });
-  const data: any = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.message || `GitHub issue failed (${res.status})`);
-  return { number: data.number, url: data.html_url };
+  const params = new URLSearchParams();
+  params.set("title", issueTitle(entry));
+  params.set("body", buildIssueBody(entry).slice(0, MAX_URL_BODY));
+  if (meta.label) params.set("labels", meta.label);
+  return `${NEW_ISSUE}?${params.toString()}`;
 }
 
-async function sendEmail(entry: {
-  name: string;
-  email: string;
-  category: string;
-  os: string;
-  appVersion: string;
-  message: string;
-  github: string;
-}): Promise<boolean> {
+/** Prefilled mail-client link, used when no mail provider is configured. */
+function mailtoLink(entry: Entry) {
+  const meta = CATEGORIES[entry.category] ?? CATEGORIES.other;
+  const subject = `[Desktop] ${meta.title} from ${entry.name}`;
+  return `mailto:${TEAM_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+    buildIssueBody(entry),
+  )}`;
+}
+
+async function sendEmail(entry: Entry): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return false;
   const res = await fetch("https://api.resend.com/emails", {
@@ -126,21 +135,6 @@ async function sendEmail(entry: {
   return true;
 }
 
-/** Prefilled mail-client link, used when no mail provider is configured. */
-function mailtoLink(entry: {
-  name: string;
-  email: string;
-  category: string;
-  os: string;
-  appVersion: string;
-  message: string;
-  github: string;
-}) {
-  const subject = `[Desktop] ${CATEGORIES[entry.category]?.title ?? "Feedback"} from ${entry.name}`;
-  const body = buildIssueBody(entry);
-  return `mailto:${TEAM_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
 export const Route = createFileRoute("/api/public/desktop-feedback")({
   server: {
     handlers: {
@@ -150,7 +144,7 @@ export const Route = createFileRoute("/api/public/desktop-feedback")({
         Response.json(
           {
             repo: `https://github.com/${REPO}/issues`,
-            newIssue: `https://github.com/${REPO}/issues/new`,
+            newIssue: NEW_ISSUE,
             categories: Object.entries(CATEGORIES).map(([value, meta]) => ({
               value,
               title: meta.title,
@@ -160,7 +154,7 @@ export const Route = createFileRoute("/api/public/desktop-feedback")({
         ),
 
       POST: async ({ request }) => {
-        let body: any;
+        let body: Record<string, unknown>;
         try {
           body = await request.json();
         } catch {
@@ -173,10 +167,11 @@ export const Route = createFileRoute("/api/public/desktop-feedback")({
         }
 
         const mode = body.mode === "issue" ? "issue" : "email";
-        const entry = {
+        const category = clean(body.category, 40);
+        const entry: Entry = {
           name: clean(body.name, 80),
           email: clean(body.email, 120),
-          category: CATEGORIES[body.category] ? body.category : "other",
+          category: CATEGORIES[category] ? category : "other",
           os: clean(body.os, 60),
           appVersion: clean(body.appVersion, 40),
           github: clean(body.github, 60).replace(/^@/, ""),
@@ -191,25 +186,23 @@ export const Route = createFileRoute("/api/public/desktop-feedback")({
         if (!entry.name)
           return Response.json({ error: "Name is required." }, { status: 400, headers: HEADERS });
         if (mode === "email" && !isEmail(entry.email))
-          return Response.json({ error: "A valid email is required." }, { status: 400, headers: HEADERS });
+          return Response.json(
+            { error: "A valid email is required." },
+            { status: 400, headers: HEADERS },
+          );
         if (body.consent !== true)
-          return Response.json({ error: "Please accept the consent." }, { status: 400, headers: HEADERS });
-
-        const token = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
+          return Response.json(
+            { error: "Please accept the consent." },
+            { status: 400, headers: HEADERS },
+          );
 
         if (mode === "issue") {
-          if (!token)
-            return Response.json(
-              { error: "Issue creation is unavailable right now. Please use the email option." },
-              { status: 503, headers: HEADERS },
-            );
-          try {
-            const issue = await createIssue(token, entry);
-            return Response.json({ ok: true, channel: "issue", issue }, { headers: HEADERS });
-          } catch (err) {
-            const message = err instanceof Error ? err.message : "Could not open the issue.";
-            return Response.json({ error: message }, { status: 502, headers: HEADERS });
-          }
+          // Hand the browser a prefilled link. The visitor submits the issue
+          // under their own GitHub account, so no token is required here.
+          return Response.json(
+            { ok: true, channel: "issue", issueUrl: newIssueLink(entry), repo: REPO },
+            { headers: HEADERS },
+          );
         }
 
         try {

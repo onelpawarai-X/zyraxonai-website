@@ -44,7 +44,7 @@ const input =
 const label = "block text-[11px] font-bold uppercase tracking-wider text-muted-foreground";
 
 type Channel = "email" | "issue";
-type Result = { channel: string; issue?: { number: number; url: string } } | null;
+type Result = { channel: string; issueUrl?: string } | null;
 
 function DesktopFeedback() {
   const [channel, setChannel] = useState<Channel>("email");
@@ -79,13 +79,18 @@ function DesktopFeedback() {
     const d = await r.json().catch(() => ({}));
     setBusy(false);
     if (!r.ok) return setMsg(d.error || "Something went wrong. Please try again.");
-    setResult({ channel: d.channel, issue: d.issue });
-    if (channel === "issue") {
-      setMsg("Your GitHub issue is open. Thank you!");
+    if (channel === "issue" && d.issueUrl) {
+      setResult({ channel: "issue", issueUrl: d.issueUrl });
+      setMsg(
+        "Almost done — GitHub is opening with your report filled in. Sign in if needed, then press Submit new issue.",
+      );
+      window.open(d.issueUrl, "_blank", "noopener,noreferrer");
     } else if (d.mailto) {
+      setResult({ channel: "email" });
       window.location.href = d.mailto;
       setMsg(`Opening your email app — send the message to ${TEAM_EMAIL}.`);
     } else {
+      setResult({ channel: "email" });
       setMsg("Your feedback has been sent. Thank you!");
     }
   }
@@ -144,7 +149,8 @@ function DesktopFeedback() {
             Open a GitHub issue
           </div>
           <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
-            Public and trackable. Best for bug reports and feature requests.
+            Public and trackable. We open GitHub with your report filled in — submit it with your
+            own account.
           </p>
         </button>
       </div>
@@ -160,9 +166,9 @@ function DesktopFeedback() {
                 {msg}
               </p>
             </div>
-            {result.issue && (
-              <ButtonAnchor href={result.issue.url} variant="glass" size="sm">
-                View issue #{result.issue.number}
+            {result.issueUrl && (
+              <ButtonAnchor href={result.issueUrl} variant="glass" size="sm">
+                Open the prefilled issue on GitHub
               </ButtonAnchor>
             )}
             <div>
@@ -292,7 +298,7 @@ function DesktopFeedback() {
                 onClick={submit}
                 className="zx-sheen inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
               >
-                {busy ? "Sending…" : channel === "issue" ? "Open GitHub issue" : "Send feedback"}
+                {busy ? "Preparing…" : channel === "issue" ? "Continue on GitHub" : "Send feedback"}
               </button>
               <ButtonAnchor href={`${REPO}/issues`} variant="ghost" size="sm">
                 Browse all issues
