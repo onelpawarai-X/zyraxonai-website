@@ -32,7 +32,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ring-offset-background: var(--background);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -48,103 +47,323 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ======================================================================
+   ZYRAXON design system.
+
+   The page itself is a flat, untextured plane - pure white in light mode,
+   pure black in dark mode. Everything the user reads sits inside a single
+   floating "glass marble" sheet hovering above that plane, so the site
+   reads as one continuous pane of frosted glass rather than a stack of
+   separate cards.
+   ====================================================================== */
+
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --radius: 1rem;
+
+  /* The plane behind the glass sheet. Deliberately flat and pure. */
+  --plane: #ffffff;
+
+  --background: #ffffff;
+  --foreground: #0a0a0f;
+  --card: rgba(255, 255, 255, 0.55);
+  --card-foreground: #0a0a0f;
+  --popover: rgba(255, 255, 255, 0.92);
+  --popover-foreground: #0a0a0f;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(15, 23, 42, 0.05);
+  --secondary-foreground: #0a0a0f;
+  --muted: rgba(15, 23, 42, 0.04);
+  --muted-foreground: #5b6172;
+  --accent: rgba(79, 70, 229, 0.08);
+  --accent-foreground: #312e81;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: rgba(15, 23, 42, 0.1);
+  --input: rgba(15, 23, 42, 0.12);
+  --ring: rgba(79, 70, 229, 0.45);
+  --chart-1: #6366f1;
+  --chart-2: #06b6d4;
+  --chart-3: #f59e0b;
+  --chart-4: #a855f7;
+  --chart-5: #ef4444;
+  --sidebar: rgba(255, 255, 255, 0.6);
+  --sidebar-foreground: #0a0a0f;
+  --sidebar-primary: #4f46e5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(79, 70, 229, 0.08);
+  --sidebar-accent-foreground: #312e81;
+  --sidebar-border: rgba(15, 23, 42, 0.1);
+  --sidebar-ring: rgba(79, 70, 229, 0.45);
+
+  --glass-tint: rgba(255, 255, 255, 0.62);
+  --glass-tint-strong: rgba(255, 255, 255, 0.84);
+  --glass-edge: rgba(255, 255, 255, 0.75);
+  --glass-stroke: rgba(15, 23, 42, 0.08);
+  --glass-shadow: 0 32px 90px -30px rgba(15, 23, 42, 0.28), 0 2px 10px -2px rgba(15, 23, 42, 0.08);
+  --glass-glow: radial-gradient(120% 120% at 15% 0%, rgba(99, 102, 241, 0.16), transparent 55%),
+    radial-gradient(120% 120% at 100% 100%, rgba(6, 182, 212, 0.14), transparent 55%);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --plane: #000000;
+
+  --background: #000000;
+  --foreground: #f4f5f9;
+  --card: rgba(255, 255, 255, 0.045);
+  --card-foreground: #f4f5f9;
+  --popover: rgba(18, 18, 24, 0.94);
+  --popover-foreground: #f4f5f9;
+  --primary: #8b8bf5;
+  --primary-foreground: #06060e;
+  --secondary: rgba(255, 255, 255, 0.06);
+  --secondary-foreground: #f4f5f9;
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: #a2a8bd;
+  --accent: rgba(139, 139, 245, 0.14);
+  --accent-foreground: #dcdcff;
+  --destructive: #f87171;
+  --destructive-foreground: #06060e;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: rgba(139, 139, 245, 0.5);
+  --chart-1: #8b8bf5;
+  --chart-2: #22d3ee;
+  --chart-3: #fbbf24;
+  --chart-4: #c084fc;
+  --chart-5: #fb7185;
+  --sidebar: rgba(255, 255, 255, 0.04);
+  --sidebar-foreground: #f4f5f9;
+  --sidebar-primary: #8b8bf5;
+  --sidebar-primary-foreground: #06060e;
+  --sidebar-accent: rgba(139, 139, 245, 0.14);
+  --sidebar-accent-foreground: #dcdcff;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: rgba(139, 139, 245, 0.5);
+
+  --glass-tint: rgba(255, 255, 255, 0.05);
+  --glass-tint-strong: rgba(255, 255, 255, 0.08);
+  --glass-edge: rgba(255, 255, 255, 0.14);
+  --glass-stroke: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.9), 0 2px 12px -2px rgba(0, 0, 0, 0.6);
+  --glass-glow: radial-gradient(120% 120% at 15% 0%, rgba(139, 139, 245, 0.18), transparent 55%),
+    radial-gradient(120% 120% at 100% 100%, rgba(34, 211, 238, 0.12), transparent 55%);
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  body { background-color: var(--color-background); color: var(--color-foreground); }
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    background: var(--plane);
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--plane);
+    color: var(--color-foreground);
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-primary) 26%, transparent);
+  }
 }
 
-/* ── Ultra glassmorphism (ZYRAXON ecosystem — LIGHT MODE) ── */
-.zx-glass-root {
-  background:
-    radial-gradient(1200px 700px at 12% -10%, rgba(88, 166, 255, 0.08), transparent 60%),
-    radial-gradient(1000px 600px at 100% 0%, rgba(137, 87, 229, 0.06), transparent 60%),
-    radial-gradient(900px 700px at 50% 120%, rgba(240, 136, 62, 0.05), transparent 60%),
-    #f8f9fc;
+@layer utilities {
+  /* -- The floating glass sheet -------------------------------------- */
+  .zx-sheet {
+    position: relative;
+    border-radius: 2rem;
+    background: var(--glass-tint);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Inner light: a soft gradient wash plus a hairline top highlight, the
+     pair that makes the surface read as a physical pane of glass. */
+  .zx-sheet::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--glass-glow);
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .zx-sheet::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border-top: 1px solid var(--glass-edge);
+    pointer-events: none;
+  }
+
+  .zx-glass {
+    background: var(--card);
+    border: 1px solid var(--glass-stroke);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: inset 0 1px 0 var(--glass-edge), 0 12px 32px -20px rgba(15, 23, 42, 0.35);
+  }
+
+  .zx-glass-strong {
+    background: var(--glass-tint-strong);
+    border: 1px solid var(--glass-stroke);
+    backdrop-filter: blur(26px) saturate(160%);
+    -webkit-backdrop-filter: blur(26px) saturate(160%);
+    box-shadow: inset 0 1px 0 var(--glass-edge), 0 18px 50px -26px rgba(15, 23, 42, 0.45);
+  }
+
+  .zx-chip {
+    background: var(--card);
+    border: 1px solid var(--glass-stroke);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: inset 0 1px 0 var(--glass-edge);
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  .zx-chip:hover {
+    background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+    border-color: color-mix(in oklab, var(--color-primary) 35%, transparent);
+    transform: translateY(-1px);
+  }
+
+  /* Specular sheen sweeping across a glass surface on hover. */
+  .zx-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .zx-sheen::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: skewX(-18deg);
+    transition: left 0.7s ease;
+    pointer-events: none;
+  }
+
+  .zx-sheen:hover::after {
+    left: 120%;
+  }
+
+  .dark .zx-sheen::after {
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  }
+
+  /* -- Marquee used by the homepage app strip ------------------------ */
+  .zx-marquee {
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .zx-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: zx-marquee-scroll 48s linear infinite;
+  }
+
+  .zx-marquee:hover .zx-marquee-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes zx-marquee-scroll {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  .zx-float {
+    animation: zx-float 7s ease-in-out infinite;
+  }
+
+  @keyframes zx-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  .zx-fade-up {
+    animation: zx-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes zx-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .zx-marquee-track,
+    .zx-float,
+    .zx-fade-up {
+      animation: none;
+    }
+  }
+
+  .zx-gradient-text {
+    background: linear-gradient(
+      100deg,
+      var(--color-foreground),
+      color-mix(in oklab, var(--color-primary) 80%, var(--color-foreground))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .zx-grid-lines {
+    background-image: linear-gradient(to right, var(--glass-stroke) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--glass-stroke) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
 }
-.zx-aurora {
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(520px 520px at 20% 30%, rgba(88, 166, 255, 0.06), transparent 70%),
-    radial-gradient(620px 620px at 80% 70%, rgba(137, 87, 229, 0.06), transparent 70%);
-  filter: blur(30px); animation: zx-aurora-drift 18s ease-in-out infinite alternate;
+
+/* Scrollbars follow the theme instead of the OS default. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
-@keyframes zx-aurora-drift {
-  from { transform: translate3d(-2%, -1%, 0) scale(1); }
-  to { transform: translate3d(2%, 2%, 0) scale(1.08); }
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-foreground) 18%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
-.zx-glass-root [style*="backdrop-filter"], .zx-glass-root [style*="backdropFilter"] {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-.zx-glass-root ::-webkit-scrollbar { width: 10px; height: 10px; }
-.zx-glass-root ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.14); border-radius: 999px; }

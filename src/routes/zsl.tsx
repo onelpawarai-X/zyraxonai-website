@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { PageShell } from "@/components/site/PageShell";
+import { PageHeader } from "@/components/site/SiteChrome";
+import { ButtonAnchor, Card, Divider, Section, StatTile, Tag } from "@/components/site/ui";
+import { Icon } from "@/components/site/Icon";
 
 export const Route = createFileRoute("/zsl")({
   head: () => ({
@@ -78,411 +82,359 @@ const TIMELINE = [
   { year: "2030+", event: "NEXUS-X transition available", desc: "Future-proof path with 180-day notice period", active: false },
 ];
 
-function CheckIcon() {
+function Mark({ value }: { value: boolean | string }) {
+  if (typeof value === "boolean") {
+    return value ? (
+      <span className="mx-auto grid h-5 w-5 place-items-center rounded-full bg-emerald-500/12 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+        ✓
+      </span>
+    ) : (
+      <span className="text-muted-foreground/40">—</span>
+    );
+  }
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-      <rect width="16" height="16" rx="4" fill="#059669" />
-      <path d="M5 8l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <span className="inline-flex rounded-full bg-amber-500/14 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+      {value}
+    </span>
   );
 }
 
-function XIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-      <rect width="16" height="16" rx="4" fill="#e5e7eb" />
-      <path d="M6 6l4 4M10 6l-4 4" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
+const WHY = [
+  {
+    title: "Commercial freedom",
+    body: "Use it for any purpose — personal, commercial, enterprise, government or education. No royalties, no fees, no permission needed.",
+    icon: "bolt",
+  },
+  {
+    title: "Patent protection",
+    body: "Contributors grant a patent licence for their contributions, and the retaliation clause keeps everyone honest.",
+    icon: "shield",
+  },
+  {
+    title: "Identity safety",
+    body: "Others can fork and modify freely, but they cannot impersonate the official release or rebrand it as their own product.",
+    icon: "users",
+  },
+];
 
-function PartialIcon({ label }: { label: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-        <rect width="16" height="16" rx="4" fill="#fef3c7" />
-        <path d="M5 8h6" stroke="#b45309" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-      <span style={{ fontSize: 11, color: "#b45309", fontWeight: 500 }}>{label}</span>
-    </div>
-  );
-}
+const ZSL_PERKS = [
+  "Full commercial rights",
+  "Modification and fork rights",
+  "Redistribution with attribution",
+  "Patent grant from contributors",
+  "Project identity protection",
+  "Auto-transitions to MEKRA-X in 2028",
+];
 
-function ZSLPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"zsl-x" | "mekra-x">("zsl-x");
+const MEKRA_PERKS = [
+  "Everything in ZSL-X, plus:",
+  "Explicit paid-tier protection",
+  "Clear line for paid products built around ZYRAXON",
+  "Contributor ownership with patent grant",
+  "Private security disclosure encouraged",
+  "Same automatic termination for resellers",
+];
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif", color: "#1f2937" }}>
-      {/* Nav */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 32px", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(20px)", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <a href="/" style={{ fontSize: 18, fontWeight: 800, color: "#111827", textDecoration: "none", letterSpacing: "-0.5px" }}>ZYRAXON</a>
-          <span style={{ fontSize: 11, fontWeight: 600, color: "#7c3aed", background: "#f3f0ff", padding: "2px 8px", borderRadius: 4, letterSpacing: "0.5px" }}>ZSL</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 24, fontSize: 13 }}>
-          <a href="#comparison" style={{ color: "#6b7280", textDecoration: "none" }}>Compare</a>
-          <a href="#licenses" style={{ color: "#6b7280", textDecoration: "none" }}>Licenses</a>
-          <a href="#faq" style={{ color: "#6b7280", textDecoration: "none" }}>FAQ</a>
-          <a href="https://github.com/onelpawarai-X/ZSL" target="_blank" rel="noopener noreferrer"
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#374151", textDecoration: "none", fontWeight: 600 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" /></svg>
-            GitHub
-          </a>
-        </div>
-      </nav>
+const ADOPTION = [
+  {
+    title: "Reference in your project",
+    desc: "Add a one-line reference to your LICENSE file or package.json.",
+    code: "Licensed under the Zyraxon Sovereign License\n— X Edition (ZSL-X v2.0.0)\nSee https://github.com/onelpawarai-X/ZSL",
+  },
+  {
+    title: "Include the full licence",
+    desc: "Copy ZSL-X-LICENSE into your project root as your LICENSE file.",
+    code: "curl -o LICENSE https://raw.githubusercontent.com/\nonelpawarai-X/ZSL/main/ZSL-X-LICENSE",
+  },
+  {
+    title: "npm / package.json",
+    desc: "Reference the licence file in your package manifest.",
+    code: '{\n  "license": "SEE LICENSE IN LICENSE",\n  "licenseFile": "LICENSE"\n}',
+  },
+];
 
-      {/* Hero */}
-      <section style={{ padding: "80px 32px 60px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -100, left: "50%", transform: "translateX(-50%)", width: 600, height: 600, background: "radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 700, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 20, background: "#f3f0ff", border: "1px solid #e9e5ff", marginBottom: 24 }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#7c3aed", display: "inline-block", animation: "pulse 2s infinite" }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>ZSL-X v2.0.0 — Active 2026–2028</span>
-          </div>
-          <h1 style={{ fontSize: 48, fontWeight: 800, color: "#111827", margin: "0 0 16px", letterSpacing: "-1.5px", lineHeight: 1.1 }}>
-            Zyraxon Sovereign<br />License
-          </h1>
-          <p style={{ fontSize: 18, color: "#6b7280", margin: "0 0 32px", lineHeight: 1.6, maxWidth: 520, marginLeft: "auto", marginRight: "auto" }}>
-            An enterprise-grade open license for the AI era. Full commercial freedom, patent protection, identity safety, and future-proof transitions.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="#licenses" style={{ padding: "12px 28px", borderRadius: 10, background: "#7c3aed", color: "white", fontSize: 14, fontWeight: 600, textDecoration: "none", boxShadow: "0 4px 14px rgba(124,58,237,0.3)" }}>
-              Read the License
-            </a>
-            <a href="https://github.com/onelpawarai-X/ZSL" target="_blank" rel="noopener noreferrer"
-              style={{ padding: "12px 28px", borderRadius: 10, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
-              View on GitHub
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section style={{ padding: "0 32px 60px", maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-          {[
-            { value: "100%", label: "Commercial Freedom", color: "#059669" },
-            { value: "Patent", label: "Grant Included", color: "#2563eb" },
-            { value: "2", label: "Editions (ZSL-X + MEKRA-X)", color: "#f59e0b" },
-            { value: "2028", label: "Auto-Transition", color: "#7c3aed" },
-          ].map((s) => (
-            <div key={s.label} style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, textAlign: "center" }}>
-              <p style={{ fontSize: 24, fontWeight: 800, color: s.color, margin: "0 0 4px" }}>{s.value}</p>
-              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Why ZSL */}
-      <section style={{ padding: "60px 32px", maxWidth: 900, margin: "0 auto" }}>
-        <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 8px", textAlign: "center" }}>Why ZSL?</h2>
-        <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 40px", textAlign: "center", maxWidth: 500, marginLeft: "auto", marginRight: "auto" }}>
-          Built for the AI era. Combines the best of MIT, Apache, and GPL with protections no other license offers.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-          {[
-            { title: "Commercial Freedom", desc: "Use for any purpose: personal, commercial, enterprise, government, education. No royalties, no fees.", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z", color: "#059669" },
-            { title: "Patent Protection", desc: "Contributors grant patent license for their contributions. Patent retaliation clause protects everyone.", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z", color: "#2563eb" },
-            { title: "Identity Safety", desc: "Protects project identity. Others can fork and modify, but can't impersonate the official release.", icon: "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z", color: "#7c3aed" },
-          ].map((c) => (
-            <div key={c.title} style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 14, padding: 28 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: `${c.color}12`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={c.icon} /></svg>
-              </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#111827", margin: "0 0 8px" }}>{c.title}</h3>
-              <p style={{ fontSize: 13, color: "#6b7280", margin: 0, lineHeight: 1.6 }}>{c.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Comparison Table */}
-      <section id="comparison" style={{ padding: "60px 32px", background: "white", borderTop: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 8px", textAlign: "center" }}>How ZSL Compares</h2>
-          <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 32px", textAlign: "center" }}>
-            ZSL = MIT Freedom + Apache Patent Protection + Identity Safety + Future-Proof Transition
-          </p>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
-                  <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "#6b7280", fontSize: 12 }}>Feature</th>
-                  <th style={{ textAlign: "center", padding: "12px 16px", fontWeight: 700, color: "#7c3aed", fontSize: 13 }}>ZSL-X</th>
-                  <th style={{ textAlign: "center", padding: "12px 16px", fontWeight: 600, color: "#6b7280" }}>MIT</th>
-                  <th style={{ textAlign: "center", padding: "12px 16px", fontWeight: 600, color: "#6b7280" }}>Apache 2.0</th>
-                  <th style={{ textAlign: "center", padding: "12px 16px", fontWeight: 600, color: "#6b7280" }}>GPL-3.0</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.map((row, i) => (
-                  <tr key={row.feature} style={{ borderBottom: "1px solid #f3f4f6", background: i % 2 === 0 ? "#f9fafb" : "white" }}>
-                    <td style={{ padding: "10px 16px", fontWeight: 500, color: "#374151" }}>{row.feature}</td>
-                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                      {typeof row.zsl === "boolean" ? (row.zsl ? <div style={{ display: "flex", justifyContent: "center" }}><CheckIcon /></div> : <div style={{ display: "flex", justifyContent: "center" }}><XIcon /></div>) : <div style={{ display: "flex", justifyContent: "center" }}><PartialIcon label={row.zsl} /></div>}
-                    </td>
-                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                      {typeof row.mit === "boolean" ? (row.mit ? <div style={{ display: "flex", justifyContent: "center" }}><CheckIcon /></div> : <div style={{ display: "flex", justifyContent: "center" }}><XIcon /></div>) : <div style={{ display: "flex", justifyContent: "center" }}><PartialIcon label={row.mit} /></div>}
-                    </td>
-                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                      {typeof row.apache === "boolean" ? (row.apache ? <div style={{ display: "flex", justifyContent: "center" }}><CheckIcon /></div> : <div style={{ display: "flex", justifyContent: "center" }}><XIcon /></div>) : <div style={{ display: "flex", justifyContent: "center" }}><PartialIcon label={row.apache} /></div>}
-                    </td>
-                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                      {typeof row.gpl === "boolean" ? (row.gpl ? <div style={{ display: "flex", justifyContent: "center" }}><CheckIcon /></div> : <div style={{ display: "flex", justifyContent: "center" }}><XIcon /></div>) : <div style={{ display: "flex", justifyContent: "center" }}><PartialIcon label={row.gpl} /></div>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* Licenses */}
-      <section id="licenses" style={{ padding: "60px 32px", maxWidth: 900, margin: "0 auto" }}>
-        <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 8px", textAlign: "center" }}>The Licenses</h2>
-        <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 32px", textAlign: "center" }}>
-          Two licenses. One vision. Future-proof.
-        </p>
-
-        {/* Tabs */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 32 }}>
-          <button onClick={() => setActiveTab("zsl-x")} style={{ padding: "10px 24px", borderRadius: 8, border: "1px solid #e5e7eb", background: activeTab === "zsl-x" ? "#7c3aed" : "white", color: activeTab === "zsl-x" ? "white" : "#374151", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            ZSL-X v2.0.0
-          </button>
-          <button onClick={() => setActiveTab("mekra-x")} style={{ padding: "10px 24px", borderRadius: 8, border: "1px solid #e5e7eb", background: activeTab === "mekra-x" ? "#7c3aed" : "white", color: activeTab === "mekra-x" ? "white" : "#374151", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            MEKRA-X v2.0.0
-          </button>
-        </div>
-
-        {activeTab === "zsl-x" ? (
-          <div style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 16, padding: 40, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg, #7c3aed, #a78bfa)" }} />
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <span style={{ padding: "4px 12px", borderRadius: 6, background: "#f3f0ff", color: "#7c3aed", fontSize: 12, fontWeight: 700 }}>ACTIVE</span>
-              <span style={{ fontSize: 13, color: "#6b7280" }}>Valid 2026–2028</span>
-            </div>
-            <h3 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 16px" }}>ZSL-X v2.0.0</h3>
-            <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 24px", lineHeight: 1.6 }}>
-              The active license for all ZYRAXON projects. Grants full commercial, modification, and redistribution rights while protecting project identity and origin.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginBottom: 24 }}>
-              {[
-                "Full commercial rights",
-                "Modification and fork rights",
-                "Redistribution with attribution",
-                "Patent grant from contributors",
-                "Project identity protection",
-                "Auto-transitions to MEKRA-X in 2028",
-              ].map((item) => (
-                <div key={item} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <CheckIcon />
-                  <span style={{ fontSize: 13, color: "#374151" }}>{item}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <a href="https://github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE" target="_blank" rel="noopener noreferrer"
-                style={{ padding: "10px 20px", borderRadius: 8, background: "#7c3aed", color: "white", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                Read Full Text
-              </a>
-              <a href="https://github.com/onelpawarai-X/ZSL" target="_blank" rel="noopener noreferrer"
-                style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                View on GitHub
-              </a>
-            </div>
-          </div>
-        ) : (
-          <div style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 16, padding: 40, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg, #f59e0b, #f97316)" }} />
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <span style={{ padding: "4px 12px", borderRadius: 6, background: "#fef3c7", color: "#b45309", fontSize: 12, fontWeight: 700 }}>SUCCESSOR</span>
-              <span style={{ fontSize: 13, color: "#6b7280" }}>Auto-activates January 1, 2028</span>
-            </div>
-            <h3 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 16px" }}>MEKRA-X v2.0.0</h3>
-            <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 24px", lineHeight: 1.6 }}>
-              The successor edition and the strictest of the license family. Keeps the same generous core as ZSL-X and preserves the same protections, with clear wording on tier protection, paid products around the software, and stricter scope.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginBottom: 24 }}>
-              {[
-                "Everything in ZSL-X, plus:",
-                "Explicit paid-tier protection (Section 2.2)",
-                "Clear line for paid products built around ZYRAXON",
-                "Contributor ownership with patent grant",
-                "Private security disclosure encouraged",
-                "Same automatic termination for resellers",
-              ].map((item) => (
-                <div key={item} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <CheckIcon />
-                  <span style={{ fontSize: 13, color: "#374151" }}>{item}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <a href="https://github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE" target="_blank" rel="noopener noreferrer"
-                style={{ padding: "10px 20px", borderRadius: 8, background: "#f59e0b", color: "white", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                Read Full Text
-              </a>
-              <a href="https://github.com/onelpawarai-X/ZSL" target="_blank" rel="noopener noreferrer"
-                style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                View on GitHub
-              </a>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Timeline */}
-      <section style={{ padding: "60px 32px", background: "white", borderTop: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 32px", textAlign: "center" }}>License Timeline</h2>
-          <div style={{ position: "relative", paddingLeft: 32 }}>
-            <div style={{ position: "absolute", left: 11, top: 8, bottom: 8, width: 2, background: "#e5e7eb" }} />
-            {TIMELINE.map((t, i) => (
-              <div key={t.year} style={{ position: "relative", marginBottom: i < TIMELINE.length - 1 ? 32 : 0 }}>
-                <div style={{ position: "absolute", left: -32, top: 4, width: 24, height: 24, borderRadius: "50%", background: t.active ? "#7c3aed" : "white", border: `2px solid ${t.active ? "#7c3aed" : "#e5e7eb"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {t.active && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "white" }} />}
-                </div>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: t.active ? "#7c3aed" : "#111827" }}>{t.year}</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{t.event}</span>
-                  </div>
-                  <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>{t.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How to Use */}
-      <section style={{ padding: "60px 32px", maxWidth: 900, margin: "0 auto" }}>
-        <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 8px", textAlign: "center" }}>How to Use ZSL</h2>
-        <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 32px", textAlign: "center" }}>
-          Three ways to adopt the Zyraxon Sovereign License.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-          {[
-            {
-              title: "Reference in Your Project",
-              desc: "Add a one-line reference to your LICENSE file or package.json.",
-              code: 'Licensed under the Zyraxon Sovereign License\n— X Edition (ZSL-X v2.0.0)\nSee https://github.com/onelpawarai-X/ZSL',
-            },
-            {
-              title: "Include Full License",
-              desc: "Copy ZSL-X-LICENSE into your project root as your LICENSE file.",
-              code: "curl -o LICENSE https://raw.githubusercontent.com/\nonelpawarai-X/ZSL/main/\nZSL-X-LICENSE",
-            },
-            {
-              title: "npm / package.json",
-              desc: "Reference the license file in your package manifest.",
-              code: '{\n  "license": "SEE LICENSE IN LICENSE",\n  "licenseFile": "LICENSE"\n}',
-            },
-          ].map((w) => (
-            <div key={w.title} style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 14, padding: 24 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: "0 0 8px" }}>{w.title}</h3>
-              <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 16px", lineHeight: 1.5 }}>{w.desc}</p>
-              <pre style={{ background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: 8, padding: 12, fontSize: 11, color: "#374151", margin: 0, overflow: "auto", lineHeight: 1.6, fontFamily: "JetBrains Mono, Fira Code, monospace" }}>
-                {w.code}
-              </pre>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Projects Using ZSL */}
-      <section style={{ padding: "60px 32px", background: "white", borderTop: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 8px", textAlign: "center" }}>Projects Using ZSL</h2>
-          <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 32px", textAlign: "center" }}>
-            All official ZYRAXON projects are licensed under ZSL.
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-            {PROJECTS_USING_ZSL.map((p) => (
-              <a key={p.name} href={`https://github.com/${p.repo}`} target="_blank" rel="noopener noreferrer"
-                style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, textDecoration: "none", display: "block", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = p.color; e.currentTarget.style.boxShadow = `0 4px 20px ${p.color}15`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.boxShadow = "none"; }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: 3, background: p.color, display: "inline-block" }} />
-                  <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{p.name}</span>
-                </div>
-                <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 12px" }}>{p.desc}</p>
-                <span style={{ fontSize: 11, fontWeight: 600, color: p.color, background: `${p.color}10`, padding: "3px 10px", borderRadius: 4 }}>ZSL-X v2.0.0</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" style={{ padding: "60px 32px", maxWidth: 700, margin: "0 auto" }}>
-        <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 8px", textAlign: "center" }}>Frequently Asked Questions</h2>
-        <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 32px", textAlign: "center" }}>
-          Everything you need to know about ZSL.
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {FAQ.map((f, i) => (
-            <div key={i} style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden" }}>
-              <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{f.q}</span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transform: openFaq === i ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>
-                  <path d="M4 6l4 4 4-4" stroke="#6b7280" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-              {openFaq === i && (
-                <div style={{ padding: "0 20px 16px", fontSize: 13, color: "#6b7280", lineHeight: 1.6 }}>
-                  {f.a}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Attribution Template */}
-      <section style={{ padding: "60px 32px", background: "white", borderTop: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 8px", textAlign: "center" }}>Attribution Template</h2>
-          <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 24px", textAlign: "center" }}>
-            Any redistribution must include the following attribution.
-          </p>
-          <pre style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 12, padding: 24, fontSize: 13, color: "#374151", lineHeight: 1.7, fontFamily: "JetBrains Mono, Fira Code, monospace", overflow: "auto" }}>
-{`This software is based on [Project Name],
+const ATTRIBUTION = `This software is based on [Project Name],
 originally created by onelpawarai.
 Modifications have been made.
 
 Licensed under the Zyraxon Sovereign License
-— X Edition (ZSL-X v2.0.0).`}
+— X Edition (ZSL-X v2.0.0).`;
+
+function ZSLPage() {
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [activeTab, setActiveTab] = useState<"zsl-x" | "mekra-x">("zsl-x");
+
+  return (
+    <PageShell>
+      <PageHeader
+        label="Legal"
+        title="Zyraxon Sovereign License"
+        description="An enterprise-grade open licence for the AI era: full commercial freedom, patent protection, identity safety and future-proof transitions."
+      >
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Tag tone="primary">ZSL-X v2.0.0 · active 2026–2028</Tag>
+          <Tag tone="success">Commercial use allowed</Tag>
+          <Tag>Not copyleft</Tag>
+        </div>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <ButtonAnchor href="#licences" external={false} size="md">
+            Read the licence
+          </ButtonAnchor>
+          <ButtonAnchor href="https://github.com/onelpawarai-X/ZSL" variant="glass" size="md">
+            View on GitHub
+          </ButtonAnchor>
+        </div>
+      </PageHeader>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile value="100%" label="Commercial freedom" />
+        <StatTile value="Patent" label="Grant included" />
+        <StatTile value="2" label="Editions" />
+        <StatTile value="2028" label="Auto-transition" />
+      </div>
+
+      <Section className="mt-12" label="Why ZSL" title="Built for the AI era">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {WHY.map((c) => (
+            <Card key={c.title} hover className="p-6">
+              <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
+                <Icon name={c.icon} size={20} />
+              </span>
+              <h3 className="mt-4 text-[15px] font-bold text-foreground">{c.title}</h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{c.body}</p>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
+      <Divider />
+
+      <Section
+        label="Comparison"
+        title="How ZSL compares"
+        description="MIT freedom, Apache patent protection, identity safety and a future-proof transition, in one licence."
+      >
+        <Card className="overflow-x-auto">
+          <table className="w-full min-w-[620px] border-collapse text-[13px]">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Feature
+                </th>
+                <th className="px-5 py-3.5 text-center text-[13px] font-bold text-primary">ZSL-X</th>
+                {["MIT", "Apache 2.0", "GPL-3.0"].map((h) => (
+                  <th key={h} className="px-5 py-3.5 text-center text-[13px] font-semibold text-muted-foreground">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON.map((row) => (
+                <tr key={row.feature} className="border-b border-border/60 last:border-0">
+                  <td className="px-5 py-3 font-medium text-foreground">{row.feature}</td>
+                  {[row.zsl, row.mit, row.apache, row.gpl].map((v, i) => (
+                    <td key={i} className="px-5 py-3 text-center">
+                      <Mark value={v as boolean | string} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      </Section>
+
+      <Divider />
+
+      <Section
+        id="licences"
+        label="The licences"
+        title="Two editions, one vision"
+        description="ZSL-X is active today. MEKRA-X is its successor and activates automatically."
+      >
+        <div className="mb-5 inline-flex gap-1.5 rounded-full p-1.5 zx-glass">
+          {(["zsl-x", "mekra-x"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setActiveTab(t)}
+              className={`rounded-full px-4 py-1.5 text-[13px] font-semibold transition ${
+                activeTab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {t === "zsl-x" ? "ZSL-X v2.0.0" : "MEKRA-X v2.0.0"}
+            </button>
+          ))}
+        </div>
+
+        <Card className="relative overflow-hidden p-7">
+          <span
+            className={`absolute inset-x-0 top-0 h-1 ${
+              activeTab === "zsl-x"
+                ? "bg-gradient-to-r from-primary to-cyan-400"
+                : "bg-gradient-to-r from-amber-400 to-orange-500"
+            }`}
+          />
+          <div className="flex flex-wrap items-center gap-3">
+            <Tag tone={activeTab === "zsl-x" ? "primary" : "warn"}>
+              {activeTab === "zsl-x" ? "Active" : "Successor"}
+            </Tag>
+            <span className="text-[13px] text-muted-foreground">
+              {activeTab === "zsl-x" ? "Valid 2026–2028" : "Auto-activates 1 January 2028"}
+            </span>
+          </div>
+          <h3 className="mt-3 text-xl font-bold tracking-tight text-foreground">
+            {activeTab === "zsl-x" ? "ZSL-X v2.0.0" : "MEKRA-X v2.0.0"}
+          </h3>
+          <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
+            {activeTab === "zsl-x"
+              ? "The active licence for all ZYRAXON projects. Grants full commercial, modification and redistribution rights while protecting project identity and origin."
+              : "The successor edition and the strictest of the licence family. It keeps the same generous core and protections, with clearer wording on tier protection and paid products built around the software."}
+          </p>
+          <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+            {(activeTab === "zsl-x" ? ZSL_PERKS : MEKRA_PERKS).map((item) => (
+              <div key={item} className="flex items-center gap-2.5">
+                <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  ✓
+                </span>
+                <span className="text-[13px] text-muted-foreground">{item}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <ButtonAnchor
+              href={`https://github.com/onelpawarai-X/ZSL/blob/main/${
+                activeTab === "zsl-x" ? "ZSL-X-LICENSE" : "MEKRA-X-LICENSE"
+              }`}
+              size="sm"
+            >
+              Read full text
+            </ButtonAnchor>
+            <ButtonAnchor href="https://github.com/onelpawarai-X/ZSL" variant="glass" size="sm">
+              View on GitHub
+            </ButtonAnchor>
+          </div>
+        </Card>
+      </Section>
+
+      <Divider />
+
+      <Section label="Timeline" title="Licence timeline">
+        <Card className="p-7">
+          <div className="relative pl-8">
+            <span className="absolute bottom-2 left-[11px] top-2 w-px bg-border" />
+            {TIMELINE.map((t, i) => (
+              <div key={t.year} className={i < TIMELINE.length - 1 ? "relative mb-8" : "relative"}>
+                <span
+                  className={`absolute -left-8 top-1 grid h-6 w-6 place-items-center rounded-full border-2 ${
+                    t.active ? "border-primary bg-primary" : "border-border bg-transparent"
+                  }`}
+                >
+                  {t.active && <span className="h-2 w-2 rounded-full bg-primary-foreground" />}
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`text-[14px] font-bold ${t.active ? "text-primary" : "text-foreground"}`}>
+                    {t.year}
+                  </span>
+                  <span className="text-[14px] font-semibold text-foreground">{t.event}</span>
+                </div>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">{t.desc}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </Section>
+
+      <Divider />
+
+      <Section
+        label="Adoption"
+        title="How to use ZSL"
+        description="Three ways to adopt the Zyraxon Sovereign Licence in your own project."
+      >
+        <div className="grid gap-4 sm:grid-cols-3">
+          {ADOPTION.map((w) => (
+            <Card key={w.title} className="flex flex-col p-6">
+              <h3 className="text-[15px] font-bold text-foreground">{w.title}</h3>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">{w.desc}</p>
+              <pre className="zx-glass mt-4 overflow-auto rounded-xl p-3.5 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                {w.code}
+              </pre>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
+      <Divider />
+
+      <Section
+        label="Adopters"
+        title="Projects using ZSL"
+        description="All official ZYRAXON projects are licensed under ZSL."
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {PROJECTS_USING_ZSL.map((p) => (
+            <a
+              key={p.name}
+              href={`https://github.com/${p.repo}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="zx-glass zx-sheen rounded-2xl p-5 transition-transform hover:-translate-y-0.5"
+            >
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-sm" style={{ background: p.color }} />
+                <span className="text-[15px] font-bold text-foreground">{p.name}</span>
+              </div>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{p.desc}</p>
+              <div className="mt-3">
+                <Tag tone="primary">ZSL-X v2.0.0</Tag>
+              </div>
+            </a>
+          ))}
+        </div>
+      </Section>
+
+      <Divider />
+
+      <Section label="FAQ" title="Licence questions">
+        <div className="grid gap-3">
+          {FAQ.map((f, i) => (
+            <details
+              key={f.q}
+              open={openFaq === i}
+              onToggle={(e) => {
+                if ((e.target as HTMLDetailsElement).open) setOpenFaq(i);
+              }}
+              className="zx-glass rounded-2xl px-5 py-4"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[14.5px] font-semibold text-foreground">
+                {f.q}
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-foreground/6 text-muted-foreground transition group-open:rotate-45">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </span>
+              </summary>
+              <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </Section>
+
+      <Divider />
+
+      <Section
+        label="Attribution"
+        title="Attribution template"
+        description="Any redistribution must include the following attribution."
+      >
+        <Card className="p-6">
+          <pre className="overflow-auto whitespace-pre-wrap font-mono text-[12.5px] leading-relaxed text-muted-foreground">
+            {ATTRIBUTION}
           </pre>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer style={{ padding: "40px 32px", borderTop: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>Zyraxon Sovereign License</p>
-            <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>Build Without Limits. Respect the Origin.</p>
-          </div>
-          <div style={{ display: "flex", gap: 20, fontSize: 13 }}>
-            <a href="/" style={{ color: "#6b7280", textDecoration: "none" }}>Home</a>
-            <a href="/faq" style={{ color: "#6b7280", textDecoration: "none" }}>FAQ</a>
-            <a href="https://github.com/onelpawarai-X/ZSL" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>GitHub</a>
-            <a href="https://github.com/onelpawarai-X/ZSL/blob/main/ZSL-X-LICENSE" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>ZSL-X</a>
-            <a href="https://github.com/onelpawarai-X/ZSL/blob/main/MEKRA-X-LICENSE" target="_blank" rel="noopener noreferrer" style={{ color: "#6b7280", textDecoration: "none" }}>MEKRA-X</a>
-          </div>
-        </div>
-        <div style={{ maxWidth: 900, margin: "24px auto 0", paddingTop: 20, borderTop: "1px solid #f3f4f6", textAlign: "center" }}>
-          <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>2026 onelpawarai — Zyraxon Sovereign License</p>
-        </div>
-      </footer>
-
-      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
-    </div>
+        </Card>
+      </Section>
+    </PageShell>
   );
 }

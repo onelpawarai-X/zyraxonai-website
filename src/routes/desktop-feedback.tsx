@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { PageShell } from "@/components/site/PageShell";
+import { PageHeader } from "@/components/site/SiteChrome";
+import { ButtonAnchor, Card } from "@/components/site/ui";
 
 export const Route = createFileRoute("/desktop-feedback")({
   head: () => ({
@@ -37,8 +40,8 @@ const CATEGORIES = [
 const OS_OPTIONS = ["Windows 10/11", "macOS (Apple Silicon)", "macOS (Intel)", "Linux", "Other"];
 
 const input =
-  "w-full rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground outline-none focus:border-primary";
-const label = "block text-xs font-semibold tracking-wide text-muted-foreground uppercase";
+  "w-full rounded-xl border border-border bg-transparent px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20";
+const label = "block text-[11px] font-bold uppercase tracking-wider text-muted-foreground";
 
 type Channel = "email" | "issue";
 type Result = { channel: string; issue?: { number: number; url: string } } | null;
@@ -63,12 +66,11 @@ function DesktopFeedback() {
   const set =
     (k: keyof typeof f) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setF({ ...f, [k]: e.target.value });
+      setF((prev) => ({ ...prev, [k]: e.target.value }));
 
   async function submit() {
     setBusy(true);
     setMsg("");
-    setResult(null);
     const r = await fetch("/api/public/desktop-feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -76,222 +78,241 @@ function DesktopFeedback() {
     });
     const d = await r.json().catch(() => ({}));
     setBusy(false);
-    if (!r.ok) return setMsg(d.error || "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।");
+    if (!r.ok) return setMsg(d.error || "Something went wrong. Please try again.");
     setResult({ channel: d.channel, issue: d.issue });
     if (channel === "issue") {
-      setMsg("আপনার GitHub ইস্যু তৈরি হয়েছে। ধন্যবাদ!");
+      setMsg("Your GitHub issue is open. Thank you!");
     } else if (d.mailto) {
-      // No server-side mail provider: open the prefilled mail draft.
       window.location.href = d.mailto;
-      setMsg(`আপনার ইমেইল অ্যাপ খোলা হচ্ছে — মেসেজটি ${TEAM_EMAIL} ঠিকানায় পাঠিয়ে দিন।`);
+      setMsg(`Opening your email app — send the message to ${TEAM_EMAIL}.`);
     } else {
-      setMsg("আপনার ফিডব্যাক পাঠানো হয়েছে। ধন্যবাদ!");
+      setMsg("Your feedback has been sent. Thank you!");
     }
   }
 
   const disabled = busy || !f.name || !f.message || f.message.length < 10 || !f.consent;
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-5 py-12">
-        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-          ← ZYRAXON AI
-        </Link>
+    <PageShell>
+      <PageHeader
+        label="Support"
+        title="Desktop feedback"
+        description="Tell us what you think about the ZYRAXON desktop app — bugs, feature requests or questions. Email the team directly, or open a tracked GitHub issue anyone can follow."
+      />
 
-        <h1 className="mt-4 text-4xl font-bold tracking-tight">Desktop Feedback</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          আপনার ZYRAXON ডেস্কটপ অ্যাপ নিয়ে মতামত, বাগ বা নতুন ফিচারের অনুরোধ পাঠান। ইমেইল করে
-          টিমের কাছে পৌঁছাতে পারেন, অথবা সরাসরি GitHub ইস্যু খুলতে পারেন যাতে সবাই ট্র্যাক করতে
-          পারে।
-        </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setChannel("email")}
+          className={`zx-glass rounded-2xl p-5 text-left transition ${
+            channel === "email" ? "border-primary/60 ring-2 ring-primary/20" : ""
+          }`}
+        >
+          <div className="flex items-center gap-2 text-[14px] font-bold text-foreground">
+            <span className="zx-glass grid h-8 w-8 place-items-center rounded-lg text-primary">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+                <path d="M3 7l9 6 9-6" />
+              </svg>
+            </span>
+            Email the team
+          </div>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
+            Best for private feedback. The message goes to {TEAM_EMAIL}.
+          </p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setChannel("issue")}
+          className={`zx-glass rounded-2xl p-5 text-left transition ${
+            channel === "issue" ? "border-primary/60 ring-2 ring-primary/20" : ""
+          }`}
+        >
+          <div className="flex items-center gap-2 text-[14px] font-bold text-foreground">
+            <span className="zx-glass grid h-8 w-8 place-items-center rounded-lg text-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7 0-.7 0-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z" />
+              </svg>
+            </span>
+            Open a GitHub issue
+          </div>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
+            Public and trackable. Best for bug reports and feature requests.
+          </p>
+        </button>
+      </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            onClick={() => setChannel("email")}
-            className={`rounded-2xl border p-5 text-left transition ${
-              channel === "email" ? "border-primary bg-primary/5" : "border-border bg-card hover:bg-accent"
-            }`}
-          >
-            <div className="text-sm font-bold">📧 Email the team</div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              গোপনীয় ফিডব্যাকের জন্য ভালো। আমরা {TEAM_EMAIL} এ আপনার মেসেজ পাব।
-            </p>
-          </button>
-          <button
-            onClick={() => setChannel("issue")}
-            className={`rounded-2xl border p-5 text-left transition ${
-              channel === "issue" ? "border-primary bg-primary/5" : "border-border bg-card hover:bg-accent"
-            }`}
-          >
-            <div className="text-sm font-bold">🐙 Open a GitHub issue</div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              পাবলিক ও ট্র্যাকযোগ্য। বাগ রিপোর্ট ও ফিচার রিকোয়েস্টের জন্য সেরা।
-            </p>
-          </button>
-        </div>
-
-        <section className="mt-6 rounded-2xl border border-border bg-card p-6">
-          {result ? (
-            <div className="space-y-3">
-              <div className="rounded-lg bg-green-500/10 p-4 text-sm text-green-600">{msg}</div>
-              {result.issue && (
-                <a
-                  href={result.issue.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block text-sm font-semibold text-primary underline"
-                >
-                  Issue #{result.issue.number} দেখুন →
-                </a>
-              )}
-              <div>
-                <button
-                  onClick={() => {
-                    setResult(null);
-                    setMsg("");
-                    setF({ ...f, message: "" });
-                  }}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:bg-accent"
-                >
-                  আরেকটি ফিডব্যাক পাঠান
-                </button>
-              </div>
+      <Card className="mt-5 p-6 sm:p-7">
+        {result ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 rounded-xl bg-emerald-500/10 p-4">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
+                ✓
+              </span>
+              <p className="text-[13.5px] leading-relaxed text-emerald-700 dark:text-emerald-300">
+                {msg}
+              </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <span className={label}>Your name *</span>
-                  <input className={input + " mt-1"} value={f.name} onChange={set("name")} placeholder="Your name" />
-                </div>
-                <div>
-                  <span className={label}>{channel === "issue" ? "Email" : "Email *"}</span>
-                  <input
-                    className={input + " mt-1"}
-                    type="email"
-                    value={f.email}
-                    onChange={set("email")}
-                    placeholder="you@gmail.com"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <span className={label}>Category</span>
-                  <select className={input + " mt-1"} value={f.category} onChange={set("category")}>
-                    {CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <span className={label}>Operating system</span>
-                  <select className={input + " mt-1"} value={f.os} onChange={set("os")}>
-                    <option value="">Select…</option>
-                    {OS_OPTIONS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <span className={label}>App version</span>
-                  <input
-                    className={input + " mt-1"}
-                    value={f.appVersion}
-                    onChange={set("appVersion")}
-                    placeholder="e.g. 19.0.5"
-                  />
-                </div>
-                <div>
-                  <span className={label}>GitHub username (optional)</span>
-                  <input
-                    className={input + " mt-1"}
-                    value={f.github}
-                    onChange={set("github")}
-                    placeholder="onelpawarai-X"
-                  />
-                </div>
-              </div>
-
+            {result.issue && (
+              <ButtonAnchor href={result.issue.url} variant="glass" size="sm">
+                View issue #{result.issue.number}
+              </ButtonAnchor>
+            )}
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  setResult(null);
+                  setMsg("");
+                  setF({ ...f, message: "" });
+                }}
+                className="zx-chip rounded-full px-4 py-2 text-[13px] font-semibold text-foreground"
+              >
+                Send another feedback
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <span className={label}>Your feedback *</span>
-                <textarea
-                  className={input + " mt-1"}
-                  rows={6}
-                  value={f.message}
-                  onChange={set("message")}
-                  placeholder="What happened, what you expected, and the steps to reproduce it."
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  কমপক্ষে ১০ অক্ষর। যত বিস্তারিত দিবেন, তত দ্রুত সমাধান সম্ভব।
-                </p>
-              </div>
-
-              {/* Honeypot: hidden from humans, filled by bots. */}
-              <input
-                tabIndex={-1}
-                autoComplete="off"
-                aria-hidden
-                className="hidden"
-                value={f.company}
-                onChange={set("company")}
-              />
-
-              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <span className={label}>Your name *</span>
                 <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={f.consent}
-                  onChange={(e) => setF({ ...f, consent: e.target.checked })}
+                  className={input + " mt-1.5"}
+                  value={f.name}
+                  onChange={set("name")}
+                  placeholder="Your name"
                 />
-                আমি সম্মতি দিচ্ছি যে আমার দেওয়া তথ্য ZYRAXON AI টিম ফিডব্যাক প্রক্রিয়ার জন্য ব্যবহার
-                করতে পারবে।{" "}
-                {channel === "issue" && "GitHub ইস্যু পাবলিকভাবে দেখা যাবে।"}
-              </label>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  disabled={disabled}
-                  onClick={submit}
-                  className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-                >
-                  {busy
-                    ? "পাঠানো হচ্ছে..."
-                    : channel === "issue"
-                      ? "Open GitHub issue"
-                      : "Send feedback"}
-                </button>
-                <a
-                  href={`${REPO}/issues`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground underline"
-                >
-                  সব ইস্যু দেখুন
-                </a>
               </div>
-
-              {msg && <p className="text-sm text-red-500">{msg}</p>}
+              <div>
+                <span className={label}>{channel === "issue" ? "Email" : "Email *"}</span>
+                <input
+                  className={input + " mt-1.5"}
+                  type="email"
+                  value={f.email}
+                  onChange={set("email")}
+                  placeholder="you@gmail.com"
+                />
+              </div>
             </div>
-          )}
-        </section>
 
-        <p className="mt-6 text-xs text-muted-foreground">
-          নিরাপত্তা সংক্রান্ত সমস্যা পাবলিক ইস্যুতে লিখবেন না — সরাসরি{" "}
-          <a className="underline" href={`mailto:${TEAM_EMAIL}`}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <span className={label}>Category</span>
+                <select className={input + " mt-1.5"} value={f.category} onChange={set("category")}>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <span className={label}>Operating system</span>
+                <select className={input + " mt-1.5"} value={f.os} onChange={set("os")}>
+                  <option value="">Select…</option>
+                  {OS_OPTIONS.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <span className={label}>App version</span>
+                <input
+                  className={input + " mt-1.5"}
+                  value={f.appVersion}
+                  onChange={set("appVersion")}
+                  placeholder="e.g. 19.0.5"
+                />
+              </div>
+              <div>
+                <span className={label}>GitHub username (optional)</span>
+                <input
+                  className={input + " mt-1.5"}
+                  value={f.github}
+                  onChange={set("github")}
+                  placeholder="onelpawarai-X"
+                />
+              </div>
+            </div>
+
+            <div>
+              <span className={label}>Your feedback *</span>
+              <textarea
+                className={input + " mt-1.5"}
+                rows={6}
+                value={f.message}
+                onChange={set("message")}
+                placeholder="What happened, what you expected, and the steps to reproduce it."
+              />
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                At least 10 characters. The more detail you give, the faster we can fix it.
+              </p>
+            </div>
+
+            {/* Honeypot: hidden from humans, filled by bots. */}
+            <input
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden
+              className="hidden"
+              value={f.company}
+              onChange={set("company")}
+            />
+
+            <label className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-muted-foreground">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={f.consent}
+                onChange={(e) => setF({ ...f, consent: e.target.checked })}
+              />
+              <span>
+                I agree that the ZYRAXON AI team may use the information I provide to process this
+                feedback. {channel === "issue" && "GitHub issues are publicly visible."}
+              </span>
+            </label>
+
+            <div className="flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={submit}
+                className="zx-sheen inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+              >
+                {busy ? "Sending…" : channel === "issue" ? "Open GitHub issue" : "Send feedback"}
+              </button>
+              <ButtonAnchor href={`${REPO}/issues`} variant="ghost" size="sm">
+                Browse all issues
+              </ButtonAnchor>
+            </div>
+
+            {msg && <p className="text-[13px] text-red-500">{msg}</p>}
+          </div>
+        )}
+      </Card>
+
+      <Card className="mt-5 p-5">
+        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+          Do not post security issues in a public issue. Email{" "}
+          <a className="font-semibold text-primary underline" href={`mailto:${TEAM_EMAIL}`}>
             {TEAM_EMAIL}
           </a>{" "}
-          এ ইমেইল করুন।
+          instead.
         </p>
-      </div>
-    </main>
+      </Card>
+    </PageShell>
   );
 }

@@ -65,14 +65,14 @@ export const Route = createFileRoute("/updates/$slug")({
   notFoundComponent: () => (
     <UpdateShell>
       <div className="py-24 text-center">
-        <p className="text-sm font-semibold tracking-widest text-cyan-600 uppercase">404</p>
-        <h1 className="mt-3 text-3xl font-bold text-slate-900">Update not found</h1>
-        <p className="mx-auto mt-3 max-w-md text-slate-600">
+        <p className="text-sm font-semibold tracking-widest text-primary uppercase">404</p>
+        <h1 className="mt-3 text-3xl font-bold text-foreground">Update not found</h1>
+        <p className="mx-auto mt-3 max-w-md text-muted-foreground">
           This permalink does not match a published update. It may have been unpublished or renamed.
         </p>
         <a
           href="/updates"
-          className="mt-8 inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
         >
           See all updates
         </a>
@@ -91,7 +91,7 @@ function UpdateDetail() {
       <article className="mx-auto max-w-3xl py-10">
         <a
           href="/updates"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-cyan-600"
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-primary"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -109,7 +109,7 @@ function UpdateDetail() {
                 {item.badge}
               </span>
             )}
-            <span className="text-xs font-medium tracking-wider text-slate-400 uppercase">
+            <span className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
               {new Date(item.createdAt).toLocaleDateString("en-GB", {
                 day: "numeric",
                 month: "long",
@@ -117,39 +117,39 @@ function UpdateDetail() {
               })}
             </span>
           </div>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             {item.title}
           </h1>
           {item.subtitle && (
-            <p className="mt-4 text-lg leading-relaxed text-slate-600">{item.subtitle}</p>
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground">{item.subtitle}</p>
           )}
         </header>
 
         <UpdateMedia item={item} />
 
         {item.body && (
-          <div className="mt-10 text-[17px] leading-[1.75] whitespace-pre-wrap text-slate-700">
+          <div className="mt-10 text-[17px] leading-[1.75] whitespace-pre-wrap text-foreground">
             {item.body}
           </div>
         )}
 
-        <footer className="mt-14 border-t border-slate-200 pt-8">
-          <p className="text-sm text-slate-500">
+        <footer className="mt-14 border-t border-border pt-8">
+          <p className="text-sm text-muted-foreground">
             Permanent link for this update — share it with any AI or tool to get the full record:
           </p>
-          <code className="mt-3 block overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm break-all text-slate-700">
+          <code className="mt-3 block overflow-x-auto rounded-xl border border-border bg-foreground/5 px-4 py-3 text-sm break-all text-foreground">
             {item.publicUrl}
           </code>
           <div className="mt-4 flex flex-wrap gap-3">
             <a
               href={`/api/public/site-content/${item.slug}`}
-              className="inline-flex items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700"
+              className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary/40 hover:text-primary"
             >
               JSON
             </a>
             <a
               href={`/api/public/site-content/${item.slug}?format=text`}
-              className="inline-flex items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700"
+              className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary/40 hover:text-primary"
             >
               Plain text
             </a>
@@ -158,7 +158,7 @@ function UpdateDetail() {
                 href={item.linkUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
               >
                 Open reference
               </a>

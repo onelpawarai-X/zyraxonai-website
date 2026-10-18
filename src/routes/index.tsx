@@ -1,6 +1,23 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { NebulaDeck } from "./nebula-core";
+import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
+import { AppMarquee } from "@/components/site/AppMarquee";
+import { Icon } from "@/components/site/Icon";
+import { ButtonAnchor, ButtonLink, Card, Divider, Section, Tag } from "@/components/site/ui";
+import {
+  COMPARE_COLS,
+  COMPARE_ROWS,
+  DOWNLOADS,
+  FEATURES,
+  MODES,
+  PLATFORM,
+  PROVIDERS,
+  SDK_FEATURES,
+  STACK,
+  STATS,
+} from "@/lib/home-content";
+
+const GITHUB = "https://github.com/onelpawarai-X/ZYRAXON-AI";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -9,7 +26,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
+          "The world's most advanced desktop AI agent. 805 tools across 63 categories, 10 agent modes, screen vision, eternal memory and 100+ live app integrations.",
       },
       {
         property: "og:title",
@@ -18,16 +35,15 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
+          "Desktop AI agent with 805 tools across 63 categories, 10 agent modes, screen vision and eternal memory.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
+      { name: "twitter:title", content: "ZYRAXON AI — All in One." },
       {
         name: "twitter:description",
-        content:
-          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
+        content: "Desktop AI agent with 805 tools, 10 agent modes and 100+ live app integrations.",
       },
     ],
     scripts: [
@@ -47,131 +63,544 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: Index,
+  component: HomePage,
 });
 
-const GREETING = "Hello world! Welcome to Zyraxon AI.";
+const TERMINAL_LINES = [
+  { p: "$", t: "zyraxon run --mode beast" },
+  { p: ">", t: "Scanning workspace… 1,204 files indexed" },
+  { p: ">", t: "Loading 805 tools across 63 categories" },
+  { p: ">", t: "Connected: GitHub · Notion · Linear · Vercel" },
+  { p: "✓", t: "Ready. What should I build?" },
+];
 
-function pickFemaleVoice(): SpeechSynthesisVoice | null {
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = [
-    "Microsoft Aria",
-    "Microsoft Jenny",
-    "Microsoft Michelle",
-    "Microsoft Zira",
-    "Google UK English Female",
-    "Google US English",
-    "Samantha",
-    "Karen",
-    "Moira",
-    "Tessa",
-    "Serena",
-  ];
-  for (const name of preferred) {
-    const match = voices.find((v) => v.name.includes(name));
-    if (match) return match;
-  }
+function HomePage() {
   return (
-    voices.find((v) => /female/i.test(v.name)) ||
-    voices.find((v) => v.lang?.toLowerCase().startsWith("en")) ||
-    voices[0] ||
-    null
+    <div className="min-h-screen bg-[var(--plane)]">
+      <SiteHeader />
+      <main className="px-3 pt-4 sm:px-5 sm:pt-5">
+        <div className="mx-auto max-w-7xl">
+          <div className="zx-sheet">
+            <AppMarquee />
+            <Hero />
+            <div className="px-6 sm:px-10">
+              <Divider />
+              <Platform />
+              <Divider />
+              <Features />
+              <Divider />
+              <Modes />
+              <Divider />
+              <Models />
+              <Divider />
+              <Compare />
+              <Divider />
+              <AppsTeaser />
+              <Divider />
+              <Download />
+              <Divider />
+              <Sdk />
+              <Divider />
+              <Stack />
+              <Divider />
+              <Community />
+            </div>
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }
 
-let spoken = false;
+function Hero() {
+  return (
+    <section className="relative overflow-hidden px-6 pb-10 pt-12 sm:px-10 sm:pt-16">
+      <div className="pointer-events-none absolute inset-0 zx-grid-lines opacity-[0.35]" />
+      <div className="relative grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:items-center">
+        <div className="zx-fade-up">
+          <span className="zx-chip inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-semibold text-muted-foreground">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
+            Free &amp; source-available · Windows · macOS · Linux
+          </span>
 
-function speakGreeting() {
-  if (spoken || typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  spoken = true;
-  try {
-    window.speechSynthesis.cancel();
-    const voice = new SpeechSynthesisUtterance(GREETING);
-    const picked = pickFemaleVoice();
-    if (picked) voice.voice = picked;
-    voice.rate = 0.94;
-    voice.pitch = 1.18;
-    voice.volume = 0.9;
-    window.speechSynthesis.speak(voice);
-  } catch {}
+          <h1 className="mt-5 text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
+            <span className="zx-gradient-text">ZYRAXON AI</span>
+            <span className="mt-3 block text-xl font-medium leading-snug text-muted-foreground sm:text-2xl">
+              Everything is possible with our AI if you guide it right.
+            </span>
+          </h1>
+
+          <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+            A chatbot talks. ZYRAXON acts. It reads your files, writes your code, runs your
+            commands, builds your projects and deploys your apps — with 10 agent modes, 805 tools
+            across 63 categories, 224 control systems, eternal memory and always-on screen vision.
+          </p>
+
+          <div className="mt-7 flex flex-wrap gap-3">
+            <ButtonLink to="/download/zyraxon-agent" size="lg">
+              <Icon name="monitor" size={17} />
+              Download for desktop
+            </ButtonLink>
+            <ButtonAnchor href={GITHUB} size="lg" variant="glass">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7 0-.7 0-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z" />
+              </svg>
+              View on GitHub
+            </ButtonAnchor>
+          </div>
+
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {STATS.map((s) => (
+              <div key={s.label} className="zx-glass rounded-xl px-3 py-2.5">
+                <p className="text-lg font-bold tracking-tight text-foreground">{s.value}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {s.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="zx-float">
+          <Terminal />
+        </div>
+      </div>
+    </section>
+  );
 }
 
-function armGreeting() {
-  speakGreeting();
-  if ("speechSynthesis" in window) {
-    const onVoices = () => {
-      if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-        spoken = false;
-        speakGreeting();
-      }
-      window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
-    };
-    window.speechSynthesis.addEventListener("voiceschanged", onVoices);
-    window.setTimeout(
-      () => window.speechSynthesis.removeEventListener("voiceschanged", onVoices),
-      8000,
-    );
-  }
-  const events = ["pointerdown", "keydown", "touchstart"] as const;
-  const once = () => {
-    speakGreeting();
-    events.forEach((e) => window.removeEventListener(e, once));
-  };
-  events.forEach((e) => window.addEventListener(e, once, { passive: true }));
-}
-
-function Index() {
-  const [nebula, setNebula] = useState(false);
+function Terminal() {
+  const [visible, setVisible] = useState(0);
 
   useEffect(() => {
-    const timer = window.setTimeout(armGreeting, 350);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const onMessage = (e: MessageEvent) => {
-      if ((e.data as any)?.type === "zyraxon:nebula") setNebula(true);
-      if ((e.data as any)?.type === "zyraxon:navigate" && (e.data as any).path) {
-        window.top!.location.href = (e.data as any).path;
-      }
-    };
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
+    const id = window.setInterval(() => {
+      setVisible((v) => (v >= TERMINAL_LINES.length ? 0 : v + 1));
+    }, 900);
+    return () => window.clearInterval(id);
   }, []);
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        background: "#06060e",
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
-      <iframe
-        title="ZYRAXON AI"
-        src="/zyraxon.html"
-        allow="autoplay"
-        style={{ display: "block", width: "100%", flex: "1 1 auto", minHeight: 0, border: 0 }}
-      />
-      {nebula && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 60,
-            background: "rgba(2,4,12,.86)",
-            backdropFilter: "blur(10px)",
-            display: "flex",
-            overflow: "auto",
-          }}
-        >
-          <NebulaDeck onClose={() => setNebula(false)} />
+    <div className="zx-glass-strong overflow-hidden rounded-2xl">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+        <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
+        <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
+        <span className="ml-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          zyraxon agent
+        </span>
+      </div>
+      <div className="space-y-2.5 px-5 py-5 font-mono text-[12.5px] leading-relaxed">
+        {TERMINAL_LINES.map((line, i) => (
+          <div
+            key={line.t}
+            className={`flex gap-2.5 transition-opacity duration-300 ${
+              i < visible ? "opacity-100" : "opacity-25"
+            }`}
+          >
+            <span
+              className={
+                line.p === "✓"
+                  ? "text-emerald-500"
+                  : line.p === "$"
+                    ? "text-primary"
+                    : "text-muted-foreground"
+              }
+            >
+              {line.p}
+            </span>
+            <span className="text-foreground">{line.t}</span>
+          </div>
+        ))}
+        <div className="flex gap-2.5">
+          <span className="text-primary">$</span>
+          <span className="inline-block h-4 w-2 animate-pulse bg-foreground/70" />
         </div>
-      )}
-    </main>
+      </div>
+    </div>
+  );
+}
+
+function Platform() {
+  return (
+    <Section
+      label="One platform"
+      title="Everything ZYRAXON, in one desktop app"
+      description="The agent and its editor ship together, so you never stitch a workflow out of five separate tools."
+    >
+      <div className="grid gap-4 md:grid-cols-2">
+        {PLATFORM.map((p) => (
+          <Card key={p.title} hover className="p-6">
+            <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
+              <Icon name={p.icon} size={21} />
+            </span>
+            <h3 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{p.title}</h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">{p.body}</p>
+            <p className="mt-4 text-[12px] font-semibold uppercase tracking-wider text-primary">
+              {p.meta}
+            </p>
+          </Card>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function Features() {
+  return (
+    <Section
+      label="Capabilities"
+      title="Built for power users"
+      description="Everything you need to build, ship and run serious work from a single desktop app."
+    >
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {FEATURES.map((f) => (
+          <Card key={f.title} hover className="p-5">
+            <span className="zx-glass grid h-10 w-10 place-items-center rounded-xl text-primary">
+              <Icon name={f.icon} size={19} />
+            </span>
+            <h3 className="mt-3.5 text-[15px] font-semibold tracking-tight text-foreground">
+              {f.title}
+            </h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{f.body}</p>
+          </Card>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function Modes() {
+  const [active, setActive] = useState(0);
+  return (
+    <Section
+      label="Ten agent modes"
+      title="From read-only planning to unstoppable"
+      description="Each mode rewrites the system prompt, the toolset, the permissions and the behaviour. Select one to see what it unlocks."
+    >
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_1.1fr]">
+        <div className="flex flex-wrap gap-2 lg:content-start">
+          {MODES.map((m, i) => (
+            <button
+              key={m.name}
+              type="button"
+              onClick={() => setActive(i)}
+              className={`zx-chip rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+                active === i ? "bg-primary/12 text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <span className="mr-1.5 font-mono text-[11px] opacity-60">{m.n}</span>
+              {m.name}
+            </button>
+          ))}
+        </div>
+        <Card className="p-6">
+          <div className="flex items-baseline gap-3">
+            <span className="font-mono text-3xl font-bold text-primary/30">{MODES[active].n}</span>
+            <h3 className="text-xl font-bold tracking-tight text-foreground">
+              {MODES[active].name}
+            </h3>
+          </div>
+          <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">
+            {MODES[active].body}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Tag tone="primary">System prompt rewrite</Tag>
+            <Tag>Toolset swap</Tag>
+            <Tag>Permission scope</Tag>
+          </div>
+        </Card>
+      </div>
+    </Section>
+  );
+}
+
+function Models() {
+  return (
+    <Section
+      label="Bring your own model"
+      title="25+ providers, or run locally"
+      description="Connect to a hosted provider or keep everything on your machine with Ollama. Switch providers per session."
+    >
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {PROVIDERS.map((p) => (
+          <div
+            key={p.name}
+            className="zx-glass flex items-center justify-between rounded-2xl px-5 py-4"
+          >
+            <div>
+              <p className="text-[15px] font-semibold text-foreground">{p.name}</p>
+              <p className="text-[12px] text-muted-foreground">{p.vendor}</p>
+            </div>
+            <Icon name="spark" size={18} className="text-primary" />
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function Compare() {
+  return (
+    <Section
+      label="Comparison"
+      title="Why ZYRAXON"
+      description="A side-by-side look at what a desktop agent can do that a chat window cannot."
+    >
+      <Card className="overflow-x-auto">
+        <table className="w-full min-w-[560px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="px-5 py-4 text-left text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
+                Feature
+              </th>
+              {COMPARE_COLS.map((c) => (
+                <th
+                  key={c.name}
+                  className={`px-5 py-4 text-center text-[13px] font-bold ${
+                    c.highlight ? "text-primary" : "text-foreground"
+                  }`}
+                >
+                  {c.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARE_ROWS.map((row, i) => (
+              <tr key={row} className="border-b border-border/60 last:border-0">
+                <td className="px-5 py-3.5 text-[13px] font-medium text-foreground">{row}</td>
+                {COMPARE_COLS.map((c) => (
+                  <td key={c.name} className="px-5 py-3.5 text-center">
+                    {c.hits[i] ? (
+                      <span
+                        className={`inline-grid h-5 w-5 place-items-center rounded-full text-[11px] font-bold ${
+                          c.highlight
+                            ? "bg-primary/15 text-primary"
+                            : "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400"
+                        }`}
+                      >
+                        ✓
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground/40">—</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+    </Section>
+  );
+}
+
+function AppsTeaser() {
+  return (
+    <Section
+      label="Integrations"
+      title="Your whole stack, connected"
+      description="100+ live MCP integrations across 27 categories. Each endpoint was verified against its live server before it was listed."
+    >
+      <Card className="relative overflow-hidden p-8">
+        <div className="pointer-events-none absolute inset-0 zx-grid-lines opacity-30" />
+        <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-lg">
+            <h3 className="text-xl font-bold tracking-tight text-foreground">
+              Browse every connected app
+            </h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+              Filter by category or auth tier, see exactly what each integration needs, and connect
+              it from the agent. Browser sign-in, token, open and local tiers — no surprises.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Tag tone="primary">Browser sign-in</Tag>
+              <Tag>Needs a token</Tag>
+              <Tag tone="success">No sign-in</Tag>
+              <Tag>Runs locally</Tag>
+            </div>
+          </div>
+          <ButtonLink to="/apps" size="lg">
+            <Icon name="plug" size={17} />
+            Open the app directory
+          </ButtonLink>
+        </div>
+      </Card>
+    </Section>
+  );
+}
+
+function Download() {
+  return (
+    <Section
+      label="Download"
+      title="Get ZYRAXON Agent"
+      description="Free and source-available. Pick your platform and run the installer."
+    >
+      <div className="grid gap-4 sm:grid-cols-3">
+        {DOWNLOADS.map((d) => (
+          <Card key={d.os} hover className="p-6 text-center">
+            <span className="zx-glass mx-auto grid h-12 w-12 place-items-center rounded-xl text-primary">
+              <Icon name="monitor" size={22} />
+            </span>
+            <h3 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{d.os}</h3>
+            <p className="mt-1 text-[13px] text-muted-foreground">{d.detail}</p>
+            <div className="mt-5">
+              <ButtonLink to="/download/zyraxon-agent" variant="glass" size="sm">
+                Download {d.file}
+              </ButtonLink>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <ButtonAnchor href={`${GITHUB}/releases`} variant="glass" size="sm">
+          All releases
+        </ButtonAnchor>
+        <ButtonLink to="/packages" variant="glass" size="sm">
+          12 NPM packages
+        </ButtonLink>
+      </div>
+    </Section>
+  );
+}
+
+function Sdk() {
+  const [copied, setCopied] = useState(false);
+  const cmd = "npm install @zyraxon-ai/sdk";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+
+  return (
+    <Section
+      label="SDK"
+      title="Build with the ZYRAXON SDK"
+      description="An official TypeScript SDK for AI-powered applications, published as 12 packages on npm."
+    >
+      <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr]">
+        <Card className="flex flex-col justify-between p-6">
+          <div className="zx-glass flex items-center gap-3 rounded-xl px-4 py-3 font-mono text-[13px]">
+            <span className="text-primary">$</span>
+            <code className="min-w-0 flex-1 truncate text-foreground">{cmd}</code>
+            <button
+              type="button"
+              onClick={copy}
+              className="zx-chip rounded-lg px-2.5 py-1 text-[11px] font-semibold text-foreground"
+            >
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+          <div className="mt-5">
+            <ButtonLink to="/packages" variant="glass" size="sm">
+              See all packages
+            </ButtonLink>
+          </div>
+        </Card>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {SDK_FEATURES.map((f) => (
+            <Card key={f.title} hover className="p-5">
+              <h3 className="text-[15px] font-semibold tracking-tight text-foreground">
+                {f.title}
+              </h3>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">{f.body}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+function Stack() {
+  return (
+    <Section
+      label="Under the hood"
+      title="Powered by a modern stack"
+      description="Fast, lean and built for the desktop era."
+    >
+      <div className="flex flex-wrap gap-2.5">
+        {STACK.map((s) => (
+          <span
+            key={s}
+            className="zx-chip rounded-full px-4 py-2 text-[13px] font-semibold text-foreground"
+          >
+            {s}
+          </span>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function Community() {
+  return (
+    <Section
+      label="Community"
+      title="Join the people building with ZYRAXON"
+      description="Create a public profile, share your work and links, and browse everyone in the roster. Questions and feedback become real GitHub issues."
+    >
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card hover className="flex flex-col p-6">
+          <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
+            <Icon name="users" size={20} />
+          </span>
+          <h3 className="mt-4 text-[15px] font-semibold tracking-tight text-foreground">
+            Community profiles
+          </h3>
+          <p className="mt-2 flex-1 text-[13px] leading-relaxed text-muted-foreground">
+            Add a photo, role, country, skills and links, then get your own public profile page.
+          </p>
+          <div className="mt-4">
+            <ButtonLink to="/community-art" variant="glass" size="sm">
+              Join the roster
+            </ButtonLink>
+          </div>
+        </Card>
+        <Card hover className="flex flex-col p-6">
+          <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
+            <Icon name="message" size={20} />
+          </span>
+          <h3 className="mt-4 text-[15px] font-semibold tracking-tight text-foreground">
+            Desktop feedback
+          </h3>
+          <p className="mt-2 flex-1 text-[13px] leading-relaxed text-muted-foreground">
+            Send feedback straight to the team by email, or open a tracked GitHub issue.
+          </p>
+          <div className="mt-4">
+            <ButtonLink to="/desktop-feedback" variant="glass" size="sm">
+              Send feedback
+            </ButtonLink>
+          </div>
+        </Card>
+        <Card hover className="flex flex-col p-6">
+          <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
+            <Icon name="book" size={20} />
+          </span>
+          <h3 className="mt-4 text-[15px] font-semibold tracking-tight text-foreground">
+            Documentation
+          </h3>
+          <p className="mt-2 flex-1 text-[13px] leading-relaxed text-muted-foreground">
+            The full technical reference: tools, modes, memory, vision and build guides.
+          </p>
+          <div className="mt-4">
+            <ButtonLink to="/docs" variant="glass" size="sm">
+              Read the docs
+            </ButtonLink>
+          </div>
+        </Card>
+      </div>
+    </Section>
   );
 }

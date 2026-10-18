@@ -110,13 +110,13 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
 
   if (!unlocked) {
     return (
-      <main className="flex min-h-screen w-full items-center justify-center bg-slate-50 px-4 font-sans text-slate-900">
-        <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      <main className="flex min-h-screen w-full items-center justify-center bg-[var(--plane)] px-4 font-sans text-foreground">
+        <div className="relative w-full max-w-sm rounded-2xl border zx-glass p-8 shadow-sm">
           {onClose && (
             <button
               onClick={onClose}
               aria-label="Close"
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-900"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -124,14 +124,14 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
             </button>
           )}
 
-          <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-fuchsia-500 text-foreground">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
           </span>
 
-          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900">Nebula Command Deck</h1>
-          <p className="mt-1.5 text-sm text-slate-600">Enter the access key to continue.</p>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-foreground">Nebula Command Deck</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">Enter the access key to continue.</p>
 
           <form onSubmit={handleUnlock} className="mt-6 space-y-4">
             <input
@@ -140,11 +140,11 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
               autoFocus
               onChange={(e) => setKey(e.target.value)}
               placeholder="Access key"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10"
+              className="w-full rounded-xl border border-border px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/20"
             />
 
             {error && (
-              <p className="rounded-lg bg-rose-50 px-3 py-2 text-center text-xs font-semibold text-rose-700">
+              <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-center text-xs font-semibold text-rose-700">
                 {error}
               </p>
             )}
@@ -152,14 +152,14 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
             <button
               type="submit"
               disabled={checking}
-              className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
+              className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
             >
               {checking ? "Verifying…" : "Unlock deck"}
             </button>
           </form>
 
-          <p className="mt-6 border-t border-slate-100 pt-4 text-center text-[11px] text-slate-400">
-            Connected to <code className="text-slate-500">{GITHUB_REPO}</code>
+          <p className="mt-6 border-t border-border/60 pt-4 text-center text-[11px] text-muted-foreground">
+            Connected to <code className="text-muted-foreground">{GITHUB_REPO}</code>
           </p>
         </div>
       </main>
@@ -167,21 +167,21 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <main className="flex min-h-screen w-full flex-col overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased">
+    <main className="flex min-h-screen w-full flex-col overflow-x-hidden bg-[var(--plane)] font-sans text-foreground antialiased">
       {/* Top header */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/85 px-6 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border bg-[var(--plane)]/85 px-6 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-fuchsia-500 text-foreground">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
             </span>
             <div>
-              <p className="text-[15px] font-bold leading-tight tracking-tight text-slate-900">
+              <p className="text-[15px] font-bold leading-tight tracking-tight text-foreground">
                 Nebula Command Deck
               </p>
-              <p className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+              <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Connected to <span className="font-mono">{GITHUB_REPO}</span>
               </p>
@@ -189,7 +189,7 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
           </div>
 
           {/* Tab Navigation */}
-          <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-1">
+          <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-border bg-[var(--plane)] p-1">
             {(
               [
                 { id: "studio", label: "Content Studio" },
@@ -203,7 +203,7 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
-                  tab === t.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+                  tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-foreground/5"
                 }`}
               >
                 {t.label}
@@ -215,7 +215,7 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
           <div className="flex items-center gap-2">
             <button
               onClick={handleLock}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-foreground/5"
               title="Lock deck"
             >
               Lock
@@ -223,7 +223,7 @@ export function NebulaDeck({ onClose }: { onClose?: () => void }) {
             {onClose && (
               <button
                 onClick={onClose}
-                className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 hover:bg-rose-500/20"
+                className="rounded-xl border border-rose-400/30 bg-rose-500/100/10 px-3 py-1.5 text-xs text-rose-200 hover:bg-rose-500/100/20"
               >
                 ✕ Close
               </button>
@@ -396,18 +396,18 @@ function GitHubLiveDocsPanel() {
   return (
     <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
       {/* Sidebar: Documents list */}
-      <aside className="flex flex-col rounded-3xl border border-cyan-400/25 bg-white/[0.03] p-5 shadow-2xl backdrop-blur-2xl">
+      <aside className="flex flex-col rounded-3xl border border-primary/25 zx-glass p-5 shadow-2xl backdrop-blur-2xl">
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div>
-            <h3 className="text-sm font-bold text-white">Docs Library</h3>
-            <span className="text-[11px] text-cyan-300 font-mono">
+            <h3 className="text-sm font-bold text-foreground">Docs Library</h3>
+            <span className="text-[11px] text-primary font-mono">
               repo: {GITHUB_REPO}
             </span>
           </div>
           <button
             onClick={fetchDocsFromRepo}
             disabled={loadingList}
-            className="rounded-lg border border-cyan-400/30 bg-cyan-500/10 p-1.5 text-xs text-cyan-300 transition hover:bg-cyan-500/20"
+            className="rounded-lg border border-primary/25 bg-primary/10 p-1.5 text-xs text-primary transition hover:bg-primary/10"
             title="Refresh Docs from GitHub"
           >
             ↻
@@ -421,22 +421,22 @@ function GitHubLiveDocsPanel() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search documents..."
-            className="w-full rounded-xl border border-cyan-400/20 bg-black/60 px-3 py-2 text-xs text-cyan-100 outline-none placeholder:text-cyan-200/30 focus:border-cyan-400"
+            className="w-full rounded-xl border border-primary/25 bg-foreground/10 px-3 py-2 text-xs text-muted-foreground outline-none placeholder:text-muted-foreground focus:border-primary/25"
           />
         </div>
 
         {status && (
-          <p className="mt-2 text-[10px] text-cyan-200/50 truncate">{status}</p>
+          <p className="mt-2 text-[10px] text-muted-foreground truncate">{status}</p>
         )}
 
         {/* List of files */}
         <div className="mt-3 flex-1 space-y-1 overflow-y-auto max-h-[65vh] pr-1">
           {loadingList ? (
-            <p className="py-8 text-center text-xs text-cyan-200/50">
+            <p className="py-8 text-center text-xs text-muted-foreground">
               Scanning GitHub docs...
             </p>
           ) : filteredDocs.length === 0 ? (
-            <p className="py-6 text-center text-xs text-cyan-200/40">
+            <p className="py-6 text-center text-xs text-muted-foreground">
               No matching docs found.
             </p>
           ) : (
@@ -448,12 +448,12 @@ function GitHubLiveDocsPanel() {
                   onClick={() => loadDocContent(doc)}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs transition ${
                     active
-                      ? "border border-cyan-400/50 bg-cyan-500/15 font-semibold text-cyan-100 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
-                      : "text-cyan-200/70 hover:bg-white/5 hover:text-white"
+                      ? "border border-primary/25 bg-primary/10 font-semibold text-muted-foreground shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+                      : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
                   }`}
                 >
                   <span className="truncate">📄 {doc.name}</span>
-                  <span className="text-[10px] text-cyan-200/40 font-mono">
+                  <span className="text-[10px] text-muted-foreground font-mono">
                     {Math.round(doc.size / 1024) || 1}kb
                   </span>
                 </button>
@@ -464,20 +464,20 @@ function GitHubLiveDocsPanel() {
       </aside>
 
       {/* Main Document Reader */}
-      <section className="flex flex-col rounded-3xl border border-cyan-400/25 bg-white/[0.03] p-6 shadow-2xl backdrop-blur-2xl">
+      <section className="flex flex-col rounded-3xl border border-primary/25 zx-glass p-6 shadow-2xl backdrop-blur-2xl">
         {selectedDoc ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-white">
+                  <h2 className="text-lg font-bold text-foreground">
                     {selectedDoc.name}
                   </h2>
-                  <span className="rounded-full bg-cyan-400/15 px-2 py-0.5 text-[10px] font-mono text-cyan-300">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono text-primary">
                     GitHub Live
                   </span>
                 </div>
-                <p className="text-xs text-cyan-200/50 font-mono">
+                <p className="text-xs text-muted-foreground font-mono">
                   path: /{selectedDoc.path}
                 </p>
               </div>
@@ -485,7 +485,7 @@ function GitHubLiveDocsPanel() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setRawView(!rawView)}
-                  className="rounded-xl border border-cyan-400/25 bg-white/5 px-3 py-1.5 text-xs text-cyan-200 hover:bg-white/10"
+                  className="rounded-xl border border-primary/25 bg-foreground/5 px-3 py-1.5 text-xs text-muted-foreground hover:bg-foreground/10"
                 >
                   {rawView ? "Rendered View" : "Raw Markdown"}
                 </button>
@@ -493,7 +493,7 @@ function GitHubLiveDocsPanel() {
                   href={selectedDoc.html_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20"
+                  className="rounded-xl border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
                 >
                   GitHub Link ↗
                 </a>
@@ -501,23 +501,23 @@ function GitHubLiveDocsPanel() {
             </div>
 
             {loadingDoc ? (
-              <div className="flex flex-1 items-center justify-center py-20 text-sm text-cyan-200/50">
+              <div className="flex flex-1 items-center justify-center py-20 text-sm text-muted-foreground">
                 Fetching document from GitHub...
               </div>
             ) : rawView ? (
               <textarea
                 readOnly
                 value={content}
-                className="mt-4 h-[65vh] w-full resize-none rounded-2xl border border-cyan-400/20 bg-black/60 p-4 font-mono text-xs leading-relaxed text-cyan-100 outline-none"
+                className="mt-4 h-[65vh] w-full resize-none rounded-2xl border border-primary/25 bg-foreground/10 p-4 font-mono text-xs leading-relaxed text-muted-foreground outline-none"
               />
             ) : (
-              <div className="mt-4 max-h-[70vh] overflow-y-auto pr-2 leading-relaxed text-cyan-100/90">
+              <div className="mt-4 max-h-[70vh] overflow-y-auto pr-2 leading-relaxed text-muted-foreground">
                 <MarkdownRenderer source={content} />
               </div>
             )}
           </>
         ) : (
-          <div className="flex flex-1 items-center justify-center py-20 text-sm text-cyan-200/50">
+          <div className="flex flex-1 items-center justify-center py-20 text-sm text-muted-foreground">
             Select a document from the left to read.
           </div>
         )}
@@ -541,7 +541,7 @@ function MarkdownRenderer({ source }: { source: string }) {
           return (
             <h1
               key={idx}
-              className="mt-6 border-b border-cyan-400/20 pb-2 text-xl font-bold text-white sm:text-2xl"
+              className="mt-6 border-b border-primary/25 pb-2 text-xl font-bold text-foreground sm:text-2xl"
             >
               {line.replace("# ", "")}
             </h1>
@@ -551,7 +551,7 @@ function MarkdownRenderer({ source }: { source: string }) {
           return (
             <h2
               key={idx}
-              className="mt-5 text-lg font-bold text-cyan-300 sm:text-xl"
+              className="mt-5 text-lg font-bold text-primary sm:text-xl"
             >
               {line.replace("## ", "")}
             </h2>
@@ -559,7 +559,7 @@ function MarkdownRenderer({ source }: { source: string }) {
         }
         if (line.startsWith("### ")) {
           return (
-            <h3 key={idx} className="mt-4 text-base font-semibold text-white">
+            <h3 key={idx} className="mt-4 text-base font-semibold text-foreground">
               {line.replace("### ", "")}
             </h3>
           );
@@ -569,7 +569,7 @@ function MarkdownRenderer({ source }: { source: string }) {
           return (
             <blockquote
               key={idx}
-              className="border-l-4 border-cyan-400/60 bg-cyan-950/20 py-1.5 pl-3 font-mono text-xs text-cyan-200/80"
+              className="border-l-4 border-primary/25 bg-primary/10 py-1.5 pl-3 font-mono text-xs text-muted-foreground"
             >
               {line.replace("> ", "")}
             </blockquote>
@@ -579,8 +579,8 @@ function MarkdownRenderer({ source }: { source: string }) {
         if (line.startsWith("- ") || line.startsWith("* ")) {
           return (
             <div key={idx} className="flex items-start gap-2 pl-2">
-              <span className="text-cyan-400">•</span>
-              <span className="text-cyan-100/90">
+              <span className="text-primary">•</span>
+              <span className="text-muted-foreground">
                 {line.replace(/^[-*]\s+/, "")}
               </span>
             </div>
@@ -591,7 +591,7 @@ function MarkdownRenderer({ source }: { source: string }) {
           return (
             <div
               key={idx}
-              className="font-mono text-[11px] text-cyan-300/60 my-1"
+              className="font-mono text-[11px] text-primary my-1"
             >
               {line}
             </div>
@@ -603,7 +603,7 @@ function MarkdownRenderer({ source }: { source: string }) {
         }
         // Normal paragraph with basic code block highlighting
         return (
-          <p key={idx} className="leading-relaxed text-cyan-100/80">
+          <p key={idx} className="leading-relaxed text-muted-foreground">
             {line}
           </p>
         );
@@ -696,20 +696,20 @@ function ReleasesHubPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-cyan-400/25 bg-white/[0.03] p-6 shadow-2xl backdrop-blur-2xl">
+      <div className="rounded-3xl border border-primary/25 zx-glass p-6 shadow-2xl backdrop-blur-2xl">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-bold text-foreground">
                 Release Pipeline: {GITHUB_REPO}
               </h2>
               {release && (
-                <span className="rounded-full bg-cyan-400/20 px-3 py-0.5 text-xs font-semibold text-cyan-300">
+                <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
                   {release.tag_name || "Latest"}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-xs text-cyan-200/50">
+            <p className="mt-1 text-xs text-muted-foreground">
               Directly mirrors binary artifacts published from Onel Power X
             </p>
           </div>
@@ -717,14 +717,14 @@ function ReleasesHubPanel() {
             href={`https://github.com/${GITHUB_REPO}/releases`}
             target="_blank"
             rel="noreferrer"
-            className="rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 px-4 py-2 text-xs font-bold text-black shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:brightness-110"
+            className="rounded-xl bg-gradient-to-r from-primary to-fuchsia-500 px-4 py-2 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110"
           >
             GitHub Releases Page ↗
           </a>
         </div>
 
         {loading ? (
-          <p className="py-12 text-center text-xs text-cyan-200/50">
+          <p className="py-12 text-center text-xs text-muted-foreground">
             Checking latest binary artifacts...
           </p>
         ) : (
@@ -736,17 +736,17 @@ function ReleasesHubPanel() {
               return (
                 <div
                   key={p.os}
-                  className="flex flex-col justify-between rounded-2xl border border-cyan-400/20 bg-black/40 p-5 backdrop-blur-xl"
+                  className="flex flex-col justify-between rounded-2xl border border-primary/25 bg-foreground/10 p-5 backdrop-blur-xl"
                 >
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-2xl">{p.icon}</span>
-                      <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-mono text-cyan-300">
+                      <span className="rounded-md bg-foreground/5 px-2 py-0.5 text-[10px] font-mono text-primary">
                         {p.arch}
                       </span>
                     </div>
-                    <h3 className="mt-3 text-sm font-bold text-white">{p.os}</h3>
-                    <p className="mt-1 text-xs text-cyan-200/60">{p.desc}</p>
+                    <h3 className="mt-3 text-sm font-bold text-foreground">{p.os}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{p.desc}</p>
                   </div>
 
                   <div className="mt-4 border-t border-white/5 pt-3">
@@ -757,7 +757,7 @@ function ReleasesHubPanel() {
                       }
                       target="_blank"
                       rel="noreferrer"
-                      className="block w-full rounded-xl border border-cyan-400/30 bg-cyan-500/10 py-2 text-center text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white"
+                      className="block w-full rounded-xl border border-primary/25 bg-primary/10 py-2 text-center text-xs font-semibold text-muted-foreground transition hover:bg-primary/10 hover:text-foreground"
                     >
                       {matchedAsset ? `Download ${p.ext}` : "Download Binary ↗"}
                     </a>
@@ -823,10 +823,10 @@ function GitHubRepoExplorerPanel() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-      <aside className="rounded-3xl border border-cyan-400/25 bg-white/[0.03] p-5 backdrop-blur-2xl">
+      <aside className="rounded-3xl border border-primary/25 zx-glass p-5 backdrop-blur-2xl">
         <div className="border-b border-white/10 pb-3">
-          <span className="text-xs font-bold text-white">Repository Tree</span>
-          <p className="mt-0.5 text-[11px] font-mono text-cyan-300">
+          <span className="text-xs font-bold text-foreground">Repository Tree</span>
+          <p className="mt-0.5 text-[11px] font-mono text-primary">
             /{path || "root"}
           </p>
         </div>
@@ -840,14 +840,14 @@ function GitHubRepoExplorerPanel() {
                   : "";
                 fetchRepoTree(parent);
               }}
-              className="w-full rounded-lg px-2.5 py-1.5 text-left text-xs text-cyan-300 hover:bg-white/5"
+              className="w-full rounded-lg px-2.5 py-1.5 text-left text-xs text-primary hover:bg-foreground/5"
             >
               📁 ../ (Back)
             </button>
           )}
 
           {loading ? (
-            <p className="py-6 text-center text-xs text-cyan-200/50">
+            <p className="py-6 text-center text-xs text-muted-foreground">
               Loading entries...
             </p>
           ) : (
@@ -859,7 +859,7 @@ function GitHubRepoExplorerPanel() {
                     ? fetchRepoTree(item.path)
                     : openFile(item)
                 }
-                className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs text-cyan-200/70 hover:bg-white/5 hover:text-white"
+                className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
               >
                 <span className="truncate">
                   {item.type === "dir" ? "📁 " : "📄 "}
@@ -871,18 +871,18 @@ function GitHubRepoExplorerPanel() {
         </div>
       </aside>
 
-      <section className="rounded-3xl border border-cyan-400/25 bg-white/[0.03] p-6 backdrop-blur-2xl">
+      <section className="rounded-3xl border border-primary/25 zx-glass p-6 backdrop-blur-2xl">
         {activeFile ? (
           <div>
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <span className="text-xs font-mono font-bold text-white">
+              <span className="text-xs font-mono font-bold text-foreground">
                 {activeFile.path}
               </span>
               <a
                 href={activeFile.html_url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-cyan-300 hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 View on GitHub ↗
               </a>
@@ -890,11 +890,11 @@ function GitHubRepoExplorerPanel() {
             <textarea
               readOnly
               value={fileContent}
-              className="mt-4 h-[60vh] w-full resize-none rounded-2xl border border-cyan-400/20 bg-black/60 p-4 font-mono text-xs leading-relaxed text-cyan-100 outline-none"
+              className="mt-4 h-[60vh] w-full resize-none rounded-2xl border border-primary/25 bg-foreground/10 p-4 font-mono text-xs leading-relaxed text-muted-foreground outline-none"
             />
           </div>
         ) : (
-          <div className="py-24 text-center text-sm text-cyan-200/50">
+          <div className="py-24 text-center text-sm text-muted-foreground">
             Select a file from the repository tree to inspect.
           </div>
         )}
@@ -918,16 +918,16 @@ function EdgeTelemetryPanel({ ping }: { ping: number }) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-3xl border border-cyan-400/25 bg-white/[0.03] p-6 backdrop-blur-2xl">
-          <h3 className="text-sm font-bold text-white">Primary Architecture</h3>
-          <dl className="mt-4 space-y-2.5 text-xs text-cyan-200/80">
+        <div className="rounded-3xl border border-primary/25 zx-glass p-6 backdrop-blur-2xl">
+          <h3 className="text-sm font-bold text-foreground">Primary Architecture</h3>
+          <dl className="mt-4 space-y-2.5 text-xs text-muted-foreground">
             <div className="flex justify-between border-b border-white/5 pb-1.5">
               <span>Primary Repository</span>
-              <span className="font-mono text-cyan-300">{GITHUB_REPO}</span>
+              <span className="font-mono text-primary">{GITHUB_REPO}</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-1.5">
               <span>Fallback Repository</span>
-              <span className="font-mono text-white/50">{FALLBACK_REPO}</span>
+              <span className="font-mono text-foreground/50">{FALLBACK_REPO}</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-1.5">
               <span>Content Sync Engine</span>
@@ -935,14 +935,14 @@ function EdgeTelemetryPanel({ ping }: { ping: number }) {
             </div>
             <div className="flex justify-between border-b border-white/5 pb-1.5">
               <span>Security Access Protocol</span>
-              <span className="text-cyan-300">NEBULA-V2 SHA / Master Key</span>
+              <span className="text-primary">NEBULA-V2 SHA / Master Key</span>
             </div>
           </dl>
         </div>
 
-        <div className="rounded-3xl border border-fuchsia-400/25 bg-white/[0.03] p-6 backdrop-blur-2xl">
-          <h3 className="text-sm font-bold text-white">Active Capabilities</h3>
-          <ul className="mt-4 space-y-2 text-xs text-cyan-100/80">
+        <div className="rounded-3xl border border-fuchsia-400/25 zx-glass p-6 backdrop-blur-2xl">
+          <h3 className="text-sm font-bold text-foreground">Active Capabilities</h3>
+          <ul className="mt-4 space-y-2 text-xs text-muted-foreground">
             <li className="flex items-center gap-2">
               <span className="text-emerald-400">✓</span> Automatic GitHub Docs ingestion and parsing
             </li>
@@ -975,23 +975,23 @@ function Gauge({
 }) {
   const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100));
   return (
-    <div className="rounded-2xl border border-cyan-400/20 bg-white/[0.03] p-4 backdrop-blur-xl">
+    <div className="rounded-2xl border border-primary/25 zx-glass p-4 backdrop-blur-xl">
       <div className="flex items-baseline justify-between">
-        <span className="text-[11px] uppercase tracking-wider text-cyan-200/60">
+        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
-        <span className="text-sm font-bold text-white">
+        <span className="text-sm font-bold text-foreground">
           {value}
-          <span className="ml-1 text-[10px] text-cyan-300">{unit}</span>
+          <span className="ml-1 text-[10px] text-primary">{unit}</span>
         </span>
       </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/60">
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-foreground/10">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-fuchsia-400 transition-all duration-700"
+          className="h-full rounded-full bg-gradient-to-r from-primary via-primary/70 to-fuchsia-500 transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <div className="mt-1 text-right text-[10px] text-cyan-200/40">
+      <div className="mt-1 text-right text-[10px] text-muted-foreground">
         {pct}% efficiency
       </div>
     </div>

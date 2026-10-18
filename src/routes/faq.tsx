@@ -1,4 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { PageShell } from "@/components/site/PageShell";
+import { PageHeader, SectionLabel } from "@/components/site/SiteChrome";
+import { ButtonAnchor, ButtonLink } from "@/components/site/ui";
 
 const FAQS = [
   {
@@ -87,75 +90,57 @@ export const Route = createFileRoute("/faq")({
 
 function FaqPage() {
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-6 py-16">
-        <p className="text-xs uppercase tracking-[0.2em] text-primary">Support</p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
-          Frequently Asked Questions
-        </h1>
-        <p className="mt-3 text-muted-foreground">
-          Quick answers about ZYRAXON AI — download, pricing, agent modes and the ecosystem
-          marketplace.
+    <PageShell contentClassName="px-6 py-10 sm:px-10 sm:py-14">
+      <PageHeader
+        label="Support"
+        title="Frequently asked questions"
+        description="Quick answers about ZYRAXON AI — download, pricing, agent modes and the ecosystem marketplace."
+      />
+
+      <div className="grid gap-3">
+        {FAQS.map((f) => (
+          <details key={f.q} className="zx-glass group rounded-2xl px-5 py-4">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-foreground">
+              {f.q}
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-foreground/6 text-muted-foreground transition group-open:rotate-45">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </span>
+            </summary>
+            <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">{f.a}</p>
+          </details>
+        ))}
+      </div>
+
+      <div className="zx-glass mt-10 rounded-2xl p-7">
+        <SectionLabel>Ask anything</SectionLabel>
+        <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+          Still have a question?
+        </h2>
+        <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
+          Every question asked here becomes a GitHub issue on the public ZYRAXON-AI repository,
+          so the answer is searchable by everyone and you can follow it until it is closed.
         </p>
-
-        <div className="mt-10 divide-y divide-border">
-          {FAQS.map((f) => (
-            <details key={f.q} className="group py-5">
-              <summary className="flex cursor-pointer items-center justify-between gap-4 text-base font-semibold text-foreground list-none">
-                {f.q}
-                <span className="text-muted-foreground transition group-open:rotate-45 text-xl leading-none">
-                  +
-                </span>
-              </summary>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
-            </details>
-          ))}
-        </div>
-
-        <div className="mt-12 rounded-2xl border border-border bg-gradient-to-br from-primary/[0.06] to-transparent p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-            Ask anything
-          </p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
-            Still have a question?
-          </h2>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Every question asked here becomes a GitHub issue on the public ZYRAXON-AI
-            repository, so the answer is searchable by everyone and you can follow it
-            until it is closed.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              href="https://github.com/onelpawarai-X/ZYRAXON-AI/issues/new?labels=question&title=%5BQuestion%5D%20"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path
-                  d="M8 1.5a6.5 6.5 0 00-6.5 6.5c0 1.9.83 3.6 2.14 4.76.2.18.34.44.36.72l.06.77c.04.5.45.87.95.83l.79-.06c.28-.02.54.09.72.3l.2.24a.95.95 0 001.38-.08l.62-.69c.18-.2.44-.31.72-.29l.79.06c.5.04.91-.33.95-.83l.06-.77c.02-.28.16-.54.36-.72A6.49 6.49 0 008 1.5z"
-                  fill="currentColor"
-                />
-              </svg>
-              Ask on GitHub Issues
-            </a>
-            <a
-              href="https://github.com/onelpawarai-X/ZYRAXON-AI/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
-            >
-              Browse all questions
-            </a>
-            <Link
-              to="/docs"
-              className="inline-flex items-center rounded-lg px-2 py-2.5 text-sm font-semibold text-primary underline underline-offset-4"
-            >
-              Read the docs
-            </Link>
-          </div>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <ButtonAnchor
+            href="https://github.com/onelpawarai-X/ZYRAXON-AI/issues/new?labels=question&title=%5BQuestion%5D%20"
+            size="md"
+          >
+            Ask on GitHub Issues
+          </ButtonAnchor>
+          <ButtonAnchor
+            href="https://github.com/onelpawarai-X/ZYRAXON-AI/issues"
+            variant="glass"
+            size="md"
+          >
+            Browse all questions
+          </ButtonAnchor>
+          <ButtonLink to="/docs" variant="ghost" size="md">
+            Read the docs
+          </ButtonLink>
         </div>
       </div>
-    </main>
+    </PageShell>
   );
 }

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CommunityAvatar } from "@/components/community/CommunityAvatar";
-import { linkLabel, type CommunityMember } from "@/lib/community";
+import { linkLabel, linkHost, type CommunityMember } from "@/lib/community";
+import { PageShell } from "@/components/site/PageShell";
+import { ButtonAnchor, ButtonLink, Card, Tag } from "@/components/site/ui";
 
 export const Route = createFileRoute("/community/$id")({
   head: () => ({
@@ -39,104 +41,144 @@ function CommunityProfile() {
     };
   }, [id]);
 
-  return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-5 py-12">
-        <Link to="/community-art" className="text-sm text-muted-foreground hover:text-foreground">
-          ← Community
-        </Link>
+  if (state === "loading") {
+    return (
+      <PageShell>
+        <div className="zx-glass h-40 animate-pulse rounded-2xl" />
+      </PageShell>
+    );
+  }
 
-        {state === "loading" && (
-          <p className="mt-8 text-sm text-muted-foreground">Loading profile…</p>
-        )}
-
-        {state === "missing" && (
-          <div className="mt-8 rounded-2xl border border-border bg-card p-8 text-center">
-            <h1 className="text-xl font-semibold">Profile not found</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              এই প্রোফাইলটি নেই বা সরিয়ে ফেলা হয়েছে।
-            </p>
-            <Link
-              to="/community-art"
-              className="mt-5 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-            >
+  if (state === "missing" || !member) {
+    return (
+      <PageShell>
+        <div className="mx-auto max-w-md py-10 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Profile not found</h1>
+          <p className="mt-2 text-[14px] text-muted-foreground">
+            This profile does not exist or has been removed.
+          </p>
+          <div className="mt-6 flex justify-center">
+            <ButtonLink to="/community-art" size="md">
               Back to community
-            </Link>
+            </ButtonLink>
           </div>
-        )}
+        </div>
+      </PageShell>
+    );
+  }
 
-        {state === "found" && member && (
-          <article className="mt-8">
-            <header className="flex flex-wrap items-center gap-5 rounded-2xl border border-border bg-card p-6">
-              <CommunityAvatar name={member.name} seed={member.id} src={member.avatarUrl} size={88} />
-              <div className="min-w-0">
-                <h1 className="text-2xl font-bold tracking-tight">{member.name}</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {[member.role, member.institution, member.country].filter(Boolean).join(" · ")}
-                </p>
-                {member.joinedAt && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Joined {new Date(member.joinedAt).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-            </header>
+  const skillList = (member.skills ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-            {member.participation && (
-              <section className="mt-5 rounded-2xl border border-border bg-card p-6">
-                <h2 className="text-sm font-bold tracking-wide text-muted-foreground uppercase">
-                  About
-                </h2>
-                <p className="mt-2 text-[15px] leading-relaxed">{member.participation}</p>
-              </section>
+  return (
+    <PageShell>
+      <div className="mb-6">
+        <ButtonLink to="/community-art" variant="ghost" size="sm">
+          ← Back to community
+        </ButtonLink>
+      </div>
+
+      <Card className="relative overflow-hidden p-7 sm:p-9">
+        <div className="pointer-events-none absolute inset-0 zx-grid-lines opacity-[0.25]" />
+        <div className="relative flex flex-wrap items-center gap-6">
+          <CommunityAvatar name={member.name} seed={member.id} src={member.avatarUrl} size={104} />
+          <div className="min-w-0 flex-1">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{member.name}</h1>
+            <p className="mt-1.5 text-[14px] text-muted-foreground">
+              {[member.role, member.institution, member.country].filter(Boolean).join(" · ")}
+            </p>
+            {member.joinedAt && (
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                Joined{" "}
+                {new Date(member.joinedAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
             )}
-
-            {member.skills && (
-              <section className="mt-5 rounded-2xl border border-border bg-card p-6">
-                <h2 className="text-sm font-bold tracking-wide text-muted-foreground uppercase">
-                  Skills
-                </h2>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {member.skills
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean)
-                    .map((s) => (
-                      <span
-                        key={s}
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium"
-                      >
-                        {s}
-                      </span>
-                    ))}
-                </div>
-              </section>
-            )}
-
             {member.links?.length > 0 && (
-              <section className="mt-5 rounded-2xl border border-border bg-card p-6">
-                <h2 className="text-sm font-bold tracking-wide text-muted-foreground uppercase">
-                  Links
-                </h2>
-                <ul className="mt-3 space-y-2">
-                  {member.links.map((l) => (
-                    <li key={l.url}>
-                      <a
-                        href={l.url}
-                        target="_blank"
-                        rel="noopener noreferrer nofollow"
-                        className="text-sm font-semibold text-primary underline break-all"
-                      >
-                        {linkLabel(l)}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {member.links.slice(0, 3).map((l) => (
+                  <ButtonAnchor key={l.url} href={l.url} variant="glass" size="sm">
+                    {linkLabel(l)}
+                  </ButtonAnchor>
+                ))}
+              </div>
             )}
-          </article>
+          </div>
+        </div>
+      </Card>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[1.5fr_1fr]">
+        <div className="grid gap-5">
+          {member.participation && (
+            <Card className="p-6">
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                About
+              </h2>
+              <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+                {member.participation}
+              </p>
+            </Card>
+          )}
+
+          {skillList.length > 0 && (
+            <Card className="p-6">
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                Skills
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {skillList.map((s) => (
+                  <Tag key={s} tone="muted">
+                    {s}
+                  </Tag>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {member.links?.length > 0 && (
+          <Card className="p-6">
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Links</h2>
+            <ul className="mt-3 grid gap-2">
+              {member.links.map((l) => (
+                <li key={l.url}>
+                  <a
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="zx-chip flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-[13.5px] font-semibold text-foreground">
+                        {linkLabel(l)}
+                      </span>
+                      <span className="block truncate text-[11.5px] text-muted-foreground">
+                        {linkHost(l.url)}
+                      </span>
+                    </span>
+                    <svg
+                      className="shrink-0 text-muted-foreground"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M7 17L17 7M9 7h8v8" />
+                    </svg>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Card>
         )}
       </div>
-    </main>
+    </PageShell>
   );
 }

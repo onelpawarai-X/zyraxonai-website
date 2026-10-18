@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PageShell } from "@/components/site/PageShell";
+import { PageHeader } from "@/components/site/SiteChrome";
+import { Card, Tag } from "@/components/site/ui";
 import { supabase } from "@/integrations/supabase/client";
 import { CommunityAvatar } from "@/components/community/CommunityAvatar";
 import {
@@ -36,7 +39,8 @@ export const Route = createFileRoute("/community-art")({
 });
 
 const input =
-  "w-full rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground outline-none focus:border-primary";
+  "w-full rounded-xl border border-border bg-transparent px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20";
+const labelCls = "block text-[11px] font-bold uppercase tracking-wider text-muted-foreground";
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
@@ -98,7 +102,7 @@ function CommunityArt() {
       if (session?.user?.email) {
         setEmail(session.user.email);
         setStage("form");
-        setMsg("ইমেইল সফলভাবে ভেরিফাই হয়েছে! এবার আপনার তথ্য পূরণ করুন।");
+        setMsg("Email verified. Now fill in your details.");
       }
     });
 
@@ -119,7 +123,7 @@ function CommunityArt() {
     setBusy(false);
     if (error) return setMsg(error.message);
     setStage("code");
-    setMsg("আপনার Gmail-এ ভেরিফিকেশন লিঙ্ক পাঠানো হয়েছে।");
+    setMsg("We sent a verification link to your inbox.");
   }
 
   async function verify() {
@@ -134,21 +138,21 @@ function CommunityArt() {
     }
     setBusy(false);
     if (res.error) {
-      return setMsg(res.error.message || "ভেরিফিকেশন কোডটি সঠিক নয় বা মেয়াদ শেষ হয়ে গেছে।");
+      return setMsg(res.error.message || "That code is not valid or has expired.");
     }
     setStage("form");
-    setMsg("ইমেইল সফলভাবে ভেরিফাই হয়েছে।");
+    setMsg("Email verified.");
   }
 
   async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setMsg("শুধু ছবি (PNG, JPG, WebP, GIF) আপলোড করা যাবে।");
+      setMsg("Only images can be uploaded (PNG, JPG, WebP, GIF).");
       return;
     }
     if (file.size > MAX_AVATAR_BYTES) {
-      setMsg("ছবির আকার ২ MB এর কম হতে হবে।");
+      setMsg("The image must be under 2 MB.");
       return;
     }
     setMsg("");
@@ -189,9 +193,9 @@ function CommunityArt() {
     });
     const d = await r.json().catch(() => ({}));
     setBusy(false);
-    if (!r.ok) return setMsg(d.error || "প্রোফাইল সংরক্ষণ ব্যর্থ হয়েছে।");
+    if (!r.ok) return setMsg(d.error || "Could not save your profile.");
     setStage("done");
-    setMsg("ধন্যবাদ! আপনার প্রোফাইল তালিকায় যুক্ত হয়েছে।");
+    setMsg("Thank you! Your profile is now on the roster.");
     load();
   }
 
@@ -212,103 +216,108 @@ function CommunityArt() {
   }, [members, query]);
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-6xl px-5 py-12">
-        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-          ← ZYRAXON AI
-        </Link>
-        <h1 className="mt-4 text-4xl font-bold tracking-tight">Community</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          আপনার ইমেইল ভেরিফাই করে কমিউনিটিতে অংশ নিন। ছবি, ওয়েবসাইট ও সোশ্যাল লিঙ্ক যোগ করুন —
-          আপনার প্রোফাইলে ক্লিক করলেই সবার সেই তথ্য দেখা যাবে। ঠিকানা, ফোন এবং ইমেইল সম্পূর্ণ
-          গোপনীয় থাকবে।
-        </p>
+    <PageShell>
+      <PageHeader
+        label="Community"
+        title="Join the roster"
+        description="Verify your email to take part. Add a photo, your role, country, skills and links — your public profile is one click away for everyone. Address and phone stay private."
+      />
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[420px_1fr]">
-          <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            {stage === "email" && (
-              <>
-                <label className="text-sm font-medium">Email Address</label>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
+        <Card className="p-6">
+          {stage === "email" && (
+            <div className="space-y-4">
+              <div>
+                <span className={labelCls}>Email address</span>
                 <input
-                  className={input + " mt-1"}
+                  className={input + " mt-1.5"}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@gmail.com"
                 />
-                <button
-                  disabled={busy || !email}
-                  onClick={sendCode}
-                  className="mt-4 w-full rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-                >
-                  {busy ? "পাঠানো হচ্ছে..." : "ভেরিফিকেশন লিঙ্ক পাঠান"}
-                </button>
-              </>
-            )}
+              </div>
+              <button
+                type="button"
+                disabled={busy || !email}
+                onClick={sendCode}
+                className="zx-sheen inline-flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+              >
+                {busy ? "Sending…" : "Send verification link"}
+              </button>
+            </div>
+          )}
 
-            {stage === "code" && (
-              <>
-                <div className="rounded-lg bg-primary/10 p-3 text-xs text-primary">
-                  📩 <b>{email}</b> ঠিকানায় ইমেইল পাঠানো হয়েছে।
-                </div>
-                <div className="mt-4 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    <b>পদ্ধতি ১ (সবচেয়ে সহজ):</b> আপনার Gmail ইনবক্সে গিয়ে <b>[Verify Email]</b>{" "}
-                    বাটনে ক্লিক করুন—পেজ স্বয়ংক্রিয়ভাবে খুলে যাবে।
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    <b>পদ্ধতি ২:</b> ইমেইলে কোনো কোড দেওয়া থাকলে নিচে লিখে ভেরিফাই করুন।
-                  </p>
-                </div>
-                <label className="mt-4 block text-xs font-medium">ওটিপি কোড (যদি থাকে)</label>
+          {stage === "code" && (
+            <div className="space-y-4">
+              <div className="rounded-xl bg-primary/10 p-3.5 text-[12.5px] text-primary">
+                We sent an email to <b>{email}</b>.
+              </div>
+              <div className="space-y-2 text-[12.5px] leading-relaxed text-muted-foreground">
+                <p>
+                  <b className="text-foreground">Option 1 (easiest):</b> open your inbox and click{" "}
+                  <b>[Verify Email]</b> — the page opens automatically.
+                </p>
+                <p>
+                  <b className="text-foreground">Option 2:</b> if the email contains a code, enter
+                  it below.
+                </p>
+              </div>
+              <div>
+                <span className={labelCls}>One-time code (if provided)</span>
                 <input
-                  className={input + " mt-1 tracking-widest"}
+                  className={input + " mt-1.5 tracking-[0.3em]"}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="123456"
                 />
-                <button
-                  disabled={busy || !code}
-                  onClick={verify}
-                  className="mt-3 w-full rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-                >
-                  {busy ? "যাচাই হচ্ছে..." : "Verify Code"}
-                </button>
-                <button
-                  onClick={() => setStage("email")}
-                  className="mt-3 w-full text-xs text-muted-foreground hover:underline"
-                >
-                  ইমেইল পরিবর্তন করুন
-                </button>
-              </>
-            )}
+              </div>
+              <button
+                type="button"
+                disabled={busy || !code}
+                onClick={verify}
+                className="zx-sheen inline-flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+              >
+                {busy ? "Verifying…" : "Verify code"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setStage("email")}
+                className="w-full text-[12.5px] text-muted-foreground hover:text-foreground"
+              >
+                Change email
+              </button>
+            </div>
+          )}
 
-            {stage === "form" && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    ভেরিফাইড: <b>{email}</b>
-                  </span>
-                  <button
-                    onClick={async () => {
-                      await supabase.auth.signOut();
-                      setStage("email");
-                    }}
-                    className="text-primary underline"
-                  >
-                    লগআউট
-                  </button>
-                </div>
+          {stage === "form" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3 text-[12px] text-muted-foreground">
+                <span className="min-w-0 truncate">
+                  Verified: <b className="text-foreground">{email}</b>
+                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    setStage("email");
+                  }}
+                  className="shrink-0 text-primary underline"
+                >
+                  Sign out
+                </button>
+              </div>
 
-                <div className="flex items-center gap-3">
-                  <CommunityAvatar name={f.name || "?"} src={avatarPreview || null} size={56} />
-                  <div>
+              <div className="flex items-center gap-4">
+                <CommunityAvatar name={f.name || "?"} src={avatarPreview || null} size={60} />
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => fileRef.current?.click()}
-                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-accent"
+                      className="zx-chip rounded-full px-3.5 py-1.5 text-[12px] font-semibold text-foreground"
                     >
-                      প্রোফাইল ছবি আপলোড
+                      Upload photo
                     </button>
                     {avatarPreview && (
                       <button
@@ -317,48 +326,71 @@ function CommunityArt() {
                           setAvatarPreview("");
                           if (fileRef.current) fileRef.current.value = "";
                         }}
-                        className="ml-2 text-xs text-muted-foreground underline"
+                        className="text-[12px] text-muted-foreground underline"
                       >
-                        সরান
+                        Remove
                       </button>
                     )}
-                    <p className="mt-1 text-[11px] text-muted-foreground">PNG, JPG, WebP · সর্বোচ্চ ২ MB</p>
                   </div>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    className="hidden"
-                    onChange={onPickFile}
-                  />
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    PNG, JPG, WebP · up to 2 MB
+                  </p>
                 </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  onChange={onPickFile}
+                />
+              </div>
 
-                <input className={input} placeholder="Full name *" value={f.name} onChange={set("name")} />
+              <div>
+                <span className={labelCls}>Full name *</span>
+                <input
+                  className={input + " mt-1.5"}
+                  placeholder="Your name"
+                  value={f.name}
+                  onChange={set("name")}
+                />
+              </div>
 
-                <select className={input} value={f.role} onChange={set("role") as any}>
+              <div>
+                <span className={labelCls}>Role</span>
+                <select className={input + " mt-1.5"} value={f.role} onChange={set("role") as any}>
                   {ROLE_OPTIONS.map((r) => (
                     <option key={r} value={r}>
                       {r}
                     </option>
                   ))}
                 </select>
-                {f.role === "Other" && (
-                  <input
-                    className={input}
-                    placeholder="আপনার পদবি লিখুন"
-                    value={f.customRole}
-                    onChange={set("customRole")}
-                  />
-                )}
-
+              </div>
+              {f.role === "Other" && (
                 <input
                   className={input}
-                  placeholder="Educational institution"
+                  placeholder="Enter your role"
+                  value={f.customRole}
+                  onChange={set("customRole")}
+                />
+              )}
+
+              <div>
+                <span className={labelCls}>Institution</span>
+                <input
+                  className={input + " mt-1.5"}
+                  placeholder="School, company or organisation"
                   value={f.institution}
                   onChange={set("institution")}
                 />
+              </div>
 
-                <select className={input} value={f.country} onChange={set("country") as any}>
+              <div>
+                <span className={labelCls}>Country</span>
+                <select
+                  className={input + " mt-1.5"}
+                  value={f.country}
+                  onChange={set("country") as any}
+                >
                   <option value="">Select country</option>
                   {COUNTRY_OPTIONS.map((c) => (
                     <option key={c} value={c}>
@@ -366,10 +398,13 @@ function CommunityArt() {
                     </option>
                   ))}
                 </select>
+              </div>
 
+              <div>
+                <span className={labelCls}>Skills</span>
                 <input
-                  className={input}
-                  placeholder="Skills (comma separated)"
+                  className={input + " mt-1.5"}
+                  placeholder="Comma separated, e.g. TypeScript, LLM / Agents"
                   list="community-skills"
                   value={f.skills}
                   onChange={set("skills")}
@@ -379,180 +414,223 @@ function CommunityArt() {
                     <option key={s} value={s} />
                   ))}
                 </datalist>
+              </div>
 
+              <div>
+                <span className={labelCls}>How do you contribute?</span>
                 <textarea
-                  className={input}
+                  className={input + " mt-1.5"}
                   rows={3}
-                  placeholder="How do you participate / contribute?"
+                  placeholder="Tell the community what you work on"
                   value={f.participation}
                   onChange={set("participation")}
                 />
+              </div>
 
-                <div className="rounded-lg border border-border p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold">Links</span>
-                    <button
-                      type="button"
-                      onClick={() => setLinks((p) => [...p, emptyLink()])}
-                      className="rounded-lg border border-border px-3 py-1 text-xs font-semibold hover:bg-accent"
-                    >
-                      + Add Link
-                    </button>
-                  </div>
-                  <div className="mt-2 space-y-2">
-                    {links.map((l, i) => (
-                      <div key={i} className="flex flex-wrap items-center gap-2">
-                        <select
-                          className={input + " w-auto min-w-[130px]"}
-                          value={l.label}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            updateLink(i, { label: v, custom: v === "Other" });
-                          }}
-                        >
-                          {LINK_PRESETS.map((p) => (
-                            <option key={p} value={p}>
-                              {p}
-                            </option>
-                          ))}
-                        </select>
-                        {l.custom && (
-                          <input
-                            className={input + " w-auto flex-1"}
-                            placeholder="Label"
-                            value={l.label === "Other" ? "" : l.label}
-                            onChange={(e) => updateLink(i, { label: e.target.value })}
-                          />
-                        )}
+              <div className="zx-glass rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-semibold text-foreground">Links</span>
+                  <button
+                    type="button"
+                    onClick={() => setLinks((p) => [...p, emptyLink()])}
+                    className="zx-chip rounded-full px-3.5 py-1.5 text-[12px] font-semibold text-foreground"
+                  >
+                    + Add Link
+                  </button>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {links.map((l, i) => (
+                    <div key={i} className="flex flex-wrap items-center gap-2">
+                      <select
+                        className={input + " w-auto min-w-[130px]"}
+                        value={l.label}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          updateLink(i, { label: v, custom: v === "Other" });
+                        }}
+                      >
+                        {LINK_PRESETS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                      {l.custom && (
                         <input
                           className={input + " w-auto flex-1"}
-                          placeholder="https://…"
-                          value={l.url}
-                          onChange={(e) => updateLink(i, { url: e.target.value })}
+                          placeholder="Label"
+                          value={l.label === "Other" ? "" : l.label}
+                          onChange={(e) => updateLink(i, { label: e.target.value })}
                         />
-                        <button
-                          type="button"
-                          onClick={() => setLinks((p) => p.filter((_, j) => j !== i))}
-                          className="text-xs text-muted-foreground underline"
-                        >
-                          সরান
-                        </button>
-                      </div>
+                      )}
+                      <input
+                        className={input + " w-auto flex-1"}
+                        placeholder="https://…"
+                        value={l.url}
+                        onChange={(e) => updateLink(i, { url: e.target.value })}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setLinks((p) => p.filter((_, j) => j !== i))}
+                        className="text-[12px] text-muted-foreground underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <span className={labelCls}>Address (private)</span>
+                  <input
+                    className={input + " mt-1.5"}
+                    placeholder="Only admins can see this"
+                    value={f.address}
+                    onChange={set("address")}
+                  />
+                </div>
+                <div>
+                  <span className={labelCls}>Phone (private)</span>
+                  <input
+                    className={input + " mt-1.5"}
+                    placeholder="Only admins can see this"
+                    value={f.phone}
+                    onChange={set("phone")}
+                  />
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={f.consent}
+                  onChange={(e) => setF({ ...f, consent: e.target.checked })}
+                />
+                <span>
+                  I agree to show my name, photo, role, institution and links on my public profile.
+                </span>
+              </label>
+
+              <button
+                type="button"
+                disabled={busy || !f.name || !f.consent}
+                onClick={submit}
+                className="zx-sheen inline-flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+              >
+                {busy ? "Saving…" : "Join community"}
+              </button>
+            </div>
+          )}
+
+          {stage === "done" && (
+            <div className="space-y-4">
+              <div className="rounded-xl bg-emerald-500/10 p-5 text-center">
+                <p className="text-[14px] font-semibold text-emerald-700 dark:text-emerald-300">
+                  Your profile is live
+                </p>
+                <p className="mt-1 text-[12.5px] text-muted-foreground">
+                  Thank you for joining the ZYRAXON community.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStage("form")}
+                className="zx-chip inline-flex h-11 w-full items-center justify-center rounded-full text-sm font-semibold text-foreground"
+              >
+                Edit profile
+              </button>
+            </div>
+          )}
+
+          {msg && <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">{msg}</p>}
+        </Card>
+
+        <section>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold tracking-tight text-foreground">
+              Members <span className="text-muted-foreground">({filtered.length})</span>
+            </h2>
+            <input
+              className={input + " max-w-[240px]"}
+              placeholder="Search members…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+
+          {members.length === 0 && (
+            <Card className="mt-4 p-8 text-center">
+              <p className="text-[13.5px] text-muted-foreground">
+                No verified members yet. Be the first to join.
+              </p>
+            </Card>
+          )}
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {filtered.map((m) => (
+              <Card key={m.id} hover className="flex flex-col p-5">
+                <Link
+                  to="/community/$id"
+                  params={{ id: m.id }}
+                  className="flex items-center gap-3.5"
+                >
+                  <CommunityAvatar name={m.name} seed={m.id} src={m.avatarUrl} size={48} />
+                  <div className="min-w-0">
+                    <div className="truncate text-[14.5px] font-semibold text-foreground">
+                      {m.name}
+                    </div>
+                    <div className="truncate text-[12px] text-muted-foreground">
+                      {[m.role, m.institution, m.country].filter(Boolean).join(" · ")}
+                    </div>
+                  </div>
+                </Link>
+                {m.participation && (
+                  <p className="mt-3 line-clamp-3 text-[13px] leading-relaxed text-muted-foreground">
+                    {m.participation}
+                  </p>
+                )}
+                {m.skills && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {m.skills
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                      .slice(0, 4)
+                      .map((s) => (
+                        <Tag key={s}>{s}</Tag>
+                      ))}
+                  </div>
+                )}
+                {m.links?.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {m.links.slice(0, 4).map((l) => (
+                      <a
+                        key={l.url}
+                        href={l.url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        className="zx-chip rounded-full px-2.5 py-1 text-[11px] font-semibold text-primary"
+                      >
+                        {linkLabel(l)}
+                      </a>
                     ))}
                   </div>
-                </div>
-
-                <input
-                  className={input}
-                  placeholder="Address (Private — শুধু অ্যাডমিন দেখবে)"
-                  value={f.address}
-                  onChange={set("address")}
-                />
-                <input
-                  className={input}
-                  placeholder="Phone (Private — শুধু অ্যাডমিন দেখবে)"
-                  value={f.phone}
-                  onChange={set("phone")}
-                />
-                <label className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5"
-                    checked={f.consent}
-                    onChange={(e) => setF({ ...f, consent: e.target.checked })}
-                  />
-                  আমি আমার নাম, ছবি, পদবি, প্রতিষ্ঠান ও লিঙ্ক পাবলিক প্রোফাইলে প্রদর্শন করার সম্মতি
-                  দিচ্ছি।
-                </label>
-                <button
-                  disabled={busy || !f.name || !f.consent}
-                  onClick={submit}
-                  className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                )}
+                <Link
+                  to="/community/$id"
+                  params={{ id: m.id }}
+                  className="mt-4 text-[12.5px] font-semibold text-primary"
                 >
-                  {busy ? "সংরক্ষণ হচ্ছে..." : "Join community"}
-                </button>
-              </div>
-            )}
-
-            {stage === "done" && (
-              <div className="space-y-3">
-                <div className="rounded-lg bg-green-500/10 p-4 text-center text-sm text-green-600">
-                  🎉 ধন্যবাদ! আপনার প্রোফাইল সফলভাবে যোগ হয়েছে।
-                </div>
-                <button
-                  onClick={() => setStage("form")}
-                  className="w-full rounded-lg border border-border py-2 text-sm font-semibold hover:bg-accent"
-                >
-                  প্রোফাইল এডিট করুন
-                </button>
-              </div>
-            )}
-
-            {msg && <p className="mt-3 text-xs text-muted-foreground">{msg}</p>}
-          </section>
-
-          <section>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold">Members ({filtered.length})</h2>
-              <input
-                className={input + " max-w-[220px]"}
-                placeholder="Search members…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-            {members.length === 0 && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                এখনো কোনো ভেরিফাইড সদস্য নেই। প্রথম সদস্য হিসেবে যোগ দিন।
-              </p>
-            )}
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {filtered.map((m) => (
-                <article
-                  key={m.id}
-                  className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
-                >
-                  <Link to="/community/$id" params={{ id: m.id }} className="flex items-center gap-3">
-                    <CommunityAvatar name={m.name} seed={m.id} src={m.avatarUrl} size={44} />
-                    <div>
-                      <div className="font-semibold">{m.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {[m.role, m.institution, m.country].filter(Boolean).join(" · ")}
-                      </div>
-                    </div>
-                  </Link>
-                  {m.participation && (
-                    <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{m.participation}</p>
-                  )}
-                  {m.skills && <p className="mt-2 text-xs">{m.skills}</p>}
-                  {m.links?.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                      {m.links.slice(0, 4).map((l) => (
-                        <a
-                          key={l.url}
-                          href={l.url}
-                          target="_blank"
-                          rel="noopener noreferrer nofollow"
-                          className="text-primary underline"
-                        >
-                          {linkLabel(l)}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                  <Link
-                    to="/community/$id"
-                    params={{ id: m.id }}
-                    className="mt-3 inline-block text-xs font-semibold text-primary"
-                  >
-                    View profile →
-                  </Link>
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
+                  View profile →
+                </Link>
+              </Card>
+            ))}
+          </div>
+        </section>
       </div>
-    </main>
+    </PageShell>
   );
 }

@@ -33,26 +33,26 @@ function UpdatesIndex() {
   return (
     <UpdateShell>
       <div className="py-14">
-        <p className="text-xs font-bold tracking-[0.18em] text-cyan-600 uppercase">Newsroom</p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+        <p className="text-xs font-bold tracking-[0.18em] text-primary uppercase">Newsroom</p>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
           Latest from ZYRAXON
         </h1>
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           Every entry has its own permanent link. Share one with an AI agent and it can read the
           full record — title, media, reference links and the complete text.
         </p>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 px-6 py-20 text-center">
-          <p className="text-slate-600">No updates published yet.</p>
+        <div className="rounded-2xl border border-dashed border-border px-6 py-20 text-center">
+          <p className="text-muted-foreground">No updates published yet.</p>
         </div>
       ) : (
           <div className="grid gap-8 pb-16 sm:grid-cols-2">
           {items.map((item: PublicItem) => (
             <article
               key={item.id}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-lg"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-border zx-glass transition hover:border-border hover:shadow-lg"
             >
               <UpdateMedia item={item} />
               <div className="flex flex-1 flex-col gap-3 p-6">
@@ -65,7 +65,7 @@ function UpdatesIndex() {
                       {item.badge}
                     </span>
                   )}
-                  <time className="text-[11px] font-medium tracking-wide text-slate-400 uppercase">
+                  <time className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                     {new Date(item.createdAt).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
@@ -73,20 +73,20 @@ function UpdatesIndex() {
                     })}
                   </time>
                 </div>
-                <h2 className="text-lg font-bold tracking-tight text-slate-900">
-                  <a href={`/updates/${item.slug}`} className="transition group-hover:text-cyan-700">
+                <h2 className="text-lg font-bold tracking-tight text-foreground">
+                  <a href={`/updates/${item.slug}`} className="transition group-hover:text-primary">
                     {item.title}
                   </a>
                 </h2>
-                {item.subtitle && <p className="text-sm text-slate-600">{item.subtitle}</p>}
+                {item.subtitle && <p className="text-sm text-muted-foreground">{item.subtitle}</p>}
                 {item.body && (
-                  <p className="line-clamp-4 text-sm leading-relaxed whitespace-pre-wrap text-slate-600">
+                  <p className="line-clamp-4 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
                     {item.body}
                   </p>
                 )}
                 <a
                   href={`/updates/${item.slug}`}
-                  className="mt-auto inline-flex items-center gap-1.5 pt-2 text-sm font-semibold text-cyan-700 transition hover:gap-2.5"
+                  className="mt-auto inline-flex items-center gap-1.5 pt-2 text-sm font-semibold text-primary transition hover:gap-2.5"
                 >
                   Read the full update
                   <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">

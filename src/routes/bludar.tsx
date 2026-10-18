@@ -43,7 +43,7 @@ function BludarRoute() {
   const [nonce, setNonce] = useState(() => Date.now());
 
   return (
-    <div className="fixed inset-0 w-screen h-screen bg-background">
+    <div className="fixed inset-0 h-screen w-screen bg-[var(--plane)]">
       <h1 className="sr-only">ZYRAXON AI Bludar — Build Websites with AI</h1>
       <iframe
         key={nonce}
@@ -57,7 +57,7 @@ function BludarRoute() {
         type="button"
         onClick={() => setNonce(Date.now())}
         aria-label="Refresh ZYRAXON AI Bludar studio"
-        className="absolute bottom-4 right-4 rounded-full border border-cyan-400/30 bg-black/60 px-4 py-2 text-xs font-medium text-cyan-100 backdrop-blur-xl transition hover:bg-black/80"
+        className="zx-glass-strong absolute bottom-4 right-4 rounded-full px-4 py-2 text-xs font-medium text-foreground transition hover:-translate-y-0.5"
       >
         ⟳ Refresh studio
       </button>

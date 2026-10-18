@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { PageShell } from "@/components/site/PageShell";
+import { PageHeader } from "@/components/site/SiteChrome";
+import { ButtonAnchor, Card, Tag } from "@/components/site/ui";
 
 export const Route = createFileRoute("/privacy-policy")({
   head: () => ({
@@ -109,138 +112,126 @@ const DOWNLOAD_TABLE = [
 ];
 
 function PrivacyPolicyPage() {
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(SECTIONS[0].id);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif", color: "#1f2937" }}>
-      {/* Nav */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 32px", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(20px)", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <a href="/" style={{ fontSize: 18, fontWeight: 800, color: "#111827", textDecoration: "none", letterSpacing: "-0.5px" }}>ZYRAXON</a>
-          <span style={{ fontSize: 11, fontWeight: 600, color: "#7c3aed", background: "#f3f0ff", padding: "2px 8px", borderRadius: 4, letterSpacing: "0.5px" }}>PRIVACY</span>
+    <PageShell>
+      <PageHeader
+        label="Legal"
+        title="Privacy Policy"
+        description="Your data stays on your machine. Our agent is local-first — what you do with ZYRAXON is yours."
+      >
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Tag tone="success">Local-first</Tag>
+          <Tag tone="primary">No data selling</Tag>
+          <Tag>Effective September 29, 2026</Tag>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 24, fontSize: 13 }}>
-          <a href="#overview" style={{ color: "#6b7280", textDecoration: "none" }}>Overview</a>
-          <a href="#details" style={{ color: "#6b7280", textDecoration: "none" }}>Policy</a>
-          <a href="/zsl" style={{ color: "#6b7280", textDecoration: "none" }}>License</a>
-          <a href="/" style={{ padding: "6px 14px", borderRadius: 8, background: "#7c3aed", color: "white", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-            Home
-          </a>
-        </div>
-      </nav>
+      </PageHeader>
 
-      {/* Hero */}
-      <section style={{ padding: "80px 32px 56px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -100, left: "50%", transform: "translateX(-50%)", width: 600, height: 600, background: "radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 720, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 20, background: "#f3f0ff", border: "1px solid #e9e5ff", marginBottom: 24 }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#059669", display: "inline-block" }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#059669" }}>Effective: September 29, 2026</span>
-          </div>
-          <h1 style={{ fontSize: 44, fontWeight: 800, color: "#111827", margin: "0 0 16px", letterSpacing: "-1.5px", lineHeight: 1.1 }}>
-            Privacy Policy
-          </h1>
-          <p style={{ fontSize: 17, color: "#6b7280", margin: "0 0 8px", lineHeight: 1.6 }}>
-            Your data stays on your machine. Our agent is local-first — what you do with ZYRAXON is yours.
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[
+          { v: "Local", l: "Processing by default — no cloud account required" },
+          { v: "No selling", l: "We never sell personal information or agent data" },
+          { v: "Your keys", l: "External providers only when you connect them" },
+        ].map((s) => (
+          <Card key={s.v} className="p-5 text-center">
+            <p className="text-lg font-bold tracking-tight text-primary">{s.v}</p>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">{s.l}</p>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="mt-6 overflow-x-auto p-6">
+        <h2 className="text-[15px] font-bold text-foreground">What this policy covers</h2>
+        <table className="mt-4 w-full min-w-[600px] border-collapse text-[13px]">
+          <thead>
+            <tr className="border-b border-border">
+              {["Information", "How it is used", "Where it is stored"].map((h) => (
+                <th
+                  key={h}
+                  className="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {DOWNLOAD_TABLE.map((r) => (
+              <tr key={r.row} className="border-b border-border/60 align-top last:border-0">
+                <td className="px-3 py-3 font-semibold text-foreground">{r.row}</td>
+                <td className="px-3 py-3 leading-relaxed text-muted-foreground">
+                  {r.description}
+                </td>
+                <td className="px-3 py-3 leading-relaxed text-muted-foreground">{r.stored}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
+      <div className="mt-10 grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <nav className="hidden lg:block">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            Sections
           </p>
-        </div>
-      </section>
+          <ul className="mt-3 space-y-1">
+            {SECTIONS.map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveId(s.id);
+                    document.getElementById(`sec-${s.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  className={`w-full rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors ${
+                    activeId === s.id
+                      ? "bg-primary/12 font-semibold text-primary"
+                      : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                  }`}
+                >
+                  <span className="mr-2 font-mono text-[11px] opacity-60">{s.num}</span>
+                  {s.title}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      {/* Overview */}
-      <section id="overview" style={{ padding: "0 32px 56px", maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-          {[
-            { value: "Local", label: "Processing by default — no cloud account required", color: "#059669" },
-            { value: "No Selling", label: "We never sell personal information or agent data", color: "#2563eb" },
-            { value: "Your Keys", label: "External providers only when you connect them", color: "#7c3aed" },
-          ].map((s) => (
-            <div key={s.label} style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, textAlign: "center" }}>
-              <p style={{ fontSize: 18, fontWeight: 800, color: s.color, margin: "0 0 6px" }}>{s.value}</p>
-              <p style={{ fontSize: 12, color: "#6b7280", margin: 0, lineHeight: 1.5 }}>{s.label}</p>
-            </div>
+        <div className="grid gap-3">
+          {SECTIONS.map((s) => (
+            <details
+              key={s.id}
+              id={`sec-${s.id}`}
+              open={activeId === s.id}
+              onToggle={(e) => {
+                if ((e.target as HTMLDetailsElement).open) setActiveId(s.id);
+              }}
+              className="zx-glass scroll-mt-24 rounded-2xl px-5 py-4"
+            >
+              <summary className="flex cursor-pointer list-none items-center gap-3 text-[15px] font-bold text-foreground">
+                <span className="font-mono text-[12px] font-bold text-primary">{s.num}</span>
+                {s.title}
+              </summary>
+              <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">{s.body}</p>
+            </details>
           ))}
         </div>
-        <div style={{ marginTop: 32, background: "white", border: "1px solid #e5e7eb", borderRadius: 14, padding: 28 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: "#111827", margin: "0 0 12px" }}>What this policy covers</h3>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
-                  <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 700, color: "#111827" }}>Information</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 700, color: "#111827" }}>How it's used</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 700, color: "#111827" }}>Where it's stored</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DOWNLOAD_TABLE.map((r) => (
-                  <tr key={r.row} style={{ borderBottom: "1px solid #f3f4f6", verticalAlign: "top" }}>
-                    <td style={{ padding: "10px 12px", fontWeight: 600, color: "#374151" }}>{r.row}</td>
-                    <td style={{ padding: "10px 12px", color: "#6b7280", lineHeight: 1.5 }}>{r.description}</td>
-                    <td style={{ padding: "10px 12px", color: "#6b7280", lineHeight: 1.5 }}>{r.stored}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+      </div>
 
-      {/* Policy details */}
-      <section id="details" style={{ padding: "56px 32px", background: "white", borderTop: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 8px", textAlign: "center" }}>The Full Policy</h2>
-          <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 32px", textAlign: "center" }}>
-            Read each section, or tap a heading to expand it.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {SECTIONS.map((s) => (
-              <div key={s.id} style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden" }}>
-                <button
-                  onClick={() => setActiveId(activeId === s.id ? null : s.id)}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
-                >
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#7c3aed", flexShrink: 0 }}>{s.num}</span>
-                  <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: "#111827" }}>{s.title}</span>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transform: activeId === s.id ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>
-                    <path d="M4 6l4 4 4-4" stroke="#6b7280" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </button>
-                {activeId === s.id && (
-                  <div style={{ padding: "0 20px 16px", fontSize: 13, color: "#6b7280", lineHeight: 1.7 }}>
-                    {s.body}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Disclaimer */}
-      <section style={{ padding: "40px 32px", maxWidth: 720, margin: "0 auto" }}>
-        <p style={{ fontSize: 12, color: "#9ca3af", lineHeight: 1.7, margin: 0 }}>
-          This Privacy Policy applies to the ZYRAXON AI website and the ZYRAXON desktop agent. Third-party services or AI providers you connect are governed by their own policies and are outside our control. This document is provided for transparency and does not create contractual obligations beyond what is stated in the Zyraxon Sovereign License (ZSL-X).
+      <Card className="mt-10 p-6">
+        <p className="text-[12px] leading-relaxed text-muted-foreground">
+          This Privacy Policy applies to the ZYRAXON AI website and the ZYRAXON desktop agent.
+          Third-party services or AI providers you connect are governed by their own policies and
+          are outside our control. This document is provided for transparency and does not create
+          contractual obligations beyond what is stated in the Zyraxon Sovereign License (ZSL-X).
         </p>
-      </section>
-
-      {/* Footer */}
-      <footer style={{ padding: "40px 32px", borderTop: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>ZYRAXON AI</p>
-            <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>Local-first. Transparent. Yours.</p>
-          </div>
-          <div style={{ display: "flex", gap: 20, fontSize: 13 }}>
-            <a href="/" style={{ color: "#6b7280", textDecoration: "none" }}>Home</a>
-            <a href="/faq" style={{ color: "#6b7280", textDecoration: "none" }}>FAQ</a>
-            <a href="/zsl" style={{ color: "#6b7280", textDecoration: "none" }}>ZSL License</a>
-            <a href="/privacy-policy" style={{ color: "#6b7280", textDecoration: "none" }}>Privacy Policy</a>
-          </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <ButtonAnchor href="https://github.com/onelpawarai-X/ZYRAXON-AI" variant="glass" size="sm">
+            Contact us on GitHub
+          </ButtonAnchor>
         </div>
-        <div style={{ maxWidth: 900, margin: "24px auto 0", paddingTop: 20, borderTop: "1px solid #f3f4f6", textAlign: "center" }}>
-          <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>2026 onelpawarai — ZYRAXON AI</p>
-        </div>
-      </footer>
-    </div>
+      </Card>
+    </PageShell>
   );
 }
