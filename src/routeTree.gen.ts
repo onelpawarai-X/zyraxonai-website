@@ -14,6 +14,7 @@ import { Route as AppsRouteImport } from './routes/apps'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as CommunityArtRouteImport } from './routes/community-art'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DesktopFeedbackRouteImport } from './routes/desktop-feedback'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as NebulaRouteImport } from './routes/nebula'
@@ -104,6 +105,11 @@ const BuilderRoute = BuilderRouteImport.update({
 const CommunityArtRoute = CommunityArtRouteImport.update({
   id: '/community-art',
   path: '/community-art',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DesktopFeedbackRoute = DesktopFeedbackRouteImport.update({
@@ -456,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
+  '/demo': typeof DemoRoute
   '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
@@ -529,6 +536,7 @@ export interface FileRoutesByTo {
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
+  '/demo': typeof DemoRoute
   '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
@@ -603,6 +611,7 @@ export interface FileRoutesById {
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
+  '/demo': typeof DemoRoute
   '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
@@ -678,6 +687,7 @@ export interface FileRouteTypes {
     | '/bludar'
     | '/builder'
     | '/community-art'
+    | '/demo'
     | '/desktop-feedback'
     | '/faq'
     | '/nebula'
@@ -751,6 +761,7 @@ export interface FileRouteTypes {
     | '/bludar'
     | '/builder'
     | '/community-art'
+    | '/demo'
     | '/desktop-feedback'
     | '/faq'
     | '/nebula'
@@ -824,6 +835,7 @@ export interface FileRouteTypes {
     | '/bludar'
     | '/builder'
     | '/community-art'
+    | '/demo'
     | '/desktop-feedback'
     | '/faq'
     | '/nebula'
@@ -898,6 +910,7 @@ export interface RootRouteChildren {
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
   CommunityArtRoute: typeof CommunityArtRoute
+  DemoRoute: typeof DemoRoute
   DesktopFeedbackRoute: typeof DesktopFeedbackRoute
   FaqRoute: typeof FaqRoute
   NebulaRoute: typeof NebulaRoute
@@ -994,6 +1007,13 @@ declare module '@tanstack/react-router' {
       path: '/community-art'
       fullPath: '/community-art'
       preLoaderRoute: typeof CommunityArtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/desktop-feedback': {
@@ -1510,6 +1530,7 @@ const rootRouteChildren: RootRouteChildren = {
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
   CommunityArtRoute: CommunityArtRoute,
+  DemoRoute: DemoRoute,
   DesktopFeedbackRoute: DesktopFeedbackRoute,
   FaqRoute: FaqRoute,
   NebulaRoute: NebulaRoute,
