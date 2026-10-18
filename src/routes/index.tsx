@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "The world's most advanced desktop AI agent. 805 tools across 63 categories, 10 agent modes, screen vision, eternal memory and 100+ live app integrations.",
+          "The world's most advanced desktop AI agent. 888 tools across 63 categories, 11 agent modes, 108 live app integrations, screen vision and eternal memory.",
       },
       {
         property: "og:title",
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Desktop AI agent with 805 tools across 63 categories, 10 agent modes, screen vision and eternal memory.",
+          "Desktop AI agent with 888 tools across 63 categories, 11 agent modes, screen vision and eternal memory.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app" },
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:title", content: "ZYRAXON AI — All in One." },
       {
         name: "twitter:description",
-        content: "Desktop AI agent with 805 tools, 10 agent modes and 100+ live app integrations.",
+        content: "Desktop AI agent with 888 tools, 11 agent modes and 108 live app integrations.",
       },
     ],
     scripts: [
@@ -56,7 +56,7 @@ export const Route = createFileRoute("/")({
           applicationCategory: "DeveloperApplication",
           operatingSystem: "Windows, macOS, Linux",
           description:
-            "Free and open-source desktop AI agent with 805 tools across 63 categories, 10 agent modes, screen vision and eternal memory.",
+            "Source-available desktop AI agent with 888 tools across 63 categories, 11 agent modes, screen vision and eternal memory.",
           url: "https://zyraxonai.lovable.app",
           offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         }),
@@ -69,7 +69,7 @@ export const Route = createFileRoute("/")({
 const TERMINAL_LINES = [
   { p: "$", t: "zyraxon run --mode beast" },
   { p: ">", t: "Scanning workspace… 1,204 files indexed" },
-  { p: ">", t: "Loading 805 tools across 63 categories" },
+  { p: ">", t: "Loading 888 tools across 63 categories" },
   { p: ">", t: "Connected: GitHub · Notion · Linear · Vercel" },
   { p: "✓", t: "Ready. What should I build?" },
 ];
@@ -136,8 +136,9 @@ function Hero() {
 
           <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             A chatbot talks. ZYRAXON acts. It reads your files, writes your code, runs your
-            commands, builds your projects and deploys your apps — with 10 agent modes, 805 tools
-            across 63 categories, 224 control systems, eternal memory and always-on screen vision.
+            commands, builds your projects and deploys your apps — with 11 agent modes, 888 tools
+            across 63 categories, 108 MCP integrations, 224+ control systems, eternal memory and
+            always-on screen vision.
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
@@ -404,7 +405,7 @@ function AppsTeaser() {
     <Section
       label="Integrations"
       title="Your whole stack, connected"
-      description="100+ live MCP integrations across 27 categories. Each endpoint was verified against its live server before it was listed."
+      description="108 live MCP integrations across 27 categories. Each endpoint was verified against its live server before it was listed."
     >
       <Card className="relative overflow-hidden p-8">
         <div className="pointer-events-none absolute inset-0 zx-grid-lines opacity-30" />
@@ -450,9 +451,9 @@ function Download() {
             <h3 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{d.os}</h3>
             <p className="mt-1 text-[13px] text-muted-foreground">{d.detail}</p>
             <div className="mt-5">
-              <ButtonLink to="/download/zyraxon-agent" variant="glass" size="sm">
+              <ButtonAnchor href={`/api/download/${d.key}`} external={false} variant="glass" size="sm">
                 Download {d.file}
-              </ButtonLink>
+              </ButtonAnchor>
             </div>
           </Card>
         ))}

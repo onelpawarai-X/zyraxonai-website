@@ -6,11 +6,11 @@ import { ButtonAnchor, ButtonLink } from "@/components/site/ui";
 const FAQS = [
   {
     q: "What is ZYRAXON AI?",
-    a: "ZYRAXON AI is a free and open-source desktop AI coding agent with 805 tools across 63 categories, 10 agent modes, screen vision, eternal memory and support for 25+ AI providers.",
+    a: "ZYRAXON AI is a source-available desktop AI coding agent with 888 tools across 63 categories, 11 agent modes, screen vision, eternal memory and support for 25+ AI providers.",
   },
   {
     q: "Is ZYRAXON AI free to use?",
-    a: "Yes. The Free tier includes 126 tools at $0. Paid tiers (Pro $5, Max $15, Ultra $99) unlock more tools and features, but the core agent is free and open-source.",
+    a: "Yes. The Free tier includes 186 tools at $0. Paid tiers (Pro $5, Max $15, Ultra $99) unlock more tools and features, but the core agent stays source-available and free to run.",
   },
   {
     q: "Which platforms does ZYRAXON AI support?",

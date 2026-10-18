@@ -22,13 +22,14 @@ const NOISE = /(\.blockmap$|\.ya?ml$|\.sha\d*$|\.sig$|\.txt$|^latest)/i;
 
 export const PLATFORM_PATTERNS: Record<string, RegExp[]> = {
   windows: [
-    /win.*installer.*\.exe$/i,
+    /win.*x64.*installer.*\.exe$/i,
+    /win.*x64.*\.exe$/i,
+    /win.*x64.*\.msi$/i,
     /setup.*\.exe$/i,
-    /win.*\.exe$/i,
     /\.exe$/i,
-    /win.*\.msi$/i,
     /win.*\.zip$/i,
   ],
+  "windows-arm64": [/win.*arm64.*\.exe$/i, /win.*arm64.*\.zip$/i],
   "mac-arm": [
     /(mac|osx|darwin).*(arm64|aarch64|silicon).*\.dmg$/i,
     /-arm64\.dmg$/i,
@@ -47,6 +48,9 @@ export const PLATFORM_PATTERNS: Record<string, RegExp[]> = {
     /linux.*(x64|x86_64|amd64).*\.tar\.gz$/i,
     /linux.*\.tar\.gz$/i,
   ],
+  "linux-appimage": [/\.AppImage$/i],
+  "linux-deb": [/\.deb$/i],
+  "linux-rpm": [/\.rpm$/i],
 };
 
 export type ResolvedAsset = {
@@ -80,9 +84,7 @@ async function fetchRepoReleases(repo: string): Promise<(GhRelease & { repo: str
     });
     if (!res.ok) return [];
     const list = (await res.json()) as GhRelease[];
-    return (Array.isArray(list) ? list : [])
-      .filter((r) => !r.draft)
-      .map((r) => ({ ...r, repo }));
+    return (Array.isArray(list) ? list : []).filter((r) => !r.draft).map((r) => ({ ...r, repo }));
   } catch {
     return [];
   }

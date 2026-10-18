@@ -20,7 +20,7 @@ export const Route = createFileRoute("/releases")({
 });
 
 const REPOS = [
-  { owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", desc: "Desktop AI agent with 10 agent modes, 805 tools across 63 categories" },
+  { owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", desc: "Desktop AI agent with 11 agent modes, 888 tools across 63 categories" },
 ];
 
 function ReleasesPage() {

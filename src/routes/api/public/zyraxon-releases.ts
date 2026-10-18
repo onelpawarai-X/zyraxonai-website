@@ -7,7 +7,7 @@ const CORS = {
 };
 
 const REPOS = [
-  { id: "zyraxon-agent", owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", description: "Desktop AI agent with 10 agent modes, 805 tools across 63 categories, eternal memory, screen vision" },
+  { id: "zyraxon-agent", owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", description: "Desktop AI agent with 11 agent modes, 888 tools across 63 categories, eternal memory, screen vision" },
 ];
 
 type GhRelease = {

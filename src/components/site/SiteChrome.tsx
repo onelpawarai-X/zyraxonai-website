@@ -232,7 +232,7 @@ export function SiteFooter() {
           <div>
             <Wordmark />
             <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-muted-foreground">
-              All in one. Anything. Nothing is impossible. An open-source desktop AI agent
+              All in one. Anything. Nothing is impossible. A source-available desktop AI agent
               that acts, builds, and ships.
             </p>
           </div>

@@ -200,7 +200,8 @@ function CommunityArt() {
   }
 
   const set =
-    (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (k: keyof typeof f) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setF({ ...f, [k]: e.target.value });
 
   const filtered = useMemo(() => {
@@ -357,7 +358,7 @@ function CommunityArt() {
 
               <div>
                 <span className={labelCls}>Role</span>
-                <select className={input + " mt-1.5"} value={f.role} onChange={set("role") as any}>
+                <select className={input + " mt-1.5"} value={f.role} onChange={set("role")}>
                   {ROLE_OPTIONS.map((r) => (
                     <option key={r} value={r}>
                       {r}
@@ -386,11 +387,7 @@ function CommunityArt() {
 
               <div>
                 <span className={labelCls}>Country</span>
-                <select
-                  className={input + " mt-1.5"}
-                  value={f.country}
-                  onChange={set("country") as any}
-                >
+                <select className={input + " mt-1.5"} value={f.country} onChange={set("country")}>
                   <option value="">Select country</option>
                   {COUNTRY_OPTIONS.map((c) => (
                     <option key={c} value={c}>
@@ -414,6 +411,36 @@ function CommunityArt() {
                     <option key={s} value={s} />
                   ))}
                 </datalist>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {SKILL_SUGGESTIONS.slice(0, 14).map((s) => {
+                    const picked = f.skills
+                      .split(",")
+                      .map((x) => x.trim().toLowerCase())
+                      .includes(s.toLowerCase());
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          const list = f.skills
+                            .split(",")
+                            .map((x) => x.trim())
+                            .filter(Boolean);
+                          const next = picked
+                            ? list.filter((x) => x.toLowerCase() !== s.toLowerCase())
+                            : [...list, s];
+                          setF({ ...f, skills: next.join(", ") });
+                        }}
+                        className={`zx-chip rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                          picked ? "bg-primary/15 text-primary" : "text-muted-foreground"
+                        }`}
+                      >
+                        {picked ? "✓ " : "+ "}
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>

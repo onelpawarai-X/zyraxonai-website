@@ -34,6 +34,7 @@ import { Route as EcosystemIndexRouteImport } from './routes/ecosystem/index'
 import { Route as ShareIdRouteImport } from './routes/share/$id'
 import { Route as UpdatesIndexRouteImport } from './routes/updates/index'
 import { Route as UpdatesSlugRouteImport } from './routes/updates/$slug'
+import { Route as ApiDownloadPlatformRouteImport } from './routes/api/download/$platform'
 import { Route as ApiGithubReposRouteImport } from './routes/api/github/repos'
 import { Route as ApiPublicCommunityRouteImport } from './routes/api/public/community'
 import { Route as ApiPublicCommunityActRouteImport } from './routes/api/public/community-act'
@@ -203,6 +204,11 @@ const UpdatesIndexRoute = UpdatesIndexRouteImport.update({
 const UpdatesSlugRoute = UpdatesSlugRouteImport.update({
   id: '/updates/$slug',
   path: '/updates/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDownloadPlatformRoute = ApiDownloadPlatformRouteImport.update({
+  id: '/api/download/$platform',
+  path: '/api/download/$platform',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGithubReposRoute = ApiGithubReposRouteImport.update({
@@ -470,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
   '/updates/': typeof UpdatesIndexRoute
+  '/api/download/$platform': typeof ApiDownloadPlatformRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
@@ -542,6 +549,7 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsIndexRoute
   '/ecosystem': typeof EcosystemIndexRoute
   '/updates': typeof UpdatesIndexRoute
+  '/api/download/$platform': typeof ApiDownloadPlatformRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
@@ -615,6 +623,7 @@ export interface FileRoutesById {
   '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
   '/updates/': typeof UpdatesIndexRoute
+  '/api/download/$platform': typeof ApiDownloadPlatformRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
@@ -689,6 +698,7 @@ export interface FileRouteTypes {
     | '/docs/'
     | '/ecosystem/'
     | '/updates/'
+    | '/api/download/$platform'
     | '/api/github/repos'
     | '/api/public/community'
     | '/api/public/community-act'
@@ -761,6 +771,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/ecosystem'
     | '/updates'
+    | '/api/download/$platform'
     | '/api/github/repos'
     | '/api/public/community'
     | '/api/public/community-act'
@@ -833,6 +844,7 @@ export interface FileRouteTypes {
     | '/docs/'
     | '/ecosystem/'
     | '/updates/'
+    | '/api/download/$platform'
     | '/api/github/repos'
     | '/api/public/community'
     | '/api/public/community-act'
@@ -906,6 +918,7 @@ export interface RootRouteChildren {
   DocsIndexRoute: typeof DocsIndexRoute
   EcosystemIndexRoute: typeof EcosystemIndexRoute
   UpdatesIndexRoute: typeof UpdatesIndexRoute
+  ApiDownloadPlatformRoute: typeof ApiDownloadPlatformRoute
   ApiGithubReposRoute: typeof ApiGithubReposRouteWithChildren
   ApiPublicCommunityRoute: typeof ApiPublicCommunityRoute
   ApiPublicCommunityActRoute: typeof ApiPublicCommunityActRoute
@@ -1121,6 +1134,13 @@ declare module '@tanstack/react-router' {
       path: '/updates/$slug'
       fullPath: '/updates/$slug'
       preLoaderRoute: typeof UpdatesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/download/$platform': {
+      id: '/api/download/$platform'
+      path: '/api/download/$platform'
+      fullPath: '/api/download/$platform'
+      preLoaderRoute: typeof ApiDownloadPlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/github/repos': {
@@ -1510,6 +1530,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsIndexRoute: DocsIndexRoute,
   EcosystemIndexRoute: EcosystemIndexRoute,
   UpdatesIndexRoute: UpdatesIndexRoute,
+  ApiDownloadPlatformRoute: ApiDownloadPlatformRoute,
   ApiGithubReposRoute: ApiGithubReposRouteWithChildren,
   ApiPublicCommunityRoute: ApiPublicCommunityRoute,
   ApiPublicCommunityActRoute: ApiPublicCommunityActRoute,

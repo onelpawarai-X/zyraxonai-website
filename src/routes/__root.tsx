@@ -87,7 +87,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
+          "The World's Most Advanced Desktop AI Agent. 888 tools across 63 categories, 11 agent modes, 108 MCP integrations, Screen Vision, Eternal Memory.",
       },
       { name: "author", content: "ZYRAXON AI" },
       {
@@ -97,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
+          "The World's Most Advanced Desktop AI Agent. 888 tools across 63 categories, 11 agent modes, 108 MCP integrations, Screen Vision, Eternal Memory.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app" },
@@ -110,7 +110,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "twitter:description",
         content:
-          "The World's Most Advanced Desktop AI Agent. 805 tools across 63 categories, 10 agent modes, Screen Vision, Eternal Memory.",
+          "The World's Most Advanced Desktop AI Agent. 888 tools across 63 categories, 11 agent modes, 108 MCP integrations, Screen Vision, Eternal Memory.",
       },
       {
         property: "og:image",

@@ -15,6 +15,8 @@ export type McpApp = {
   col: string;
   /** Domain, used for the favicon mark */
   dom?: string;
+  /** Where to create the token, for token-tier apps */
+  tok?: string;
 };
 
 export const TIER_LABEL: Record<AppTier, string> = {

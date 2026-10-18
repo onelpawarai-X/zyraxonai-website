@@ -73,7 +73,7 @@ const FAQ = [
 ];
 
 const PROJECTS_USING_ZSL = [
-  { name: "ZYRAXON-AI", desc: "Main AI platform with 805 tools across 63 categories", repo: "onelpawarai-X/ZYRAXON-AI", color: "#2563eb" },
+  { name: "ZYRAXON-AI", desc: "Main AI platform with 888 tools across 63 categories and 108 MCP integrations", repo: "onelpawarai-X/ZYRAXON-AI", color: "#2563eb" },
 ];
 
 const TIMELINE = [
