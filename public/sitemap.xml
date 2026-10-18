@@ -9,6 +9,7 @@
   <url><loc>https://zyraxonai.lovable.app/download/zyraxon-agent</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zyraxonai.lovable.app/bludar</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/releases</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/demo</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zyraxonai.lovable.app/zsl</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/faq</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/community-art</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
