@@ -27,9 +27,9 @@ function XToolsCatalog({ search }: { search: string }) {
       </p>
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
+          ["Total Tools", String(X_TOOL_TOTALS.tools)],
+          ["MCP Apps", String(X_TOOL_TOTALS.mcp)],
           ["Control Systems", String(X_TOOL_TOTALS.classes)],
-          ["MCP Tools", String(X_TOOL_TOTALS.mcp)],
-          ["Core Tools", String(X_TOOL_TOTALS.builtin)],
           ["Source Files", String(X_TOOL_TOTALS.files)],
         ].map(([label, value]) => (
           <div key={label} className="p-4 text-center">
@@ -259,9 +259,9 @@ export default function DocsShell({ slug }: { slug?: string }) {
             Official Documentation
           </h1>
           <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
-            Complete technical reference for ZYRAXON-AI — the open-source desktop AI agent with 10
-            agent modes, 805 tools across 63 categories, eternal memory, self-healing and real-time
-            screen vision.
+            Complete technical reference for ZYRAXON-AI — the source-available desktop AI agent with
+            11 agent modes, 888 tools across 63 categories, 108 MCP integrations, eternal memory,
+            self-healing and real-time screen vision.
           </p>
           {DOC_GROUPS.map((g) => {
             const pages = DOCS.filter((d) => d.group === g);

@@ -840,6 +840,6 @@ export const X_TOOL_CATEGORIES: XToolCategory[] = [
 export const X_TOOL_TOTALS = {
   files: 54,
   classes: 224,
-  mcp: 156,
-  builtin: 31,
+  mcp: 108,
+  tools: 888,
 };

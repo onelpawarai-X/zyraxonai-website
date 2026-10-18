@@ -16,4 +16,21 @@
   <url><loc>https://zyraxonai.lovable.app/publish</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://zyraxonai.lovable.app/privacy-policy</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://zyraxonai.lovable.app/nebula</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/getting-started</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/installation</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/agent-modes</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/tools-reference</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/x-tools</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/vision-system</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/memory-system</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/self-healing</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/mcp-hub</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/packages</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/sdk</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/architecture</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/build-from-source</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/comparison</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/contributing</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/zsl</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/faq</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
 </urlset>

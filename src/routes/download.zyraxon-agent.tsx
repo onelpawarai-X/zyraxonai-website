@@ -14,7 +14,7 @@ export const Route = createFileRoute("/download/zyraxon-agent")({
       {
         name: "description",
         content:
-          "Download the latest ZYRAXON Agent for Windows, macOS or Linux. Free, source-available desktop AI agent with 805+ tools.",
+          "Download the latest ZYRAXON Agent for Windows, macOS or Linux. Free, source-available desktop AI agent with 888 tools.",
       },
       { property: "og:title", content: "Download ZYRAXON Agent" },
       {

@@ -19,13 +19,13 @@ export const Route = createFileRoute("/apps")({
       {
         name: "description",
         content:
-          "Every application ZYRAXON AI can drive: 100+ live MCP integrations across 27 categories, with browser sign-in, token auth, open and local tiers.",
+          "Every application ZYRAXON AI can drive: 108 live MCP integrations across 27 categories, with browser sign-in, token auth, open and local tiers.",
       },
       { property: "og:title", content: "Connected Apps — ZYRAXON AI" },
       {
         property: "og:description",
         content:
-          "Every application ZYRAXON AI can drive: 100+ live MCP integrations across 27 categories.",
+          "Every application ZYRAXON AI can drive: 108 live MCP integrations across 27 categories.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/apps" },

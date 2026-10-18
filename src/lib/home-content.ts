@@ -1,15 +1,16 @@
 export const STATS = [
-  { value: "805+", label: "Tools" },
+  { value: "888", label: "Tools" },
   { value: "63", label: "Categories" },
-  { value: "10", label: "Agent modes" },
-  { value: "224", label: "Control systems" },
+  { value: "11", label: "Agent modes" },
+  { value: "108", label: "MCP integrations" },
+  { value: "224+", label: "Control systems" },
   { value: "25+", label: "AI providers" },
 ];
 
 export const PLATFORM = [
   {
     title: "ZYRAXON Agent",
-    body: "Desktop AI agent for Windows, macOS and Linux. 805 tools across 63 categories, 224 real control systems, 10 agent modes, eternal memory, screen vision and self-healing.",
+    body: "Desktop AI agent for Windows, macOS and Linux. 888 tools across 63 categories, 108 MCP integrations, 224+ real control systems, 11 agent modes, eternal memory, screen vision and self-healing.",
     meta: "Windows · macOS · Linux",
     href: "/download/zyraxon-agent",
     external: false,
@@ -32,14 +33,19 @@ export const FEATURES = [
     icon: "bolt",
   },
   {
-    title: "805+ Tools",
-    body: "31 core tools, 521 domain tools and 224 real control systems — aircraft, cars, drones, boats, rockets, robots, medical, agriculture and security. It installs new ones itself.",
+    title: "888 Tools",
+    body: "186 free, 317 pro, 324 max and 61 ultra tools across 63 categories — vehicles, aircraft, drones, boats, rockets, robots, medical, agriculture, security and more. It installs new ones itself.",
     icon: "wrench",
   },
   {
-    title: "224 Control Systems",
+    title: "224+ Control Systems",
     body: "Real algorithms, real physics. Aircraft autopilot, car sensor fusion, drone formation, boat navigation, rocket GNC and robot SLAM. Production-grade, not simulation.",
     icon: "cpu",
+  },
+  {
+    title: "108 MCP Integrations",
+    body: "GitHub, Figma, Notion, Slack, Stripe, Linear, Google Workspace and 100 more — each probed with a real handshake before it is listed. Press Connect and the tools are live.",
+    icon: "plug",
   },
   {
     title: "Screen Vision",
@@ -69,16 +75,17 @@ export const FEATURES = [
 ];
 
 export const MODES = [
-  { n: "01", name: "Build", body: "The reliable workhorse. Full file system access, persistent memory, web browsing, command execution and image generation." },
-  { n: "02", name: "Plan", body: "Strategic read-only analysis. Plans the perfect approach before a single file is touched." },
-  { n: "03", name: "Vision", body: "Continuous screen capture, frame memory, scene-change detection and intelligent timeline recall." },
-  { n: "04", name: "Pro Builder", body: "Complete production websites from plain language, auto-deployed with live preview and SEO handled." },
-  { n: "05", name: "PRO", body: "Everything Build has, plus unlimited memory and always-on screen vision backed by self-healing." },
-  { n: "06", name: "Beast", body: "Six powers at once: Mission Control with three-level subagents, Self-Evolution, Subagent Army, Autonomous Completion, Eternal Memory and Vision." },
-  { n: "07", name: "AUTO", body: "Autonomous orchestrator. Analyses the task, delegates to a parallel sub-agent army, coordinates and delivers." },
-  { n: "08", name: "APEX PREDATOR", body: "Omega Command Center, Annihilation Engine, Tool Mastery, Quantum Processing and Predator's Intuition." },
-  { n: "09", name: "DARK EMPEROR", body: "Supreme mode with ten powers and eight exclusive ULTRA tools. Never refuses, never stops, never fails." },
-  { n: "10", name: "General", body: "Lightweight subagent used for delegated background work. Small, fast, called constantly by bigger modes." },
+  { n: "01", name: "General", body: "Lightweight subagent used for delegated background work. Small, fast, called constantly by bigger modes." },
+  { n: "02", name: "Build", body: "The reliable workhorse. Full file system access, persistent memory, web browsing, command execution and image generation." },
+  { n: "03", name: "Plan", body: "Strategic read-only analysis. Plans the perfect approach before a single file is touched." },
+  { n: "04", name: "Explore", body: "Read-only searching and mapping of an unfamiliar codebase before anything is changed." },
+  { n: "05", name: "Vision", body: "Continuous screen capture, frame memory, scene-change detection and intelligent timeline recall." },
+  { n: "06", name: "PRO", body: "Everything Build has, plus unlimited memory and always-on screen vision backed by self-healing." },
+  { n: "07", name: "Pro Builder", body: "Complete production websites from plain language, auto-deployed with live preview and SEO handled." },
+  { n: "08", name: "Beast", body: "Six powers at once: Mission Control with three-level subagents, Self-Evolution, Subagent Army, Autonomous Completion, Eternal Memory and Vision." },
+  { n: "09", name: "AUTO", body: "Autonomous orchestrator. Analyses the task, delegates to a parallel sub-agent army, coordinates and delivers." },
+  { n: "10", name: "APEX PREDATOR", body: "Omega Command Center, Annihilation Engine, Tool Mastery, Quantum Processing and Predator's Intuition." },
+  { n: "11", name: "DARK EMPEROR", body: "Supreme mode with ten powers and eight exclusive ULTRA tools. Never refuses, never stops, never fails." },
 ];
 
 export const PROVIDERS = [
@@ -96,9 +103,9 @@ export const COMPARE_ROWS = [
   "Eternal Memory (50k+)",
   "Screen Vision",
   "Self-Healing",
-  "805+ Tools",
+  "888 Tools",
   "Free & source-available",
-  "10 Agent Modes",
+  "11 Agent Modes",
   "Self-Evolving",
 ];
 
