@@ -3,14 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { Card, Section, StatTile, Tag } from "@/components/site/ui";
 import { PageHeader } from "@/components/site/SiteChrome";
-import {
-  TIER_HINT,
-  TIER_LABEL,
-  faviconUrl,
-  loadApps,
-  type AppTier,
-  type McpApp,
-} from "@/lib/apps";
+import { TIER_HINT, TIER_LABEL, faviconUrl, loadApps, type AppTier, type McpApp } from "@/lib/apps";
 
 export const Route = createFileRoute("/apps")({
   head: () => ({
@@ -242,10 +235,20 @@ function AppCard({ app }: { app: McpApp }) {
         </div>
       </div>
       <p className="text-[13px] leading-relaxed text-muted-foreground">{app.d}</p>
-      <div className="mt-auto pt-1">
+      <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
         <Tag tone={app.t === "open" ? "success" : app.t === "browser" ? "primary" : "muted"}>
           {TIER_LABEL[app.t]}
         </Tag>
+        {app.t === "key" && app.tok && (
+          <a
+            href={app.tok}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[12px] font-semibold text-primary underline underline-offset-2"
+          >
+            Get a token →
+          </a>
+        )}
       </div>
     </Card>
   );

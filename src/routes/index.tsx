@@ -451,9 +451,9 @@ function Download() {
             <h3 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{d.os}</h3>
             <p className="mt-1 text-[13px] text-muted-foreground">{d.detail}</p>
             <div className="mt-5">
-              <ButtonLink to="/download/zyraxon-agent" variant="glass" size="sm">
+              <ButtonAnchor href={`/api/download/${d.key}`} external={false} variant="glass" size="sm">
                 Download {d.file}
-              </ButtonLink>
+              </ButtonAnchor>
             </div>
           </Card>
         ))}

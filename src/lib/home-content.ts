@@ -127,7 +127,7 @@ export const SDK_FEATURES = [
 export const STACK = ["Bun", "Electron", "SolidJS", "TypeScript", "SQLite", "MCP"];
 
 export const DOWNLOADS = [
-  { os: "Windows", detail: "Windows 10/11 (x64)", file: ".exe" },
-  { os: "macOS", detail: "macOS 12+ (Apple Silicon & Intel)", file: ".dmg" },
-  { os: "Linux", detail: "Ubuntu / Debian / Fedora (x64)", file: ".AppImage" },
+  { os: "Windows", detail: "Windows 10/11 (x64)", file: ".exe", key: "windows" },
+  { os: "macOS", detail: "macOS 12+ (Apple Silicon)", file: ".dmg", key: "mac-arm" },
+  { os: "Linux", detail: "Ubuntu / Debian / Fedora (x64)", file: ".AppImage", key: "linux-appimage" },
 ];

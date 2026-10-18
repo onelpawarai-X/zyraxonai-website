@@ -25,9 +25,12 @@
   <url><loc>https://zyraxonai.lovable.app/docs/memory-system</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/docs/self-healing</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/docs/mcp-hub</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/providers</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/permissions</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/docs/packages</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://zyraxonai.lovable.app/docs/sdk</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/docs/architecture</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/sdk</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zyraxonai.lovable.app/docs/cli</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/docs/build-from-source</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/docs/comparison</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zyraxonai.lovable.app/docs/contributing</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
