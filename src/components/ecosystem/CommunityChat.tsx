@@ -1597,7 +1597,7 @@ export default function CommunityChat() {
         <div className="w-[220px] bg-[#f9fafb] border-l border-[#f3f4f6] flex-col overflow-hidden max-lg:hidden flex">
           <div className="px-3.5 py-3 border-b border-[#f3f4f6] text-[12px] font-bold text-[#6b7280] uppercase flex items-center justify-between">
             <span>
-              অনলাইন —{" "}
+              Online —{" "}
               {onlineUsers.filter((u) => u.id !== auth.user?.id).length + (auth.user ? 1 : 0)}
             </span>
             <button

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppsRouteImport } from './routes/apps'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as CommunityArtRouteImport } from './routes/community-art'
@@ -82,6 +83,11 @@ import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppsRoute = AppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BludarRoute = BludarRouteImport.update({
@@ -440,6 +446,7 @@ const ApiPublicZyraxonV1ChatCompletionsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/apps': typeof AppsRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
@@ -511,6 +518,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/apps': typeof AppsRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
@@ -583,6 +591,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/apps': typeof AppsRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
@@ -656,6 +665,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/apps'
     | '/bludar'
     | '/builder'
     | '/community-art'
@@ -727,6 +737,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/apps'
     | '/bludar'
     | '/builder'
     | '/community-art'
@@ -798,6 +809,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/apps'
     | '/bludar'
     | '/builder'
     | '/community-art'
@@ -870,6 +882,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppsRoute: typeof AppsRoute
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
   CommunityArtRoute: typeof CommunityArtRoute
@@ -940,6 +953,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apps': {
+      id: '/apps'
+      path: '/apps'
+      fullPath: '/apps'
+      preLoaderRoute: typeof AppsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bludar': {
@@ -1466,6 +1486,7 @@ const ApiPublicAuthGithubRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppsRoute: AppsRoute,
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
   CommunityArtRoute: CommunityArtRoute,

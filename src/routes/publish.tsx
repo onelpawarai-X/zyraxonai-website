@@ -1,13 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { PageShell } from "@/components/site/PageShell";
+import { PageHeader } from "@/components/site/SiteChrome";
+import { ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
 
 export const Route = createFileRoute("/publish")({
   head: () => ({
     meta: [
       { title: "Publish — ZYRAXON AI" },
-      { name: "description", content: "Publish your project to the ZYRAXON Ecosystem marketplace. Auto-scanned for security and shared with the community." },
+      {
+        name: "description",
+        content:
+          "Publish your project to the ZYRAXON Ecosystem marketplace. Auto-scanned for security and shared with the community.",
+      },
       { property: "og:title", content: "Publish — ZYRAXON AI" },
-      { property: "og:description", content: "Publish your project to the ZYRAXON Ecosystem marketplace. Auto-scanned for security and shared with the community." },
+      {
+        property: "og:description",
+        content:
+          "Publish your project to the ZYRAXON Ecosystem marketplace. Auto-scanned for security and shared with the community.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/publish" },
       { name: "twitter:card", content: "summary" },
@@ -17,6 +28,10 @@ export const Route = createFileRoute("/publish")({
 });
 
 const ENDPOINT = "https://agent-ecosystem-hub.lovable.app/api/public/v1";
+
+const inputCls =
+  "w-full rounded-xl border border-border bg-transparent px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20";
+const labelCls = "block text-[11px] font-bold uppercase tracking-wider text-muted-foreground";
 
 interface PublishedApp {
   slug: string;
@@ -42,54 +57,52 @@ interface PublishResult {
   url: string;
 }
 
+const EMPTY_FORM = {
+  name: "",
+  slug: "",
+  tagline: "",
+  description: "",
+  category: "website",
+  source_agent: "cloud",
+  author_name: "",
+  live_url: "",
+  repo_url: "",
+  version: "1.0.0",
+  tags: "",
+  publish: false,
+};
+
 function PublishPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "Inter, sans-serif" }}>
-      <header style={{ borderBottom: "1px solid #e5e7eb", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <a href="/" target="_top" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 12, background: "linear-gradient(135deg, #059669, #10b981)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg style={{ width: 20, height: 20, color: "white" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-              </div>
-              <div>
-                <h1 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0 }}>Publish</h1>
-                <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>ZYRAXON Ecosystem Hub</p>
-              </div>
-            </a>
-          </div>
-          <a href="/ecosystem" style={{ fontSize: 13, color: "#6b7280", textDecoration: "none", padding: "6px 12px", borderRadius: 8, border: "1px solid #e5e7eb" }}>Back to Ecosystem</a>
-        </div>
-      </header>
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "24px 16px" }}>
-        <PublishForm />
-        <PublishedAppsSection />
-      </main>
-      <footer style={{ borderTop: "1px solid #e5e7eb", background: "white", padding: "24px 0", textAlign: "center" }}>
-        <p style={{ fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.2em", color: "#9ca3af" }}>ZYRAXON-AI // All in one. Anything. Nothing is impossible.</p>
-      </footer>
-    </div>
+    <PageShell>
+      <PageHeader
+        label="Ecosystem"
+        title="Publish a project"
+        description="Send your project to the ZYRAXON Ecosystem Hub. It is auto-scanned for security, then published live for the community."
+      />
+      <PublishForm />
+      <PublishedAppsSection />
+    </PageShell>
   );
 }
 
 function PublishForm() {
   const [apiKey, setApiKey] = useState("");
-  const [form, setForm] = useState({
-    name: "", slug: "", tagline: "", description: "", category: "website",
-    source_agent: "cloud", author_name: "", live_url: "", repo_url: "",
-    version: "1.0.0", tags: "", publish: false,
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [sourceFiles, setSourceFiles] = useState<{ path: string; content: string }[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [step, setStep] = useState<"form" | "preview" | "publishing" | "done" | "error">("form");
+  const [step, setStep] = useState<"form" | "publishing" | "done" | "error">("form");
   const [result, setResult] = useState<PublishResult | null>(null);
   const [error, setError] = useState("");
 
   async function handleFileDrop(files: FileList) {
     const results: { path: string; content: string }[] = [];
     for (let i = 0; i < files.length; i++) {
-      try { results.push({ path: files[i].name, content: await files[i].text() }); }
-      catch { results.push({ path: files[i].name, content: "[binary]" }); }
+      try {
+        results.push({ path: files[i].name, content: await files[i].text() });
+      } catch {
+        results.push({ path: files[i].name, content: "[binary]" });
+      }
     }
     setSourceFiles((prev) => [...prev, ...results]);
   }
@@ -98,8 +111,8 @@ function PublishForm() {
     setForm((p) => ({ ...p, [field]: value }));
 
   const generateSlug = () => {
-    const slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    update("slug", slug);
+    if (form.slug) return;
+    update("slug", form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
   };
 
   const handleSubmit = async () => {
@@ -107,8 +120,11 @@ function PublishForm() {
     setStep("publishing");
     setError("");
     try {
-      const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
-      const body: any = {
+      const tags = form.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const body: Record<string, unknown> = {
         name: form.name,
         slug: form.slug,
         tagline: form.tagline,
@@ -136,131 +152,245 @@ function PublishForm() {
         setError(data.message || data.error || "Publish failed");
         setStep("error");
       }
-    } catch (e: any) {
-      setError(e?.message || "Connection failed");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Connection failed");
       setStep("error");
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%", padding: "10px 12px", border: "1px solid #e5e7eb", borderRadius: 8,
-    fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "inherit",
-  };
-  const labelStyle: React.CSSProperties = { display: "block", fontSize: 13, fontWeight: 500, color: "#374151", marginBottom: 6 };
+  const canSubmit = Boolean(form.name && form.slug && apiKey);
 
   return (
-    <div style={{ marginBottom: 48 }}>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>Publish Your Project</h2>
-        <p style={{ fontSize: 14, color: "#6b7280", margin: 0 }}>Send your project to the ZYRAXON Ecosystem Hub. Auto-scanned, then published live.</p>
-      </div>
-
-      <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, background: "white", padding: 24, marginBottom: 24 }}>
-        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: 16, marginBottom: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1e40af", margin: "0 0 8px" }}>How it works</h3>
-          <ol style={{ fontSize: 13, color: "#1e3a5f", margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
-            <li>Enter your agent API key (get it from your ZYRAXON agent)</li>
-            <li>Fill in your project details</li>
-            <li>Click <strong>Publish</strong> — the system auto-scans your code</li>
-            <li>If no critical findings, your project goes live on the marketplace</li>
-            <li>Share the link or connect your GitHub to track stats</li>
+    <section className="mb-14">
+      <Card className="p-6 sm:p-7">
+        <div className="rounded-xl bg-primary/10 p-4">
+          <h3 className="text-[13.5px] font-bold text-primary">How it works</h3>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-[13px] leading-relaxed text-muted-foreground">
+            <li>Enter your agent API key (from your ZYRAXON agent).</li>
+            <li>Fill in your project details.</li>
+            <li>
+              Press <strong className="text-foreground">Publish</strong> — the system auto-scans
+              your code.
+            </li>
+            <li>If no critical findings appear, your project goes live on the marketplace.</li>
+            <li>Share the link, or connect GitHub to track stats.</li>
           </ol>
         </div>
 
         {step === "form" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="mt-6 grid gap-4">
             <div>
-              <label style={labelStyle}>Agent API Key *</label>
-              <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="x-zyraxon-key" style={inputStyle} />
+              <span className={labelCls}>Agent API key *</span>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="x-zyraxon-key"
+                className={inputCls + " mt-1.5"}
+              />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label style={labelStyle}>Project Name *</label>
-                <input value={form.name} onChange={(e) => update("name", e.target.value)} onBlur={generateSlug} placeholder="My Awesome Project" style={inputStyle} />
+                <span className={labelCls}>Project name *</span>
+                <input
+                  value={form.name}
+                  onChange={(e) => update("name", e.target.value)}
+                  onBlur={generateSlug}
+                  placeholder="My project"
+                  className={inputCls + " mt-1.5"}
+                />
               </div>
               <div>
-                <label style={labelStyle}>Slug *</label>
-                <input value={form.slug} onChange={(e) => update("slug", e.target.value)} placeholder="my-awesome-project" style={inputStyle} />
+                <span className={labelCls}>Slug *</span>
+                <input
+                  value={form.slug}
+                  onChange={(e) => update("slug", e.target.value)}
+                  placeholder="my-project"
+                  className={inputCls + " mt-1.5"}
+                />
               </div>
             </div>
+
             <div>
-              <label style={labelStyle}>Tagline</label>
-              <input value={form.tagline} onChange={(e) => update("tagline", e.target.value)} placeholder="One line description" style={inputStyle} />
+              <span className={labelCls}>Tagline</span>
+              <input
+                value={form.tagline}
+                onChange={(e) => update("tagline", e.target.value)}
+                placeholder="One line description"
+                className={inputCls + " mt-1.5"}
+              />
             </div>
+
             <div>
-              <label style={labelStyle}>Description *</label>
-              <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={4} placeholder="Full description of your project..." style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} />
+              <span className={labelCls}>Description *</span>
+              <textarea
+                value={form.description}
+                onChange={(e) => update("description", e.target.value)}
+                rows={4}
+                placeholder="Full description of your project…"
+                className={inputCls + " mt-1.5 resize-y"}
+              />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+
+            <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label style={labelStyle}>Category</label>
-                <select value={form.category} onChange={(e) => update("category", e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <span className={labelCls}>Category</span>
+                <select
+                  value={form.category}
+                  onChange={(e) => update("category", e.target.value)}
+                  className={inputCls + " mt-1.5"}
+                >
                   {["website", "plugin", "template", "theme", "bot", "tool", "cli", "sdk", "model", "app", "other"].map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label style={labelStyle}>Source Agent</label>
-                <select value={form.source_agent} onChange={(e) => update("source_agent", e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <span className={labelCls}>Source agent</span>
+                <select
+                  value={form.source_agent}
+                  onChange={(e) => update("source_agent", e.target.value)}
+                  className={inputCls + " mt-1.5"}
+                >
                   {["cloud", "desktop", "mobile", "code"].map((a) => (
-                    <option key={a} value={a}>{a}</option>
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label style={labelStyle}>Version</label>
-                <input value={form.version} onChange={(e) => update("version", e.target.value)} placeholder="1.0.0" style={inputStyle} />
+                <span className={labelCls}>Version</span>
+                <input
+                  value={form.version}
+                  onChange={(e) => update("version", e.target.value)}
+                  placeholder="1.0.0"
+                  className={inputCls + " mt-1.5"}
+                />
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label style={labelStyle}>Author Name</label>
-                <input value={form.author_name} onChange={(e) => update("author_name", e.target.value)} placeholder="Your name" style={inputStyle} />
+                <span className={labelCls}>Author name</span>
+                <input
+                  value={form.author_name}
+                  onChange={(e) => update("author_name", e.target.value)}
+                  placeholder="Your name"
+                  className={inputCls + " mt-1.5"}
+                />
               </div>
               <div>
-                <label style={labelStyle}>Tags (comma separated)</label>
-                <input value={form.tags} onChange={(e) => update("tags", e.target.value)} placeholder="react, typescript, landing" style={inputStyle} />
+                <span className={labelCls}>Tags (comma separated)</span>
+                <input
+                  value={form.tags}
+                  onChange={(e) => update("tags", e.target.value)}
+                  placeholder="react, typescript, landing"
+                  className={inputCls + " mt-1.5"}
+                />
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label style={labelStyle}>Live URL</label>
-                <input value={form.live_url} onChange={(e) => update("live_url", e.target.value)} placeholder="https://..." style={inputStyle} />
+                <span className={labelCls}>Live URL</span>
+                <input
+                  value={form.live_url}
+                  onChange={(e) => update("live_url", e.target.value)}
+                  placeholder="https://…"
+                  className={inputCls + " mt-1.5"}
+                />
               </div>
               <div>
-                <label style={labelStyle}>GitHub Repo URL</label>
-                <input value={form.repo_url} onChange={(e) => update("repo_url", e.target.value)} placeholder="https://github.com/..." style={inputStyle} />
+                <span className={labelCls}>GitHub repo URL</span>
+                <input
+                  value={form.repo_url}
+                  onChange={(e) => update("repo_url", e.target.value)}
+                  placeholder="https://github.com/…"
+                  className={inputCls + " mt-1.5"}
+                />
               </div>
             </div>
+
             <div>
-              <label style={labelStyle}>Source Code (upload your project files)</label>
+              <span className={labelCls}>Source code (upload your project files)</span>
               <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
                 onDragLeave={() => setDragOver(false)}
-                onDrop={async (e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files.length) await handleFileDrop(e.dataTransfer.files); }}
-                style={{ border: `2px dashed ${dragOver ? "#059669" : "#d1d5db"}`, borderRadius: 8, padding: 24, textAlign: "center", background: dragOver ? "#f0fdf4" : "#f9fafb", cursor: "pointer" }}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  if (e.dataTransfer.files.length) await handleFileDrop(e.dataTransfer.files);
+                }}
+                className={`mt-1.5 rounded-xl border-2 border-dashed p-6 text-center transition ${
+                  dragOver ? "border-emerald-500 bg-emerald-500/5" : "border-border"
+                }`}
               >
-                <input type="file" multiple id="src-files" onChange={async (e) => { if (e.target.files?.length) await handleFileDrop(e.target.files); e.target.value = ""; }} style={{ display: "none" }} />
-                <svg style={{ width: 32, height: 32, color: "#9ca3af", margin: "0 auto 8px" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 4px" }}>Drop files here or <span style={{ color: "#059669", fontWeight: 600 }} onClick={() => document.getElementById("src-files")?.click()}>browse</span></p>
-                <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>Source files for auto-scan & publish</p>
+                <input
+                  type="file"
+                  multiple
+                  id="src-files"
+                  onChange={async (e) => {
+                    if (e.target.files?.length) await handleFileDrop(e.target.files);
+                    e.target.value = "";
+                  }}
+                  className="hidden"
+                />
+                <p className="text-[13px] text-muted-foreground">
+                  Drop files here or{" "}
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("src-files")?.click()}
+                    className="font-semibold text-primary underline"
+                  >
+                    browse
+                  </button>
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Source files for auto-scan and publish
+                </p>
               </div>
               {sourceFiles.length > 0 && (
-                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, maxHeight: 120, overflow: "auto" }}>
+                <div className="mt-2 max-h-32 space-y-1 overflow-auto">
                   {sourceFiles.map((f, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", background: "#f3f4f6", borderRadius: 4, fontSize: 12 }}>
-                      <span style={{ color: "#374151", fontFamily: "monospace" }}>{f.path}</span>
-                      <button onClick={() => setSourceFiles((p) => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 14 }}>&times;</button>
+                    <div
+                      key={`${f.path}-${i}`}
+                      className="zx-chip flex items-center justify-between gap-3 rounded-lg px-2.5 py-1.5"
+                    >
+                      <span className="truncate font-mono text-[12px] text-foreground">{f.path}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSourceFiles((p) => p.filter((_, j) => j !== i))}
+                        className="shrink-0 text-[12px] text-muted-foreground hover:text-foreground"
+                      >
+                        Remove
+                      </button>
                     </div>
                   ))}
-                  <button onClick={() => setSourceFiles([])} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 12, textAlign: "left" }}>Clear all</button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceFiles([])}
+                    className="text-[12px] text-muted-foreground underline"
+                  >
+                    Clear all
+                  </button>
                 </div>
               )}
             </div>
-            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
-              <button onClick={handleSubmit} disabled={!form.name || !form.slug || !apiKey}
-                style={{ padding: "10px 24px", borderRadius: 8, background: form.name && form.slug && apiKey ? "#059669" : "#d1d5db", border: "none", color: "white", fontSize: 14, fontWeight: 600, cursor: form.name && form.slug && apiKey ? "pointer" : "not-allowed" }}>
+
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                className="zx-sheen inline-flex h-11 items-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+              >
                 Publish
               </button>
             </div>
@@ -268,140 +398,180 @@ function PublishForm() {
         )}
 
         {step === "publishing" && (
-          <div style={{ textAlign: "center", padding: 40 }}>
-            <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#059669", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-            <p style={{ fontSize: 14, color: "#6b7280" }}>Publishing... scanning code for security findings.</p>
+          <div className="py-12 text-center">
+            <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-[3px] border-border border-t-primary" />
+            <p className="text-[13.5px] text-muted-foreground">
+              Publishing… scanning your code for security findings.
+            </p>
           </div>
         )}
 
         {step === "done" && result && (
-          <div style={{ textAlign: "center", padding: 40 }}>
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#ecfdf5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <svg style={{ width: 32, height: 32, color: "#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-            </div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: "#111827", margin: "0 0 8px" }}>Published!</h3>
-            <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 16 }}>
-              {result.scan?.blocked ? "Published with warnings — some findings detected." : "Your project is live on the marketplace."}
+          <div className="py-8 text-center">
+            <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-500/12 text-2xl text-emerald-600 dark:text-emerald-400">
+              ✓
+            </span>
+            <h3 className="mt-4 text-xl font-bold tracking-tight text-foreground">Published</h3>
+            <p className="mt-1.5 text-[13.5px] text-muted-foreground">
+              {result.scan?.blocked
+                ? "Published with warnings — some findings were detected."
+                : "Your project is live on the marketplace."}
             </p>
             {result.scan && (
-              <div style={{ background: result.scan.blocked ? "#fef2f2" : "#f0fdf4", border: `1px solid ${result.scan.blocked ? "#fecaca" : "#bbf7d0"}`, borderRadius: 8, padding: 16, marginBottom: 16, textAlign: "left" }}>
-                <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>Security Score: {result.scan.score}/100</p>
+              <div
+                className={`mx-auto mt-4 max-w-md rounded-xl p-4 text-left ${
+                  result.scan.blocked ? "bg-red-500/10" : "bg-emerald-500/10"
+                }`}
+              >
+                <p className="text-[13px] font-semibold text-foreground">
+                  Security score: {result.scan.score}/100
+                </p>
                 {result.scan.findings.length > 0 && (
-                  <ul style={{ fontSize: 12, color: "#6b7280", margin: 0, paddingLeft: 16 }}>
-                    {result.scan.findings.map((f, i) => <li key={i}>{f}</li>)}
+                  <ul className="mt-1.5 list-disc pl-5 text-[12px] leading-relaxed text-muted-foreground">
+                    {result.scan.findings.map((f, i) => (
+                      <li key={i}>{f}</li>
+                    ))}
                   </ul>
                 )}
               </div>
             )}
-            {result.url && (
-              <a href={result.url} target="_blank" rel="noopener noreferrer"
-                style={{ display: "inline-block", padding: "8px 16px", borderRadius: 8, background: "#059669", color: "white", fontSize: 13, fontWeight: 600, textDecoration: "none", marginRight: 8 }}>
-                View on Marketplace
-              </a>
-            )}
-            <button onClick={() => { setStep("form"); setResult(null); setForm({ name: "", slug: "", tagline: "", description: "", category: "website", source_agent: "cloud", author_name: "", live_url: "", repo_url: "", version: "1.0.0", tags: "", publish: false }); }}
-              style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 13, cursor: "pointer" }}>
-              Publish Another
-            </button>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              {result.url && (
+                <ButtonAnchor href={result.url} size="sm">
+                  View on marketplace
+                </ButtonAnchor>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("form");
+                  setResult(null);
+                  setForm(EMPTY_FORM);
+                  setSourceFiles([]);
+                }}
+                className="zx-chip inline-flex h-9 items-center rounded-full px-4 text-[13px] font-semibold text-foreground"
+              >
+                Publish another
+              </button>
+            </div>
           </div>
         )}
 
         {step === "error" && (
-          <div style={{ textAlign: "center", padding: 40 }}>
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <svg style={{ width: 32, height: 32, color: "#dc2626" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          <div className="py-8 text-center">
+            <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-500/12 text-2xl text-red-500">
+              ✕
+            </span>
+            <h3 className="mt-4 text-lg font-bold tracking-tight text-foreground">
+              Publish failed
+            </h3>
+            <p className="mt-1.5 text-[13.5px] text-red-500">{error}</p>
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={() => setStep("form")}
+                className="zx-chip inline-flex h-9 items-center rounded-full px-4 text-[13px] font-semibold text-foreground"
+              >
+                Try again
+              </button>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: "#111827", margin: "0 0 8px" }}>Publish Failed</h3>
-            <p style={{ fontSize: 14, color: "#dc2626", marginBottom: 16 }}>{error}</p>
-            <button onClick={() => setStep("form")} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 13, cursor: "pointer" }}>Try Again</button>
           </div>
         )}
-      </div>
-    </div>
+      </Card>
+    </section>
   );
 }
 
 function PublishedAppsSection() {
   const [apps, setApps] = useState<PublishedApp[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${ENDPOINT}/apps`)
       .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d)) setApps(d); else if (d.apps) setApps(d.apps); })
+      .then((d) => {
+        if (Array.isArray(d)) setApps(d);
+        else if (d.apps) setApps(d.apps);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>Published Apps</h2>
-        <p style={{ fontSize: 14, color: "#6b7280", margin: 0 }}>
-          {loading ? "Loading..." : `${apps.length} projects live on the marketplace`}
-        </p>
-      </div>
+    <Section
+      label="Marketplace"
+      title="Published apps"
+      description={loading ? "Loading…" : `${apps.length} projects live on the marketplace.`}
+    >
       {loading && (
-        <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 13 }}>Loading published apps...</div>
-      )}
-      {!loading && apps.length === 0 && (
-        <div style={{ textAlign: "center", padding: 40, border: "1px dashed #d1d5db", borderRadius: 12, color: "#9ca3af", fontSize: 13 }}>
-          No published apps yet. Be the first to publish!
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="zx-glass h-56 animate-pulse rounded-2xl" />
+          ))}
         </div>
       )}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+
+      {!loading && apps.length === 0 && (
+        <Card className="p-10 text-center">
+          <p className="text-[13.5px] text-muted-foreground">
+            No published apps yet. Be the first to publish.
+          </p>
+        </Card>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {apps.map((app) => (
-          <div key={app.slug} style={{ border: "1px solid #e5e7eb", borderRadius: 12, background: "white", overflow: "hidden", transition: "box-shadow 0.15s" }}>
+          <Card key={app.slug} hover className="flex flex-col overflow-hidden">
             {app.cover_url && (
-              <div style={{ height: 160, overflow: "hidden", background: "#f3f4f6" }}>
-                <img src={app.cover_url} alt={app.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <div className="h-40 overflow-hidden bg-foreground/5">
+                <img src={app.cover_url} alt={app.name} className="h-full w-full object-cover" />
               </div>
             )}
-            <div style={{ padding: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "#f3f4f6", color: "#6b7280", textTransform: "capitalize" }}>
-                  {app.category}
-                </span>
-                <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "#dbeafe", color: "#2563eb" }}>
-                  {app.source_agent}
-                </span>
-                {app.version && <span style={{ fontSize: 11, color: "#9ca3af" }}>v{app.version}</span>}
+            <div className="flex flex-1 flex-col p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Tag tone="muted">{app.category}</Tag>
+                <Tag tone="primary">{app.source_agent}</Tag>
+                {app.version && <span className="text-[11px] text-muted-foreground">v{app.version}</span>}
               </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>{app.name}</h3>
-              {app.tagline && <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 8px" }}>{app.tagline}</p>}
-              <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 12px" }}>by {app.author_name || "Anonymous"}</p>
+              <h3 className="mt-3 text-[15px] font-bold tracking-tight text-foreground">
+                {app.name}
+              </h3>
+              {app.tagline && (
+                <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                  {app.tagline}
+                </p>
+              )}
+              <p className="mt-1.5 text-[11.5px] text-muted-foreground">
+                by {app.author_name || "Anonymous"}
+              </p>
               {app.tags && app.tags.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {app.tags.slice(0, 5).map((t) => (
-                    <span key={t} style={{ padding: "2px 8px", borderRadius: 12, fontSize: 11, background: "#f3f4f6", color: "#6b7280" }}>{t}</span>
+                    <Tag key={t}>{t}</Tag>
                   ))}
                 </div>
               )}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
                 {app.live_url && (
-                  <a href={app.live_url} target="_blank" rel="noopener noreferrer"
-                    style={{ padding: "6px 12px", borderRadius: 6, background: "#059669", color: "white", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>
-                    Live Demo
-                  </a>
+                  <ButtonAnchor href={app.live_url} size="sm">
+                    Live demo
+                  </ButtonAnchor>
                 )}
                 {app.repo_url && (
-                  <a href={app.repo_url} target="_blank" rel="noopener noreferrer"
-                    style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 12, textDecoration: "none" }}>
+                  <ButtonAnchor href={app.repo_url} variant="glass" size="sm">
                     GitHub
-                  </a>
+                  </ButtonAnchor>
                 )}
                 {app.scan && (
-                  <span style={{ padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 600, color: app.scan.blocked ? "#dc2626" : "#059669", background: app.scan.blocked ? "#fef2f2" : "#f0fdf4" }}>
-                    Score: {app.scan.score}/100
-                  </span>
+                  <Tag tone={app.scan.blocked ? "warn" : "success"}>
+                    Score {app.scan.score}/100
+                  </Tag>
                 )}
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
-    </div>
+    </Section>
   );
 }

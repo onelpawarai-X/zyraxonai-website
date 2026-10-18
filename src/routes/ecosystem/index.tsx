@@ -115,26 +115,31 @@ export default function EcosystemPage() {
   }, []);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f9fafb", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif", color: "#1f2937" }}>
-      <Sidebar currentView={tab} onViewChange={(v) => {
-        if (v === "publish") { setShowPublish(true); return; }
-        setTab(v as Tab);
-      }} />
+    <div className="flex min-h-screen bg-[var(--plane)] text-foreground">
+      <Sidebar
+        currentView={tab}
+        onViewChange={(v) => {
+          if (v === "publish") {
+            setShowPublish(true);
+            return;
+          }
+          setTab(v as Tab);
+        }}
+      />
 
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        {/* Header */}
-        <header style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid #e5e7eb" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div>
-              <h1 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0 }}>
+      <main className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-50 border-b border-border bg-[var(--plane)]/85 backdrop-blur-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+            <div className="min-w-0">
+              <h1 className="text-[17px] font-bold tracking-tight text-foreground">
                 {tab === "home" && "Ecosystem"}
-                {tab === "published" && "Published Apps"}
+                {tab === "published" && "Published apps"}
                 {tab === "extensions" && "Extensions"}
-                {tab === "releases" && "GitHub Releases"}
-                {tab === "featured" && "Featured Apps"}
-                {tab === "search" && `Search: "${searchQuery}"`}
+                {tab === "releases" && "GitHub releases"}
+                {tab === "featured" && "Featured apps"}
+                {tab === "search" && `Search: “${searchQuery}”`}
               </h1>
-              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>
+              <p className="text-[12px] text-muted-foreground">
                 {tab === "home" && `${appCount} apps published via ZYRAXON Hub`}
                 {tab === "published" && "Projects published to the marketplace"}
                 {tab === "extensions" && "ZYRAXON Agent extension marketplace"}
@@ -143,32 +148,48 @@ export default function EcosystemPage() {
                 {tab === "search" && `${searchResults.length} results found`}
               </p>
             </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* Global search bar */}
-            <div style={{ position: "relative" }}>
-              <input
-                type="text"
-                placeholder="Search ecosystem..."
-                aria-label="Search ecosystem"
-                value={searchQuery}
-                onChange={(e) => { handleSearch(e.target.value); if (e.target.value.length >= 2) setTab("search"); }}
-                style={{ width: 260, padding: "8px 12px 8px 36px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", fontSize: 13, outline: "none", fontFamily: "inherit" }}
-              />
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" aria-hidden="true" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}>
-                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-              </svg>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search ecosystem…"
+                  aria-label="Search ecosystem"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    handleSearch(e.target.value);
+                    if (e.target.value.length >= 2) setTab("search");
+                  }}
+                  className="h-10 w-[240px] rounded-xl border border-border bg-transparent pl-9 pr-3 text-[13px] text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                />
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPublish(true)}
+                className="zx-sheen inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Publish
+              </button>
             </div>
-            <button onClick={() => setShowPublish(true)}
-              style={{ padding: "8px 18px", borderRadius: 8, background: "linear-gradient(135deg, #059669, #10b981)", border: "none", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 8px rgba(16,185,129,0.3)" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
-              Publish
-            </button>
           </div>
         </header>
 
-        {/* Content */}
-        <div style={{ flex: 1, padding: 24, overflowY: "auto" }}>
+        <div className="flex-1 overflow-y-auto p-5">
           {tab === "home" && <HomeView onNavigate={setTab} onPublish={() => setShowPublish(true)} appCount={appCount} featuredApps={featuredApps} featuredLoading={featuredLoading} />}
           {tab === "published" && <div><PublishedApps /></div>}
           {tab === "extensions" && <div><ZyraxonMarketplace /></div>}
@@ -178,7 +199,13 @@ export default function EcosystemPage() {
         </div>
       </main>
 
-      <PublishModal isOpen={showPublish} onClose={() => setShowPublish(false)} onPublished={() => { setAppCount((c) => c + 1); }} />
+      <PublishModal
+        isOpen={showPublish}
+        onClose={() => setShowPublish(false)}
+        onPublished={() => {
+          setAppCount((c) => c + 1);
+        }}
+      />
     </div>
   );
 }

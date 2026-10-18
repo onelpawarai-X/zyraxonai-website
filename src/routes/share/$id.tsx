@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { PageShell } from "@/components/site/PageShell";
+import { ButtonLink, Card, Tag } from "@/components/site/ui";
 
 type Share = {
   id: string;
@@ -54,7 +56,7 @@ export const Route = createFileRoute("/share/$id")({
 function CodeBlock({ code, lang }: { code: string; lang?: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="relative my-3 overflow-hidden rounded-lg border border-white/10 bg-black/50">
+    <div className="relative my-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0f]">
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5 text-[11px] uppercase tracking-wider text-cyan-300/70">
         <span>{lang || "code"}</span>
         <button
@@ -85,7 +87,7 @@ function renderContent(content: string) {
       return <CodeBlock key={i} code={code.replace(/\s+$/, "")} lang={lang} />;
     }
     return (
-      <p key={i} className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-200">
+      <p key={i} className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
         {block}
       </p>
     );
@@ -124,47 +126,52 @@ function SharePage() {
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0a0a0f] px-6 text-center">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-100">Share unavailable</h1>
-          <p className="mt-2 text-sm text-slate-400">{error}</p>
+      <PageShell>
+        <div className="mx-auto max-w-md py-12 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Share unavailable</h1>
+          <p className="mt-2 text-[14px] text-muted-foreground">{error}</p>
+          <div className="mt-6 flex justify-center">
+            <ButtonLink to="/" size="md">
+              Back to home
+            </ButtonLink>
+          </div>
         </div>
-      </main>
+      </PageShell>
     );
   }
 
   if (!share) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0a0a0f]">
-        <p className="text-sm text-slate-400">Loading shared session…</p>
-      </main>
+      <PageShell>
+        <div className="grid gap-4">
+          <div className="zx-glass h-32 animate-pulse rounded-2xl" />
+          <div className="zx-glass h-48 animate-pulse rounded-2xl" />
+        </div>
+      </PageShell>
     );
   }
 
   const title = (share.session?.["title"] as string) || "Untitled session";
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-slate-200">
-      <header className="border-b border-white/10 bg-gradient-to-b from-cyan-500/10 to-transparent">
-        <div className="mx-auto flex max-w-4xl flex-col gap-3 px-5 py-8 sm:flex-row sm:items-end sm:justify-between">
+    <PageShell>
+      <header className="border-b border-border pb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
               ZYRAXON AI · Shared session
             </p>
-            <h1 className="mt-2 text-2xl font-bold text-white sm:text-3xl">{title}</h1>
-            <p className="mt-1 text-xs text-slate-400">
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+            <p className="mt-1 text-[12px] text-muted-foreground">
               Created {new Date(share.timeCreated).toLocaleString()} · Updated{" "}
               {new Date(share.timeUpdated).toLocaleString()}
             </p>
             {share.models.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {share.models.map((m, i) => (
-                  <span
-                    key={i}
-                    className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-[11px] text-cyan-200"
-                  >
+                  <Tag key={i} tone="primary">
                     {(m["name"] as string) || `${m["providerID"]}/${m["modelID"]}`}
-                  </span>
+                  </Tag>
                 ))}
               </div>
             )}
@@ -175,19 +182,19 @@ function SharePage() {
               setCopied(true);
               setTimeout(() => setCopied(false), 1500);
             }}
-            className="self-start rounded-md border border-white/15 px-3 py-1.5 text-sm text-slate-200 transition hover:bg-white/10"
+            className="zx-chip self-start rounded-full px-4 py-2 text-[13px] font-semibold text-foreground"
           >
-            {copied ? "Link copied" : "Share"}
+            {copied ? "Link copied" : "Copy link"}
           </button>
         </div>
       </header>
 
-      <div className="mx-auto max-w-4xl px-5 py-8">
+      <div className="py-8">
         <section className="space-y-5">
           {share.messages.length === 0 && (
-            <p className="text-sm text-slate-500">
+            <Card className="p-8 text-center text-[13.5px] text-muted-foreground">
               No messages have been synced to this share yet.
-            </p>
+            </Card>
           )}
           {share.messages.map((msg, i) => {
             const role = String(msg["role"] ?? "assistant");
@@ -196,14 +203,12 @@ function SharePage() {
             return (
               <article
                 key={String(msg["id"] ?? i)}
-                className={`rounded-xl border p-4 ${
-                  isUser
-                    ? "border-cyan-400/25 bg-cyan-400/[0.06]"
-                    : "border-white/10 bg-white/[0.03]"
+                className={`rounded-2xl border p-5 ${
+                  isUser ? "border-primary/30 bg-primary/5" : "zx-glass"
                 }`}
               >
-                <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-400">
-                  <span className={isUser ? "text-cyan-300" : "text-fuchsia-300"}>
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <span className={isUser ? "text-primary" : "text-fuchsia-500 dark:text-fuchsia-300"}>
                     {isUser ? "You" : "ZYRAXON"}
                   </span>
                   {msg["model"] ? <span>· {String(msg["model"])}</span> : null}
@@ -222,12 +227,12 @@ function SharePage() {
 
         {share.diffs.length > 0 && (
           <section className="mt-10">
-            <h2 className="text-lg font-semibold text-white">File changes</h2>
+            <h2 className="text-lg font-bold tracking-tight text-foreground">File changes</h2>
             <div className="mt-4 space-y-4">
               {share.diffs.map((d, i) => (
                 <div
                   key={i}
-                  className="overflow-hidden rounded-lg border border-white/10 bg-black/40"
+                  className="overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0f]"
                 >
                   <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-sm">
                     <span className="font-mono text-slate-200">{String(d["path"] ?? "file")}</span>
@@ -260,10 +265,10 @@ function SharePage() {
           </section>
         )}
 
-        <footer className="mt-12 border-t border-white/10 pt-6 text-xs text-slate-500">
+        <footer className="mt-12 border-t border-border pt-6 text-[12px] text-muted-foreground">
           Published with ZYRAXON AI · share id {share.id}
         </footer>
       </div>
-    </main>
+    </PageShell>
   );
 }

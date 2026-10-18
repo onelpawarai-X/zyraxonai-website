@@ -8,10 +8,10 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-  "ZYRAXON AI কীভাবে ডাউনলোড করব?",
-  "ZYRAXON AI এর কয়টি টুল আছে?",
-  "GitHub Repository লিংক দিন",
-  "Windows এ কি এটা ফ্রি?",
+  "How do I download ZYRAXON AI?",
+  "How many tools does ZYRAXON AI have?",
+  "Give me the GitHub repository link",
+  "Is it free on Windows?",
 ];
 
 export default function HelpAgent() {
@@ -19,7 +19,7 @@ export default function HelpAgent() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "স্বাগতম! আমি ZYRAXON AI অ্যাসিস্ট্যান্ট। যেকোনো প্রশ্ন করুন — ডাউনলোড, ফিচার, বা সেটআপ সংক্রান্ত যেকোনো বিষয়ে সাহায্য করতে পারি।",
+      content: "Welcome! I am the ZYRAXON AI assistant. Ask me anything — downloads, features or setup, I am here to help.",
       timestamp: Date.now(),
     },
   ]);
@@ -100,7 +100,7 @@ export default function HelpAgent() {
         ...prev,
         {
           role: "assistant",
-          content: "দুঃখিত, সংযোগে সাময়িক সমস্যা হয়েছে। সরাসরি https://github.com/onelpawarai-X/ZYRAXON-AI দেখতে পারেন।",
+          content: "Sorry, there was a temporary connection problem. You can go straight to https://github.com/onelpawarai-X/ZYRAXON-AI.",
           timestamp: Date.now(),
         },
       ]);
@@ -270,7 +270,7 @@ export default function HelpAgent() {
           </div>
         )}
         {loading && !streaming && (
-          <div style={{ color: "#22d3ee", fontSize: 11, paddingLeft: 6 }}>AI ভাবছে...</div>
+          <div style={{ color: "#22d3ee", fontSize: 11, paddingLeft: 6 }}>AI is thinking…</div>
         )}
         <div ref={messagesEnd} />
       </div>
@@ -321,7 +321,7 @@ export default function HelpAgent() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-          placeholder="প্রশ্ন লিখুন..."
+          placeholder="Ask a question…"
           style={{
             flex: 1,
             padding: "9px 12px",
@@ -349,7 +349,7 @@ export default function HelpAgent() {
             opacity: loading || !input.trim() ? 0.5 : 1,
           }}
         >
-          পাঠান
+          Send
         </button>
       </div>
     </div>
