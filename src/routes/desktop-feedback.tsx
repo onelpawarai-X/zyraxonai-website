@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { PageHeader } from "@/components/site/SiteChrome";
@@ -42,6 +42,34 @@ const OS_OPTIONS = ["Windows 10/11", "macOS (Apple Silicon)", "macOS (Intel)", "
 const input =
   "w-full rounded-xl border border-border bg-transparent px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20";
 const label = "block text-[11px] font-bold uppercase tracking-wider text-muted-foreground";
+
+/**
+ * Selected-state styling for the channel cards. It is applied inline rather than
+ * with Tailwind classes because `.zx-glass` also sets `border` and `box-shadow`
+ * in the utilities layer, and a class-vs-class fight there is won by whichever
+ * rule comes last in the stylesheet — which silently swallowed `border-primary/60`
+ * and `ring-2`, leaving the selected card looking identical to the other one.
+ */
+function selectedStyle(active: boolean): CSSProperties {
+  return active
+    ? {
+        borderColor: "color-mix(in oklab, var(--primary) 70%, transparent)",
+        boxShadow: "0 0 0 2px color-mix(in oklab, var(--primary) 25%, transparent)",
+      }
+    : {};
+}
+
+/** Small tick shown on the active channel card so the choice is unmissable. */
+function SelectedBadge() {
+  return (
+    <span
+      aria-hidden="true"
+      className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground"
+    >
+      ✓
+    </span>
+  );
+}
 
 type Channel = "email" | "issue";
 type Result = { channel: string; issueUrl?: string } | null;
@@ -112,8 +140,18 @@ function DesktopFeedback() {
       setMsg(
         "Almost done — GitHub is opening with your report filled in. Sign in if needed, then press Submit new issue.",
       );
-      if (tab && !tab.closed) tab.location.href = d.issueUrl;
-      else window.open(d.issueUrl, "_blank", "noopener,noreferrer");
+      const opened = tab && !tab.closed ? tab : window.open(d.issueUrl, "_blank");
+      if (opened) {
+        // Some browsers show a blank tab for a moment before the navigation
+        // commits; point it explicitly instead of relying on window.open alone.
+        if (opened !== tab) opened.opener = null;
+        try {
+          opened.location.href = d.issueUrl;
+        } catch {
+          // Cross-origin assignment can throw; the window.open call already
+          // targeted the same URL, so the tab is still correct.
+        }
+      }
     } else if (d.mailto) {
       tab?.close();
       setResult({ channel: "email" });
@@ -149,16 +187,21 @@ function DesktopFeedback() {
         description="Tell us what you think about the ZYRAXON desktop app — bugs, feature requests or questions. Email the team directly, or open a tracked GitHub issue anyone can follow."
       />
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div
+        className="grid gap-3 sm:grid-cols-2"
+        role="radiogroup"
+        aria-label="How to send your feedback"
+      >
         <button
           type="button"
           onClick={() => {
             setError("");
             setChannel("email");
           }}
-          className={`zx-glass rounded-2xl p-5 text-left transition ${
-            channel === "email" ? "border-primary/60 ring-2 ring-primary/20" : ""
-          }`}
+          role="radio"
+          aria-checked={channel === "email"}
+          className="zx-glass relative rounded-2xl p-5 text-left transition"
+          style={selectedStyle(channel === "email")}
         >
           <div className="flex items-center gap-2 text-[14px] font-bold text-foreground">
             <span className="zx-glass grid h-8 w-8 place-items-center rounded-lg text-primary">
@@ -175,6 +218,7 @@ function DesktopFeedback() {
               </svg>
             </span>
             Email the team
+            {channel === "email" && <SelectedBadge />}
           </div>
           <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
             Best for private feedback. The message goes to {TEAM_EMAIL}.
@@ -186,9 +230,10 @@ function DesktopFeedback() {
             setError("");
             setChannel("issue");
           }}
-          className={`zx-glass rounded-2xl p-5 text-left transition ${
-            channel === "issue" ? "border-primary/60 ring-2 ring-primary/20" : ""
-          }`}
+          role="radio"
+          aria-checked={channel === "issue"}
+          className="zx-glass relative rounded-2xl p-5 text-left transition"
+          style={selectedStyle(channel === "issue")}
         >
           <div className="flex items-center gap-2 text-[14px] font-bold text-foreground">
             <span className="zx-glass grid h-8 w-8 place-items-center rounded-lg text-primary">
@@ -197,6 +242,7 @@ function DesktopFeedback() {
               </svg>
             </span>
             Open a GitHub issue
+            {channel === "issue" && <SelectedBadge />}
           </div>
           <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
             Public and trackable. We open GitHub with your report filled in — submit it with your
