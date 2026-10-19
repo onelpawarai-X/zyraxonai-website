@@ -17,6 +17,7 @@ const NAV = [
 
 const MORE = [
   { to: "/builder", label: "Builder" },
+  { to: "/providers", label: "Providers" },
   { to: "/bludar", label: "Bludar Studio" },
   { to: "/nebula", label: "Nebula" },
   { to: "/publish", label: "Publish" },

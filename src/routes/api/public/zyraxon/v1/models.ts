@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -6,52 +7,34 @@ const CORS = {
   "Access-Control-Allow-Methods": "GET,OPTIONS",
 };
 
-// Public ZYRAXON aliases. Provider IDs stay server-side and match the
-// established PR #95 Console model mapping exactly.
-const MODELS = [
-  {
-    id: "zyraxon-t10",
-    label: "ZYRAXON T10",
-    description: "MiMo-V2.5 Free · multimodal",
-    upstream: "mimo-v2.5-free",
-  },
-  {
-    id: "zyraxon-vector",
-    label: "ZYRAXON VECTOR",
-    description: "Big Pickle · fast autonomous building",
-    upstream: "big-pickle",
-  },
-  {
-    id: "zyraxon-phantom",
-    label: "ZYRAXON PHANTOM",
-    description: "Nemotron 3 Ultra Free · deep reasoning builder",
-    upstream: "nemotron-3-ultra-free",
-  },
-] as const;
-
+/** The model catalogue a caller reads. Ten ZYRAXON models, nothing else —
+ *  upstream names are an implementation detail and stay server-side. */
 export const Route = createFileRoute("/api/public/zyraxon/v1/models")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       GET: async () => {
         const created = Math.floor(Date.now() / 1000);
+        const brands = await brandCatalogue();
         return Response.json(
           {
             object: "list",
-            data: MODELS.map((model) => ({
-              id: model.id,
+            data: brands.map((b) => ({
+              id: b.id,
               object: "model",
               created,
               owned_by: "zyraxon",
-              name: model.label,
-              display_name: model.label,
-              description: model.description,
+              name: b.label,
+              display_name: b.label,
+              description: `${b.tagline} — ${b.capability}`,
+              // Standard OpenAI catalogue fields, so existing clients read the
+              // list without special-casing us.
               permission: [],
-              root: model.id,
+              root: b.id,
               parent: null,
             })),
           },
-          { headers: CORS },
+          { headers: { ...CORS, "Cache-Control": "public, max-age=300" } },
         );
       },
     },

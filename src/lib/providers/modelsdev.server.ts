@@ -33,7 +33,7 @@ export type ProviderDetail = {
   models: CatalogModel[];
 };
 
-const MODELS_DEV_URL = "https://models.dev/api.json";
+const MODELS_DEV_URL = process.env.MODELS_DEV_URL || "https://models.dev/api.json";
 const CACHE_TTL = 30 * 60 * 1000;
 
 type CatalogEntry = {

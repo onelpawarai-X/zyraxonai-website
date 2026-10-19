@@ -21,6 +21,7 @@ import { Route as NebulaRouteImport } from './routes/nebula'
 import { Route as NebulaCoreRouteImport } from './routes/nebula-core'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
+import { Route as ProvidersRouteImport } from './routes/providers'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as ReleasesRouteImport } from './routes/releases'
 import { Route as ZslRouteImport } from './routes/zsl'
@@ -81,6 +82,7 @@ import { Route as ApiPublicSharesIdIndexRouteImport } from './routes/api/public/
 import { Route as ApiPublicSharesIdDataRouteImport } from './routes/api/public/shares/$id/data'
 import { Route as ApiPublicSharesIdSyncRouteImport } from './routes/api/public/shares/$id/sync'
 import { Route as ApiPublicZyraxonV1ModelsRouteImport } from './routes/api/public/zyraxon/v1/models'
+import { Route as ApiPublicZyraxonV1ProviderRouteImport } from './routes/api/public/zyraxon/v1/provider'
 import { Route as ApiGithubReposOwnerRepoPublishRouteImport } from './routes/api/github/repos/$owner/$repo/publish'
 import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/api/public/zyraxon/v1/chat/completions'
 
@@ -142,6 +144,11 @@ const PackagesRoute = PackagesRouteImport.update({
 const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
   id: '/privacy-policy',
   path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProvidersRoute = ProvidersRouteImport.update({
+  id: '/providers',
+  path: '/providers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublishRoute = PublishRouteImport.update({
@@ -455,6 +462,12 @@ const ApiPublicZyraxonV1ModelsRoute =
     path: '/api/public/zyraxon/v1/models',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicZyraxonV1ProviderRoute =
+  ApiPublicZyraxonV1ProviderRouteImport.update({
+    id: '/api/public/zyraxon/v1/provider',
+    path: '/api/public/zyraxon/v1/provider',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiGithubReposOwnerRepoPublishRoute =
   ApiGithubReposOwnerRepoPublishRouteImport.update({
     id: '/$owner/$repo/publish',
@@ -481,6 +494,7 @@ export interface FileRoutesByFullPath {
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/providers': typeof ProvidersRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
   '/zsl': typeof ZslRoute
@@ -540,6 +554,7 @@ export interface FileRoutesByFullPath {
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
+  '/api/public/zyraxon/v1/provider': typeof ApiPublicZyraxonV1ProviderRoute
   '/api/public/shares/$id/': typeof ApiPublicSharesIdIndexRoute
   '/api/github/repos/$owner/$repo/publish': typeof ApiGithubReposOwnerRepoPublishRoute
   '/api/public/zyraxon/v1/chat/completions': typeof ApiPublicZyraxonV1ChatCompletionsRoute
@@ -557,6 +572,7 @@ export interface FileRoutesByTo {
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/providers': typeof ProvidersRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
   '/zsl': typeof ZslRoute
@@ -616,6 +632,7 @@ export interface FileRoutesByTo {
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
+  '/api/public/zyraxon/v1/provider': typeof ApiPublicZyraxonV1ProviderRoute
   '/api/public/shares/$id': typeof ApiPublicSharesIdIndexRoute
   '/api/github/repos/$owner/$repo/publish': typeof ApiGithubReposOwnerRepoPublishRoute
   '/api/public/zyraxon/v1/chat/completions': typeof ApiPublicZyraxonV1ChatCompletionsRoute
@@ -634,6 +651,7 @@ export interface FileRoutesById {
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/providers': typeof ProvidersRoute
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
   '/zsl': typeof ZslRoute
@@ -693,6 +711,7 @@ export interface FileRoutesById {
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
+  '/api/public/zyraxon/v1/provider': typeof ApiPublicZyraxonV1ProviderRoute
   '/api/public/shares/$id/': typeof ApiPublicSharesIdIndexRoute
   '/api/github/repos/$owner/$repo/publish': typeof ApiGithubReposOwnerRepoPublishRoute
   '/api/public/zyraxon/v1/chat/completions': typeof ApiPublicZyraxonV1ChatCompletionsRoute
@@ -712,6 +731,7 @@ export interface FileRouteTypes {
     | '/nebula-core'
     | '/packages'
     | '/privacy-policy'
+    | '/providers'
     | '/publish'
     | '/releases'
     | '/zsl'
@@ -771,6 +791,7 @@ export interface FileRouteTypes {
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
     | '/api/public/zyraxon/v1/models'
+    | '/api/public/zyraxon/v1/provider'
     | '/api/public/shares/$id/'
     | '/api/github/repos/$owner/$repo/publish'
     | '/api/public/zyraxon/v1/chat/completions'
@@ -788,6 +809,7 @@ export interface FileRouteTypes {
     | '/nebula-core'
     | '/packages'
     | '/privacy-policy'
+    | '/providers'
     | '/publish'
     | '/releases'
     | '/zsl'
@@ -847,6 +869,7 @@ export interface FileRouteTypes {
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
     | '/api/public/zyraxon/v1/models'
+    | '/api/public/zyraxon/v1/provider'
     | '/api/public/shares/$id'
     | '/api/github/repos/$owner/$repo/publish'
     | '/api/public/zyraxon/v1/chat/completions'
@@ -864,6 +887,7 @@ export interface FileRouteTypes {
     | '/nebula-core'
     | '/packages'
     | '/privacy-policy'
+    | '/providers'
     | '/publish'
     | '/releases'
     | '/zsl'
@@ -923,6 +947,7 @@ export interface FileRouteTypes {
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
     | '/api/public/zyraxon/v1/models'
+    | '/api/public/zyraxon/v1/provider'
     | '/api/public/shares/$id/'
     | '/api/github/repos/$owner/$repo/publish'
     | '/api/public/zyraxon/v1/chat/completions'
@@ -941,6 +966,7 @@ export interface RootRouteChildren {
   NebulaCoreRoute: typeof NebulaCoreRoute
   PackagesRoute: typeof PackagesRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  ProvidersRoute: typeof ProvidersRoute
   PublishRoute: typeof PublishRoute
   ReleasesRoute: typeof ReleasesRoute
   ZslRoute: typeof ZslRoute
@@ -994,6 +1020,7 @@ export interface RootRouteChildren {
   ApiPublicSharesIdDataRoute: typeof ApiPublicSharesIdDataRoute
   ApiPublicSharesIdSyncRoute: typeof ApiPublicSharesIdSyncRoute
   ApiPublicZyraxonV1ModelsRoute: typeof ApiPublicZyraxonV1ModelsRoute
+  ApiPublicZyraxonV1ProviderRoute: typeof ApiPublicZyraxonV1ProviderRoute
   ApiPublicSharesIdIndexRoute: typeof ApiPublicSharesIdIndexRoute
   ApiPublicZyraxonV1ChatCompletionsRoute: typeof ApiPublicZyraxonV1ChatCompletionsRoute
 }
@@ -1082,6 +1109,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy-policy'
       fullPath: '/privacy-policy'
       preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/providers': {
+      id: '/providers'
+      path: '/providers'
+      fullPath: '/providers'
+      preLoaderRoute: typeof ProvidersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/publish': {
@@ -1504,6 +1538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicZyraxonV1ModelsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zyraxon/v1/provider': {
+      id: '/api/public/zyraxon/v1/provider'
+      path: '/api/public/zyraxon/v1/provider'
+      fullPath: '/api/public/zyraxon/v1/provider'
+      preLoaderRoute: typeof ApiPublicZyraxonV1ProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/github/repos/$owner/$repo/publish': {
       id: '/api/github/repos/$owner/$repo/publish'
       path: '/$owner/$repo/publish'
@@ -1577,6 +1618,7 @@ const rootRouteChildren: RootRouteChildren = {
   NebulaCoreRoute: NebulaCoreRoute,
   PackagesRoute: PackagesRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
+  ProvidersRoute: ProvidersRoute,
   PublishRoute: PublishRoute,
   ReleasesRoute: ReleasesRoute,
   ZslRoute: ZslRoute,
@@ -1630,6 +1672,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSharesIdDataRoute: ApiPublicSharesIdDataRoute,
   ApiPublicSharesIdSyncRoute: ApiPublicSharesIdSyncRoute,
   ApiPublicZyraxonV1ModelsRoute: ApiPublicZyraxonV1ModelsRoute,
+  ApiPublicZyraxonV1ProviderRoute: ApiPublicZyraxonV1ProviderRoute,
   ApiPublicSharesIdIndexRoute: ApiPublicSharesIdIndexRoute,
   ApiPublicZyraxonV1ChatCompletionsRoute:
     ApiPublicZyraxonV1ChatCompletionsRoute,

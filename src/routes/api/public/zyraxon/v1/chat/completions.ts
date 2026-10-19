@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { zenChatStream, resolveZenModel, type ChatMessage } from "@/lib/builder/zen.server";
+import { brandChatStream } from "@/lib/providers/zyraxon-brand.server";
+import { isBrand } from "@/lib/providers/zyraxon-brands";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -38,11 +39,11 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")(
         }
 
         const model = typeof body?.model === "string" ? body.model : "";
-        if (!resolveZenModel(model)) {
+        if (!isBrand(model)) {
           return Response.json(
             {
               error: {
-                message: `Unknown model: ${model || "(missing)"}`,
+                message: `Unknown model: ${model || "(missing)"}. Call GET /api/public/zyraxon/v1/models for the ZYRAXON model list.`,
                 type: "invalid_request_error",
               },
             },
@@ -50,7 +51,7 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")(
           );
         }
 
-        const messages: ChatMessage[] = Array.isArray(body?.messages)
+        const messages = Array.isArray(body?.messages)
           ? body.messages
               .filter(
                 (m: any) =>
@@ -69,11 +70,8 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")(
           );
         }
 
-        const requestId =
-          request.headers.get("x-request-id") ||
-          `api-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const apiKey = providerKey(request);
-        return zenChatStream(model, messages, apiKey, []);
+        return brandChatStream(model, messages, apiKey);
       },
     },
   },

@@ -1,5 +1,5 @@
 /** Keyless-first Zen verification: free pool must work with NO API key (UA-patched requests). */
-const endpoint = "https://opencode.ai/zen/v1/chat/completions";
+const endpoint = "https://opencode.ai/inference/v1/chat/completions";
 const key = process.env.OPENCODE_ZEN_API_KEY || process.env.OPENCODE_API_KEY;
 const model = process.env.ZEN_MODEL || "big-pickle";
 const headers = {
