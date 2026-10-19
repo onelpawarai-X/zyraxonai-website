@@ -50,6 +50,10 @@ function DesktopFeedback() {
   const [channel, setChannel] = useState<Channel>("email");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
+  // Only mark fields red once the user has actually tried to submit, so a fresh
+  // form does not look like it is already shouting at them.
+  const [attempted, setAttempted] = useState(false);
   const [result, setResult] = useState<Result>(null);
   const [f, setF] = useState({
     name: "",
@@ -65,12 +69,20 @@ function DesktopFeedback() {
 
   const set =
     (k: keyof typeof f) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      if (error) setError("");
       setF((prev) => ({ ...prev, [k]: e.target.value }));
+    };
 
   async function submit() {
-    setBusy(true);
     setMsg("");
+    setAttempted(true);
+    if (missing.length) {
+      setError(`Please add ${missing.join(", ")}.`);
+      return;
+    }
+    setError("");
+    setBusy(true);
     // Open the tab right now, while the click still counts as a user gesture.
     // Calling window.open after `await fetch(...)` is treated as a popup by
     // most browsers and silently blocked, which is why the button looked dead.
@@ -114,7 +126,20 @@ function DesktopFeedback() {
     }
   }
 
-  const disabled = busy || !f.name || !f.message || f.message.length < 10 || !f.consent;
+  // Fields the server will reject. We keep the button clickable on purpose:
+  // a disabled button gives no clue why it does nothing, which reads as broken.
+  // Instead the click tells the user exactly what is missing.
+  const missing: string[] = [];
+  if (!f.name.trim()) missing.push("your name");
+  if (channel === "email" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim()))
+    missing.push("a valid email address");
+  if (f.message.trim().length < 10) missing.push("feedback of at least 10 characters");
+  if (!f.consent) missing.push("the consent checkbox");
+
+  const err = (bad: boolean) => (attempted && bad ? "border-red-500/60" : "");
+  const errName = err(!f.name.trim());
+  const errEmail = err(channel === "email" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim()));
+  const errMsg = err(f.message.trim().length < 10);
 
   return (
     <PageShell>
@@ -127,7 +152,10 @@ function DesktopFeedback() {
       <div className="grid gap-3 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => setChannel("email")}
+          onClick={() => {
+            setError("");
+            setChannel("email");
+          }}
           className={`zx-glass rounded-2xl p-5 text-left transition ${
             channel === "email" ? "border-primary/60 ring-2 ring-primary/20" : ""
           }`}
@@ -154,7 +182,10 @@ function DesktopFeedback() {
         </button>
         <button
           type="button"
-          onClick={() => setChannel("issue")}
+          onClick={() => {
+            setError("");
+            setChannel("issue");
+          }}
           className={`zx-glass rounded-2xl p-5 text-left transition ${
             channel === "issue" ? "border-primary/60 ring-2 ring-primary/20" : ""
           }`}
@@ -196,6 +227,7 @@ function DesktopFeedback() {
                 onClick={() => {
                   setResult(null);
                   setMsg("");
+                  setError("");
                   setF({ ...f, message: "" });
                 }}
                 className="zx-chip rounded-full px-4 py-2 text-[13px] font-semibold text-foreground"
@@ -210,7 +242,7 @@ function DesktopFeedback() {
               <div>
                 <span className={label}>Your name *</span>
                 <input
-                  className={input + " mt-1.5"}
+                  className={`${input} mt-1.5 ${errName}`}
                   value={f.name}
                   onChange={set("name")}
                   placeholder="Your name"
@@ -219,7 +251,7 @@ function DesktopFeedback() {
               <div>
                 <span className={label}>{channel === "issue" ? "Email" : "Email *"}</span>
                 <input
-                  className={input + " mt-1.5"}
+                  className={`${input} mt-1.5 ${errEmail}`}
                   type="email"
                   value={f.email}
                   onChange={set("email")}
@@ -276,7 +308,7 @@ function DesktopFeedback() {
             <div>
               <span className={label}>Your feedback *</span>
               <textarea
-                className={input + " mt-1.5"}
+                className={`${input} mt-1.5 ${errMsg}`}
                 rows={6}
                 value={f.message}
                 onChange={set("message")}
@@ -302,7 +334,10 @@ function DesktopFeedback() {
                 type="checkbox"
                 className="mt-0.5"
                 checked={f.consent}
-                onChange={(e) => setF({ ...f, consent: e.target.checked })}
+                onChange={(e) => {
+                  setError("");
+                  setF({ ...f, consent: e.target.checked });
+                }}
               />
               <span>
                 I agree that the ZYRAXON AI team may use the information I provide to process this
@@ -313,7 +348,7 @@ function DesktopFeedback() {
             <div className="flex flex-wrap items-center gap-4">
               <button
                 type="button"
-                disabled={disabled}
+                disabled={busy}
                 onClick={submit}
                 className="zx-sheen inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
               >
@@ -324,6 +359,7 @@ function DesktopFeedback() {
               </ButtonAnchor>
             </div>
 
+            {error && <p className="text-[13px] font-semibold text-red-500">{error}</p>}
             {msg && <p className="text-[13px] text-red-500">{msg}</p>}
           </div>
         )}
