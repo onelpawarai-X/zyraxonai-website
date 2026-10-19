@@ -32,6 +32,7 @@ import { Route as DocsIndexRouteImport } from './routes/docs.index'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as DownloadZyraxonAgentRouteImport } from './routes/download.zyraxon-agent'
 import { Route as EcosystemIndexRouteImport } from './routes/ecosystem/index'
+import { Route as ExtensionsIndexRouteImport } from './routes/extensions/index'
 import { Route as ShareIdRouteImport } from './routes/share/$id'
 import { Route as UpdatesIndexRouteImport } from './routes/updates/index'
 import { Route as UpdatesSlugRouteImport } from './routes/updates/$slug'
@@ -52,6 +53,7 @@ import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/pub
 import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/public/zyraxon-releases'
 import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
 import { Route as EcosystemItemIdRouteImport } from './routes/ecosystem/item/$id'
+import { Route as ExtensionsNamespaceNameRouteImport } from './routes/extensions/$namespace.$name'
 import { Route as ApiPublicAuthGithubRouteImport } from './routes/api/public/auth/github'
 import { Route as ApiPublicBuilderChatRouteImport } from './routes/api/public/builder/chat'
 import { Route as ApiPublicBuilderEngineRouteImport } from './routes/api/public/builder/engine'
@@ -197,6 +199,11 @@ const EcosystemIndexRoute = EcosystemIndexRouteImport.update({
   path: '/ecosystem/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExtensionsIndexRoute = ExtensionsIndexRouteImport.update({
+  id: '/extensions/',
+  path: '/extensions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShareIdRoute = ShareIdRouteImport.update({
   id: '/share/$id',
   path: '/share/$id',
@@ -298,6 +305,11 @@ const ApiSharesIndexRoute = ApiSharesIndexRouteImport.update({
 const EcosystemItemIdRoute = EcosystemItemIdRouteImport.update({
   id: '/ecosystem/item/$id',
   path: '/ecosystem/item/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExtensionsNamespaceNameRoute = ExtensionsNamespaceNameRouteImport.update({
+  id: '/extensions/$namespace/$name',
+  path: '/extensions/$namespace/$name',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAuthGithubRoute = ApiPublicAuthGithubRouteImport.update({
@@ -482,6 +494,7 @@ export interface FileRoutesByFullPath {
   '/updates/$slug': typeof UpdatesSlugRoute
   '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
+  '/extensions/': typeof ExtensionsIndexRoute
   '/updates/': typeof UpdatesIndexRoute
   '/api/download/$platform': typeof ApiDownloadPlatformRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
@@ -499,6 +512,7 @@ export interface FileRoutesByFullPath {
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
+  '/extensions/$namespace/$name': typeof ExtensionsNamespaceNameRoute
   '/api/shares/': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
@@ -556,6 +570,7 @@ export interface FileRoutesByTo {
   '/updates/$slug': typeof UpdatesSlugRoute
   '/docs': typeof DocsIndexRoute
   '/ecosystem': typeof EcosystemIndexRoute
+  '/extensions': typeof ExtensionsIndexRoute
   '/updates': typeof UpdatesIndexRoute
   '/api/download/$platform': typeof ApiDownloadPlatformRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
@@ -573,6 +588,7 @@ export interface FileRoutesByTo {
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
+  '/extensions/$namespace/$name': typeof ExtensionsNamespaceNameRoute
   '/api/shares': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
@@ -631,6 +647,7 @@ export interface FileRoutesById {
   '/updates/$slug': typeof UpdatesSlugRoute
   '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
+  '/extensions/': typeof ExtensionsIndexRoute
   '/updates/': typeof UpdatesIndexRoute
   '/api/download/$platform': typeof ApiDownloadPlatformRoute
   '/api/github/repos': typeof ApiGithubReposRouteWithChildren
@@ -648,6 +665,7 @@ export interface FileRoutesById {
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
+  '/extensions/$namespace/$name': typeof ExtensionsNamespaceNameRoute
   '/api/shares/': typeof ApiSharesIndexRoute
   '/api/public/auth/github': typeof ApiPublicAuthGithubRouteWithChildren
   '/api/public/builder/chat': typeof ApiPublicBuilderChatRoute
@@ -707,6 +725,7 @@ export interface FileRouteTypes {
     | '/updates/$slug'
     | '/docs/'
     | '/ecosystem/'
+    | '/extensions/'
     | '/updates/'
     | '/api/download/$platform'
     | '/api/github/repos'
@@ -724,6 +743,7 @@ export interface FileRouteTypes {
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
+    | '/extensions/$namespace/$name'
     | '/api/shares/'
     | '/api/public/auth/github'
     | '/api/public/builder/chat'
@@ -781,6 +801,7 @@ export interface FileRouteTypes {
     | '/updates/$slug'
     | '/docs'
     | '/ecosystem'
+    | '/extensions'
     | '/updates'
     | '/api/download/$platform'
     | '/api/github/repos'
@@ -798,6 +819,7 @@ export interface FileRouteTypes {
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
+    | '/extensions/$namespace/$name'
     | '/api/shares'
     | '/api/public/auth/github'
     | '/api/public/builder/chat'
@@ -855,6 +877,7 @@ export interface FileRouteTypes {
     | '/updates/$slug'
     | '/docs/'
     | '/ecosystem/'
+    | '/extensions/'
     | '/updates/'
     | '/api/download/$platform'
     | '/api/github/repos'
@@ -872,6 +895,7 @@ export interface FileRouteTypes {
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
+    | '/extensions/$namespace/$name'
     | '/api/shares/'
     | '/api/public/auth/github'
     | '/api/public/builder/chat'
@@ -930,6 +954,7 @@ export interface RootRouteChildren {
   UpdatesSlugRoute: typeof UpdatesSlugRoute
   DocsIndexRoute: typeof DocsIndexRoute
   EcosystemIndexRoute: typeof EcosystemIndexRoute
+  ExtensionsIndexRoute: typeof ExtensionsIndexRoute
   UpdatesIndexRoute: typeof UpdatesIndexRoute
   ApiDownloadPlatformRoute: typeof ApiDownloadPlatformRoute
   ApiGithubReposRoute: typeof ApiGithubReposRouteWithChildren
@@ -947,6 +972,7 @@ export interface RootRouteChildren {
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
   ApiPublicZyraxonReleasesRoute: typeof ApiPublicZyraxonReleasesRoute
   EcosystemItemIdRoute: typeof EcosystemItemIdRoute
+  ExtensionsNamespaceNameRoute: typeof ExtensionsNamespaceNameRoute
   ApiSharesIndexRoute: typeof ApiSharesIndexRoute
   ApiPublicAuthGithubRoute: typeof ApiPublicAuthGithubRouteWithChildren
   ApiPublicBuilderChatRoute: typeof ApiPublicBuilderChatRoute
@@ -1135,6 +1161,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EcosystemIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/extensions/': {
+      id: '/extensions/'
+      path: '/extensions'
+      fullPath: '/extensions/'
+      preLoaderRoute: typeof ExtensionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/share/$id': {
       id: '/share/$id'
       path: '/share/$id'
@@ -1273,6 +1306,13 @@ declare module '@tanstack/react-router' {
       path: '/ecosystem/item/$id'
       fullPath: '/ecosystem/item/$id'
       preLoaderRoute: typeof EcosystemItemIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/extensions/$namespace/$name': {
+      id: '/extensions/$namespace/$name'
+      path: '/extensions/$namespace/$name'
+      fullPath: '/extensions/$namespace/$name'
+      preLoaderRoute: typeof ExtensionsNamespaceNameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/auth/github': {
@@ -1550,6 +1590,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpdatesSlugRoute: UpdatesSlugRoute,
   DocsIndexRoute: DocsIndexRoute,
   EcosystemIndexRoute: EcosystemIndexRoute,
+  ExtensionsIndexRoute: ExtensionsIndexRoute,
   UpdatesIndexRoute: UpdatesIndexRoute,
   ApiDownloadPlatformRoute: ApiDownloadPlatformRoute,
   ApiGithubReposRoute: ApiGithubReposRouteWithChildren,
@@ -1567,6 +1608,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
   ApiPublicZyraxonReleasesRoute: ApiPublicZyraxonReleasesRoute,
   EcosystemItemIdRoute: EcosystemItemIdRoute,
+  ExtensionsNamespaceNameRoute: ExtensionsNamespaceNameRoute,
   ApiSharesIndexRoute: ApiSharesIndexRoute,
   ApiPublicAuthGithubRoute: ApiPublicAuthGithubRouteWithChildren,
   ApiPublicBuilderChatRoute: ApiPublicBuilderChatRoute,

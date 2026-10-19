@@ -8,9 +8,17 @@ export const Route = createFileRoute("/releases")({
   head: () => ({
     meta: [
       { title: "Releases — ZYRAXON AI" },
-      { name: "description", content: "All GitHub releases for ZYRAXON Agent. Download the latest installers and changelogs." },
+      {
+        name: "description",
+        content:
+          "All GitHub releases for ZYRAXON Agent. Download the latest installers and changelogs.",
+      },
       { property: "og:title", content: "Releases — ZYRAXON AI" },
-      { property: "og:description", content: "All GitHub releases for ZYRAXON Agent. Download the latest installers and changelogs." },
+      {
+        property: "og:description",
+        content:
+          "All GitHub releases for ZYRAXON Agent. Download the latest installers and changelogs.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/releases" },
       { name: "twitter:card", content: "summary" },
@@ -20,8 +28,28 @@ export const Route = createFileRoute("/releases")({
 });
 
 const REPOS = [
-  { owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", desc: "Desktop AI agent with 11 agent modes, 888 tools across 63 categories" },
+  {
+    owner: "onelpawarai-X",
+    name: "ZYRAXON-AI",
+    label: "ZYRAXON Agent",
+    color: "#2563eb",
+    desc: "Desktop AI agent with 11 agent modes, 888 tools across 63 categories",
+  },
 ];
+
+type ReleaseAsset = { name: string; size: number; url: string; downloads: number; type: string };
+type Release = {
+  id: number;
+  tag: string;
+  name: string;
+  url: string;
+  publishedAt: string;
+  prerelease: boolean;
+  body: string | null;
+  totalDownloads: number;
+  assets: ReleaseAsset[];
+};
+type RepoFeed = { repo: { fullName: string }; releases: Release[] };
 
 function ReleasesPage() {
   return (
@@ -41,24 +69,31 @@ function ReleasesPage() {
 }
 
 function RepoSection({ repo }: { repo: (typeof REPOS)[0] }) {
-  const [releases, setReleases] = useState<any[]>([]);
+  const [releases, setReleases] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch(`https://api.github.com/repos/${repo.owner}/${repo.name}/releases?per_page=20`, {
-      headers: { Accept: "application/vnd.github+json" },
-    })
+    let active = true;
+    // Goes through our own endpoint, which paginates the whole release feed
+    // (no token, no per_page cap) so every published tag shows up here.
+    fetch("/api/public/zyraxon-releases")
       .then((r) => r.json())
       .then((d) => {
-        if (Array.isArray(d)) setReleases(d.filter((x: any) => !x.draft));
+        if (!active) return;
+        const feeds = (d.repos || []) as RepoFeed[];
+        const match = feeds.find((x) => x.repo?.fullName === `${repo.owner}/${repo.name}`);
+        setReleases(match?.releases ?? []);
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
   }, [repo.owner, repo.name]);
 
   const totalDownloads = releases.reduce(
-    (s, r) => s + (r.assets || []).reduce((s2: number, a: any) => s2 + (a.download_count || 0), 0),
+    (s, r) => s + (r.assets || []).reduce((s2, a) => s2 + (a.downloads || 0), 0),
     0,
   );
 
@@ -90,10 +125,7 @@ function RepoSection({ repo }: { repo: (typeof REPOS)[0] }) {
         )}
         {releases.map((r) => {
           const isOpen = expanded === r.id;
-          const rDownloads = (r.assets || []).reduce(
-            (s: number, a: any) => s + (a.download_count || 0),
-            0,
-          );
+          const rDownloads = (r.assets || []).reduce((s, a) => s + (a.downloads || 0), 0);
           return (
             <Card key={r.id} className="overflow-hidden">
               <button
@@ -101,16 +133,14 @@ function RepoSection({ repo }: { repo: (typeof REPOS)[0] }) {
                 className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[15px] font-bold text-foreground">
-                    {r.name || r.tag_name}
-                  </span>
+                  <span className="text-[15px] font-bold text-foreground">{r.name || r.tag}</span>
                   <span className="zx-chip rounded-md px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
-                    {r.tag_name}
+                    {r.tag}
                   </span>
                   {r.prerelease && <Tag tone="warn">Pre-release</Tag>}
                 </div>
                 <span className="shrink-0 text-[12px] text-muted-foreground">
-                  {new Date(r.published_at).toLocaleDateString("en-US", {
+                  {new Date(r.publishedAt).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "short",
                     day: "numeric",
@@ -126,10 +156,10 @@ function RepoSection({ repo }: { repo: (typeof REPOS)[0] }) {
                     </pre>
                   )}
                   <div className="mt-3 grid gap-2">
-                    {(r.assets || []).map((a: any) => (
+                    {(r.assets || []).map((a) => (
                       <a
                         key={a.name}
-                        href={a.browser_download_url}
+                        href={a.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="zx-chip flex items-center justify-between rounded-xl px-3.5 py-2.5"
@@ -138,13 +168,13 @@ function RepoSection({ repo }: { repo: (typeof REPOS)[0] }) {
                           {a.name}
                         </span>
                         <span className="shrink-0 text-[12px] text-muted-foreground">
-                          {fmtSize(a.size)} · {a.download_count} dl
+                          {fmtSize(a.size)} · {a.downloads} dl
                         </span>
                       </a>
                     ))}
                   </div>
                   <div className="mt-3">
-                    <ButtonAnchor href={r.html_url} variant="ghost" size="sm">
+                    <ButtonAnchor href={r.url} variant="ghost" size="sm">
                       View on GitHub
                     </ButtonAnchor>
                   </div>
