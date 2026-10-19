@@ -1,5 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+/**
+ * ZYRAXON releases feed.
+ *
+ * Reads GitHub with NO token: the public REST API allows 60 requests/hour per
+ * IP, which is enough for a handful of repos and their full release history.
+ * When a token IS present in the environment it is used, which lifts the rate
+ * limit — but the endpoint never requires one.
+ *
+ * Every release of every repo is returned, not just the newest: the release
+ * list is paginated (100 per page) until GitHub returns a short page, so tags
+ * published later show up here on the next request without any code change.
+ *
+ *   GET /api/public/zyraxon-releases
+ *   GET /api/public/zyraxon-releases?fresh=1   (bypass the 2-minute cache)
+ */
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -7,8 +23,20 @@ const CORS = {
 };
 
 const REPOS = [
-  { id: "zyraxon-agent", owner: "onelpawarai-X", name: "ZYRAXON-AI", label: "ZYRAXON Agent", color: "#2563eb", description: "Desktop AI agent with 11 agent modes, 888 tools across 63 categories, eternal memory, screen vision" },
+  {
+    id: "zyraxon-agent",
+    owner: "onelpawarai-X",
+    name: "ZYRAXON-AI",
+    label: "ZYRAXON Agent",
+    color: "#2563eb",
+    description:
+      "Desktop AI agent with 11 agent modes, 888 tools across 63 categories, eternal memory, screen vision",
+  },
 ];
+
+const PER_PAGE = 100;
+const MAX_PAGES = 10; // hard ceiling of 1000 releases per repo
+const CACHE_MS = 120_000;
 
 type GhRelease = {
   id: number;
@@ -51,11 +79,24 @@ type NormalizedRelease = {
 };
 
 type RepoReleases = {
-  repo: { id: string; label: string; color: string; description: string; fullName: string; url: string; stars: number; forks: number; language: string | null };
+  repo: {
+    id: string;
+    label: string;
+    color: string;
+    description: string;
+    fullName: string;
+    url: string;
+    stars: number;
+    forks: number;
+    language: string | null;
+  };
   releases: NormalizedRelease[];
   totalDownloads: number;
   latestTag: string | null;
 };
+
+type CacheEntry = { at: number; body: { success: boolean; repos: RepoReleases[] } };
+let cache: CacheEntry | null = null;
 
 function ghHeaders(): Record<string, string> {
   const h: Record<string, string> = {
@@ -69,19 +110,41 @@ function ghHeaders(): Record<string, string> {
 
 async function fetchRepo(owner: string, name: string): Promise<RepoInfo | null> {
   try {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${name}`, { headers: ghHeaders(), signal: AbortSignal.timeout(10000) });
+    const res = await fetch(`https://api.github.com/repos/${owner}/${name}`, {
+      headers: ghHeaders(),
+      signal: AbortSignal.timeout(10000),
+    });
     if (!res.ok) return null;
     return await res.json();
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
-async function fetchReleases(owner: string, name: string, perPage = 50): Promise<GhRelease[]> {
-  try {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${name}/releases?per_page=${perPage}`, { headers: ghHeaders(), signal: AbortSignal.timeout(15000) });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return Array.isArray(data) ? data.filter((r: GhRelease) => !r.draft) : [];
-  } catch { return []; }
+/**
+ * Walk every page of the release feed until GitHub returns fewer than a full
+ * page. That is what makes later tags appear without touching this file.
+ */
+async function fetchReleases(owner: string, name: string): Promise<GhRelease[]> {
+  const all: GhRelease[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    let batch: GhRelease[] = [];
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${owner}/${name}/releases?per_page=${PER_PAGE}&page=${page}`,
+        { headers: ghHeaders(), signal: AbortSignal.timeout(15000) },
+      );
+      if (!res.ok) break;
+      const data = await res.json();
+      if (!Array.isArray(data)) break;
+      batch = data.filter((r: GhRelease) => !r.draft);
+    } catch {
+      break;
+    }
+    all.push(...batch);
+    if (batch.length < PER_PAGE) break;
+  }
+  return all;
 }
 
 function normalize(r: GhRelease): NormalizedRelease {
@@ -109,7 +172,15 @@ export const Route = createFileRoute("/api/public/zyraxon-releases")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      GET: async () => {
+
+      GET: async ({ request }) => {
+        const fresh = new URL(request.url).searchParams.get("fresh") === "1";
+        if (!fresh && cache && Date.now() - cache.at < CACHE_MS) {
+          return Response.json(cache.body, {
+            headers: { ...CORS, "Cache-Control": "public, max-age=120" },
+          });
+        }
+
         try {
           const results: RepoReleases[] = await Promise.all(
             REPOS.map(async (repo) => {
@@ -117,7 +188,9 @@ export const Route = createFileRoute("/api/public/zyraxon-releases")({
                 fetchRepo(repo.owner, repo.name),
                 fetchReleases(repo.owner, repo.name),
               ]);
-              const normalized = releases.map(normalize);
+              const normalized = releases
+                .map(normalize)
+                .sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
               const totalDownloads = normalized.reduce((sum, r) => sum + r.totalDownloads, 0);
               return {
                 repo: {
@@ -138,9 +211,16 @@ export const Route = createFileRoute("/api/public/zyraxon-releases")({
             }),
           );
 
-          return Response.json({ success: true, repos: results }, { headers: { ...CORS, "Cache-Control": "public, max-age=120" } });
+          const body = { success: true, repos: results };
+          cache = { at: Date.now(), body };
+          return Response.json(body, {
+            headers: { ...CORS, "Cache-Control": "public, max-age=120" },
+          });
         } catch (err) {
-          return Response.json({ success: false, error: String(err), repos: [] }, { status: 500, headers: CORS });
+          return Response.json(
+            { success: false, error: String(err), repos: [] },
+            { status: 500, headers: CORS },
+          );
         }
       },
     },

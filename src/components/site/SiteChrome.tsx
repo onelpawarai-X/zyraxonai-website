@@ -8,6 +8,7 @@ const NAV = [
   { to: "/ecosystem", label: "Ecosystem" },
   { to: "/docs", label: "Docs" },
   { to: "/packages", label: "Packages" },
+  { to: "/extensions", label: "Extensions" },
   { to: "/releases", label: "Releases" },
   { to: "/demo", label: "Demo" },
   { to: "/community-art", label: "Community" },
@@ -243,6 +244,7 @@ export function SiteFooter() {
               { to: "/apps", label: "Apps" },
               { to: "/ecosystem", label: "Ecosystem" },
               { to: "/packages", label: "Packages" },
+              { to: "/extensions", label: "Extensions" },
               { to: "/releases", label: "Releases" },
               { to: "/docs", label: "Documentation" },
             ]}

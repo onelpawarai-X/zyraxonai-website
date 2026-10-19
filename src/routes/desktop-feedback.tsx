@@ -71,25 +71,44 @@ function DesktopFeedback() {
   async function submit() {
     setBusy(true);
     setMsg("");
-    const r = await fetch("/api/public/desktop-feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...f, mode: channel }),
-    });
+    // Open the tab right now, while the click still counts as a user gesture.
+    // Calling window.open after `await fetch(...)` is treated as a popup by
+    // most browsers and silently blocked, which is why the button looked dead.
+    const tab = channel === "issue" ? window.open("about:blank", "_blank") : null;
+    if (tab) tab.opener = null;
+
+    let r: Response;
+    try {
+      r = await fetch("/api/public/desktop-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...f, mode: channel }),
+      });
+    } catch {
+      tab?.close();
+      setBusy(false);
+      return setMsg("Network error. Please check your connection and try again.");
+    }
     const d = await r.json().catch(() => ({}));
     setBusy(false);
-    if (!r.ok) return setMsg(d.error || "Something went wrong. Please try again.");
+    if (!r.ok) {
+      tab?.close();
+      return setMsg(d.error || "Something went wrong. Please try again.");
+    }
     if (channel === "issue" && d.issueUrl) {
       setResult({ channel: "issue", issueUrl: d.issueUrl });
       setMsg(
         "Almost done — GitHub is opening with your report filled in. Sign in if needed, then press Submit new issue.",
       );
-      window.open(d.issueUrl, "_blank", "noopener,noreferrer");
+      if (tab && !tab.closed) tab.location.href = d.issueUrl;
+      else window.open(d.issueUrl, "_blank", "noopener,noreferrer");
     } else if (d.mailto) {
+      tab?.close();
       setResult({ channel: "email" });
       window.location.href = d.mailto;
       setMsg(`Opening your email app — send the message to ${TEAM_EMAIL}.`);
     } else {
+      tab?.close();
       setResult({ channel: "email" });
       setMsg("Your feedback has been sent. Thank you!");
     }

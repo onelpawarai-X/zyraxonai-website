@@ -24,6 +24,12 @@ Never rewrite published history (see the Lovable note above). Work on a feature
 branch, open a PR, merge it. `Run Datadog Synthetic tests` fails on every branch
 including `main` (no Datadog credentials) — it is not a signal about your change.
 
+`npx vite preview` is broken for this preset: it looks for `dist/server/server.js`
+while the Cloudflare build writes `.output/server/index.mjs`, so every route
+answers 500 with `ERR_MODULE_NOT_FOUND`. That failure exists on `main` too. To
+serve a real production build, use
+`npx wrangler dev --config .output/server/wrangler.json --port <port>`.
+
 ### Testing UI changes
 
 There is no test runner in this repo. To check real browser behaviour, drive
