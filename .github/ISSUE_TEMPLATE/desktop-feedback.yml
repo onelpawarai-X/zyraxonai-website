@@ -1,13 +1,13 @@
 name: Desktop feedback
 description: Report a bug, request a feature, or ask a question about the ZYRAXON desktop agent.
 title: "[Desktop] "
-labels: ["needs:issue"]
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for helping improve ZYRAXON AI. You can also submit this from the
-        website at https://zyraxonai.lovable.app/desktop-feedback
+        website at https://zyraxonai.lovable.app/desktop-feedback, which fills in
+        the category, environment and details for you.
   - type: dropdown
     id: category
     attributes:
