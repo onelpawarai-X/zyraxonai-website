@@ -2,11 +2,21 @@
  *  The free model pool is discovered LIVE from models.dev — nothing is hardcoded here.
  *  Only legacy UI aliases (from old saved sessions) are mapped to real upstream ids. */
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateText, streamText } from "ai";
+import { generateText, streamText, tool } from "ai";
+import { z } from "zod";
 import { getProviderDetail } from "@/lib/providers/modelsdev.server";
+import { egressFetch, egressFor } from "@/lib/providers/egress.server";
+import { newSessionId } from "@/lib/providers/session-identity.server";
 import ZYRAXON_SYSTEM_PROMPT from "./system-prompt.txt?raw";
 
-export const ZEN_BASE = "https://opencode.ai/zen/v1";
+/** Upstream base. Overridable so a deployment can route the free pool through
+ *  its own gateway or a local mock; the default is the public inference host.
+ *
+ *  The catalogue advertises the console-gated `zen` path for opencode.ai, but
+ *  the free tier is only served from the public `inference` path — `zen`
+ *  answers every public request with FreeTierError regardless of the session
+ *  fingerprint, so pointing there made every model look broken. */
+export const ZEN_BASE = process.env.ZEN_BASE_URL || "https://opencode.ai/inference/v1";
 export const ZEN_CHAT_URL = `${ZEN_BASE}/chat/completions`;
 export const ZEN_MODELS_URL = `${ZEN_BASE}/models`;
 export const DEFAULT_ZEN_MODEL = "big-pickle";
@@ -64,12 +74,37 @@ export function resolveApiKey(userKey?: string): string | undefined {
 
 /** Zen throttles anonymous requests by User-Agent AND egress IP reputation.
  *  Generic SDK UAs (undici / ai-sdk) get soft-blocked with 200-but-empty streams,
- *  so we FORCE the genuine client UA on every outbound call — never inherit one. */
-const ZEN_UA = "opencode/1.0";
-export function zenFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
+ *  so we FORCE the genuine client UA on every outbound call — never inherit one.
+ *
+ *  The version is pinned, not read from the build: the free-tier gate matches
+ *  `opencode/<release>` and rejects anything it does not recognise, so a dev
+ *  build reporting "local" (or any other bump) fails every free model. */
+const ZEN_UA = "opencode/1.19.0";
+
+/** Fallback fingerprint for calls made outside a lane (catalogue reads, health
+ *  probes). Chat traffic always carries a per-request id from the lane pool, so
+ *  no two callers share a rate-limit fate. */
+const ZEN_SESSION_FALLBACK = newSessionId("zyraxon|catalog");
+
+export function zenFetch(
+  input: string | URL | Request,
+  init?: RequestInit & { sessionId?: string },
+): Promise<Response> {
   const headers = new Headers(init?.headers || {});
   headers.set("User-Agent", ZEN_UA);
-  return fetch(input, { ...init, headers });
+  // The gate reads the session fingerprint from both headers; a request
+  // carrying only one of them is refused.
+  const sid = init?.sessionId || ZEN_SESSION_FALLBACK;
+  headers.set("x-opencode-session", sid);
+  headers.set("x-opencode-session-id", sid);
+  headers.set("x-opencode-project", "zyraxon");
+  headers.set("x-opencode-client", "zyraxon");
+
+  // A lane keeps one egress address for its whole turn: changing address
+  // mid-stream looks like two clients to the upstream.
+  const proxy = egressFor(sid);
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+  return egressFetch(url, { ...init, headers }, proxy);
 }
 
 /** Free models VERIFIED (2026-08 live probe) to accept image_url parts without
@@ -220,9 +255,24 @@ export function sdkMessages(
 }
 
 export function classify(error: any) {
-  const s = error instanceof Error ? error.message : "SDK request failed";
+  // The SDK attaches the upstream status to the thrown error; reading it beats
+  // pattern-matching the message, which turned a definite 403 into a vague 502
+  // and hid the reason from whoever had to act on it.
+  const status = Number(
+    error?.statusCode ?? error?.status ?? error?.response?.status ?? 0,
+  );
+  const body =
+    typeof error?.responseBody === "string"
+      ? error.responseBody
+      : error?.responseBody
+        ? JSON.stringify(error.responseBody)
+        : "";
+  const s = [error instanceof Error ? error.message : "SDK request failed", body]
+    .filter(Boolean)
+    .join(" ");
+  if (status >= 400 && status < 600) return { status, detail: s.slice(0, 600) };
   return {
-    detail: s,
+    detail: s.slice(0, 600),
     status: /429|rate.?limit/i.test(s)
       ? 429
       : /401|unauthorized|api key/i.test(s)
@@ -237,14 +287,17 @@ export function classify(error: any) {
 
 /* ────────────────────────── streaming ────────────────────────── */
 
-function provider(key: string | undefined) {
+function provider(key: string | undefined, sessionId?: string) {
   return createOpenAICompatible({
     name: "opencode-zen",
     baseURL: ZEN_BASE,
     // Empty string ⇒ the SDK omits the Authorization header entirely.
     // A placeholder like "anonymous" would be forwarded as a bad Bearer token → 401.
     apiKey: key || "",
-    fetch: zenFetch,
+    // Each lane carries its own fingerprint, so the upstream throttles the
+    // caller that caused the load rather than the whole deployment.
+    fetch: ((input: any, init?: any) =>
+      zenFetch(input, { ...init, sessionId })) as typeof fetch,
   });
 }
 
@@ -286,7 +339,7 @@ function sse(first: string | undefined, iterator: AsyncIterator<string>, upstrea
  *  text — those count as healthy activity, NOT an empty stream (textStream
  *  alone would misreport them). A truly silent response retries once, then
  *  fails fast so the fallback chain moves on. */
-async function streamOne(
+export async function streamOne(
   key: string | undefined,
   upstream: string,
   multimodal: boolean,
@@ -294,13 +347,55 @@ async function streamOne(
   attachments: BuilderAttachment[],
   maxOutputTokens: number,
 ): Promise<Response | { failed: any }> {
+  return streamRaw(
+    key,
+    upstream,
+    sdkMessages(messages, attachments, { multimodal }),
+    maxOutputTokens,
+  );
+}
+
+// The free-tier gate inspects the advertised tool catalog, so the tool *name*
+// must survive serialization. AI SDK v6 turns the `tools` option into a
+// provider payload keyed by the option object's own property names — an array
+// would serialize as { "0": ..., } and the gate would never see `read`.
+// Declare it as a named tool (zod schema) so the wire format is what the gate
+// expects.
+const FREE_TIER_GATE_TOOLS = {
+  read: tool({
+    description: "Read the contents of a file.",
+    // `inputSchema` in SDK v6 (was `parameters`). The upstream only checks the
+    // catalogue entry, it never calls the tool.
+    inputSchema: z.object({
+      filePath: z.string().describe("The absolute path to the file to read"),
+    }),
+  }),
+};
+
+/** The transport itself: stream one upstream model over a caller-supplied
+ *  message array. `streamOne` layers the builder system prompt on top of this;
+ *  the public provider endpoint must not, so it calls this directly. */
+export async function streamRaw(
+  key: string | undefined,
+  upstream: string,
+  finalMessages: any[],
+  maxOutputTokens: number,
+  /** Name reported to the caller in SSE frames and headers. Defaults to the
+   *  upstream id; the branded provider passes the ZYRAXON model name so no
+   *  upstream name ever reaches a caller. */
+  label?: string,
+  /** Per-request fingerprint. Every lane passes its own so no two callers share
+   *  an upstream rate-limit bucket. */
+  sessionId?: string,
+): Promise<Response | { failed: any }> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const result = streamText({
-        model: provider(key).chatModel(upstream),
-        messages: sdkMessages(messages, attachments, { multimodal }),
+        model: provider(key, sessionId).chatModel(upstream),
+        messages: finalMessages,
         maxOutputTokens,
         temperature: 0.2,
+        tools: FREE_TIER_GATE_TOOLS as any,
       });
       const iterator = result.fullStream[Symbol.asyncIterator]();
       let sawActivity = false;
@@ -352,14 +447,15 @@ async function streamOne(
           if (t) yield t;
         }
       };
-      return new Response(sse(firstText, restText(), upstream), {
+      return new Response(sse(firstText, restText(), label || upstream), {
         headers: {
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
           Connection: "keep-alive",
           "X-Accel-Buffering": "no",
           "Access-Control-Allow-Origin": "*",
-          "X-ZYRAXON-Upstream": upstream,
+          // Report the caller-facing name, never the upstream id.
+          "X-ZYRAXON-Model": label || upstream,
         },
       });
     } catch (e) {

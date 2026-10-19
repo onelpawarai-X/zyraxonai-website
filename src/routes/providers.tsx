@@ -1,0 +1,304 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { PageShell } from "@/components/site/PageShell";
+import { PageHeader } from "@/components/site/SiteChrome";
+import { Button, ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
+import { ZYRAXON_BRANDS } from "@/lib/providers/zyraxon-brands";
+
+export const Route = createFileRoute("/providers")({
+  head: () => ({
+    meta: [
+      { title: "ZYRAXON Provider — Ten Branded AI Models, One OpenAI-Compatible API" },
+      {
+        name: "description",
+        content:
+          "Use the ZYRAXON provider: ten branded models served from a single OpenAI-compatible endpoint. Point any OpenAI client at ZYRAXON and pick a model — no provider keys, no rate-limit juggling.",
+      },
+      { property: "og:title", content: "ZYRAXON Provider — Ten Branded AI Models" },
+      {
+        property: "og:description",
+        content:
+          "Ten ZYRAXON models behind one OpenAI-compatible endpoint. Works with the OpenAI SDK, LangChain, and any tool that speaks /v1/chat/completions.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zyraxonai.lovable.app/providers" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ZYRAXON Provider — Ten Branded AI Models" },
+      {
+        name: "twitter:description",
+        content: "Ten ZYRAXON models behind one OpenAI-compatible endpoint.",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "ZYRAXON Provider",
+          applicationCategory: "DeveloperApplication",
+          operatingSystem: "Web",
+          description:
+            "OpenAI-compatible AI provider exposing ten ZYRAXON branded models behind a single endpoint.",
+          url: "https://zyraxonai.lovable.app/providers",
+        }),
+      },
+    ],
+  }),
+  component: ProvidersPage,
+});
+
+const API_ORIGIN = "https://zyraxonai.lovable.app";
+const MODELS_URL = `${API_ORIGIN}/api/public/zyraxon/v1/models`;
+const CHAT_URL = `${API_ORIGIN}/api/public/zyraxon/v1/chat/completions`;
+
+type Live = { id: string; status: "ready" | "rotated"; context: number; output: number };
+
+const CURL_SAMPLE = `curl ${CHAT_URL} \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "zyraxon-apex",
+    "messages": [{ "role": "user", "content": "Hello" }],
+    "stream": true
+  }'`;
+
+const SDK_SAMPLE = `import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "${API_ORIGIN}/api/public/zyraxon/v1",
+  apiKey: "not-needed",
+});
+
+const stream = await client.chat.completions.create({
+  model: "zyraxon-codex",
+  messages: [{ role: "user", content: "Build a landing page" }],
+  stream: true,
+});`;
+
+function ProvidersPage() {
+  const [live, setLive] = useState<Record<string, Live>>({});
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/public/zyraxon/v1/provider")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!alive || !d?.models) return;
+        const map: Record<string, Live> = {};
+        for (const m of d.models as Live[]) map[m.id] = m;
+        setLive(map);
+      })
+      .catch(() => {})
+      .finally(() => alive && setChecked(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  return (
+    <PageShell>
+      <PageHeader
+        label="Provider"
+        title="Ten models. One endpoint. Yours."
+        description="ZYRAXON serves its own line of ten branded models over a single OpenAI-compatible API. Point any OpenAI client at the endpoint below, pick a ZYRAXON model, and build. No upstream keys, no provider switching, no rate-limit juggling."
+      >
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <ButtonAnchor href="#quickstart" variant="primary" external={false}>
+            Quickstart
+          </ButtonAnchor>
+          <ButtonAnchor href="#models">See the models</ButtonAnchor>
+          <Tag tone="success">OpenAI-compatible</Tag>
+          <Tag tone="primary">Streaming</Tag>
+        </div>
+      </PageHeader>
+
+      <Section
+        label="Endpoint"
+        title="Two URLs, that is the whole integration"
+        description="The models list is what a client reads to discover us. The chat URL is what it calls to use us."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card className="p-5">
+            <div className="mb-2 flex items-center gap-2">
+              <Tag tone="primary">GET</Tag>
+              <span className="text-[13px] font-semibold text-foreground">Model catalogue</span>
+            </div>
+            <code className="block break-all rounded-lg bg-foreground/5 px-3 py-2 text-[12px] text-foreground">
+              {MODELS_URL}
+            </code>
+            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+              Returns the ten ZYRAXON models in the standard OpenAI{" "}
+              <code className="text-[12px]">{"{ object: \"list\", data: [...] }"}</code> shape, so
+              existing clients read it without special handling.
+            </p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="mb-2 flex items-center gap-2">
+              <Tag tone="primary">POST</Tag>
+              <span className="text-[13px] font-semibold text-foreground">Chat completions</span>
+            </div>
+            <code className="block break-all rounded-lg bg-foreground/5 px-3 py-2 text-[12px] text-foreground">
+              {CHAT_URL}
+            </code>
+            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+              OpenAI chat-completions semantics, including server-sent-event streaming when{" "}
+              <code className="text-[12px]">"stream": true</code>. Responses name the ZYRAXON model
+              you asked for.
+            </p>
+          </Card>
+        </div>
+      </Section>
+
+      <Section
+        id="models"
+        label="The line"
+        title="Ten ZYRAXON models"
+        description="Each model is built for a different job. Capabilities below are read live from the serving pool, so what you see is what is answering right now."
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {ZYRAXON_BRANDS.map((b) => {
+            const state = live[b.id];
+            const rotated = state?.status === "rotated";
+            const ctx = state?.context;
+            return (
+              <Card key={b.id} hover className="flex flex-col p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-[15px] font-bold tracking-tight text-foreground">
+                      {b.label}
+                    </h3>
+                    <p className="mt-0.5 text-[12.5px] text-muted-foreground">{b.tagline}</p>
+                  </div>
+                  {state && (
+                    <Tag tone={rotated ? "warn" : "success"}>
+                      {rotated ? "Rotated" : "Ready"}
+                    </Tag>
+                  )}
+                </div>
+
+                <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
+                  {b.capability}
+                </p>
+
+                <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-3">
+                  <Tag>{b.id}</Tag>
+                  {typeof ctx === "number" && ctx > 0 && (
+                    <Tag>{ctx >= 1_000_000 ? `${ctx / 1_000_000}M ctx` : `${Math.round(ctx / 1000)}K ctx`}</Tag>
+                  )}
+                  <Tag>{b.preferred.includes("vl") || b.id === "zyraxon-visionary" ? "vision" : "text"}</Tag>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        {checked && Object.keys(live).length === 0 && (
+          <p className="mt-4 text-[12.5px] text-muted-foreground">
+            Live status is momentarily unavailable. The models above are still callable — status is
+            informational only.
+          </p>
+        )}
+
+        <Card className="mt-5 p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/12 text-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M4 12a8 8 0 0113.7-5.7M20 12a8 8 0 01-13.7 5.7M17 3v4h-4M7 21v-4h4" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-[14px] font-semibold text-foreground">Automatic rotation</h3>
+              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                Each ZYRAXON model is bound to a preferred model underneath, with every other model
+                in the pool behind it as a fallback. If one is retired or rate-limited, the same
+                ZYRAXON model keeps answering from the next one — so a <em>Rotated</em> badge means
+                it is covering, not down. You always call the same name; we handle the swap.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </Section>
+
+      <Section
+        id="quickstart"
+        label="Quickstart"
+        title="Point your client at us"
+        description="Any OpenAI-compatible client works. Two examples below."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+              <span className="text-[13px] font-semibold text-foreground">cURL</span>
+              <Tag>shell</Tag>
+            </div>
+            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
+              <code>{CURL_SAMPLE}</code>
+            </pre>
+          </Card>
+
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+              <span className="text-[13px] font-semibold text-foreground">OpenAI SDK</span>
+              <Tag>typescript</Tag>
+            </div>
+            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
+              <code>{SDK_SAMPLE}</code>
+            </pre>
+          </Card>
+        </div>
+
+        <Card className="mt-5 p-5">
+          <h3 className="text-[14px] font-semibold text-foreground">Response shape</h3>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            Standard chat-completion chunks. The <code className="text-[12px]">model</code> field
+            carries the ZYRAXON name you requested, so your logs and billing stay yours.
+          </p>
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 text-[12px] text-foreground">
+            <code>{`data: {"id":"zyraxon-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}],"model":"ZYRAXON Apex"}`}</code>
+          </pre>
+        </Card>
+      </Section>
+
+      <Section
+        label="Why a rooted provider"
+        title="One name you control"
+        description=""
+      >
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Stable names</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Upstream models come and go. Your <code className="text-[12px]">model</code> value
+              does not have to change when they do.
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Capacity pooling</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Every model in the pool stands behind every brand, so one model's limit is absorbed
+              rather than passed to you.
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Drop-in</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Same request and response shapes as OpenAI, so existing code works with a base-URL
+              change.
+            </p>
+          </Card>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Button variant="primary" onClick={() => navigator.clipboard?.writeText(CHAT_URL)}>
+            Copy chat URL
+          </Button>
+          <Button onClick={() => navigator.clipboard?.writeText(MODELS_URL)}>
+            Copy models URL
+          </Button>
+        </div>
+      </Section>
+    </PageShell>
+  );
+}
