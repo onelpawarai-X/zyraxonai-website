@@ -5,8 +5,9 @@ import {
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
-import * as React from "react";
-import { ThemeProvider } from "@/lib/theme";
+import type { ReactNode } from "react";
+import { ThemeProvider, themeInitScript } from "@/lib/theme";
+import appCss from "@/styles.css?url";
 
 function NotFoundComponent() {
   return (
@@ -69,6 +70,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
     links: [
+      // The site's whole visual layer lives in this stylesheet. Without this
+      // link the document renders unstyled, so it must stay on the root route.
+      { rel: "stylesheet", href: appCss },
       { rel: "canonical", href: "https://zyraxonai.lovable.app" },
       { rel: "icon", href: "/favicon.png" },
       {
@@ -85,9 +89,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
   }),
+  shellComponent: RootShell,
   notFoundComponent: NotFoundComponent,
   component: RootComponent,
 });
+
+/** The document shell. TanStack Start renders this around every page, so it is
+ *  the only place that can emit `<html>`, `<head>` and `<body>` — without it the
+ *  response is a bare fragment with no head, no stylesheet and no doctype, and
+ *  the browser shows an unstyled page. */
+function RootShell({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  );
+}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
