@@ -391,6 +391,124 @@ function Format-ZyraxonError {
     return $message
 }
 
+function Invoke-ZyraxonLong {
+    <#
+    .SYNOPSIS
+        Run a task that may take hours, and never lose it.
+    .DESCRIPTION
+        The whole run is kept in a file under $HOME\.zyraxon\sessions and saved
+        after every step, so a dropped network, a killed shell or a reboot does
+        not lose the job — it carries on from the last checkpoint. With no
+        -Hours, it keeps going until the task finishes.
+    .EXAMPLE
+        Invoke-ZyraxonLong "refactor each file in src, one at a time" -Session refactor
+    .EXAMPLE
+        Invoke-ZyraxonLong "keep improving the report" -Hours 48
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Position = 0, Mandatory = $true)][string]$Prompt,
+        [string]$Model,
+        [string]$Session = "default",
+        [double]$Hours = 0,
+        [switch]$Confirm,
+        [int]$MaxTurnsPerAttempt = 40
+    )
+    $model = if ($Model) { $Model } else { $script:ZyraxonModel }
+    $tools = Get-ZyraxonFileTools
+    $dir = Join-Path $HOME ".zyraxon/sessions"
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    $file = Join-Path $dir "$Session.json"
+
+    $messages = $null
+    $step = 0
+    if (Test-Path -LiteralPath $file) {
+        $saved = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json -AsHashtable
+        if ($saved.status -ne "done") {
+            $messages = $saved.messages
+            $step = [int]($saved.step)
+            Write-Host "resuming session '$Session' — step $step" -ForegroundColor DarkGray
+        }
+    }
+    if (-not $messages) {
+        $messages = @(@{ role = "user"; content = $Prompt })
+    }
+
+    $deadline = if ($Hours -gt 0) { (Get-Date).AddHours($Hours) } else { $null }
+    $attempt = 0
+
+    while ($true) {
+        $attempt++
+        try {
+            for ($turn = 0; $turn -lt $MaxTurnsPerAttempt; $turn++) {
+                $body = @{ model = $model; stream = $false; messages = $messages; tools = $tools } |
+                    ConvertTo-Json -Depth 20
+                $response = Invoke-ZyraxonJson -Body $body
+                $err = Get-ZyraxonProperty $response "error"
+                if ($err) { throw (Format-ZyraxonError $err) }
+
+                $choice = $response.choices[0]
+                $message = $choice.message
+                $toolCalls = Get-ZyraxonProperty $message "tool_calls"
+                $messages += @{ role = "assistant"; content = (Get-ZyraxonProperty $message "content"); tool_calls = $toolCalls }
+                $step++
+
+                # Checkpoint: this is what makes the run resumable after anything.
+                @{ session = $Session; prompt = $Prompt; messages = $messages; step = $step; status = "running" } |
+                    ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $file -Encoding UTF8
+                Write-Host "  step $step" -ForegroundColor DarkGray
+
+                if ($choice.finish_reason -ne "tool_calls" -or -not $toolCalls) {
+                    $answer = Get-ZyraxonProperty $message "content"
+                    @{ session = $Session; prompt = $Prompt; messages = $messages; step = $step; status = "done"; result = $answer } |
+                        ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $file -Encoding UTF8
+                    return $answer
+                }
+
+                foreach ($call in $toolCalls) {
+                    $result = Invoke-ZyraxonTool -Name $call.function.name -Arguments $call.function.arguments -Confirm:$Confirm
+                    $messages += @{ role = "tool"; tool_call_id = $call.id; content = [string]$result }
+                }
+            }
+            Write-Host "checkpoint at step $step — continuing (attempt $($attempt + 1))" -ForegroundColor DarkGray
+        }
+        catch {
+            # Any interruption lands here — a dropped network, a 429/502/503, a
+            # restart. The checkpoint is on disk, so the loop continues from it.
+            Write-Host "interrupted ($($_.Exception.Message)); resuming from step $step" -ForegroundColor DarkGray
+        }
+
+        if ($deadline -and (Get-Date) -ge $deadline) {
+            @{ session = $Session; prompt = $Prompt; messages = $messages; step = $step; status = "paused" } |
+                ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $file -Encoding UTF8
+            Write-Host "stopped after $Hours h at step $step" -ForegroundColor DarkGray
+            return ""
+        }
+        Start-Sleep -Seconds 2
+    }
+}
+
+function Get-ZyraxonSessions {
+    <#
+    .SYNOPSIS
+        List the saved long runs, so one can be inspected or resumed.
+    #>
+    $dir = Join-Path $HOME ".zyraxon/sessions"
+    if (-not (Test-Path -LiteralPath $dir)) { Write-Host "no saved sessions"; return }
+    Get-ChildItem -LiteralPath $dir -Filter *.json | ForEach-Object {
+        try {
+            $s = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json -AsHashtable
+            [pscustomobject]@{
+                Session = $s.session
+                Status  = $s.status
+                Step    = $s.step
+                Prompt  = ([string]$s.prompt).Substring(0, [Math]::Min(48, ([string]$s.prompt).Length))
+            }
+        }
+        catch { }
+    }
+}
+
 # Allow a one-shot run: .\zyraxon.ps1 "prompt" -Stream
 if ($MyInvocation.InvocationName -ne ".") {
     $scriptArgs = $args

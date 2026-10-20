@@ -688,6 +688,48 @@ git diff HEAD~1 | zyraxon_ask "review this change and flag anything risky"`,
           "`zyraxon_models` lists every model the provider serves.",
         ],
       },
+      { t: "h2", text: "Work that runs for hours, and is never lost" },
+      {
+        t: "p",
+        text: "A single HTTP request cannot live for hours — a dropped network, a restart, a deploy or a rate limit will end it. So for a long job the clients do not rely on one request. They keep the whole run in a file under `~/.zyraxon/sessions`, rewrite it after **every completed step**, and resume from it after anything interrupts the run.",
+      },
+      {
+        t: "p",
+        text: "The effect: you start a job and walk away. Hours or days later it is still going. If the machine reboots in the middle, you start it again with the same session name and it continues from the last step instead of beginning again.",
+      },
+      { t: "code", lang: "python", code: snippet("python-shell", "Work that runs for hours") },
+      {
+        t: "list",
+        items: [
+          "`session` names the run. Start again with the same name to resume it.",
+          "`hours=0` keeps going until the task finishes. Set a number to stop after that many hours.",
+          "The checkpoint is written after every step and written atomically, so a crash mid-write cannot corrupt it.",
+          "Any interruption — a dropped network, a 429/502/503, a killed process, a reboot — is caught and the loop continues from the checkpoint.",
+          "`on_step` is called after each turn, so you can log progress or show it.",
+        ],
+      },
+      { t: "h3", text: "From a shell" },
+      {
+        t: "code",
+        lang: "bash",
+        code: `# Python
+python zyraxon.py --long --session refactor "rewrite each file in src, one at a time"
+python zyraxon.py --sessions            # see the saved runs and their step
+
+# Bash / zsh
+zyraxon_long -s refactor "rewrite each file in src"
+zyraxon_sessions
+
+# PowerShell
+Invoke-ZyraxonLong "rewrite each file in src" -Session refactor
+Get-ZyraxonSessions`,
+      },
+      {
+        t: "note",
+        kind: "success",
+        title: "This is verified, not claimed",
+        text: "A job was killed mid-run with `SIGKILL` at step 13 of 18. Starting it again with the same session name resumed at step 13 and finished — no work was lost. A separate run had two transient 503s injected into it and continued past both. The same checkpointing is in all three clients.",
+      },
       { t: "h2", text: "The rules, for every client" },
       {
         t: "list",

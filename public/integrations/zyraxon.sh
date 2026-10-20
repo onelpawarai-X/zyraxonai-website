@@ -206,3 +206,141 @@ zyraxon_agent() {
   printf 'stopping: the agent used its whole turn budget.\n' >&2
   return 1
 }
+
+# zyraxon_long [-m model] [-s session] [-h hours] "prompt"
+#
+# For work that may take hours. The whole run is kept in a file under
+# ~/.zyraxon/sessions and rewritten after every step, so a dropped network, a
+# killed shell or a reboot does not lose the job — it carries on from the last
+# checkpoint instead of starting over. `hours` of 0 means keep going until the
+# task finishes.
+zyraxon_long() {
+  local model="$ZYRAXON_MODEL" prompt="" session="default" hours=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -m|--model) model="$2"; shift 2 ;;
+      -s|--session) session="$2"; shift 2 ;;
+      -h|--hours) hours="$2"; shift 2 ;;
+      *) prompt="$1"; shift ;;
+    esac
+  done
+  [ -n "$prompt" ] || prompt="$(cat)"
+
+  local dir="$HOME/.zyraxon/sessions"
+  local file="$dir/$session.json"
+  mkdir -p "$dir"
+
+  local tools='[
+    {"type":"function","function":{"name":"read_file","description":"Read a text file.","parameters":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"]}}},
+    {"type":"function","function":{"name":"write_file","description":"Write text to a file.","parameters":{"type":"object","properties":{"path":{"type":"string"},"content":{"type":"string"}},"required":["path","content"]}}},
+    {"type":"function","function":{"name":"run_shell","description":"Run a shell command and return its output.","parameters":{"type":"object","properties":{"command":{"type":"string"}},"required":["command"]}}}
+  ]'
+
+  # Resume if a run with this session name is on disk and unfinished.
+  local messages status
+  if [ -f "$file" ]; then
+    status="$(jq -r '.status // ""' "$file" 2>/dev/null)"
+    if [ "$status" != "done" ]; then
+      messages="$(jq -c '.messages' "$file")"
+      printf 'resuming session %s — step %s\n' "$session" "$(jq -r '.step // 0' "$file")" >&2
+    fi
+  fi
+  if [ -z "${messages:-}" ]; then
+    messages="$(jq -nc --arg p "$prompt" '[{role:"user",content:$p}]')"
+  fi
+
+  local step=0 started
+  started="$(date +%s)"
+  [ -f "$file" ] && step="$(jq -r '.step // 0' "$file" 2>/dev/null)"
+  local deadline=0
+  [ "$hours" != "0" ] && deadline=$(( started + hours * 3600 ))
+
+  local answer_fd=3
+  if [ -p /dev/stdin ]; then exec 3<&0; elif { true < /dev/tty; } 2>/dev/null; then exec 3< /dev/tty; else exec 3<&0; fi
+
+  local attempt=0
+  while :; do
+    attempt=$((attempt + 1))
+    local turn choice reason name args result reply body resp
+    local failed=0
+    for turn in $(seq 1 40); do
+      body="$(jq -nc --arg m "$model" --argjson msgs "$messages" --argjson tools "$tools" \
+        '{model:$m, stream:false, messages:$msgs, tools:$tools}')"
+      resp="$(_zyraxon_api "$body")"
+      if _zyraxon_error "$resp"; then failed=1; break; fi
+
+      choice="$(printf '%s' "$resp" | jq -c '.choices[0]' 2>/dev/null)"
+      [ -n "$choice" ] || { failed=1; break; }
+      messages="$(jq -nc --argjson msgs "$messages" --argjson msg "$(printf '%s' "$choice" | jq -c '.message')" '$msgs + [$msg]')"
+      step=$((step + 1))
+      # Checkpoint: this is what makes the run resumable after anything.
+      jq -nc --arg s "$session" --argjson m "$messages" --argjson st "$step" \
+        '{session:$s, messages:$m, step:$st, status:"running"}' > "$file.tmp" \
+        && mv "$file.tmp" "$file"
+      printf '  step %s\n' "$step" >&2
+
+      reason="$(printf '%s' "$choice" | jq -r '.finish_reason')"
+      if [ "$reason" != "tool_calls" ]; then
+        jq -nc --arg s "$session" --argjson m "$messages" --argjson st "$step" \
+          '{session:$s, messages:$m, step:$st, status:"done"}' > "$file.tmp" && mv "$file.tmp" "$file"
+        printf '%s' "$choice" | jq -r '.message.content // empty'
+        return 0
+      fi
+
+      while read -r call; do
+        name="$(printf '%s' "$call" | jq -r '.function.name')"
+        args="$(printf '%s' "$call" | jq -r '.function.arguments')"
+        printf '  -> %s\n' "$name" >&2
+        case "$name" in
+          read_file)
+            local path; path="$(printf '%s' "$args" | jq -r '.path')"
+            if [ -f "$path" ]; then result="$(head -c 20000 "$path")"; else result="no such file: $path"; fi ;;
+          write_file)
+            local wpath content
+            wpath="$(printf '%s' "$args" | jq -r '.path')"
+            content="$(printf '%s' "$args" | jq -r '.content')"
+            printf 'write %s (%s bytes)? [y/N] ' "$wpath" "${#content}" >&2
+            read -r reply <&"$answer_fd" || reply=""
+            case "$reply" in y|Y|yes) printf '%s' "$content" > "$wpath"; result="wrote $wpath" ;; *) result="declined" ;; esac ;;
+          run_shell)
+            local command
+            command="$(printf '%s' "$args" | jq -r '.command')"
+            printf 'run: %s ? [y/N] ' "$command" >&2
+            read -r reply <&"$answer_fd" || reply=""
+            case "$reply" in y|Y|yes) result="$(bash -c "$command" 2>&1 | head -c 20000)" ;; *) result="declined" ;; esac ;;
+          *) result="unknown tool: $name" ;;
+        esac
+        [ -n "$result" ] || result="(no output)"
+        messages="$(jq -nc --argjson msgs "$messages" \
+          --arg id "$(printf '%s' "$call" | jq -r '.id')" --arg out "$result" \
+          '$msgs + [{role:"tool",tool_call_id:$id,content:$out}]')"
+      done < <(printf '%s' "$choice" | jq -c '.message.tool_calls[]')
+    done
+
+    # The turn budget, a failure, or a lost network all land here. The
+    # checkpoint is on disk, so the next attempt continues from it.
+    printf 'interrupted or checkpointed at step %s; continuing (attempt %s)\n' "$step" "$((attempt + 1))" >&2
+    if [ "$deadline" != "0" ] && [ "$(date +%s)" -ge "$deadline" ]; then
+      jq -nc --arg s "$session" --argjson m "$messages" --argjson st "$step" \
+        '{session:$s, messages:$m, step:$st, status:"paused"}' > "$file.tmp" && mv "$file.tmp" "$file"
+      printf 'stopped after %s h at step %s\n' "$hours" "$step" >&2
+      return 1
+    fi
+    sleep 2
+  done
+}
+
+# zyraxon_sessions — list the saved long runs, so one can be inspected or resumed.
+zyraxon_sessions() {
+  local dir="$HOME/.zyraxon/sessions"
+  [ -d "$dir" ] || { echo "no saved sessions"; return 0; }
+  local f
+  for f in "$dir"/*.json; do
+    [ -f "$f" ] || continue
+    printf '%-20s %-8s step %-5s %s\n' \
+      "$(jq -r '.session // "?"' "$f")" \
+      "$(jq -r '.status // "?"' "$f")" \
+      "$(jq -r '.step // 0' "$f")" \
+      "$(jq -r '(.prompt // "")[0:48]' "$f")"
+  done
+}
