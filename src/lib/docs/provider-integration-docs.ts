@@ -16,6 +16,7 @@ import {
   CHAT_URL,
   DEFAULT_MODEL,
   INTEGRATIONS_URL,
+  LITELLM_MODEL,
   MODELS_URL,
   PROVIDER_URL,
   USAGE_RULES,
@@ -316,7 +317,23 @@ export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
       { t: "h2", text: "Steps" },
       { t: "list", ordered: true, items: OPENHANDS.steps ?? [] },
       { t: "h2", text: "The form, as text" },
-      { t: "code", lang: "text", code: snippet("openhands", "Connection fields") },
+      { t: "code", lang: "text", code: snippet("openhands", "Copy these four") },
+      {
+        t: "note",
+        kind: "warn",
+        title: "Copy the Custom Model exactly, `openai/` included",
+        text: `OpenHands routes the model through LiteLLM, which reads the text before the first \`/\` to choose a handler. A bare id fails with \`LLM Provider NOT provided\` before it ever calls us, so the value to enter is \`${LITELLM_MODEL}\`.`,
+      },
+      { t: "h2", text: 'The "LLM Provider NOT provided" error' },
+      {
+        t: "p",
+        text: "This is the most common failure, and it happens entirely on the OpenHands side — our endpoint is never reached, so nothing here can fix it. The model string needs a provider prefix.",
+      },
+      {
+        t: "code",
+        lang: "text",
+        code: snippet("openhands", 'The "LLM Provider NOT provided" error'),
+      },
       { t: "h2", text: "Verify before you save" },
       {
         t: "p",
