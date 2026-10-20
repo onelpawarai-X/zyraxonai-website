@@ -13,6 +13,7 @@ import {
   type ChatMessage,
 } from "@/lib/builder/zen.server";
 import { providerChatStream } from "@/lib/builder/gateway.server";
+import { MAX_MEDIA_PARTS } from "@/lib/providers/media";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -103,8 +104,16 @@ export const Route = createFileRoute("/api/public/builder/chat")({
               typeof attachment.mime === "string" &&
               typeof attachment.data === "string",
           )
-          .filter((attachment: any) => /^(image|audio|video)\//i.test(attachment.mime))
-          .slice(0, 6)
+          // Images, audio, video and documents all pass. PDFs used to be dropped
+          // here, which is why an attached PDF silently vanished.
+          .filter((attachment: any) =>
+            /^(image|audio|video)\//i.test(attachment.mime) ||
+            /^application\/pdf$/i.test(attachment.mime),
+          )
+          // The cap matches the media planner's part ceiling. When it was smaller,
+          // a video ffmpeg had correctly cut into more parts had its tail dropped
+          // here with no error, so the model saw only the opening seconds.
+          .slice(0, MAX_MEDIA_PARTS)
           .map((attachment: any) => ({
             name: attachment.name.slice(0, 160),
             mime: attachment.mime.slice(0, 100),

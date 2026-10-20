@@ -13,17 +13,32 @@
  */
 import {
   DEFAULT_ZEN_MODEL,
+  completeRaw,
+  completeWireRaw,
+  needsWire,
   resolveApiKey,
   streamRaw,
+  streamWireRaw,
   zenFreeModels,
   zenLiveIds,
   type ChatMessage,
+  type WireTool,
   type ZenModel,
 } from "@/lib/builder/zen.server";
 import { LaneShedError, lanePool } from "./lane-pool.server";
 import {
+  fitsModalities,
+  normaliseContent,
+  requiredModalities,
+  toSdkContent,
+  toWireContent,
+  type MediaKind,
+  type NormalisedPart,
+} from "./media";
+import {
   ZYRAXON_BRANDS,
   brandView,
+  capabilityScore,
   getBrand,
   rotateThrough,
   rotationFor,
@@ -31,7 +46,14 @@ import {
   type BrandView,
 } from "./zyraxon-brands";
 
-export { rotationFor, brandView, isBrand, getBrand, rotateThrough, isUpstreamGate } from "./zyraxon-brands";
+export {
+  rotationFor,
+  brandView,
+  isBrand,
+  getBrand,
+  rotateThrough,
+  isUpstreamGate,
+} from "./zyraxon-brands";
 export type { BrandView, BrandId } from "./zyraxon-brands";
 
 /** Every brand with its live binding, in one catalogue read. */
@@ -41,20 +63,66 @@ export async function brandCatalogue(): Promise<BrandView[]> {
 }
 
 /** Resolve a brand id to its ordered upstream chain, plus the model the
- *  response should be labelled with (our brand, never the upstream name). */
+ *  response should be labelled with (our brand, never the upstream name).
+ *
+ *  When the turn carries media, the chain is ordered so models that can actually
+ *  accept every required modality come first. A request that needs video is
+ *  never sent to a text-only model first and made to fail its way down the list. */
 export async function resolveBrandChain(
   modelId: string,
+  need: Set<MediaKind> = new Set(),
 ): Promise<{ brand: Brand; chain: string[] } | null> {
   const brand = getBrand(modelId);
   if (!brand) return null;
   const [pool, live] = await Promise.all([zenFreeModels(), zenLiveIds()]);
   const chain = rotationFor(brand, pool);
   const served = live ? chain.filter((id) => live.has(id)) : chain;
-  // A brand whose whole chain is unserved still gets one attempt at its
-  // preferred model, so the caller sees the real upstream error instead of a
-  // fabricated "unknown model".
-  return { brand, chain: served.length ? served : [chain[0] || brand.preferred] };
+  const base = served.length ? served : [chain[0] || brand.preferred];
+  if (need.size === 0) return { brand, chain: base };
+
+  const byId = new Map(pool.map((m) => [m.id, m]));
+  const fits = (id: string) => fitsModalities(need, byId.get(id)?.modalities ?? ["text"]);
+  // Capable models first (best capability score among them), then the rest, so a
+  // media turn still degrades to a real attempt instead of a fabricated error.
+  const capable = base.filter(fits).sort((a, b) => {
+    const ma = byId.get(a);
+    const mb = byId.get(b);
+    return capabilityScore(brand, mb ?? { id: b }) - capabilityScore(brand, ma ?? { id: a });
+  });
+  const rest = base.filter((id) => !fits(id));
+  return { brand, chain: [...capable, ...rest] };
 }
+
+/** Run a chat turn for a brand, rotating through the upstream pool when a
+ *  model is retired, rate-limited, or returns nothing. The caller only ever
+ *  sees the ZYRAXON name.
+ *
+ *  The whole turn runs inside one lane from `lanePool`, so a burst of inbound
+ *  requests becomes a bounded number of concurrent upstream conversations
+ *  instead of one per caller. Each lane carries its own session fingerprint:
+ *  the upstream throttles the request that caused the load, never the
+ *  deployment as a whole. A lane that cannot start within the queue deadline is
+ *  shed with a 503 rather than queued forever, so no caller is silently stuck
+ *  behind another. */
+export type BrandTurnOptions = {
+  /** Ask for a single JSON completion instead of an SSE stream. */
+  stream?: boolean;
+  /** Upstream call to use for a streaming turn. Injectable for tests. */
+  send?: typeof streamRaw;
+  /** Upstream call to use for a non-streaming turn. Injectable for tests. */
+  complete?: typeof completeRaw;
+  /** Chain resolver. Injectable for tests. */
+  resolve?: typeof resolveBrandChain;
+  /** Optional stable seed so one end user keeps a memory window upstream while
+   *  remaining isolated from every other end user. */
+  seed?: string;
+  /** Output token budget. Defaults to the brand's live cap, capped for safety. */
+  maxOutputTokens?: number;
+  /** Caller-defined tools, in OpenAI wire form. A turn that carries tools is
+   *  posted on the wire path, because the SDK path advertises only the gate
+   *  catalogue and would silently drop the caller's definitions. */
+  tools?: WireTool[];
+};
 
 /** Run a chat turn for a brand, rotating through the upstream pool when a
  *  model is retired, rate-limited, or returns nothing. The caller only ever
@@ -71,17 +139,46 @@ export async function brandChatStream(
   modelId: string,
   messages: ChatMessage[],
   apiKey?: string,
-  /** Upstream call to use. Defaults to the real transport; tests inject one so
-   *  the rotation and labelling logic can be exercised without network access. */
-  send: typeof streamRaw = streamRaw,
-  /** Chain resolver. Defaults to the live catalogue; injectable for the same
-   *  reason as `send`. */
-  resolve: typeof resolveBrandChain = resolveBrandChain,
-  /** Optional stable seed so one end user keeps a memory window upstream while
-   *  remaining isolated from every other end user. */
-  seed?: string,
+  options: BrandTurnOptions = {},
 ): Promise<Response> {
-  const resolved = await resolve(modelId);
+  const {
+    stream = true,
+    send,
+    complete,
+    resolve = resolveBrandChain,
+    seed,
+    maxOutputTokens,
+    tools,
+  } = options;
+
+  // Shape every message once. The SDK shape is the default, because the SDK
+  // gives us retries and tool plumbing; but audio and video have no SDK part at
+  // all, so a turn carrying either is posted on the raw wire path instead, where
+  // `input_audio` / `video_url` survive intact.
+  const canonical = messages.map((m) => ({
+    role: m.role,
+    content: normaliseContent(m.content),
+  }));
+  // Audio and video have no AI-SDK message part, so a turn carrying either is
+  // posted on the raw OpenAI wire path, where `input_audio`/`video_url` survive.
+  // Caller-defined tools force the same path: the SDK path advertises only the
+  // gate catalogue, so a `tools` array would be dropped and the model would
+  // answer as though no tools existed. Everything else keeps the SDK path
+  // (retries, tool plumbing, usage).
+  const wire = needsWire(messages) || (tools?.length ?? 0) > 0;
+  const useSend = send ?? (wire ? streamWireRaw : streamRaw);
+  const useComplete = complete ?? (wire ? completeWireRaw : completeRaw);
+  const finalMessages = canonical.map((m) => ({
+    role: m.role,
+    content: wire ? toWireContent(m.content) : toSdkContent(m.content),
+  }));
+  // Modality routing reads the *raw* inbound parts, where the caller's own
+  // spelling (`image_url`, `video_url`, `input_audio`) still distinguishes
+  // image from audio from video. The SDK shape collapses all three into
+  // `image`/`file`, which is too coarse to route on.
+  const need = requiredModalities(messages.map((m) => ({ content: m.content })));
+
+  const resolved = await resolve(modelId, need);
   if (!resolved) {
     return Response.json(
       {
@@ -95,13 +192,17 @@ export async function brandChatStream(
   }
   const { brand, chain } = resolved;
   const key = resolveApiKey(apiKey);
-  const finalMessages = messages.map((m) => ({
-    role: m.role,
-    content: typeof m.content === "string" ? m.content : m.content,
-  }));
+  const budget = Math.min(maxOutputTokens ?? 16000, 32768);
 
   try {
-    return await lanePool.run(async (lane) => {
+    // A streaming turn holds its lane until the body is drained; a non-streaming
+    // turn releases as soon as the JSON is built. Either way `maxActive` bounds
+    // the number of concurrent upstream conversations, not just their setup.
+    const runner = stream
+      ? (work: (lane: any) => Promise<Response>, seed?: string) => lanePool.stream(work, seed)
+      : (work: (lane: any) => Promise<Response>, seed?: string) => lanePool.run(work, seed);
+
+    return await runner(async (lane) => {
       const outcome = await rotateThrough(
         chain,
         async (upstream) => {
@@ -109,7 +210,9 @@ export async function brandChatStream(
             return { ok: false as const, status: 503, detail: "lane attempt budget exhausted" };
           }
           lane.attemptsLeft--;
-          const out = await send(key, upstream, finalMessages, 16000, brand.label, lane.sessionId);
+          const out = stream
+            ? await useSend(key, upstream, finalMessages, budget, brand.label, lane.sessionId, tools)
+            : await useComplete(key, upstream, finalMessages, budget, brand.label, lane.sessionId, tools);
           if (!("failed" in out)) return { ok: true as const, value: out };
           return {
             ok: false as const,
@@ -119,7 +222,19 @@ export async function brandChatStream(
         },
         lane.attemptsLeft,
       );
-      if (outcome.ok) return outcome.value;
+      if (outcome.ok) {
+        const res = outcome.value as Response;
+        // Advertise two things the caller (and an operator) can act on: the
+        // modalities the turn actually used, so a real media answer is
+        // distinguishable from a degraded text-only one, and the capacity tier
+        // that served it. `spill` means the primary lane budget was full and the
+        // turn was handed to the OpenCode Zen free pool instead of being shed —
+        // a successful answer, just served from the overflow.
+        const headers = new Headers(res.headers);
+        if (need.size) headers.set("X-ZYRAXON-Input-Modalities", Array.from(need).sort().join(","));
+        headers.set("X-ZYRAXON-Capacity", lane.tier);
+        return new Response(res.body, { status: res.status, headers });
+      }
       return brandFailureResponse(brand, outcome.tried, outcome.gate);
     }, seed);
   } catch (e) {

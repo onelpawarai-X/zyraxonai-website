@@ -11,6 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test:zen": "node scripts/verify-zen.mjs",
+    "test:provider": "npm run test:provider:plain && npm run test:provider:loader",
+    "test:provider:plain": "tsx scripts/verify-brand-provider.ts && tsx scripts/verify-lane-pool.ts",
+    "test:provider:loader": "tsx --import ./scripts/raw-import-loader.mjs scripts/verify-brand-turn.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-media.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-e2e.ts",
     "engine:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File engine/setup-engine.ps1"
   },
   "dependencies": {

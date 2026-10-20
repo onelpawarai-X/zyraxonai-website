@@ -14,6 +14,10 @@ export type CatalogModel = {
   id: string;
   name: string;
   description?: string;
+  /** Input modalities the model accepts: any of text, image, audio, video, pdf. */
+  modalities: string[];
+  /** True when the model accepts any non-text input. Kept for callers that only
+   *  need the boolean; `modalities` is the source of truth. */
   multimodal: boolean;
   reasoning: boolean;
   toolCall: boolean;
@@ -150,11 +154,13 @@ export async function getProviderDetail(providerId: string): Promise<ProviderDet
   for (const [key, raw] of Object.entries<any>(entry.models || {})) {
     const id = String(raw?.id || key);
     const input = Array.isArray(raw?.modalities?.input) ? raw.modalities.input : ["text"];
+    const modalities = input.map((x: string) => String(x).toLowerCase());
     models.push({
       id,
       name: String(raw?.name || id),
       description: typeof raw?.description === "string" ? raw.description.slice(0, 220) : undefined,
-      multimodal: input.some((x: string) => x !== "text"),
+      modalities,
+      multimodal: modalities.some((x: string) => x !== "text"),
       reasoning: Boolean(raw?.reasoning),
       toolCall: raw?.tool_call !== false,
       context: Number(raw?.limit?.context) || 0,

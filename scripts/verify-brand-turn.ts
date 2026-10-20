@@ -51,8 +51,7 @@ const failUp = (upstream: string, status: number, detail: string) =>
     "zyraxon-apex",
     [{ role: "user", content: "hi" }],
     undefined,
-    send,
-    resolveTo("zyraxon-apex", ["retired-model", "big-pickle", "glm-5.3-flash-free"]),
+    { send, resolve: resolveTo("zyraxon-apex", ["retired-model", "big-pickle", "glm-5.3-flash-free"]) },
   );
 
   check("a retired model rotates to the next", res.status === 200, res.status);
@@ -76,8 +75,7 @@ const failUp = (upstream: string, status: number, detail: string) =>
     "zyraxon-apex",
     [{ role: "user", content: "hi" }],
     undefined,
-    send,
-    resolveTo("zyraxon-apex", ["beam-free", "big-pickle", "glm-5.3-flash-free"]),
+    { send, resolve: resolveTo("zyraxon-apex", ["beam-free", "big-pickle", "glm-5.3-flash-free"]) },
   );
   const body = await res.json();
   check("a gate answers 503", res.status === 503, res.status);
@@ -99,12 +97,12 @@ const failUp = (upstream: string, status: number, detail: string) =>
     "zyraxon-apex",
     [{ role: "user", content: "hi" }],
     undefined,
-    send,
-    resolveTo("zyraxon-apex", ["beam-free", "big-pickle"]),
+    { send, resolve: resolveTo("zyraxon-apex", ["beam-free", "big-pickle"]) },
   );
   check("a healthy first model is served at once", res.status === 200);
   check("no second model is tried after success", calls === 1, calls);
   check("the label header is the brand", res.headers.get("X-ZYRAXON-Model") === "ZYRAXON Apex");
+  await res.text(); // drain so the lane is released for later checks
 }
 
 // every model unavailable for a non-gate reason: 502, not a gate
@@ -114,8 +112,7 @@ const failUp = (upstream: string, status: number, detail: string) =>
     "zyraxon-apex",
     [{ role: "user", content: "hi" }],
     undefined,
-    send,
-    resolveTo("zyraxon-apex", ["beam-free", "big-pickle"]),
+    { send, resolve: resolveTo("zyraxon-apex", ["beam-free", "big-pickle"]) },
   );
   const body = await res.json();
   check("a non-gate failure answers 502", res.status === 502, res.status);
@@ -152,8 +149,7 @@ const failUp = (upstream: string, status: number, detail: string) =>
         "zyraxon-apex",
         [{ role: "user", content: "call " + i }],
         undefined,
-        send,
-        resolveTo("zyraxon-apex", ["beam-free"]),
+        { send, resolve: resolveTo("zyraxon-apex", ["beam-free"]) },
       ),
     ),
   );
@@ -161,7 +157,62 @@ const failUp = (upstream: string, status: number, detail: string) =>
   check("each caller had its own fingerprint", sids.size === 40, sids.size);
   check("concurrency stayed bounded", peak <= 512, "peak " + peak);
   check("40 lanes were opened", lanePool.stats().opened - before === 40, lanePool.stats().opened - before);
-  check("no lane leaked", lanePool.stats().active === 0, lanePool.stats().active);
+  // A streaming turn holds its lane until the body is drained, so the slots are
+  // still occupied here. That is the invariant that keeps a flood of open
+  // streams from exceeding the bound.
+  check("streaming lanes stay held until drained", lanePool.stats().active === 40, lanePool.stats().active);
+  await Promise.all(results.map((r) => r.text()));
+  check("draining every body releases every lane", lanePool.stats().active === 0, lanePool.stats().active);
+}
+
+// Caller-defined tools must reach the upstream. The SDK path advertises only the
+// gate catalogue, so a turn carrying tools has to be routed to the wire path or
+// the caller's definitions are dropped and the model answers as though no tools
+// existed — the "endless tool-validation" symptom.
+{
+  const seen: any[] = [];
+  const send = (async (_k: any, upstream: string, _m: any, _t: any, label: string, sid: string, tools: any) => {
+    seen.push({ upstream, tools });
+    return new Response("streamed:" + label, { headers: { "X-ZYRAXON-Model": label } });
+  }) as any;
+
+  const tools = [
+    {
+      type: "function",
+      function: {
+        name: "write_file",
+        description: "Write a file",
+        parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"] },
+      },
+    },
+  ];
+  const res = await brandChatStream(
+    "zyraxon-apex",
+    [{ role: "user", content: "make a file" }],
+    undefined,
+    { send, resolve: resolveTo("zyraxon-apex", ["beam-free"]), tools },
+  );
+  check("a turn with caller tools succeeds", res.status === 200, res.status);
+  check("the caller tool reached the upstream", seen[0]?.tools?.[0]?.function?.name === "write_file", JSON.stringify(seen[0]?.tools));
+  await res.text();
+}
+
+// Without caller tools the SDK path is still used, so the caller-tool routing
+// does not change the behaviour of an ordinary turn.
+{
+  const seen: any[] = [];
+  const send = (async (_k: any, upstream: string, _m: any, _t: any, label: string, sid: string, tools: any) => {
+    seen.push(tools);
+    return new Response("streamed:" + label, { headers: { "X-ZYRAXON-Model": label } });
+  }) as any;
+  const res = await brandChatStream(
+    "zyraxon-apex",
+    [{ role: "user", content: "hi" }],
+    undefined,
+    { send, resolve: resolveTo("zyraxon-apex", ["beam-free"]) },
+  );
+  check("a tool-less turn passes no tools", seen[0] === undefined, JSON.stringify(seen[0]));
+  await res.text();
 }
 
 console.log("\n" + (failures === 0 ? "ALL TURN CHECKS PASSED" : failures + " CHECK(S) FAILED"));

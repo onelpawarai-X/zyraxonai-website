@@ -7,6 +7,11 @@ const CORS = {
   "Access-Control-Allow-Methods": "GET,OPTIONS",
 };
 
+/** The ZYRAXON provider line went live on 2026-10-19 (commit 2dd4557, "Rooted
+ *  ZYRAXON provider over OpenCode Zen free pool"). Published here so a client
+ *  can answer "since when?" without reading the repo history. */
+const PROVIDER_SINCE = "2026-10-19";
+
 /** The model catalogue a caller reads. Ten ZYRAXON models, nothing else —
  *  upstream names are an implementation detail and stay server-side. */
 export const Route = createFileRoute("/api/public/zyraxon/v1/models")({
@@ -14,11 +19,20 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/models")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       GET: async () => {
-        const created = Math.floor(Date.now() / 1000);
+        // Stable across requests: derived from the provider's launch date, not
+        // from `Date.now()`, so a catalogue read does not look like ten models
+        // that were all created this second.
+        const created = Math.floor(Date.parse(`${PROVIDER_SINCE}T00:00:00Z`) / 1000);
         const brands = await brandCatalogue();
         return Response.json(
           {
             object: "list",
+            provider: {
+              id: "zyraxon",
+              name: "ZYRAXON",
+              since: PROVIDER_SINCE,
+              endpoint: "/api/public/zyraxon/v1",
+            },
             data: brands.map((b) => ({
               id: b.id,
               object: "model",
@@ -32,6 +46,13 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/models")({
               permission: [],
               root: b.id,
               parent: null,
+              // ZYRAXON extensions: the modalities the model accepts and its
+              // live token limits. A client that only knows OpenAI ignores them;
+              // one that sends media can use them to pick a model.
+              context_window: b.context,
+              max_output_tokens: b.output,
+              input_modalities: b.modalities,
+              reasoning: b.reasoning,
             })),
           },
           { headers: { ...CORS, "Cache-Control": "public, max-age=300" } },

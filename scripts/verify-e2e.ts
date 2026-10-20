@@ -42,7 +42,7 @@ try {
       [{ role: "user", content: "hello" }],
       "test-key",
       undefined,
-      served("zyraxon-apex", ["beam-free"]),
+      { resolve: served("zyraxon-apex", ["beam-free"]) },
     );
     const body = await drain(res);
     const visit = requests.filter((r) => r.url.endsWith("/chat/completions")).slice(-1)[0];
@@ -71,8 +71,7 @@ try {
       "zyraxon-apex",
       [{ role: "user", content: "hi" }],
       undefined,
-      undefined,
-      served("zyraxon-apex", ["beam-free", "big-pickle"]),
+      { resolve: served("zyraxon-apex", ["beam-free", "big-pickle"]) },
     );
     const body = await drain(res);
     const visited = requests
@@ -96,8 +95,7 @@ try {
       "zyraxon-apex",
       [{ role: "user", content: "hi" }],
       undefined,
-      undefined,
-      served("zyraxon-apex", ["beam-free", "big-pickle"]),
+      { resolve: served("zyraxon-apex", ["beam-free", "big-pickle"]) },
     );
     const body = await res.json();
     check("E2E full gate answers 503", res.status === 503, res.status);
@@ -106,6 +104,67 @@ try {
     check("the brand is named, not the upstream", body.error.model === "zyraxon-apex");
     check("the message says what is actually wrong", /OPENCODE_ZEN_API_KEY/.test(body.error.message));
   }
+  // -----------------------------------------------------------------
+  // E2E-4: an audio turn has no AI-SDK part, so it must go out on the raw
+  // wire path. The upstream must receive `input_audio`, and the reply must
+  // still be labelled as the ZYRAXON brand.
+  // -----------------------------------------------------------------
+  setScenario("ok");
+  {
+    requests.length = 0;
+    const audio = [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "transcribe" },
+          { type: "input_audio", input_audio: { data: "AAAA", format: "wav" } },
+        ],
+      },
+    ];
+    const res = await brandChatStream(
+      "zyraxon-apex",
+      audio as any,
+      "test-key",
+      { resolve: served("zyraxon-apex", ["beam-free"]) },
+    );
+    const body = await drain(res);
+    const visit = requests.filter((r) => r.url.endsWith("/chat/completions")).slice(-1)[0];
+    check("E2E audio turn is answered on the wire path", res.status === 200, res.status);
+    check("the upstream received the raw audio part", /"input_audio"/.test(visit.body), visit.body.slice(0, 200));
+    check("the reply is still labelled with the brand", body.includes("ZYRAXON Apex"), body.slice(0, 80));
+  }
+
+  // -----------------------------------------------------------------
+  // E2E-5: the non-streaming wire path. A `stream: false` audio turn must
+  // drain the upstream SSE and answer with one `chat.completion` object,
+  // not a stream.
+  // -----------------------------------------------------------------
+  setScenario("ok");
+  {
+    requests.length = 0;
+    const audio = [
+      {
+        role: "user",
+        content: [{ type: "input_audio", input_audio: { data: "AAAA", format: "wav" } }],
+      },
+    ];
+    const res = await brandChatStream(
+      "zyraxon-apex",
+      audio as any,
+      "test-key",
+      { stream: false, resolve: served("zyraxon-apex", ["beam-free"]) },
+    );
+    const json = await res.json();
+    check("E2E non-streaming wire turn answers 200", res.status === 200, res.status);
+    check("the body is a chat.completion object", json.object === "chat.completion", json.object);
+    check(
+      "the drained text is assembled from the chunks",
+      json.choices?.[0]?.message?.content === "Hello from the mock upstream.",
+      json.choices?.[0]?.message?.content,
+    );
+    check("the finish reason is carried through", json.choices?.[0]?.finish_reason === "stop", json.choices?.[0]?.finish_reason);
+  }
+
 } finally {
   server.close();
 }
