@@ -111,6 +111,57 @@ export const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
 
 const TERMUX_SETUP = `curl -fsSL ${API_ORIGIN}/integrations/termux-setup.sh | bash`;
 
+/** The Termux chat box, as shown in the docs and on the provider page. Kept
+ *  short on purpose: the full command list lives in the client's own /help, so
+ *  this only has to show what it looks like to use it. */
+const TERMUX_CHAT = `$ zyraxon
+
+  ZYRAXON  ·  chat
+  model zyraxon-codex   ·   tools off
+  /help for commands, /exit to leave
+
+you> explain what this repo does in three bullets
+zyraxon> 1. It is a marketing and tooling site for the ZYRAXON desktop agent.
+         2. Provider routes live under src/routes/api/public/zyraxon/v1.
+         3. The docs are data files under src/lib/docs.
+
+you> /agent on
+tools on
+you> make hello.py that prints hi, then run it
+  -> write_file
+write hello.py (24 bytes)? [y/N] y
+  -> run_shell
+run: python3 hello.py ? [y/N] y
+Done — it printed: hi
+
+you> /model 2
+model is now zyraxon-apex
+
+you> /exit
+bye`;
+
+const TERMUX_COMMANDS = `Commands inside the chat box
+  /help            show this list
+  /models          list every model the provider serves
+  /model <n|id>    switch model — by number from /models, or by id
+  /agent [on|off]  toggle tool calling (read, write, run) for the session
+  /new             forget the conversation and start fresh
+  /history         how many messages are in the conversation
+  /save <file>     write the conversation to a file as JSON
+  /exit            leave (also /quit)
+
+Anything else you type is sent to the model.
+
+One-shot, from the shell
+  zyraxon "explain this repo"            stream one answer and exit
+  zyraxon -a "make hello.py and run it"  one agent turn with tools, then exit
+  zyraxon -m zyraxon-apex "..."          pick a model for one turn
+  echo "what is 2+2?" | zyraxon          read the prompt from stdin
+  zyraxon --models                       list the models
+
+Any model works. The model list is read live, so every id the provider serves
+today is selectable with /model — there is no fixed list in the client.`;
+
 const TOOL_LOOP_TS = `import OpenAI from "openai";
 
 const client = new OpenAI({ baseURL: "${V1_BASE_URL}", apiKey: "${ANY_API_KEY}" });
@@ -632,6 +683,78 @@ const MCP_CLIENT = `// An MCP server, or any agent tool host, can call ZYRAXON a
   ]
 }`;
 
+// LiteLLM and any LiteLLM-based gateway (Open WebUI, LibreChat, Langroid,
+// Dify, Flowise, Continue in LiteLLM mode). LiteLLM refuses a model string
+// with no provider prefix — "LLM Provider NOT provided" — so the model must be
+// written `openai/<id>`, and the `openai/` prefix is what selects the generic
+// OpenAI-compatible handler. The endpoint accepts that prefix.
+const LITELLM_PY = `from litellm import completion
+
+response = completion(
+    # The provider prefix is required: LiteLLM reads it to pick a handler, and
+    # without it you get "LLM Provider NOT provided". The endpoint strips it.
+    model="openai/${DEFAULT_MODEL}",
+    api_base="${V1_BASE_URL}",
+    api_key="${ANY_API_KEY}",
+    messages=[{"role": "user", "content": "Explain what a reverse proxy does."}],
+)
+
+print(response.choices[0].message.content)`;
+
+const LITELLM_CONFIG = `# litellm-config.yaml — a LiteLLM proxy that fronts ZYRAXON.
+#
+# Start it with:  litellm --config litellm-config.yaml --port 4000
+# Then any client pointed at http://localhost:4000/v1 gets the ZYRAXON models,
+# with LiteLLM's own routing, budgets, logging and key management on top.
+model_list:
+  - model_name: zyraxon-apex
+    litellm_params:
+      model: openai/zyraxon-apex
+      api_base: ${V1_BASE_URL}
+      api_key: ${ANY_API_KEY}
+  - model_name: zyraxon-codex
+    litellm_params:
+      model: openai/zyraxon-codex
+      api_base: ${V1_BASE_URL}
+      api_key: ${ANY_API_KEY}
+  - model_name: zyraxon-cyber
+    litellm_params:
+      model: openai/zyraxon-cyber
+      api_base: ${V1_BASE_URL}
+      api_key: ${ANY_API_KEY}
+
+litellm_settings:
+  drop_params: true`;
+
+const LITELLM_ENV = `# Point LiteLLM at ZYRAXON with plain environment variables, no config file.
+# The openai/ prefix in the model string is required by LiteLLM.
+export OPENAI_API_BASE="${V1_BASE_URL}"
+export OPENAI_API_KEY="${ANY_API_KEY}"
+
+python - <<'PY'
+from litellm import completion
+r = completion(model="openai/${DEFAULT_MODEL}",
+               messages=[{"role": "user", "content": "hello"}])
+print(r.choices[0].message.content)
+PY
+
+# Same thing through the LiteLLM CLI:
+litellm --model openai/${DEFAULT_MODEL} --api_base ${V1_BASE_URL} --api_key ${ANY_API_KEY}`;
+
+const LITELLM_MODEL_PREFIX = `# Why the model string needs a provider prefix, and what this endpoint accepts.
+#
+# LiteLLM reads the text before the first "/" to choose a handler. A bare id
+# like "zyraxon-codex" has no "/", so LiteLLM stops with:
+#     BadRequestError: LLM Provider NOT provided
+# Write "openai/zyraxon-codex" and it uses the generic OpenAI-compatible path.
+#
+# This endpoint is tolerant: all of these resolve to the same ZYRAXON model.
+#   zyraxon-codex
+#   openai/zyraxon-codex
+#   zyraxon/zyraxon-codex
+#   zyraxon/codex
+#   openai/zyraxon/codex`;
+
 export const INTEGRATIONS: Integration[] = [
   // ───────────────────────── TERMINAL & MOBILE ─────────────────────────
   {
@@ -639,8 +762,8 @@ export const INTEGRATIONS: Integration[] = [
     name: "Termux (Android)",
     category: "Terminal & Mobile",
     blurb:
-      "Run ZYRAXON from the terminal on an Android phone. The setup script installs curl and jq, stores your base URL, and adds a `zyraxon` command that streams a reply or runs a tool-calling agent loop.",
-    tags: ["Android", "Shell", "Tool calls", "Streaming"],
+      "Run ZYRAXON from the terminal on an Android phone. The setup script installs curl and jq, stores your settings, and adds a `zyraxon` command that opens an interactive chat box — type a message, get a streamed reply, switch models, and turn on tool calling so the agent can read, write and run things on the phone.",
+    tags: ["Android", "Chat box", "Any model", "Tool calls"],
     download: {
       href: "/integrations/termux-setup.sh",
       label: "termux-setup.sh",
@@ -648,18 +771,21 @@ export const INTEGRATIONS: Integration[] = [
     steps: [
       "Install Termux from F-Droid (the Play Store build is abandoned).",
       `Run the setup script: \`${TERMUX_SETUP}\``,
-      "Open a new shell, or run `source ~/.bashrc`, so the `zyraxon` command is on your PATH.",
-      'Ask something: `zyraxon "explain this repo in three bullets"`.',
-      "Add `-a` for the agent loop, which lets the model call `read_file`, `write_file` and `run_shell` on the device.",
+      "Open a new shell, or run `source ~/.bashrc`, so `zyraxon` is on your PATH.",
+      "Run `zyraxon` with no arguments to open the chat box, then just type.",
+      "Use `/models` and `/model` to pick any model the provider serves, and `/agent on` to let it read, write and run commands on the device.",
     ],
     snippets: [
+      { label: "The chat box", lang: "text", code: TERMUX_CHAT },
+      { label: "Commands", lang: "text", code: TERMUX_COMMANDS },
       {
         label: "Setup",
         lang: "bash",
-        code: `# One command. Installs deps, writes ~/.zyraxon/env, adds the command.
+        code: `# One command. Installs deps, writes ~/.zyraxon/env, installs the client.
 ${TERMUX_SETUP}
 
 # Then, from any directory:
+zyraxon                                  # open the chat box
 zyraxon "summarise the changes in this repo"
 zyraxon -a "create a hello world python file and run it"
 echo "what is 2+2?" | zyraxon`,
@@ -673,6 +799,10 @@ pkg install -y curl jq python
 export ZYRAXON_BASE="${V1_BASE_URL}"
 export ZYRAXON_MODEL="${DEFAULT_MODEL}"
 export ZYRAXON_KEY="${ANY_API_KEY}"
+
+# The client on its own, without the installer:
+curl -fsSL ${API_ORIGIN}/integrations/zyraxon-chat.sh -o ~/.local/bin/zyraxon
+chmod +x ~/.local/bin/zyraxon
 
 curl -s "\${ZYRAXON_BASE}/models" | jq -r '.data[].id'`,
       },
@@ -691,8 +821,10 @@ echo`,
       },
     ],
     notes: [
+      "The chat box keeps the conversation, so follow-up questions work. `/new` clears it.",
+      "Every model is selectable: the client reads the model list live, so there is no hardcoded list to go stale.",
       "Termux has no GPU and no browser, so keep media on the phone small. Images under 2 MB inline work; video should be compressed before sending.",
-      "The agent loop only runs the three tools the script defines. It is deliberately not a general shell escape hatch — edit the script if you want more.",
+      "In agent mode the client runs three tools — read, write, run — and asks before it writes or executes anything. It is deliberately not a general shell escape hatch.",
       "Android may kill Termux in the background. Run `termux-wake-lock` before a long agent turn.",
     ],
   },
@@ -979,6 +1111,40 @@ curl -s ${PROVIDER_URL}    | jq '{modalities, concurrency, fleet}'`,
     snippets: [
       { label: "Python", lang: "python", code: LANGCHAIN_PY },
       { label: "JavaScript", lang: "typescript", code: LANGCHAIN_JS },
+    ],
+  },
+  {
+    id: "litellm",
+    name: "LiteLLM (and Open WebUI, LibreChat, Dify, Flowise)",
+    category: "SDKs & Frameworks",
+    blurb:
+      'LiteLLM refuses a model string without a provider prefix — that is the "LLM Provider NOT provided" error. Write the model as `openai/zyraxon-codex` and it uses the generic OpenAI-compatible handler. Every LiteLLM-based gateway (Open WebUI, LibreChat, Dify, Flowise, Langroid) connects the same way.',
+    tags: ["Python", "Proxy", "Open WebUI", "Gateways"],
+    fields: [
+      {
+        label: "Model",
+        value: `openai/${DEFAULT_MODEL}`,
+        note: "The `openai/` prefix is required by LiteLLM.",
+      },
+      { label: "API base / api_base", value: V1_BASE_URL },
+      { label: "API key", value: ANY_API_KEY },
+    ],
+    steps: [
+      "Use the model string with its provider prefix: `openai/zyraxon-codex`. Without a prefix LiteLLM stops before it ever calls us.",
+      `Set the API base to \`${V1_BASE_URL}\` and the key to any non-empty value.`,
+      "For a gateway like Open WebUI, add a custom OpenAI connection with those same values and reload.",
+      "To front the whole line with LiteLLM's own proxy, use the config file below.",
+    ],
+    snippets: [
+      { label: "Python", lang: "python", code: LITELLM_PY },
+      { label: "litellm-config.yaml", lang: "yaml", code: LITELLM_CONFIG },
+      { label: "Environment", lang: "bash", code: LITELLM_ENV },
+      { label: "Model id rules", lang: "text", code: LITELLM_MODEL_PREFIX },
+    ],
+    notes: [
+      "The endpoint is tolerant of the prefix: `zyraxon-codex`, `openai/zyraxon-codex`, `zyraxon/zyraxon-codex` and `zyraxon/codex` all resolve to the same model.",
+      "`drop_params: true` in the proxy config avoids LiteLLM sending parameters an OpenAI-compatible endpoint may not accept.",
+      "This is the integration to reach for when a client insists on a `provider/model` string.",
     ],
   },
 

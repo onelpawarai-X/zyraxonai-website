@@ -127,15 +127,30 @@ describes how is `src/lib/providers/integrations.ts` — one module read by the
 `GET /api/public/zyraxon/v1/integrations`. Add a platform there and it appears in
 all three; do not hand-write a snippet into a page.
 
-`public/integrations/termux-setup.sh` and `public/integrations/kali-ask.sh` are
-real, runnable clients, not illustrations. Both are exercised against the live
-endpoint during development. Two bugs they caught that are easy to reintroduce:
+`public/integrations/termux-setup.sh`, `public/integrations/zyraxon-chat.sh` and
+`public/integrations/kali-ask.sh` are real, runnable clients, not illustrations.
+All three are exercised during development (the chat client is driven over a pty).
+Two bugs they caught that are easy to reintroduce:
 
 - A `... | while read` loop runs in a subshell, so any variable it updates is
-  discarded. The Termux agent loop accumulates the message history inside the
-  loop, so it uses process substitution (`done < <(...)`) instead. With a pipe
-  the model is handed the same history every turn and repeats its tool call.
+  discarded. The agent loop accumulates the message history inside the loop, so
+  it uses process substitution (`done < <(...)`) instead. With a pipe the model
+  is handed the same history every turn and repeats its tool call.
 - Only a JSON object can carry an error. A streaming response is SSE (`data: `
   frames), and feeding that to `jq` exits non-zero, which under `set -e` kills
   the script. Guard with a `case "$raw" in \{*)` before parsing.
+
+`termux-setup.sh` downloads `zyraxon-chat.sh` rather than inlining it, so the
+installed client and the served file cannot drift apart.
+
+### The model id is deliberately tolerant
+
+Clients differ on how they spell a model. LiteLLM requires a `provider/model`
+string and refuses a bare id with `BadRequestError: LLM Provider NOT provided`;
+other clients send the bare id. `canonicalBrandId()` in `zyraxon-brands.ts`
+resolves both — `zyraxon-codex`, `openai/zyraxon-codex`, `zyraxon/zyraxon-codex`
+and `zyraxon/codex` all reach the same brand. `isBrand` and `getBrand` go through
+it, so accepting a new wrapper is a one-line change in one place. Do not narrow
+this back to an exact match: it reintroduces the most common connection failure.
+`verify-integrations.ts` asserts every spelling still resolves.
 
