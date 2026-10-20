@@ -165,6 +165,50 @@ try {
     check("the finish reason is carried through", json.choices?.[0]?.finish_reason === "stop", json.choices?.[0]?.finish_reason);
   }
 
+  // -----------------------------------------------------------------
+  // E2E-6: a tool round-trip. The client sends the assistant's tool call and
+  // the tool result back; both must reach the upstream intact, or the model
+  // cannot match a result to its call and repeats the same call forever.
+  // -----------------------------------------------------------------
+  setScenario("ok");
+  {
+    requests.length = 0;
+    const toolTurn = [
+      { role: "user", content: "Save a file." },
+      {
+        role: "assistant",
+        content: null,
+        tool_calls: [
+          {
+            id: "call_1",
+            type: "function",
+            function: { name: "write_file", arguments: '{"path":"a.txt","content":"hi"}' },
+          },
+        ],
+      },
+      { role: "tool", tool_call_id: "call_1", content: "wrote a.txt" },
+    ];
+    const res = await brandChatStream(
+      "zyraxon-apex",
+      toolTurn as any,
+      "test-key",
+      { stream: false, resolve: served("zyraxon-apex", ["beam-free"]) },
+    );
+    await res.json();
+    const visit = requests.filter((r) => r.url.endsWith("/chat/completions")).slice(-1)[0];
+    check("E2E tool round-trip answers 200", res.status === 200, res.status);
+    check(
+      "the upstream received the assistant tool_calls",
+      /"tool_calls"/.test(visit.body) && /"call_1"/.test(visit.body),
+      visit.body.slice(0, 300),
+    );
+    check(
+      "the upstream received the tool result and its id",
+      /"role":"tool"/.test(visit.body) && /"tool_call_id":"call_1"/.test(visit.body),
+      visit.body.slice(0, 300),
+    );
+  }
+
 } finally {
   server.close();
 }

@@ -110,16 +110,38 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")(
         // Accept both a plain string and the multimodal parts array. Parts are
         // normalised in the provider layer; here we only keep well-formed turns
         // and cap the count so the upstream payload stays bounded.
+        //
+        // `tool` turns and an assistant turn's `tool_calls` are kept, not
+        // dropped: a tool-calling client sends the result back as a `tool`
+        // message, and an upstream that cannot match it to the call refuses the
+        // turn. Filtering those out silently breaks every tool loop.
         const messages = Array.isArray(body?.messages)
           ? body.messages
-              .filter((m: any) => m && ["system", "user", "assistant"].includes(m.role))
-              .filter(
-                (m: any) =>
+              .filter((m: any) => m && ["system", "user", "assistant", "tool"].includes(m.role))
+              .filter((m: any) => {
+                if (m.role === "tool") return true;
+                return (
                   typeof m.content === "string" ||
-                  (Array.isArray(m.content) && m.content.length > 0),
-              )
+                  (Array.isArray(m.content) && m.content.length > 0) ||
+                  (Array.isArray(m.tool_calls) && m.tool_calls.length > 0)
+                );
+              })
               .slice(-MAX_MESSAGES)
-              .map((m: any) => ({ role: m.role, content: normaliseContent(m.content) }))
+              .map((m: any) => {
+                const out: any = { role: m.role, content: normaliseContent(m.content) };
+                if (Array.isArray(m.tool_calls) && m.tool_calls.length) {
+                  out.tool_calls = m.tool_calls.filter(
+                    (c: any) =>
+                      c &&
+                      typeof c.id === "string" &&
+                      c.function &&
+                      typeof c.function.name === "string",
+                  );
+                }
+                if (typeof m.tool_call_id === "string") out.tool_call_id = m.tool_call_id;
+                if (typeof m.name === "string") out.name = m.name;
+                return out;
+              })
           : [];
 
         if (!messages.length) {

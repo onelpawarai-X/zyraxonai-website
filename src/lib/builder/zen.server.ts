@@ -28,8 +28,20 @@ export type ContentPart =
   | { type: "input_audio"; input_audio: { data: string } }
   | { type: "video_url"; video_url: { url: string }; fps?: number };
 export type ChatMessage = {
-  role: "system" | "user" | "assistant";
+  role: "system" | "user" | "assistant" | "tool";
   content: string | ContentPart[];
+  /** Set on an assistant message that is asking for tool calls. Carried through
+   *  so the tool results that follow can be matched to the call that produced
+   *  them; an upstream that cannot match them refuses the turn. */
+  tool_calls?: Array<{
+    id: string;
+    type?: "function";
+    function: { name: string; arguments: string };
+  }>;
+  /** Set on a `role: "tool"` message: which call it answers. */
+  tool_call_id?: string;
+  /** Optional tool name on a `role: "tool"` message. */
+  name?: string;
 };
 export type BuilderAttachment = { name: string; mime: string; data: string };
 export type ZenModel = {
@@ -415,7 +427,9 @@ const GATE_TOOLS_WIRE: WireTool[] = [
       description: "Read the contents of a file.",
       parameters: {
         type: "object",
-        properties: { filePath: { type: "string", description: "The absolute path to the file to read" } },
+        properties: {
+          filePath: { type: "string", description: "The absolute path to the file to read" },
+        },
         required: ["filePath"],
       },
     },
@@ -620,7 +634,6 @@ function sseFromOpenAI(body: ReadableStream<Uint8Array>, label: string) {
   });
 }
 
-
 /** Post a chat turn to the upstream in raw OpenAI wire form and return the raw
  *  SSE `Response`.
  *
@@ -700,7 +713,11 @@ async function drainOpenAi(body: ReadableStream<Uint8Array>, upstream: string, l
       const payload = line.slice(5).trim();
       if (!payload) continue;
       let j: any = null;
-      try { j = JSON.parse(payload); } catch { continue; }
+      try {
+        j = JSON.parse(payload);
+      } catch {
+        continue;
+      }
       const ch = j?.choices?.[0];
       const d = ch?.delta || {};
       if (typeof d.content === "string" && d.content) {
@@ -742,10 +759,14 @@ async function drainOpenAi(body: ReadableStream<Uint8Array>, upstream: string, l
     for (const c of chunks) handleEvent(c);
   }
   if (buffer.trim()) handleEvent(buffer);
-  try { reader.releaseLock(); } catch {}
+  try {
+    reader.releaseLock();
+  } catch {}
 
   if (!sawActivity) {
-    return { failed: { upstream, status: 502, detail: `empty upstream stream from ${label || upstream}` } };
+    return {
+      failed: { upstream, status: 502, detail: `empty upstream stream from ${label || upstream}` },
+    };
   }
 
   const message: any = { role: "assistant", content: text || reasoning };

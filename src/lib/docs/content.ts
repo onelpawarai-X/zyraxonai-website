@@ -1,4 +1,5 @@
 import { PROVIDER_DOCS } from "./provider-docs";
+import { PROVIDER_INTEGRATION_DOCS } from "./provider-integration-docs";
 
 export type DocBlock =
   | { t: "h2"; text: string }
@@ -29,6 +30,7 @@ export const DOC_GROUPS = [
 export const DOCS: DocPage[] = [
   // ─────────────────────── ZYRAXON PROVIDER ───────────────────────────
   ...PROVIDER_DOCS,
+  ...PROVIDER_INTEGRATION_DOCS,
   // ─────────────────────────────── START ───────────────────────────────
   {
     slug: "getting-started",
