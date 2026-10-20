@@ -12,10 +12,14 @@
 
 import {
   DEFAULT_MEDIA_BUDGET,
+  MAX_MEDIA_BODY_BYTES,
+  MAX_MEDIA_PARTS,
+  fitBitrateKbps,
   planMedia,
   sliceName,
   videoSliceCount,
   sliceWindows,
+  trimToBodyBudget,
   type MediaBudget,
 } from "./media";
 
@@ -148,11 +152,21 @@ export async function compressVideo(
   const ext = (name.match(/\.([a-z0-9]{1,5})$/i)?.[1] || "mp4").toLowerCase();
   const input = `in.${ext}`;
   const compressed = "out.mp4";
-  const videoKbps = options.videoKbps ?? 700;
   const maxWidth = options.maxWidth ?? 1280;
 
   try {
     await ff.writeFile(input, dataUrlToBytes(original));
+
+    // Size the bitrate to the duration, not to a fixed constant. A fixed
+    // bitrate cannot fit a long recording into the request budget at all: two
+    // hours at 700 kbps is ~630 MB of video, which no amount of slicing makes
+    // sendable. Knowing the duration up front lets the encoder aim the whole
+    // output at the budget the rest of the pipeline actually enforces.
+    const duration = await probeDurationSeconds(ff, original);
+    const targetBytes = MAX_MEDIA_PARTS * budget.partTarget;
+    const audioKbps = duration > 600 ? 32 : 96;
+    const videoKbps = options.videoKbps ?? fitBitrateKbps(targetBytes, duration, audioKbps);
+
     await ff.exec([
       "-i",
       input,
@@ -167,7 +181,7 @@ export async function compressVideo(
       "-c:a",
       "aac",
       "-b:a",
-      "96k",
+      `${audioKbps}k`,
       "-movflags",
       "+faststart",
       compressed,
@@ -188,10 +202,9 @@ export async function compressVideo(
       };
     }
 
-    // Still too large: probe the duration, then cut it into near-equal slices.
-    const duration = await probeDurationSeconds(ff, original);
+    // Still too large: cut it into near-equal slices in playback order.
     const count = videoSliceCount(duration, outBytes.byteLength, budget);
-    const slices = await sliceVideo(ff, outBytes, count, name, duration);
+    const slices = await sliceMedia(ff, outBytes, count, "mp4", duration, "video/mp4");
     if (slices.length <= 1) {
       return {
         parts: [compressedUrl],
@@ -232,22 +245,23 @@ async function probeDurationSeconds(ff: FFmpegLike, originalDataUrl: string): Pr
   return duration;
 }
 
-async function sliceVideo(
+async function sliceMedia(
   ff: FFmpegLike,
-  compressedBytes: Uint8Array,
+  bytes: Uint8Array,
   count: number,
-  baseName: string,
+  outExt: string,
   durationSeconds: number,
+  mime = "video/mp4",
 ): Promise<string[]> {
   if (count <= 1) return [];
   const windows = sliceWindows(durationSeconds, count);
   const out: string[] = [];
-  const src = "slice-src.mp4";
-  await ff.writeFile(src, compressedBytes);
+  const src = `slice-src.${outExt}`;
+  await ff.writeFile(src, bytes);
   try {
     for (let i = 0; i < windows.length; i++) {
       const w = windows[i];
-      const outName = sliceName(baseName, i, "mp4");
+      const outName = `slice-out-${i}.${outExt}`;
       await ff.exec([
         "-ss",
         String(w.start),
@@ -262,8 +276,8 @@ async function sliceVideo(
         outName,
       ]);
       const data = await ff.readFile(outName);
-      const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
-      if (bytes.byteLength > 0) out.push(bytesToDataUrl(bytes, "video/mp4"));
+      const sliceBytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
+      if (sliceBytes.byteLength > 0) out.push(bytesToDataUrl(sliceBytes, mime));
       await ff.deleteFile(outName).catch(() => {});
     }
   } finally {
@@ -274,6 +288,24 @@ async function sliceVideo(
 
 const MB = 1024 * 1024;
 const fmtMb = (n: number) => `${(n / MB).toFixed(1)} MB`;
+
+/** Trim a prepared set to what one request can actually carry.
+ *
+ *  The planner caps part count, but a compressed video's bitrate is not known
+ *  until it is encoded, so the encoded total can still overrun the body cap.
+ *  Dropping the tail here — and saying so — is the honest failure: the caller
+ *  sees which parts were sent, instead of the whole turn dying on a 413 after a
+ *  long compression. */
+function finalize(
+  attachments: PreparedAttachment[],
+  notes: string[],
+): Prepared {
+  const { kept, dropped } = trimToBodyBudget(attachments);
+  if (dropped > 0) {
+    notes.push(`Sent the first ${kept.length} of ${attachments.length} parts to stay within the per-request limit.`);
+  }
+  return { attachments: kept, notes };
+}
 
 /** Prepare one user-picked file for the chat routes, whatever its type.
  *
@@ -305,28 +337,39 @@ export async function prepareAttachment(
     } else if (out.action.startsWith("compressed")) {
       notes.push(`${file.name}: compressed ${fmtMb(out.originalBytes)} → ${fmtMb(out.sentBytes)}.`);
     }
-    return {
-      attachments: out.parts.map((data, i) => ({
+    return finalize(
+      out.parts.map((data, i) => ({
         name: out.parts.length > 1 ? sliceName(file.name, i, "mp4") : file.name,
         mime: "video/mp4",
         data,
       })),
       notes,
-    };
+    );
   }
 
   if (mime.startsWith("audio/")) {
     const data = await fileToDataUrl(file);
     if (file.size <= budget.inlineMax) {
-      return { attachments: [{ name: file.name, mime, data }], notes };
+      return finalize([{ name: file.name, mime, data }], notes);
     }
     const shrunk = await compressAudio(file, options);
-    if (shrunk) {
-      notes.push(`${file.name}: compressed ${fmtMb(file.size)} → ${fmtMb(shrunk.bytes)}.`);
-      return { attachments: [{ name: file.name, mime: "audio/wav", data: shrunk.data }], notes };
+    if (!shrunk) {
+      notes.push(`${file.name}: ${fmtMb(file.size)} exceeds the limit and could not be compressed in this browser.`);
+      return { attachments: [], notes };
     }
-    notes.push(`${file.name}: ${fmtMb(file.size)} exceeds the limit and could not be compressed in this browser.`);
-    return { attachments: [], notes };
+    if (shrunk.parts.length > 1) {
+      notes.push(`${file.name}: compressed and split into ${shrunk.parts.length} parts (${fmtMb(file.size)} → ${fmtMb(shrunk.bytes)}).`);
+    } else {
+      notes.push(`${file.name}: compressed ${fmtMb(file.size)} → ${fmtMb(shrunk.bytes)}.`);
+    }
+    return finalize(
+      shrunk.parts.map((part, i) => ({
+        name: shrunk.parts.length > 1 ? sliceName(file.name, i, shrunk.ext) : file.name,
+        mime: shrunk.mime,
+        data: part,
+      })),
+      notes,
+    );
   }
 
   // Images and PDFs are not transcoded here; they are small enough that the
@@ -336,36 +379,72 @@ export async function prepareAttachment(
     notes.push(`${file.name}: ${fmtMb(file.size)} exceeds the per-request limit.`);
     return { attachments: [], notes };
   }
-  return { attachments: [{ name: file.name, mime: mime || "application/octet-stream", data }], notes };
+  return finalize([{ name: file.name, mime: mime || "application/octet-stream", data }], notes);
 }
 
-/** Transcode audio down to mono 16 kHz WAV, the shape speech models want. Returns
- *  null when ffmpeg is unavailable or the file cannot be decoded, so the caller
- *  can fall back rather than fail. */
+/** Transcode audio down to a compact speech codec and, when it is still too
+ *  large, cut it into ordered slices.
+ *
+ *  MP3 at a low mono bitrate is the target, not WAV: a WAV of a one-hour
+ *  recording is well over a hundred megabytes, so "compressing" to WAV made a
+ *  large file larger and guaranteed the upload was rejected. Returns null when
+ *  ffmpeg is unavailable or the file cannot be decoded, so the caller can fall
+ *  back rather than fail. */
 async function compressAudio(
   file: File,
   options: CompressOptions,
-): Promise<{ data: string; bytes: number } | null> {
+): Promise<{ data: string; bytes: number; parts: string[]; mime: string; ext: string } | null> {
   let ff: FFmpegLike;
   try {
     ff = await loadFFmpeg(options.onLog);
   } catch {
     return null;
   }
+  const budget = options.budget ?? DEFAULT_MEDIA_BUDGET;
   const original = await fileToDataUrl(file);
   const ext = (file.name.match(/\.([a-z0-9]{1,5})$/i)?.[1] || "bin").toLowerCase();
   const input = `audio-in.${ext}`;
-  const output = "audio-out.wav";
+  // mp3 first: it is the format the wire shape names, and libmp3lame is in the
+  // bundled core. AAC in m4a is the fallback when the core lacks the encoder.
+  const codecs: Array<{ ext: string; mime: string; args: string[] }> = [
+    { ext: "mp3", mime: "audio/mpeg", args: ["-c:a", "libmp3lame", "-b:a", "48k", "-ac", "1", "-ar", "16000"] },
+    { ext: "m4a", mime: "audio/mp4", args: ["-c:a", "aac", "-b:a", "48k", "-ac", "1", "-ar", "16000"] },
+  ];
   try {
     await ff.writeFile(input, dataUrlToBytes(original));
-    await ff.exec(["-i", input, "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", output]);
-    const data = await ff.readFile(output);
-    const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
-    return { data: bytesToDataUrl(bytes, "audio/wav"), bytes: bytes.byteLength };
+    for (const codec of codecs) {
+      const output = `audio-out.${codec.ext}`;
+      try {
+        await ff.exec(["-i", input, ...codec.args, output]);
+        const data = await ff.readFile(output);
+        const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
+        await ff.deleteFile(output).catch(() => {});
+        if (!bytes.byteLength) continue;
+        const encoded = bytesToDataUrl(bytes, codec.mime);
+        const after = planMedia(bytes.byteLength, budget);
+        if (after.parts <= 1) {
+          return { data: encoded, bytes: bytes.byteLength, parts: [encoded], mime: codec.mime, ext: codec.ext };
+        }
+        const duration = await probeDurationSeconds(ff, original);
+        const slices = await sliceMedia(ff, bytes, after.parts, codec.ext, duration);
+        if (slices.length > 1) {
+          return {
+            data: encoded,
+            bytes: bytes.byteLength,
+            parts: slices,
+            mime: codec.mime,
+            ext: codec.ext,
+          };
+        }
+        return { data: encoded, bytes: bytes.byteLength, parts: [encoded], mime: codec.mime, ext: codec.ext };
+      } catch {
+        // Try the next codec.
+      }
+    }
+    return null;
   } catch {
     return null;
   } finally {
     await ff.deleteFile(input).catch(() => {});
-    await ff.deleteFile(output).catch(() => {});
   }
 }

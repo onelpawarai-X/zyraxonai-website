@@ -340,13 +340,20 @@ export type MediaBudget = {
   maxParts: number;
 };
 
+/** Largest number of media parts one turn may carry. The UI, the chat route and
+ *  the media planner all read this one constant, so a file that ffmpeg cuts into
+ *  N parts is never silently trimmed to fewer by a narrower cap downstream. */
+export const MAX_MEDIA_PARTS = 12;
+
 export const DEFAULT_MEDIA_BUDGET: MediaBudget = {
-  // A single base64 data URL inflates 33%; keeping the raw payload at ~8 MiB
-  // holds the whole JSON body under the 12 MiB request cap with room for text.
-  inlineMax: 8 * 1024 * 1024,
+  // A single base64 data URL inflates 33%, so the encoded payload is what the
+  // request body actually pays for. The cap is chosen against
+  // MAX_MEDIA_BODY_BYTES below: MAX_MEDIA_PARTS parts at this size, plus base64
+  // inflation and text, still fits the body cap with room to spare.
+  inlineMax: 2 * 1024 * 1024,
   hardMax: 2 * 1024 * 1024 * 1024,
-  partTarget: 6 * 1024 * 1024,
-  maxParts: 24,
+  partTarget: 2 * 1024 * 1024,
+  maxParts: MAX_MEDIA_PARTS,
 };
 
 /** Decide how to send one media file. Large video is compressed first and then
@@ -402,4 +409,68 @@ export function sliceName(base: string, index: number, ext = "mp4"): string {
     .replace(/\.[a-z0-9]{1,5}$/i, "")
     .replace(/[^a-z0-9_-]+/gi, "_");
   return `${stem || "media"}_part${String(index + 1).padStart(2, "0")}.${ext}`;
+}
+
+/** Request-body ceiling shared by both chat routes.
+ *
+ *  This is the number the media budget is sized against, and the reason it is
+ *  exported: when the two disagreed, a large video was compressed and sliced
+ *  correctly and then the whole request was refused with a 413 because the
+ *  sliced parts did not fit under a smaller, unrelated cap. */
+export const MAX_MEDIA_BODY_BYTES = 40 * 1024 * 1024;
+
+/** Bytes a payload costs once base64-encoded, which is what the body cap sees. */
+export function encodedBytes(bytes: number): number {
+  return Math.ceil(bytes * BASE64_RATIO);
+}
+
+/** The video bitrate, in kbps, that fits `targetBytes` of encoded output into
+ *  `durationSeconds` of video.
+ *
+ *  Clamped to [50, 4000]: below 50 kbps the picture is useless, and above 4000
+ *  there is no point when the pipeline is going to re-encode anyway. A zero or
+ *  unknown duration cannot be sized, so it falls back to a middle rate rather
+ *  than to 0 (which would ask the encoder for an empty file). */
+export function fitBitrateKbps(
+  targetBytes: number,
+  durationSeconds: number,
+  audioKbps = 96,
+): number {
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) return 700;
+  // targetBytes is the *raw* payload; the encoded payload is larger by the
+  // base64 ratio, so convert back to the raw budget the encoder may spend.
+  const rawKbits = (targetBytes * 8) / BASE64_RATIO / 1000;
+  const videoKbps = Math.floor(rawKbits / durationSeconds) - audioKbps;
+  return Math.max(50, Math.min(4000, videoKbps));
+}
+
+/** Total encoded size of a set of attachments, for a pre-flight size check. */
+export function attachmentsBodyBytes(
+  attachments: Array<{ data: string }>,
+): number {
+  let total = 0;
+  for (const a of attachments) {
+    const comma = a.data.indexOf(",");
+    const payload = comma >= 0 ? a.data.length - comma - 1 : a.data.length;
+    total += payload;
+  }
+  return total;
+}
+
+/** Reduce a set of parts to what one request can actually carry.
+ *
+ *  The planner caps the part count, but an encoder's real output size is only
+ *  known after it runs, and a very long recording cannot be shrunk below a
+ *  usable bitrate at all. When that happens the honest move is to send as many
+ *  leading parts as fit and report the rest, rather than send an over-cap body
+ *  (which the server refuses) or silently drop the tail (which the caller never
+ *  learns about). Returns the kept parts and how many were dropped. */
+export function trimToBodyBudget<T extends { data: string }>(
+  attachments: T[],
+  maxParts: number = MAX_MEDIA_PARTS,
+  maxBytes: number = MAX_MEDIA_BODY_BYTES,
+): { kept: T[]; dropped: number } {
+  const kept = attachments.slice(0, Math.max(1, maxParts));
+  while (kept.length > 1 && attachmentsBodyBytes(kept) > maxBytes) kept.pop();
+  return { kept, dropped: attachments.length - kept.length };
 }

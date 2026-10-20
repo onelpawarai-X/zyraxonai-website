@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { MAX_MEDIA_PARTS } from "@/lib/providers/media";
 import {
   prepareAttachment,
   type PreparedAttachment,
@@ -104,12 +105,17 @@ export default function BludarPage() {
   const preview = useMemo(() => makePreview(files), [files]);
 
   /** Prepare a picked file on the client. Video is compressed and, if still
-   *  oversized, sliced; audio is transcoded when it is too big. Doing this here
-   *  means a one-hour recording becomes a handful of model-sized parts instead
-   *  of a request the server must reject. */
+   *  oversized, sliced; audio is transcoded and sliced; PDFs pass through. Doing
+   *  this here means a one-hour recording becomes a handful of model-sized parts
+   *  instead of a request the server must reject.
+   *
+   *  The retained set is bounded by MAX_MEDIA_PARTS — the same constant the
+   *  server enforces — so the parts ffmpeg produced are the parts that get sent.
+   *  A tighter local cap here is what silently dropped the tail of a long video. */
   const attach = async (picked: FileList | null) => {
     if (!picked?.length) return;
     setError("");
+    setNotes([]);
     const prepared: PreparedAttachment[] = [];
     const said: string[] = [];
     for (const file of Array.from(picked).slice(0, 4)) {
@@ -117,7 +123,11 @@ export default function BludarPage() {
       prepared.push(...out.attachments);
       said.push(...out.notes);
     }
-    setAttachments((a) => [...a, ...prepared].slice(0, 6));
+    const kept = prepared.slice(0, MAX_MEDIA_PARTS);
+    if (kept.length < prepared.length) {
+      said.push(`Only the first ${kept.length} of ${prepared.length} parts were kept — that is the per-message limit.`);
+    }
+    setAttachments((a) => [...a, ...kept].slice(0, MAX_MEDIA_PARTS));
     setNotes(said);
   };
   const send = async () => {

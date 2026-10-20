@@ -7,6 +7,12 @@
 import {
   collectMedia,
   dataUrlBytes,
+  DEFAULT_MEDIA_BUDGET,
+  MAX_MEDIA_BODY_BYTES,
+  MAX_MEDIA_PARTS,
+  attachmentsBodyBytes,
+  encodedBytes,
+  fitBitrateKbps,
   fitsModalities,
   normaliseContent,
   normalisePart,
@@ -16,6 +22,7 @@ import {
   sliceWindows,
   toSdkContent,
   toWireContent,
+  trimToBodyBudget,
   videoSliceCount,
 } from "../src/lib/providers/media";
 import {
@@ -171,6 +178,60 @@ const PDF = "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MK";
   })());
   check("a long video yields more slices", videoSliceCount(3600, 1024 * 1024 * 1024) > videoSliceCount(60, 1024 * 1024));
   check("a tiny video is one slice", videoSliceCount(30, 1024) === 1);
+}
+
+// ── 4b. the size invariants that make a large upload actually sendable ──────
+{
+  // The whole pipeline has to agree on one ceiling. These checks fail the moment
+  // someone raises a part cap in one place and not another, which is exactly how
+  // a correctly sliced video ended up truncated or refused with a 413.
+  const encodedAll = encodedBytes(MAX_MEDIA_PARTS * DEFAULT_MEDIA_BUDGET.partTarget);
+  check(
+    "a full set of parts fits the request body cap",
+    encodedAll <= MAX_MEDIA_BODY_BYTES,
+    `${encodedAll} vs ${MAX_MEDIA_BODY_BYTES}`,
+  );
+  check(
+    "the planner's part cap is the shared one",
+    DEFAULT_MEDIA_BUDGET.maxParts === MAX_MEDIA_PARTS,
+  );
+
+  // Sizing to the duration is what makes a long-but-sendable recording fit.
+  // One hour at the 50 kbps floor is ~35 MB, inside the cap.
+  const oneHour = fitBitrateKbps(MAX_MEDIA_PARTS * DEFAULT_MEDIA_BUDGET.partTarget, 3600, 32);
+  const oneHourBytes = ((oneHour + 32) * 1000 * 3600) / 8;
+  check("an hour-long video is sized to fit the budget", oneHourBytes <= MAX_MEDIA_BODY_BYTES, `${oneHour} kbps -> ${Math.round(oneHourBytes / 1024 / 1024)} MB`);
+
+  // Past that, the bitrate floor is reached and no rate fits the cap: two hours
+  // needs at least ~45 MB. The helper must still return a usable rate rather
+  // than a negative or zero one, and the trim below is what handles the excess.
+  const twoHours = fitBitrateKbps(MAX_MEDIA_PARTS * DEFAULT_MEDIA_BUDGET.partTarget, 7200, 32);
+  check("a two-hour video is floored at a usable rate, not zero", twoHours === 50, twoHours);
+
+  const short = fitBitrateKbps(MAX_MEDIA_PARTS * DEFAULT_MEDIA_BUDGET.partTarget, 30, 96);
+  check("a short clip is not starved", short >= 300, short);
+  check("an unknown duration falls back, not to zero", fitBitrateKbps(1024, 0) === 700);
+
+  // The encoded body of a set of attachments is what the cap measures.
+  const parts = Array.from({ length: 3 }, () => ({ data: "data:video/mp4;base64," + "A".repeat(1000) }));
+  check("body bytes count the payload, not the prefix", attachmentsBodyBytes(parts) === 3000, attachmentsBodyBytes(parts));
+
+  // A recording long enough to defeat the bitrate floor still has to produce a
+  // sendable request. The trim sends the leading parts and reports the rest.
+  const many = Array.from({ length: 30 }, () => ({
+    data: "data:video/mp4;base64," + "A".repeat(3 * 1024 * 1024),
+  }));
+  const trimmed = trimToBodyBudget(many);
+  check("an over-long recording is trimmed to the part cap", trimmed.kept.length === MAX_MEDIA_PARTS, trimmed.kept.length);
+  check("the dropped parts are reported, not hidden", trimmed.dropped === 30 - MAX_MEDIA_PARTS, trimmed.dropped);
+  check("what is kept fits the body cap", attachmentsBodyBytes(trimmed.kept) <= MAX_MEDIA_BODY_BYTES);
+
+  const overBytes = Array.from({ length: MAX_MEDIA_PARTS }, () => ({
+    data: "data:video/mp4;base64," + "A".repeat(5 * 1024 * 1024),
+  }));
+  const byBytes = trimToBodyBudget(overBytes);
+  check("a set that is over on bytes is trimmed further", attachmentsBodyBytes(byBytes.kept) <= MAX_MEDIA_BODY_BYTES, byBytes.kept.length);
+  check("and at least one part always survives", byBytes.kept.length >= 1);
 }
 
 // ── 5. capability-aware binding ─────────────────────────────────────────────

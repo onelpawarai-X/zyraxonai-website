@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { brandChatStream } from "@/lib/providers/zyraxon-brand.server";
 import { isBrand } from "@/lib/providers/zyraxon-brands";
 import { normaliseContent } from "@/lib/providers/media";
+import { MAX_MEDIA_BODY_BYTES } from "@/lib/providers/media";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -11,8 +12,12 @@ const CORS = {
 
 /** A turn is capped so one caller cannot pin a lane indefinitely. The ceiling is
  *  generous enough for a long conversation plus several media parts, but not
- *  unbounded: an unbounded body is a memory-exhaustion vector. */
-const MAX_BODY_BYTES = 12 * 1024 * 1024;
+ *  unbounded: an unbounded body is a memory-exhaustion vector.
+ *
+ *  Sized against the media budget in `media.ts`: MAX_MEDIA_PARTS parts at the
+ *  planner's target, plus base64 inflation and text. The two constants must stay
+ *  in step, or a correctly compressed video is refused at the door. */
+const MAX_BODY_BYTES = MAX_MEDIA_BODY_BYTES;
 const MAX_MESSAGES = 48;
 
 function providerKey(request: Request): string | undefined {
