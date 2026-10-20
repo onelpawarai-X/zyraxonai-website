@@ -1,3 +1,5 @@
+import { PROVIDER_DOCS } from "./provider-docs";
+
 export type DocBlock =
   | { t: "h2"; text: string }
   | { t: "h3"; text: string }
@@ -18,12 +20,15 @@ export type DocPage = {
 export const DOC_GROUPS = [
   "Start",
   "ZYRAXON Agent",
+  "ZYRAXON Provider",
   "Features",
   "Development",
   "Reference",
 ] as const;
 
 export const DOCS: DocPage[] = [
+  // ─────────────────────── ZYRAXON PROVIDER ───────────────────────────
+  ...PROVIDER_DOCS,
   // ─────────────────────────────── START ───────────────────────────────
   {
     slug: "getting-started",

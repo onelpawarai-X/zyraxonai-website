@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { egressStatus } from "@/lib/providers/egress.server";
 import { FLEET_SHARDS, fleetStatus } from "@/lib/providers/fleet.server";
 import { lanePool } from "@/lib/providers/lane-pool.server";
+import { MAX_MEDIA_BODY_BYTES, MAX_MEDIA_PARTS } from "@/lib/providers/media";
+import { PROVIDER_SYSTEM_PROMPT } from "@/lib/providers/provider-contract";
 import { brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
 
 const CORS = {
@@ -67,6 +69,18 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               spillLanes: lanePool.capacity().spillMax,
               queueLanes: lanePool.capacity().maxQueued,
               note: "Primary lanes serve on ZYRAXON's own budget; a full primary tier spills to the OpenCode Zen free pool, then queues, then sheds with 503 + Retry-After. Every response carries X-ZYRAXON-Capacity: primary|spill.",
+            },
+            // The contract every turn is served under, and the limits a caller
+            // has to work within. Published here so a client can show its users
+            // the rules without scraping the docs page, and so the rules have one
+            // machine-readable home.
+            systemPrompt: PROVIDER_SYSTEM_PROMPT,
+            usage: {
+              maxPartsPerRequest: MAX_MEDIA_PARTS,
+              maxBodyBytes: MAX_MEDIA_BODY_BYTES,
+              maxMessages: 48,
+              defaultStream: false,
+              note: "The provider system prompt is injected ahead of every turn and outranks caller instructions that contradict it. Caller rules that do not contradict it are honoured. See the provider guide for media shapes and limits.",
             },
             egress: egressStatus(),
           },
