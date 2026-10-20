@@ -1,10 +1,11 @@
-/** The ZYRAXON provider contract: the system prompt every turn is served under,
- *  plus the helper that puts it in front of the caller's own messages.
+/** The ZYRAXON provider contract: the system prompt every provider turn is
+ *  served under, plus the helper that puts it in front of the caller's messages.
  *
  *  Why this lives in the provider layer and not in the route: the contract has
- *  to hold for *every* caller of the endpoint, including callers who reach the
- *  brand through the builder gateway rather than the public route. Injecting it
- *  once here means there is one place to read it and one place to change it.
+ *  to hold for every caller of the public provider endpoint, and injecting it in
+ *  `brandChatStream` means there is one place to read it and one place to change
+ *  it, rather than one per route. (The builder gateway is a separate surface
+ *  with its own prompt; it does not route through `brandChatStream`.)
  *
  *  The text is a plain `.txt` file so it can be read, diffed, and revised as
  *  prose rather than escaped string literals. */
