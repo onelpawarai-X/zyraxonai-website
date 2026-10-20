@@ -13,6 +13,7 @@ export const Route = createFileRoute("/publish")({
         content:
           "Publish your project to the ZYRAXON Ecosystem marketplace. Auto-scanned for security and shared with the community.",
       },
+      { name: "keywords", content: "publish AI website, deploy site, ZYRAXON publish" },
       { property: "og:title", content: "Publish — ZYRAXON AI" },
       {
         property: "og:description",
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/publish")({
       { property: "og:url", content: "https://zyraxonai.lovable.app/publish" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/publish" }],
   }),
   component: PublishPage,
 });
@@ -112,7 +114,13 @@ function PublishForm() {
 
   const generateSlug = () => {
     if (form.slug) return;
-    update("slug", form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+    update(
+      "slug",
+      form.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, ""),
+    );
   };
 
   const handleSubmit = async () => {
@@ -241,7 +249,19 @@ function PublishForm() {
                   onChange={(e) => update("category", e.target.value)}
                   className={inputCls + " mt-1.5"}
                 >
-                  {["website", "plugin", "template", "theme", "bot", "tool", "cli", "sdk", "model", "app", "other"].map((c) => (
+                  {[
+                    "website",
+                    "plugin",
+                    "template",
+                    "theme",
+                    "bot",
+                    "tool",
+                    "cli",
+                    "sdk",
+                    "model",
+                    "app",
+                    "other",
+                  ].map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
@@ -363,7 +383,9 @@ function PublishForm() {
                       key={`${f.path}-${i}`}
                       className="zx-chip flex items-center justify-between gap-3 rounded-lg px-2.5 py-1.5"
                     >
-                      <span className="truncate font-mono text-[12px] text-foreground">{f.path}</span>
+                      <span className="truncate font-mono text-[12px] text-foreground">
+                        {f.path}
+                      </span>
                       <button
                         type="button"
                         onClick={() => setSourceFiles((p) => p.filter((_, j) => j !== i))}
@@ -531,7 +553,9 @@ function PublishedAppsSection() {
               <div className="flex flex-wrap items-center gap-2">
                 <Tag tone="muted">{app.category}</Tag>
                 <Tag tone="primary">{app.source_agent}</Tag>
-                {app.version && <span className="text-[11px] text-muted-foreground">v{app.version}</span>}
+                {app.version && (
+                  <span className="text-[11px] text-muted-foreground">v{app.version}</span>
+                )}
               </div>
               <h3 className="mt-3 text-[15px] font-bold tracking-tight text-foreground">
                 {app.name}
@@ -563,9 +587,7 @@ function PublishedAppsSection() {
                   </ButtonAnchor>
                 )}
                 {app.scan && (
-                  <Tag tone={app.scan.blocked ? "warn" : "success"}>
-                    Score {app.scan.score}/100
-                  </Tag>
+                  <Tag tone={app.scan.blocked ? "warn" : "success"}>Score {app.scan.score}/100</Tag>
                 )}
               </div>
             </div>

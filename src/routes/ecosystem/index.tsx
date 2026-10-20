@@ -10,15 +10,29 @@ export const Route = createFileRoute("/ecosystem/")({
   head: () => ({
     meta: [
       { title: "ZYRAXON Ecosystem — AI Marketplace for Plugins, Bots, Templates & Tools" },
-      { name: "description", content: "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community. Browse, install and share AI-powered apps." },
+      {
+        name: "description",
+        content:
+          "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community. Browse, install and share AI-powered apps.",
+      },
+      { name: "keywords", content: "ZYRAXON ecosystem, AI tools ecosystem, developer ecosystem" },
       { property: "og:title", content: "ZYRAXON Ecosystem — AI Marketplace" },
-      { property: "og:description", content: "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community." },
+      {
+        property: "og:description",
+        content:
+          "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/ecosystem" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "ZYRAXON Ecosystem — AI Marketplace" },
-      { name: "twitter:description", content: "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community." },
+      {
+        name: "twitter:description",
+        content:
+          "Explore plugins, AI bots, templates, extensions and developer tools published by the ZYRAXON community.",
+      },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/ecosystem" }],
     scripts: [
       {
         type: "application/ld+json",
@@ -27,7 +41,8 @@ export const Route = createFileRoute("/ecosystem/")({
           "@type": "WebSite",
           name: "ZYRAXON Ecosystem",
           url: "https://zyraxonai.lovable.app/ecosystem",
-          description: "AI marketplace for plugins, bots, templates, extensions and developer tools.",
+          description:
+            "AI marketplace for plugins, bots, templates, extensions and developer tools.",
           potentialAction: {
             "@type": "SearchAction",
             target: "https://zyraxonai.lovable.app/ecosystem?search={search_term_string}",
@@ -62,7 +77,10 @@ interface SearchResult {
 }
 
 const AGENT_COLORS: Record<string, string> = {
-  cloud: "#2563eb", desktop: "#7c3aed", mobile: "#f59e0b", code: "#059669",
+  cloud: "#2563eb",
+  desktop: "#7c3aed",
+  mobile: "#f59e0b",
+  code: "#059669",
 };
 
 export default function EcosystemPage() {
@@ -79,7 +97,10 @@ export default function EcosystemPage() {
   useEffect(() => {
     fetch(`${ENDPOINT}/apps`)
       .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d)) setAppCount(d.length); else if (d?.apps) setAppCount(d.apps.length); })
+      .then((d) => {
+        if (Array.isArray(d)) setAppCount(d.length);
+        else if (d?.apps) setAppCount(d.apps.length);
+      })
       .catch(() => {});
   }, []);
 
@@ -99,7 +120,10 @@ export default function EcosystemPage() {
     setSearchQuery(q);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
-      if (q.trim().length < 2) { setSearchResults([]); return; }
+      if (q.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
       setSearchLoading(true);
       fetch(`${ENDPOINT}/search?q=${encodeURIComponent(q.trim())}`)
         .then((r) => r.json())
@@ -180,7 +204,14 @@ export default function EcosystemPage() {
                 onClick={() => setShowPublish(true)}
                 className="zx-sheen inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
                   <path d="M12 5v14M5 12h14" />
                 </svg>
                 Publish
@@ -190,12 +221,34 @@ export default function EcosystemPage() {
         </header>
 
         <div className="flex-1 overflow-y-auto p-5">
-          {tab === "home" && <HomeView onNavigate={setTab} onPublish={() => setShowPublish(true)} appCount={appCount} featuredApps={featuredApps} featuredLoading={featuredLoading} />}
-          {tab === "published" && <div><PublishedApps /></div>}
-          {tab === "extensions" && <div><ZyraxonMarketplace /></div>}
-          {tab === "releases" && <div><GitHubReleases /></div>}
+          {tab === "home" && (
+            <HomeView
+              onNavigate={setTab}
+              onPublish={() => setShowPublish(true)}
+              appCount={appCount}
+              featuredApps={featuredApps}
+              featuredLoading={featuredLoading}
+            />
+          )}
+          {tab === "published" && (
+            <div>
+              <PublishedApps />
+            </div>
+          )}
+          {tab === "extensions" && (
+            <div>
+              <ZyraxonMarketplace />
+            </div>
+          )}
+          {tab === "releases" && (
+            <div>
+              <GitHubReleases />
+            </div>
+          )}
           {tab === "featured" && <FeaturedView apps={featuredApps} loading={featuredLoading} />}
-          {tab === "search" && <SearchView results={searchResults} loading={searchLoading} query={searchQuery} />}
+          {tab === "search" && (
+            <SearchView results={searchResults} loading={searchLoading} query={searchQuery} />
+          )}
         </div>
       </main>
 
@@ -210,26 +263,89 @@ export default function EcosystemPage() {
   );
 }
 
-function HomeView({ onNavigate, onPublish, appCount, featuredApps, featuredLoading }: {
-  onNavigate: (t: Tab) => void; onPublish: () => void; appCount: number;
-  featuredApps: SearchResult[]; featuredLoading: boolean;
+function HomeView({
+  onNavigate,
+  onPublish,
+  appCount,
+  featuredApps,
+  featuredLoading,
+}: {
+  onNavigate: (t: Tab) => void;
+  onPublish: () => void;
+  appCount: number;
+  featuredApps: SearchResult[];
+  featuredLoading: boolean;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
       {/* Hero */}
-      <div style={{ background: "linear-gradient(135deg, #059669, #10b981)", borderRadius: 16, padding: 40, color: "white", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: "rgba(255,255,255,0.1)", borderRadius: "50%" }} />
-        <div style={{ position: "absolute", bottom: -60, left: "40%", width: 160, height: 160, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }} />
+      <div
+        style={{
+          background: "linear-gradient(135deg, #059669, #10b981)",
+          borderRadius: 16,
+          padding: 40,
+          color: "white",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: -40,
+            right: -40,
+            width: 200,
+            height: 200,
+            background: "rgba(255,255,255,0.1)",
+            borderRadius: "50%",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: -60,
+            left: "40%",
+            width: 160,
+            height: 160,
+            background: "rgba(255,255,255,0.08)",
+            borderRadius: "50%",
+          }}
+        />
         <div style={{ position: "relative", zIndex: 1 }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 8px" }}>ZYRAXON Ecosystem</h2>
           <p style={{ fontSize: 15, opacity: 0.9, margin: "0 0 20px", maxWidth: 500 }}>
-            Publish your projects, discover extensions, and explore everything built by the community.
+            Publish your projects, discover extensions, and explore everything built by the
+            community.
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button onClick={onPublish} style={{ padding: "10px 20px", borderRadius: 8, background: "white", color: "#059669", border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+            <button
+              onClick={onPublish}
+              style={{
+                padding: "10px 20px",
+                borderRadius: 8,
+                background: "white",
+                color: "#059669",
+                border: "none",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
               Publish Your Project
             </button>
-            <button onClick={() => onNavigate("extensions")} style={{ padding: "10px 20px", borderRadius: 8, background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.3)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+            <button
+              onClick={() => onNavigate("extensions")}
+              style={{
+                padding: "10px 20px",
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.15)",
+                color: "white",
+                border: "1px solid rgba(255,255,255,0.3)",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
               Browse Extensions
             </button>
           </div>
@@ -237,19 +353,80 @@ function HomeView({ onNavigate, onPublish, appCount, featuredApps, featuredLoadi
       </div>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 16,
+        }}
+      >
         {[
-          { label: "Published Apps", value: appCount, color: "#059669", icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" },
-          { label: "Extensions", value: "100+", color: "#7c3aed", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
-          { label: "GitHub Releases", value: "3 repos", color: "#f59e0b", icon: "M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" },
-          { label: "Source Agent", value: "4 types", color: "#2563eb", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+          {
+            label: "Published Apps",
+            value: appCount,
+            color: "#059669",
+            icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12",
+          },
+          {
+            label: "Extensions",
+            value: "100+",
+            color: "#7c3aed",
+            icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+          },
+          {
+            label: "GitHub Releases",
+            value: "3 repos",
+            color: "#f59e0b",
+            icon: "M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z",
+          },
+          {
+            label: "Source Agent",
+            value: "4 types",
+            color: "#2563eb",
+            icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
+          },
         ].map((s) => (
-          <div key={s.label} style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 10, background: `${s.color}12`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={s.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={s.icon} /></svg>
+          <div
+            key={s.label}
+            style={{
+              background: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 10,
+                background: `${s.color}12`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={s.color}
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d={s.icon} />
+              </svg>
             </div>
             <div>
-              <p style={{ fontSize: 22, fontWeight: 700, color: "#111827", margin: 0 }}>{s.value}</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: "#111827", margin: 0 }}>
+                {s.value}
+              </p>
               <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{s.label}</p>
             </div>
           </div>
@@ -259,16 +436,58 @@ function HomeView({ onNavigate, onPublish, appCount, featuredApps, featuredLoadi
       {/* Featured Apps */}
       {featuredApps.length > 0 && (
         <section>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 3, background: "#f59e0b", display: "inline-block" }} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 16,
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: "#111827",
+                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 3,
+                  background: "#f59e0b",
+                  display: "inline-block",
+                }}
+              />
               Featured Apps
             </h2>
-            <button onClick={() => onNavigate("featured")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#f59e0b", cursor: "pointer", fontSize: 13 }}>
+            <button
+              onClick={() => onNavigate("featured")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                border: "1px solid #e5e7eb",
+                background: "white",
+                color: "#f59e0b",
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
               View all
             </button>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 12,
+            }}
+          >
             {featuredApps.slice(0, 3).map((app) => (
               <FeaturedCard key={app.slug} app={app} />
             ))}
@@ -278,13 +497,49 @@ function HomeView({ onNavigate, onPublish, appCount, featuredApps, featuredLoadi
 
       {/* Published Apps */}
       <section>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 3, background: "#059669", display: "inline-block" }} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 16,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: "#111827",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 3,
+                background: "#059669",
+                display: "inline-block",
+              }}
+            />
             Published Apps
           </h2>
           {appCount > 6 && (
-            <button onClick={() => onNavigate("published")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#059669", cursor: "pointer", fontSize: 13 }}>
+            <button
+              onClick={() => onNavigate("published")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                border: "1px solid #e5e7eb",
+                background: "white",
+                color: "#059669",
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
               View all
             </button>
           )}
@@ -294,12 +549,48 @@ function HomeView({ onNavigate, onPublish, appCount, featuredApps, featuredLoadi
 
       {/* Extensions */}
       <section>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 3, background: "#7c3aed", display: "inline-block" }} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 16,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: "#111827",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 3,
+                background: "#7c3aed",
+                display: "inline-block",
+              }}
+            />
             ZYRAXON Extensions
           </h2>
-          <button onClick={() => onNavigate("extensions")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#7c3aed", cursor: "pointer", fontSize: 13 }}>
+          <button
+            onClick={() => onNavigate("extensions")}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 8,
+              border: "1px solid #e5e7eb",
+              background: "white",
+              color: "#7c3aed",
+              cursor: "pointer",
+              fontSize: 13,
+            }}
+          >
             Browse all
           </button>
         </div>
@@ -308,12 +599,48 @@ function HomeView({ onNavigate, onPublish, appCount, featuredApps, featuredLoadi
 
       {/* GitHub Releases */}
       <section>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 3, background: "#f59e0b", display: "inline-block" }} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 16,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: "#111827",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 3,
+                background: "#f59e0b",
+                display: "inline-block",
+              }}
+            />
             GitHub Releases
           </h2>
-          <button onClick={() => onNavigate("releases")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "white", color: "#f59e0b", cursor: "pointer", fontSize: 13 }}>
+          <button
+            onClick={() => onNavigate("releases")}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 8,
+              border: "1px solid #e5e7eb",
+              background: "white",
+              color: "#f59e0b",
+              cursor: "pointer",
+              fontSize: 13,
+            }}
+          >
             Browse all
           </button>
         </div>
@@ -325,27 +652,104 @@ function HomeView({ onNavigate, onPublish, appCount, featuredApps, featuredLoadi
 
 function FeaturedCard({ app }: { app: SearchResult }) {
   return (
-    <div style={{ border: "1px solid #fbbf24", borderRadius: 12, background: "white", padding: 16, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, #f59e0b, #f97316)" }} />
+    <div
+      style={{
+        border: "1px solid #fbbf24",
+        borderRadius: 12,
+        background: "white",
+        padding: 16,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: "linear-gradient(90deg, #f59e0b, #f97316)",
+        }}
+      />
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>FEATURED</span>
-        <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "#f3f4f6", color: "#6b7280", textTransform: "capitalize" }}>{app.category}</span>
+        <span
+          style={{
+            padding: "2px 8px",
+            borderRadius: 6,
+            fontSize: 11,
+            fontWeight: 600,
+            background: "#fef3c7",
+            color: "#b45309",
+          }}
+        >
+          FEATURED
+        </span>
+        <span
+          style={{
+            padding: "2px 8px",
+            borderRadius: 6,
+            fontSize: 11,
+            fontWeight: 600,
+            background: "#f3f4f6",
+            color: "#6b7280",
+            textTransform: "capitalize",
+          }}
+        >
+          {app.category}
+        </span>
       </div>
-      <h4 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: "0 0 4px" }}>{app.name}</h4>
-      {app.tagline && <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 8px", lineHeight: 1.4 }}>{app.tagline}</p>}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "#9ca3af" }}>
+      <h4 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: "0 0 4px" }}>
+        {app.name}
+      </h4>
+      {app.tagline && (
+        <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 8px", lineHeight: 1.4 }}>
+          {app.tagline}
+        </p>
+      )}
+      <div
+        style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "#9ca3af" }}
+      >
         <span>by {app.author_name || "Anonymous"}</span>
         {app.downloads > 0 && <span>{app.downloads} downloads</span>}
         {app.rating > 0 && <span>{app.rating.toFixed(1)} stars</span>}
       </div>
       <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
         {app.live_url && (
-          <a href={app.live_url} target="_blank" rel="noopener noreferrer"
-            style={{ padding: "4px 10px", borderRadius: 6, background: "#059669", color: "white", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>Live</a>
+          <a
+            href={app.live_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              background: "#059669",
+              color: "white",
+              fontSize: 11,
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            Live
+          </a>
         )}
         {app.repo_url && (
-          <a href={app.repo_url} target="_blank" rel="noopener noreferrer"
-            style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 11, textDecoration: "none" }}>GitHub</a>
+          <a
+            href={app.repo_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #e5e7eb",
+              background: "white",
+              color: "#374151",
+              fontSize: 11,
+              textDecoration: "none",
+            }}
+          >
+            GitHub
+          </a>
         )}
       </div>
     </div>
@@ -353,57 +757,196 @@ function FeaturedCard({ app }: { app: SearchResult }) {
 }
 
 function FeaturedView({ apps, loading }: { apps: SearchResult[]; loading: boolean }) {
-  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 13 }}>Loading featured apps...</div>;
-  if (apps.length === 0) return (
-    <div style={{ textAlign: "center", padding: 60, border: "1px dashed #d1d5db", borderRadius: 12, color: "#9ca3af" }}>
-      <p style={{ fontSize: 15, margin: "0 0 8px" }}>No featured apps yet</p>
-      <p style={{ fontSize: 13, margin: 0 }}>Featured apps are curated by the ZYRAXON team.</p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 13 }}>
+        Loading featured apps...
+      </div>
+    );
+  if (apps.length === 0)
+    return (
+      <div
+        style={{
+          textAlign: "center",
+          padding: 60,
+          border: "1px dashed #d1d5db",
+          borderRadius: 12,
+          color: "#9ca3af",
+        }}
+      >
+        <p style={{ fontSize: 15, margin: "0 0 8px" }}>No featured apps yet</p>
+        <p style={{ fontSize: 13, margin: 0 }}>Featured apps are curated by the ZYRAXON team.</p>
+      </div>
+    );
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
-      {apps.map((app) => <FeaturedCard key={app.slug} app={app} />)}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+        gap: 16,
+      }}
+    >
+      {apps.map((app) => (
+        <FeaturedCard key={app.slug} app={app} />
+      ))}
     </div>
   );
 }
 
-function SearchView({ results, loading, query }: { results: SearchResult[]; loading: boolean; query: string }) {
-  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 13 }}>Searching...</div>;
-  if (!query || query.length < 2) return (
-    <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>
-      <p style={{ fontSize: 15, margin: "0 0 8px" }}>Type to search the ecosystem</p>
-      <p style={{ fontSize: 13, margin: 0 }}>Search across published apps, extensions, and more.</p>
-    </div>
-  );
-  if (results.length === 0) return (
-    <div style={{ textAlign: "center", padding: 60, border: "1px dashed #d1d5db", borderRadius: 12, color: "#9ca3af" }}>
-      <p style={{ fontSize: 15, margin: "0 0 8px" }}>No results for "{query}"</p>
-      <p style={{ fontSize: 13, margin: 0 }}>Try a different search term.</p>
-    </div>
-  );
+function SearchView({
+  results,
+  loading,
+  query,
+}: {
+  results: SearchResult[];
+  loading: boolean;
+  query: string;
+}) {
+  if (loading)
+    return (
+      <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontSize: 13 }}>
+        Searching...
+      </div>
+    );
+  if (!query || query.length < 2)
+    return (
+      <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>
+        <p style={{ fontSize: 15, margin: "0 0 8px" }}>Type to search the ecosystem</p>
+        <p style={{ fontSize: 13, margin: 0 }}>
+          Search across published apps, extensions, and more.
+        </p>
+      </div>
+    );
+  if (results.length === 0)
+    return (
+      <div
+        style={{
+          textAlign: "center",
+          padding: 60,
+          border: "1px dashed #d1d5db",
+          borderRadius: 12,
+          color: "#9ca3af",
+        }}
+      >
+        <p style={{ fontSize: 15, margin: "0 0 8px" }}>No results for "{query}"</p>
+        <p style={{ fontSize: 13, margin: 0 }}>Try a different search term.</p>
+      </div>
+    );
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+        gap: 16,
+      }}
+    >
       {results.map((app) => (
-        <div key={app.slug} style={{ border: "1px solid #e5e7eb", borderRadius: 12, background: "white", padding: 16 }}>
+        <div
+          key={app.slug}
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: 12,
+            background: "white",
+            padding: 16,
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "#f3f4f6", color: "#6b7280", textTransform: "capitalize" }}>{app.category}</span>
-            <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: `${AGENT_COLORS[app.source_agent] || "#6b7280"}15`, color: AGENT_COLORS[app.source_agent] || "#6b7280" }}>{app.source_agent}</span>
-            {app.featured && <span style={{ padding: "2px 6px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "#fef3c7", color: "#b45309" }}>FEATURED</span>}
+            <span
+              style={{
+                padding: "2px 8px",
+                borderRadius: 6,
+                fontSize: 11,
+                fontWeight: 600,
+                background: "#f3f4f6",
+                color: "#6b7280",
+                textTransform: "capitalize",
+              }}
+            >
+              {app.category}
+            </span>
+            <span
+              style={{
+                padding: "2px 8px",
+                borderRadius: 6,
+                fontSize: 11,
+                fontWeight: 600,
+                background: `${AGENT_COLORS[app.source_agent] || "#6b7280"}15`,
+                color: AGENT_COLORS[app.source_agent] || "#6b7280",
+              }}
+            >
+              {app.source_agent}
+            </span>
+            {app.featured && (
+              <span
+                style={{
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: "#fef3c7",
+                  color: "#b45309",
+                }}
+              >
+                FEATURED
+              </span>
+            )}
           </div>
-          <h4 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: "0 0 4px" }}>{app.name}</h4>
-          {app.tagline && <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 8px", lineHeight: 1.4 }}>{app.tagline}</p>}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "#9ca3af" }}>
+          <h4 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: "0 0 4px" }}>
+            {app.name}
+          </h4>
+          {app.tagline && (
+            <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 8px", lineHeight: 1.4 }}>
+              {app.tagline}
+            </p>
+          )}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              fontSize: 11,
+              color: "#9ca3af",
+            }}
+          >
             <span>by {app.author_name || "Anonymous"}</span>
             {app.downloads > 0 && <span>{app.downloads} downloads</span>}
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
             {app.live_url && (
-              <a href={app.live_url} target="_blank" rel="noopener noreferrer"
-                style={{ padding: "4px 10px", borderRadius: 6, background: "#059669", color: "white", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>Live</a>
+              <a
+                href={app.live_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  background: "#059669",
+                  color: "white",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
+              >
+                Live
+              </a>
             )}
             {app.repo_url && (
-              <a href={app.repo_url} target="_blank" rel="noopener noreferrer"
-                style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #e5e7eb", background: "white", color: "#374151", fontSize: 11, textDecoration: "none" }}>GitHub</a>
+              <a
+                href={app.repo_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  border: "1px solid #e5e7eb",
+                  background: "white",
+                  color: "#374151",
+                  fontSize: 11,
+                  textDecoration: "none",
+                }}
+              >
+                GitHub
+              </a>
             )}
           </div>
         </div>

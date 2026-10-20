@@ -55,6 +55,10 @@ export const Route = createFileRoute("/faq")({
         content:
           "Answers to common questions about ZYRAXON AI: pricing, download, agent modes, ecosystem marketplace, ZSL license, supported platforms and AI providers.",
       },
+      {
+        name: "keywords",
+        content: "ZYRAXON FAQ, AI agent questions, is ZYRAXON free, install ZYRAXON",
+      },
       { property: "og:title", content: "FAQ — ZYRAXON AI Frequently Asked Questions" },
       {
         property: "og:description",
@@ -67,9 +71,11 @@ export const Route = createFileRoute("/faq")({
       { name: "twitter:title", content: "FAQ — ZYRAXON AI" },
       {
         name: "twitter:description",
-        content: "Answers to common questions about ZYRAXON AI: pricing, download, agent modes and more.",
+        content:
+          "Answers to common questions about ZYRAXON AI: pricing, download, agent modes and more.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/faq" }],
     scripts: [
       {
         type: "application/ld+json",
@@ -103,7 +109,14 @@ function FaqPage() {
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-foreground">
               {f.q}
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-foreground/6 text-muted-foreground transition group-open:rotate-45">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.6"
+                >
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </span>
@@ -119,8 +132,8 @@ function FaqPage() {
           Still have a question?
         </h2>
         <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
-          Every question asked here becomes a GitHub issue on the public ZYRAXON-AI repository,
-          so the answer is searchable by everyone and you can follow it until it is closed.
+          Every question asked here becomes a GitHub issue on the public ZYRAXON-AI repository, so
+          the answer is searchable by everyone and you can follow it until it is closed.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <ButtonAnchor

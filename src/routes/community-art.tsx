@@ -25,6 +25,10 @@ export const Route = createFileRoute("/community-art")({
         content:
           "Join the ZYRAXON AI community with a verified email, upload a profile picture, add your website and social links, and get a public profile page.",
       },
+      {
+        name: "keywords",
+        content: "ZYRAXON community, developer profiles, AI community roster, ZYRAXON users",
+      },
       { property: "og:title", content: "Community — ZYRAXON AI" },
       {
         property: "og:description",
@@ -34,6 +38,7 @@ export const Route = createFileRoute("/community-art")({
       { property: "og:url", content: "https://zyraxonai.lovable.app/community-art" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/community-art" }],
   }),
   component: CommunityArt,
 });

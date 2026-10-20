@@ -13,6 +13,10 @@ export const Route = createFileRoute("/releases")({
         content:
           "All GitHub releases for ZYRAXON Agent. Download the latest installers and changelogs.",
       },
+      {
+        name: "keywords",
+        content: "ZYRAXON releases, download ZYRAXON, AI agent download, release notes",
+      },
       { property: "og:title", content: "Releases — ZYRAXON AI" },
       {
         property: "og:description",
@@ -23,6 +27,7 @@ export const Route = createFileRoute("/releases")({
       { property: "og:url", content: "https://zyraxonai.lovable.app/releases" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/releases" }],
   }),
   component: ReleasesPage,
 });

@@ -6,6 +6,11 @@ export const Route = createFileRoute("/nebula")({
   head: () => ({
     meta: [
       { title: "ZYRAXON Nebula — Command Deck" },
+      {
+        name: "description",
+        content:
+          "Nebula Core: the ZYRAXON operator command deck for publishing updates, announcements and telemetry. Private to the project owner.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -122,11 +127,20 @@ export default function NebulaPage() {
           className="w-full max-w-sm rounded-2xl border zx-glass p-8 shadow-sm"
         >
           <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-fuchsia-500 text-primary-foreground">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
           </span>
-          <h1 className="mt-5 text-2xl font-bold tracking-tight text-foreground">Nebula Command Deck</h1>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-foreground">
+            Nebula Command Deck
+          </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">Enter the access key to continue.</p>
           <input
             type="password"
@@ -155,12 +169,21 @@ export default function NebulaPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-6">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-fuchsia-500 text-primary-foreground">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
             </span>
             <div>
-              <p className="text-[15px] font-bold leading-tight tracking-tight">Nebula Command Deck</p>
+              <p className="text-[15px] font-bold leading-tight tracking-tight">
+                Nebula Command Deck
+              </p>
               <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Connected to {GITHUB_REPO}
@@ -300,10 +323,17 @@ export default function NebulaPage() {
                 {releases.map((rel) => (
                   <li key={rel.id} className="rounded-2xl border zx-glass p-6 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h2 className="text-lg font-bold tracking-tight">{rel.name || rel.tag_name}</h2>
+                      <h2 className="text-lg font-bold tracking-tight">
+                        {rel.name || rel.tag_name}
+                      </h2>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>{new Date(rel.published_at).toLocaleDateString()}</span>
-                        <a href={rel.html_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+                        <a
+                          href={rel.html_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-primary hover:underline"
+                        >
                           GitHub
                         </a>
                       </div>
@@ -329,12 +359,29 @@ export default function NebulaPage() {
         {tab === "telemetry" && (
           <div className="grid gap-5 sm:grid-cols-3">
             {[
-              { label: "Storage backend", value: "Lovable Cloud", hint: "Supabase + private bucket", tone: "text-primary" },
-              { label: "Target repository", value: "ZYRAXON-AI", hint: GITHUB_REPO, tone: "text-foreground" },
-              { label: "Access", value: "Authenticated", hint: "Session active", tone: "text-emerald-600" },
+              {
+                label: "Storage backend",
+                value: "Lovable Cloud",
+                hint: "Supabase + private bucket",
+                tone: "text-primary",
+              },
+              {
+                label: "Target repository",
+                value: "ZYRAXON-AI",
+                hint: GITHUB_REPO,
+                tone: "text-foreground",
+              },
+              {
+                label: "Access",
+                value: "Authenticated",
+                hint: "Session active",
+                tone: "text-emerald-600",
+              },
             ].map((c) => (
               <div key={c.label} className="rounded-2xl border zx-glass p-6 shadow-sm">
-                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">{c.label}</p>
+                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  {c.label}
+                </p>
                 <p className={`mt-2 text-xl font-bold ${c.tone}`}>{c.value}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{c.hint}</p>
               </div>

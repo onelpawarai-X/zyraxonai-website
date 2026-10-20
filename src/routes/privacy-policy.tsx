@@ -17,6 +17,7 @@ export const Route = createFileRoute("/privacy-policy")({
       { name: "twitter:title", content: "Privacy Policy — ZYRAXON AI" },
       { name: "twitter:description", content: "How ZYRAXON AI handles your data. Local-first, transparent, zero hidden tracking." },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/privacy-policy" }],
   }),
   component: PrivacyPolicyPage,
 });

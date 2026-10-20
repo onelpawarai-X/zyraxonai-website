@@ -9,22 +9,44 @@ export const Route = createFileRoute("/zsl")({
   head: () => ({
     meta: [
       { title: "ZSL — Zyraxon Sovereign License" },
-      { name: "description", content: "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era. Commercial freedom, patent protection, identity safety." },
+      {
+        name: "description",
+        content:
+          "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era. Commercial freedom, patent protection, identity safety.",
+      },
+      {
+        name: "keywords",
+        content: "Zyraxon Sovereign License, ZSL-X, source available license, AI license",
+      },
       { property: "og:title", content: "ZSL — Zyraxon Sovereign License" },
-      { property: "og:description", content: "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era. Commercial freedom, patent protection, identity safety." },
+      {
+        property: "og:description",
+        content:
+          "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era. Commercial freedom, patent protection, identity safety.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/zsl" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "ZSL — Zyraxon Sovereign License" },
-      { name: "twitter:description", content: "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era." },
+      {
+        name: "twitter:description",
+        content: "The Zyraxon Sovereign License — an enterprise-grade open license for the AI era.",
+      },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/zsl" }],
   }),
   component: ZSLPage,
 });
 
 const COMPARISON = [
   { feature: "Commercial use", zsl: true, mit: true, apache: true, gpl: "Copyleft" },
-  { feature: "Enterprise (50+ employees)", zsl: "Explicit", mit: "Implied", apache: "Implied", gpl: "Implied" },
+  {
+    feature: "Enterprise (50+ employees)",
+    zsl: "Explicit",
+    mit: "Implied",
+    apache: "Implied",
+    gpl: "Implied",
+  },
   { feature: "Modification", zsl: true, mit: true, apache: true, gpl: true },
   { feature: "Redistribution", zsl: true, mit: true, apache: true, gpl: "Copyleft" },
   { feature: "Patent grant", zsl: true, mit: false, apache: true, gpl: true },
@@ -73,13 +95,33 @@ const FAQ = [
 ];
 
 const PROJECTS_USING_ZSL = [
-  { name: "ZYRAXON-AI", desc: "Main AI platform with 888 tools across 63 categories and 108 MCP integrations", repo: "onelpawarai-X/ZYRAXON-AI", color: "#2563eb" },
+  {
+    name: "ZYRAXON-AI",
+    desc: "Main AI platform with 888 tools across 63 categories and 108 MCP integrations",
+    repo: "onelpawarai-X/ZYRAXON-AI",
+    color: "#2563eb",
+  },
 ];
 
 const TIMELINE = [
-  { year: "2026", event: "ZSL-X v2.0.0 released", desc: "Active license for all ZYRAXON projects", active: true },
-  { year: "2028", event: "MEKRA-X v2.0.0 auto-activates", desc: "The successor edition — the strictest of the license family", active: false },
-  { year: "2030+", event: "NEXUS-X transition available", desc: "Future-proof path with 180-day notice period", active: false },
+  {
+    year: "2026",
+    event: "ZSL-X v2.0.0 released",
+    desc: "Active license for all ZYRAXON projects",
+    active: true,
+  },
+  {
+    year: "2028",
+    event: "MEKRA-X v2.0.0 auto-activates",
+    desc: "The successor edition — the strictest of the license family",
+    active: false,
+  },
+  {
+    year: "2030+",
+    event: "NEXUS-X transition available",
+    desc: "Future-proof path with 180-day notice period",
+    active: false,
+  },
 ];
 
 function Mark({ value }: { value: boolean | string }) {
@@ -221,9 +263,14 @@ function ZSLPage() {
                 <th className="px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   Feature
                 </th>
-                <th className="px-5 py-3.5 text-center text-[13px] font-bold text-primary">ZSL-X</th>
+                <th className="px-5 py-3.5 text-center text-[13px] font-bold text-primary">
+                  ZSL-X
+                </th>
                 {["MIT", "Apache 2.0", "GPL-3.0"].map((h) => (
-                  <th key={h} className="px-5 py-3.5 text-center text-[13px] font-semibold text-muted-foreground">
+                  <th
+                    key={h}
+                    className="px-5 py-3.5 text-center text-[13px] font-semibold text-muted-foreground"
+                  >
                     {h}
                   </th>
                 ))}
@@ -334,7 +381,9 @@ function ZSLPage() {
                   {t.active && <span className="h-2 w-2 rounded-full bg-primary-foreground" />}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`text-[14px] font-bold ${t.active ? "text-primary" : "text-foreground"}`}>
+                  <span
+                    className={`text-[14px] font-bold ${t.active ? "text-primary" : "text-foreground"}`}
+                  >
                     {t.year}
                   </span>
                   <span className="text-[14px] font-semibold text-foreground">{t.event}</span>
@@ -411,7 +460,14 @@ function ZSLPage() {
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[14.5px] font-semibold text-foreground">
                 {f.q}
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-foreground/6 text-muted-foreground transition group-open:rotate-45">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                  >
                     <path d="M12 5v14M5 12h14" />
                   </svg>
                 </span>

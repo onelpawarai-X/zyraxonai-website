@@ -11,10 +11,7 @@ export const Route = createFileRoute("/updates/$slug")({
     const item = loaderData?.item;
     if (!item) {
       return {
-        meta: [
-          { title: "Update not found — ZYRAXON AI" },
-          { name: "robots", content: "noindex" },
-        ],
+        meta: [{ title: "Update not found — ZYRAXON AI" }, { name: "robots", content: "noindex" }],
       };
     }
     const description =
@@ -45,7 +42,11 @@ export const Route = createFileRoute("/updates/$slug")({
             dateModified: item.updatedAt,
             url,
             mainEntityOfPage: url,
-            author: { "@type": "Organization", name: "onelpawarai", url: "https://github.com/onelpawarai-X" },
+            author: {
+              "@type": "Organization",
+              name: "onelpawarai",
+              url: "https://github.com/onelpawarai-X",
+            },
             publisher: {
               "@type": "Organization",
               name: "ZYRAXON AI",
@@ -53,7 +54,9 @@ export const Route = createFileRoute("/updates/$slug")({
               logo: { "@type": "ImageObject", url: `${SITE_ORIGIN}/favicon.ico` },
             },
             ...(item.imageUrl ? { image: [item.imageUrl] } : {}),
-            ...(item.embedUrl ? { associatedMedia: { "@type": "VideoObject", contentUrl: item.embedUrl } } : {}),
+            ...(item.embedUrl
+              ? { associatedMedia: { "@type": "VideoObject", contentUrl: item.embedUrl } }
+              : {}),
             articleBody: item.body ?? "",
             keywords: ["ZYRAXON", "ZYRAXON AI", item.kind, "desktop AI agent", "AI automation"],
           }),
@@ -94,7 +97,13 @@ function UpdateDetail() {
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-primary"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M10 3L5 8l5 5"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           All updates
         </a>

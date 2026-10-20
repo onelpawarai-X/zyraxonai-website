@@ -22,11 +22,22 @@ const GITHUB = "https://github.com/onelpawarai-X/ZYRAXON-AI";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
+      {
+        // A slogan tells a search engine nothing about what the page is. The
+        // title has to say what the product is, because that is the string a
+        // person sees in the results and the one the crawler matches on.
+        title:
+          "ZYRAXON AI — Free Desktop AI Agent for Windows, macOS and Linux (888 Tools, 11 Modes)",
+      },
       {
         name: "description",
         content:
           "The world's most advanced desktop AI agent. 888 tools across 63 categories, 11 agent modes, 108 live app integrations, screen vision and eternal memory.",
+      },
+      {
+        name: "keywords",
+        content:
+          "ZYRAXON AI, desktop AI agent, free AI coding agent, open source AI agent, 888 tools, 11 agent modes, MCP integrations",
       },
       {
         property: "og:title",
@@ -46,6 +57,7 @@ export const Route = createFileRoute("/")({
         content: "Desktop AI agent with 888 tools, 11 agent modes and 108 live app integrations.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/" }],
     scripts: [
       {
         type: "application/ld+json",
@@ -455,7 +467,12 @@ function Download() {
             <h3 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{d.os}</h3>
             <p className="mt-1 text-[13px] text-muted-foreground">{d.detail}</p>
             <div className="mt-5">
-              <ButtonAnchor href={`/api/download/${d.key}`} external={false} variant="glass" size="sm">
+              <ButtonAnchor
+                href={`/api/download/${d.key}`}
+                external={false}
+                variant="glass"
+                size="sm"
+              >
                 Download {d.file}
               </ButtonAnchor>
             </div>

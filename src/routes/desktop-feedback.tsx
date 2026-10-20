@@ -13,6 +13,7 @@ export const Route = createFileRoute("/desktop-feedback")({
         content:
           "Send feedback about the ZYRAXON desktop agent. Email the team directly or open a tracked GitHub issue — bug reports, feature requests and questions are all welcome.",
       },
+      { name: "keywords", content: "ZYRAXON feedback, report AI agent bug, GitHub issue" },
       { property: "og:title", content: "Desktop Feedback — ZYRAXON AI" },
       {
         property: "og:description",
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/desktop-feedback")({
       { property: "og:url", content: "https://zyraxonai.lovable.app/desktop-feedback" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/desktop-feedback" }],
   }),
   component: DesktopFeedback,
 });

@@ -40,6 +40,16 @@ export const Route = createFileRoute("/extensions/$namespace/$name")({
         },
         { name: "twitter:card", content: "summary_large_image" },
       ],
+      // Without a canonical URL a detail page competes with its own listing,
+      // and a search engine has to guess which one to show.
+      links: [
+        {
+          rel: "canonical",
+          href: ext
+            ? `https://zyraxonai.lovable.app/extensions/${ext.namespace}/${ext.name}`
+            : "https://zyraxonai.lovable.app/extensions",
+        },
+      ],
     };
   },
   component: ExtensionDetailPage,

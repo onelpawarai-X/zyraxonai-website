@@ -126,6 +126,7 @@ export const Route = createFileRoute("/ecosystem/item/$id")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
       ],
+      links: [{ rel: "canonical", href: url }],
       scripts: [
         {
           type: "application/ld+json",

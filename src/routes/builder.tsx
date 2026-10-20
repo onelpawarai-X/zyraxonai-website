@@ -12,6 +12,7 @@ export const Route = createFileRoute("/builder")({
         content:
           "Build, preview, edit, export and publish websites with ZYRAXON AI Builder. Describe your idea and watch it come to life with live preview and one-click deploy.",
       },
+      { name: "keywords", content: "AI website builder, ZYRAXON builder, build site with AI" },
       { property: "og:title", content: "ZYRAXON AI Builder — Build Without Limits" },
       {
         property: "og:description",
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/builder")({
           "Build, preview, edit, export and publish websites with ZYRAXON AI Builder. Describe your idea and watch it come to life with live preview and one-click deploy.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/builder" }],
     scripts: [
       {
         type: "application/ld+json",

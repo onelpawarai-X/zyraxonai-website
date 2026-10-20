@@ -15,6 +15,7 @@ import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as CommunityArtRouteImport } from './routes/community-art'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as DesktopAiAgentGuideRouteImport } from './routes/desktop-ai-agent-guide'
 import { Route as DesktopFeedbackRouteImport } from './routes/desktop-feedback'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as NebulaRouteImport } from './routes/nebula'
@@ -49,6 +50,7 @@ import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public
 import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mcp-registry'
 import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
+import { Route as ApiPublicSitemapDynamicRouteImport } from './routes/api/public/sitemap-dynamic'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
 import { Route as ApiPublicTtsRouteImport } from './routes/api/public/tts'
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
@@ -118,6 +120,11 @@ const CommunityArtRoute = CommunityArtRouteImport.update({
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesktopAiAgentGuideRoute = DesktopAiAgentGuideRouteImport.update({
+  id: '/desktop-ai-agent-guide',
+  path: '/desktop-ai-agent-guide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DesktopFeedbackRoute = DesktopFeedbackRouteImport.update({
@@ -289,6 +296,11 @@ const ApiPublicNebulaRoute = ApiPublicNebulaRouteImport.update({
 const ApiPublicNpmPackagesRoute = ApiPublicNpmPackagesRouteImport.update({
   id: '/api/public/npm-packages',
   path: '/api/public/npm-packages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSitemapDynamicRoute = ApiPublicSitemapDynamicRouteImport.update({
+  id: '/api/public/sitemap-dynamic',
+  path: '/api/public/sitemap-dynamic',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
@@ -513,6 +525,7 @@ export interface FileRoutesByFullPath {
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
   '/demo': typeof DemoRoute
+  '/desktop-ai-agent-guide': typeof DesktopAiAgentGuideRoute
   '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
@@ -547,6 +560,7 @@ export interface FileRoutesByFullPath {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
+  '/api/public/sitemap-dynamic': typeof ApiPublicSitemapDynamicRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/tts': typeof ApiPublicTtsRouteWithChildren
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
@@ -595,6 +609,7 @@ export interface FileRoutesByTo {
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
   '/demo': typeof DemoRoute
+  '/desktop-ai-agent-guide': typeof DesktopAiAgentGuideRoute
   '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
@@ -629,6 +644,7 @@ export interface FileRoutesByTo {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
+  '/api/public/sitemap-dynamic': typeof ApiPublicSitemapDynamicRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/tts': typeof ApiPublicTtsRouteWithChildren
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
@@ -678,6 +694,7 @@ export interface FileRoutesById {
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
   '/demo': typeof DemoRoute
+  '/desktop-ai-agent-guide': typeof DesktopAiAgentGuideRoute
   '/desktop-feedback': typeof DesktopFeedbackRoute
   '/faq': typeof FaqRoute
   '/nebula': typeof NebulaRoute
@@ -712,6 +729,7 @@ export interface FileRoutesById {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
+  '/api/public/sitemap-dynamic': typeof ApiPublicSitemapDynamicRoute
   '/api/public/stt': typeof ApiPublicSttRoute
   '/api/public/tts': typeof ApiPublicTtsRouteWithChildren
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
@@ -762,6 +780,7 @@ export interface FileRouteTypes {
     | '/builder'
     | '/community-art'
     | '/demo'
+    | '/desktop-ai-agent-guide'
     | '/desktop-feedback'
     | '/faq'
     | '/nebula'
@@ -796,6 +815,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
+    | '/api/public/sitemap-dynamic'
     | '/api/public/stt'
     | '/api/public/tts'
     | '/api/public/vscode-marketplace'
@@ -844,6 +864,7 @@ export interface FileRouteTypes {
     | '/builder'
     | '/community-art'
     | '/demo'
+    | '/desktop-ai-agent-guide'
     | '/desktop-feedback'
     | '/faq'
     | '/nebula'
@@ -878,6 +899,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
+    | '/api/public/sitemap-dynamic'
     | '/api/public/stt'
     | '/api/public/tts'
     | '/api/public/vscode-marketplace'
@@ -926,6 +948,7 @@ export interface FileRouteTypes {
     | '/builder'
     | '/community-art'
     | '/demo'
+    | '/desktop-ai-agent-guide'
     | '/desktop-feedback'
     | '/faq'
     | '/nebula'
@@ -960,6 +983,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
+    | '/api/public/sitemap-dynamic'
     | '/api/public/stt'
     | '/api/public/tts'
     | '/api/public/vscode-marketplace'
@@ -1009,6 +1033,7 @@ export interface RootRouteChildren {
   BuilderRoute: typeof BuilderRoute
   CommunityArtRoute: typeof CommunityArtRoute
   DemoRoute: typeof DemoRoute
+  DesktopAiAgentGuideRoute: typeof DesktopAiAgentGuideRoute
   DesktopFeedbackRoute: typeof DesktopFeedbackRoute
   FaqRoute: typeof FaqRoute
   NebulaRoute: typeof NebulaRoute
@@ -1043,6 +1068,7 @@ export interface RootRouteChildren {
   ApiPublicMcpRegistryRoute: typeof ApiPublicMcpRegistryRoute
   ApiPublicNebulaRoute: typeof ApiPublicNebulaRouteWithChildren
   ApiPublicNpmPackagesRoute: typeof ApiPublicNpmPackagesRoute
+  ApiPublicSitemapDynamicRoute: typeof ApiPublicSitemapDynamicRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
   ApiPublicTtsRoute: typeof ApiPublicTtsRouteWithChildren
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
@@ -1119,6 +1145,13 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/desktop-ai-agent-guide': {
+      id: '/desktop-ai-agent-guide'
+      path: '/desktop-ai-agent-guide'
+      fullPath: '/desktop-ai-agent-guide'
+      preLoaderRoute: typeof DesktopAiAgentGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/desktop-feedback': {
@@ -1357,6 +1390,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/npm-packages'
       fullPath: '/api/public/npm-packages'
       preLoaderRoute: typeof ApiPublicNpmPackagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sitemap-dynamic': {
+      id: '/api/public/sitemap-dynamic'
+      path: '/api/public/sitemap-dynamic'
+      fullPath: '/api/public/sitemap-dynamic'
+      preLoaderRoute: typeof ApiPublicSitemapDynamicRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/stt': {
@@ -1704,6 +1744,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuilderRoute: BuilderRoute,
   CommunityArtRoute: CommunityArtRoute,
   DemoRoute: DemoRoute,
+  DesktopAiAgentGuideRoute: DesktopAiAgentGuideRoute,
   DesktopFeedbackRoute: DesktopFeedbackRoute,
   FaqRoute: FaqRoute,
   NebulaRoute: NebulaRoute,
@@ -1738,6 +1779,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMcpRegistryRoute: ApiPublicMcpRegistryRoute,
   ApiPublicNebulaRoute: ApiPublicNebulaRouteWithChildren,
   ApiPublicNpmPackagesRoute: ApiPublicNpmPackagesRoute,
+  ApiPublicSitemapDynamicRoute: ApiPublicSitemapDynamicRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
   ApiPublicTtsRoute: ApiPublicTtsRouteWithChildren,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,

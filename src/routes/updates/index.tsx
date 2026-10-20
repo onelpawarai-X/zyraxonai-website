@@ -15,6 +15,7 @@ export const Route = createFileRoute("/updates/")({
         content:
           "Every feature, release and announcement published from the ZYRAXON AI command deck — each with its own permanent link.",
       },
+      { name: "keywords", content: "ZYRAXON updates, AI agent news, release announcements" },
       { property: "og:title", content: "Latest Updates — ZYRAXON AI" },
       {
         property: "og:description",
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/updates/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE_ORIGIN}/updates` },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/updates" }],
   }),
   component: UpdatesIndex,
 });
@@ -48,7 +50,7 @@ function UpdatesIndex() {
           <p className="text-muted-foreground">No updates published yet.</p>
         </div>
       ) : (
-          <div className="grid gap-8 pb-16 sm:grid-cols-2">
+        <div className="grid gap-8 pb-16 sm:grid-cols-2">
           {items.map((item: PublicItem) => (
             <article
               key={item.id}
@@ -90,7 +92,13 @@ function UpdatesIndex() {
                 >
                   Read the full update
                   <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M6 3l5 5-5 5"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </a>
               </div>
