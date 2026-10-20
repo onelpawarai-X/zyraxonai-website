@@ -441,6 +441,21 @@ function DocsShellFrame({
             placeholder="Search docs..."
             className="w-full rounded-lg border border-border bg-foreground/5 px-3 py-2 text-sm text-foreground placeholder-gray-400 outline-none transition-colors focus:border-primary/60 focus:bg-[var(--plane)] focus:ring-2 focus:ring-blue-100"
           />
+          <Link
+            to="/docs/$slug"
+            params={{ slug: "provider-overview" }}
+            onClick={() => setOpen(false)}
+            className="mt-4 flex items-center justify-between rounded-xl px-3.5 py-2.5 no-underline transition-transform hover:-translate-y-0.5"
+            style={{ background: "linear-gradient(135deg,#2563eb,#7c3aed)" }}
+          >
+            <span className="flex flex-col">
+              <span className="text-[13px] font-bold text-white">Provider</span>
+              <span className="text-[10px] font-medium text-white/80">
+                Ten models · one endpoint
+              </span>
+            </span>
+            <span className="text-white/90">&#8594;</span>
+          </Link>
           <nav className="mt-5 space-y-6">
             {DOC_GROUPS.map((g) => {
               const pages = (filtered ?? DOCS).filter((d) => d.group === g);

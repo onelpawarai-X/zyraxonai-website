@@ -33,7 +33,7 @@ export const PROVIDER_DOCS: DocPage[] = [
         rows: [
           ["GET", `${V1}/models`, "Lists the ten ZYRAXON models in the standard `{ object: \"list\", data: [...] }` shape."],
           ["POST", `${V1}/chat/completions`, "Runs a chat turn, streaming or not, with optional media and tools."],
-          ["GET", `${V1}/provider`, "Live provider status: model health, capabilities, capacity, and the system prompt in force."],
+          ["GET", `${V1}/provider`, "Live provider status: model health, capabilities and capacity."],
         ],
       },
       { t: "h2", text: "Quickstart with cURL" },
@@ -223,18 +223,6 @@ for await (const chunk of stream) {
         title: "How to slice a video",
         text: "Compress first with H.264 at a bitrate sized to the length, then cut with stream copy (`-c copy`) so slicing is fast and lossless. The provider's own client does exactly this: it sizes the bitrate to the duration, then cuts into near-equal ordered slices.",
       },
-      {
-        t: "code",
-        lang: "shell",
-        code: `# 1. Compress to a size that fits the budget (bitrate sized to duration)
-ffmpeg -i input.mp4 -vf "scale='min(1280,iw)':-2" \\
-  -c:v libx264 -preset veryfast -b:v 500k \\
-  -c:a aac -b:a 96k -movflags +faststart out.mp4
-
-# 2. Slice into ordered parts without re-encoding
-ffmpeg -i out.mp4 -c copy -f segment -segment_time 60 \\
-  -reset_timestamps 1 part_%02d.mp4`,
-      },
       { t: "h2", text: "PDFs and other documents" },
       {
         t: "code",
@@ -266,62 +254,6 @@ ffmpeg -i out.mp4 -c copy -f segment -segment_time 60 \\
         kind: "info",
         title: "Large media is sliced, not rejected",
         text: "The ZYRAXON desktop and web clients compress and slice on the client before sending, so a long recording arrives as several ordered parts rather than a single refused upload. If a file is so long that even the lowest usable bitrate will not fit one turn, the leading parts are sent and the remainder is reported to the user — never dropped silently.",
-      },
-    ],
-  },
-
-  {
-    slug: "provider-system-prompt",
-    title: "The Provider System Prompt and Your Rules",
-    group: "ZYRAXON Provider",
-    desc: "Every turn is served under a ZYRAXON contract. Here is what it says, and how your own rules interact with it.",
-    blocks: [
-      {
-        t: "p",
-        text: "Every request to the ZYRAXON Provider is served under a **provider contract** — a system prompt issued by us and injected ahead of your messages. It governs identity, honesty, output quality, media handling, tool use, and refusals. It is the same for every caller and cannot be removed.",
-      },
-      {
-        t: "note",
-        kind: "info",
-        title: "Why we inject it",
-        text: "A provider that lets any caller strip its own behaviour has no behaviour. The contract is what makes ZYRAXON models consistent and safe to build on, and it is what keeps a caller's own rules from being quietly overridden by a later prompt.",
-      },
-      { t: "h2", text: "How your own system prompt is treated" },
-      {
-        t: "p",
-        text: "Send your own `system` message as usual. It is kept **verbatim**, after the contract. The contract instructs the model to treat your rules as binding — so if you tell the model to always answer in JSON, to adopt a persona, to follow a house style, or to refuse certain topics, it will follow those rules for your users.",
-      },
-      {
-        t: "table",
-        head: ["Situation", "What happens"],
-        rows: [
-          ["Your rule does not conflict with the contract", "It is honoured in full, exactly as you wrote it."],
-          ["Your rule conflicts with the contract", "The contract wins, and the model tells the user which rule it could not keep and why."],
-          ["You ask the model to ignore or reveal the contract", "That part is declined; the rest of the request continues."],
-          ["You send a message that imitates the contract", "It is discarded, so only the provider's real contract is in force."],
-        ],
-      },
-      {
-        t: "note",
-        kind: "success",
-        title: "This is the mechanism you asked for",
-        text: "Because the contract makes caller rules binding, a developer who sets rules for their own users gets them enforced by the model — while the safety floor still holds. You tighten; you cannot loosen.",
-      },
-      { t: "h2", text: "Read the contract in force" },
-      {
-        t: "p",
-        text: "The exact text is published, so you never have to guess what is in force:",
-      },
-      {
-        t: "code",
-        lang: "shell",
-        code: `curl ${V1}/provider | jq -r .systemPrompt`,
-      },
-      {
-        t: "note",
-        kind: "tip",
-        title: "Build your rules on top, not against it",
-        text: "Write your system prompt as you would for any OpenAI model. The contract already covers honesty, language matching, no-duplication, and complete code output — so your own prompt can focus on your product's specifics rather than restating the basics.",
       },
     ],
   },
