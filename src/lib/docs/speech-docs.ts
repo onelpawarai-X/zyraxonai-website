@@ -76,6 +76,75 @@ curl -s ${TTS} -H "Content-Type: application/json" \\
           ],
         ],
       },
+      {
+        t: "note",
+        kind: "success",
+        title: "The language is detected — you do not have to send it",
+        text: "The endpoint reads the script of the text you send and picks a voice for it. Bengali text is read by a Bengali voice, Devanagari by a Hindi one, Arabic by an Arabic one, and Latin script falls back to English. This is what makes a Bengali answer audible: an English voice reading Bengali does not pronounce the letters at all. Send `locale` only when you want to override the detection.",
+      },
+      { t: "h2", text: "Speaking in real time" },
+      {
+        t: "p",
+        text: "For a live conversation the audio must start before the answer is finished. Synthesising the whole reply first means seconds of silence. The pattern is to **split the answer into sentences and speak each one as it is ready**, queued in order so nothing is reordered.",
+      },
+      {
+        t: "code",
+        lang: "typescript",
+        code: `// Speak an answer while it is still being written.
+// A reply arrives token by token; feed the growing text and speak each
+// completed sentence as it appears. The first sentence is heard while the
+// model is still writing the second.
+const queue: string[] = [];
+let buffer = "";
+let speaking = false;
+
+async function speak(text: string) {
+  const res = await fetch("${TTS}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),   // the locale is detected from the text
+  });
+  const audio = new Audio(URL.createObjectURL(await res.blob()));
+  await new Promise<void>((done) => {
+    audio.onended = () => done();
+    audio.onerror = () => done();
+    audio.play();
+  });
+}
+
+async function pump() {
+  if (speaking) return;
+  speaking = true;
+  while (queue.length) await speak(queue.shift()!);
+  speaking = false;
+}
+
+// Call this on every streamed token.
+function feed(chunk: string) {
+  buffer += chunk;
+  // Cut after each sentence terminator, including the Bengali danda.
+  let at = -1;
+  for (let i = 0; i < buffer.length; i++) if (/[.!?।॥]/.test(buffer[i]!)) at = i;
+  if (at >= 0) {
+    queue.push(buffer.slice(0, at + 1).trim());
+    buffer = buffer.slice(at + 1).trimStart();
+    void pump();
+  }
+}
+
+// When the answer ends, speak whatever is left.
+function finish() {
+  if (buffer.trim()) queue.push(buffer.trim());
+  buffer = "";
+  void pump();
+}`,
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "How fast is a sentence",
+        text: "A short sentence comes back in well under a second from this endpoint, which is what makes sentence-by-sentence playback feel like speech rather than a recording starting late.",
+      },
       { t: "h2", text: "Which voices exist" },
       {
         t: "code",

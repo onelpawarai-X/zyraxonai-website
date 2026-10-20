@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Markdown from "@/components/site/Markdown";
 import SpeakButton from "@/components/site/SpeakButton";
+import { useLiveSpeech } from "@/components/site/useLiveSpeech";
 
 /** One line of the helper's stream. The route sends newline-delimited JSON so
  *  the browser can show "thinking" and tool use before the answer starts. */
@@ -33,6 +34,7 @@ export default function HelpAgent() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [live, setLive] = useState("");
+  const speech = useLiveSpeech();
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -97,9 +99,15 @@ export default function HelpAgent() {
               setStatus("Switching model");
             } else if (event.type === "delta") {
               setStatus(null);
+              // Speak each completed sentence as it appears, so the answer is
+              // heard while it is still being written.
+              speech.feed(event.text);
               setLive((prev) => prev + event.text);
             } else if (event.type === "answer") {
               answer = event.text;
+              // The answer is complete: flush the last sentence, if any, so the
+              // tail is not left unspoken.
+              speech.feed("", { final: true });
               setStatus(null);
             }
           }
@@ -177,13 +185,32 @@ export default function HelpAgent() {
                 Knows every page here · can search the web
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setMessages([])}
-              className="ml-auto rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-            >
-              Clear
-            </button>
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => speech.setLive(!speech.enabled)}
+                aria-pressed={speech.enabled}
+                title={
+                  speech.enabled
+                    ? "Stop speaking replies aloud"
+                    : "Speak every reply aloud as it is written"
+                }
+                className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                  speech.enabled
+                    ? "bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                }`}
+              >
+                {speech.enabled ? "Voice on" : "Voice off"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMessages([])}
+                className="rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+              >
+                Clear
+              </button>
+            </div>
           </div>
 
           {/* Body */}
