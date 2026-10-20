@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "google-site-verification", content: "6Jtjtw5XD-55BulMN295zZTRKlS3H9DEePsIaJ2N-6c" },
+      { name: "google-site-verification", content: "uzagX2DqipxT74MOT4dVhJNvojHGiOBY44B4qIYHVG0" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
       {
