@@ -80,7 +80,7 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               maxBodyBytes: MAX_MEDIA_BODY_BYTES,
               maxMessages: 48,
               defaultStream: false,
-              note: "The provider system prompt is injected ahead of every turn and outranks caller instructions that contradict it. Caller rules that do not contradict it are honoured. See the provider guide for media shapes and limits.",
+              note: "Limits for the chat-completions endpoint. See the provider guide for media shapes and sizes.",
             },
             egress: egressStatus(),
           },
