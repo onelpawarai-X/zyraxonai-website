@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -154,7 +154,6 @@ export type Database = {
       community_members: {
         Row: {
           address: string | null
-          avatar_url: string | null
           consented_at: string | null
           country: string | null
           email: string
@@ -162,7 +161,6 @@ export type Database = {
           id: string
           institution: string | null
           joined_at: string
-          links: string | null
           name: string
           participation: string | null
           phone: string | null
@@ -173,7 +171,6 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          avatar_url?: string | null
           consented_at?: string | null
           country?: string | null
           email: string
@@ -181,7 +178,6 @@ export type Database = {
           id?: string
           institution?: string | null
           joined_at?: string
-          links?: string | null
           name: string
           participation?: string | null
           phone?: string | null
@@ -192,7 +188,6 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          avatar_url?: string | null
           consented_at?: string | null
           country?: string | null
           email?: string
@@ -200,7 +195,6 @@ export type Database = {
           id?: string
           institution?: string | null
           joined_at?: string
-          links?: string | null
           name?: string
           participation?: string | null
           phone?: string | null
@@ -507,6 +501,57 @@ export type Database = {
           position?: number
           published?: boolean
           subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      swebench_report: {
+        Row: {
+          authors: string | null
+          code_url: string | null
+          contribution: string | null
+          download_url: string | null
+          first_run: string | null
+          id: number
+          links_public: boolean
+          methodology: string | null
+          report_url: string | null
+          rerun: string | null
+          results_url: string | null
+          score: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          authors?: string | null
+          code_url?: string | null
+          contribution?: string | null
+          download_url?: string | null
+          first_run?: string | null
+          id?: number
+          links_public?: boolean
+          methodology?: string | null
+          report_url?: string | null
+          rerun?: string | null
+          results_url?: string | null
+          score?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          authors?: string | null
+          code_url?: string | null
+          contribution?: string | null
+          download_url?: string | null
+          first_run?: string | null
+          id?: number
+          links_public?: boolean
+          methodology?: string | null
+          report_url?: string | null
+          rerun?: string | null
+          results_url?: string | null
+          score?: string | null
           title?: string
           updated_at?: string
         }
