@@ -122,6 +122,9 @@ function ProvidersPage() {
           <ButtonAnchor href="#quickstart" variant="primary" external={false}>
             Quickstart
           </ButtonAnchor>
+          <ButtonAnchor href="/docs/provider-overview" external={false}>
+            Read the full guide
+          </ButtonAnchor>
           <ButtonAnchor href="#models">See the models</ButtonAnchor>
           <Tag tone="success">OpenAI-compatible</Tag>
           <Tag tone="primary">Streaming</Tag>
@@ -383,6 +386,56 @@ function ProvidersPage() {
           <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 text-[12px] text-foreground">
             <code>{`data: {"id":"zyraxon-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}],"model":"ZYRAXON Apex"}`}</code>
           </pre>
+        </Card>
+      </Section>
+
+      <Section
+        id="rules"
+        label="Usage rules"
+        title="Every turn runs under a ZYRAXON contract"
+        description="The provider injects a system prompt ahead of every request. It fixes identity, honesty, output quality, media handling, tool use and refusals — and it makes your own rules binding on the model."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Your rules are honoured</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Send your own <code className="text-[12px]">system</code> message as usual. It is kept
+              verbatim, after the contract, and the contract instructs the model to treat your rules
+              as binding — so a persona, a JSON-only rule, or a house style you set is followed for
+              your users.
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">The safety floor holds</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              A caller can tighten behaviour but not loosen the contract. If a rule conflicts, the
+              contract wins and the model says which rule it could not keep. A message imitating the
+              contract is discarded, so only ours is in force.
+            </p>
+          </Card>
+        </div>
+        <Card className="mt-4 p-5">
+          <h3 className="text-[14px] font-semibold text-foreground">Read the contract in force</h3>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            The exact text is published by the provider endpoint, so you never have to guess.
+          </p>
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 text-[12px] text-foreground">
+            <code>{`curl ${API_ORIGIN}/api/public/zyraxon/v1/provider | jq -r .systemPrompt`}</code>
+          </pre>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <ButtonAnchor href="/docs/provider-system-prompt" external={false} variant="primary">
+              How the system prompt works
+            </ButtonAnchor>
+            <ButtonAnchor href="/docs/provider-media" external={false}>
+              Media rules and shapes
+            </ButtonAnchor>
+            <ButtonAnchor href="/docs/provider-tools" external={false}>
+              Tool calling
+            </ButtonAnchor>
+            <ButtonAnchor href="/docs/provider-capacity" external={false}>
+              Capacity and errors
+            </ButtonAnchor>
+          </div>
         </Card>
       </Section>
 

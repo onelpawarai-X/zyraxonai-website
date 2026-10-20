@@ -26,6 +26,7 @@ import {
   type ZenModel,
 } from "@/lib/builder/zen.server";
 import { LaneShedError, lanePool } from "./lane-pool.server";
+import { withProviderContract } from "./provider-contract";
 import {
   fitsModalities,
   normaliseContent,
@@ -155,7 +156,13 @@ export async function brandChatStream(
   // gives us retries and tool plumbing; but audio and video have no SDK part at
   // all, so a turn carrying either is posted on the raw wire path instead, where
   // `input_audio` / `video_url` survive intact.
-  const canonical = messages.map((m) => ({
+  //
+  // The provider contract is injected here, before any shaping, so it is the
+  // first thing the model reads on every turn regardless of which path the turn
+  // takes or what the caller sent. A caller-supplied system message is kept and
+  // follows the contract; see `withProviderContract`.
+  const contracted = withProviderContract(messages);
+  const canonical = contracted.map((m) => ({
     role: m.role,
     content: normaliseContent(m.content),
   }));
