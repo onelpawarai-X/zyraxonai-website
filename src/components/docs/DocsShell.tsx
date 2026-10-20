@@ -1,5 +1,6 @@
 ﻿import { Link, useRouterState } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
+import { inlineMarkdown } from "@/lib/inline-markdown";
 import { DOCS, DOC_GROUPS, type DocBlock } from "@/lib/docs/content";
 import { X_TOOL_CATEGORIES, X_TOOL_TOTALS } from "@/lib/docs/x-tools";
 
@@ -92,50 +93,6 @@ function XToolsCatalog({ search }: { search: string }) {
   );
 }
 
-function inline(text: string): ReactNode[] {
-  const out: ReactNode[] = [];
-  const re = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
-  let last = 0;
-  let m: RegExpExecArray | null;
-  let k = 0;
-  while ((m = re.exec(text))) {
-    if (m.index > last) out.push(text.slice(last, m.index));
-    const tok = m[0];
-    if (tok.startsWith("**"))
-      out.push(
-        <strong key={k++} className="font-semibold text-foreground">
-          {tok.slice(2, -2)}
-        </strong>,
-      );
-    else if (tok.startsWith("`"))
-      out.push(
-        <code
-          key={k++}
-          className="rounded bg-foreground/8 px-1.5 py-0.5 font-mono text-[0.85em] text-primary"
-        >
-          {tok.slice(1, -1)}
-        </code>,
-      );
-    else {
-      const mm = tok.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-      if (mm)
-        out.push(
-          <a
-            key={k++}
-            href={mm[2]}
-            target="_top"
-            className="text-primary underline decoration-blue-300 underline-offset-4 hover:text-primary hover:decoration-blue-500"
-          >
-            {mm[1]}
-          </a>,
-        );
-    }
-    last = m.index + tok.length;
-  }
-  if (last < text.length) out.push(text.slice(last));
-  return out;
-}
-
 function Block({ b }: { b: DocBlock }) {
   switch (b.t) {
     case "h2":
@@ -147,7 +104,7 @@ function Block({ b }: { b: DocBlock }) {
     case "h3":
       return <h3 className="mt-8 text-base font-semibold text-foreground sm:text-lg">{b.text}</h3>;
     case "p":
-      return <p className="mt-4 leading-relaxed text-muted-foreground">{inline(b.text)}</p>;
+      return <p className="mt-4 leading-relaxed text-muted-foreground">{inlineMarkdown(b.text)}</p>;
     case "code":
       return (
         <div className="mt-5 overflow-hidden rounded-lg bg-[#0a0a0f]">
@@ -170,7 +127,7 @@ function Block({ b }: { b: DocBlock }) {
               <span className="mt-[7px] shrink-0 font-mono text-[11px] text-blue-500">
                 {b.ordered ? String(i + 1).padStart(2, "0") : "\u25B8"}
               </span>
-              <span>{inline(it)}</span>
+              <span>{inlineMarkdown(it)}</span>
             </li>
           ))}
         </Tag>
@@ -197,7 +154,7 @@ function Block({ b }: { b: DocBlock }) {
                 <tr key={i} className="border-b border-border/60 last:border-0">
                   {r.map((c, j) => (
                     <td key={j} className="py-2.5 pr-4 align-top text-muted-foreground">
-                      {inline(c)}
+                      {inlineMarkdown(c)}
                     </td>
                   ))}
                 </tr>
@@ -222,7 +179,9 @@ function Block({ b }: { b: DocBlock }) {
               {b.title ? (
                 <div className="text-xs font-bold uppercase tracking-wider">{b.title}</div>
               ) : null}
-              <div className="mt-0.5 text-sm leading-relaxed opacity-90">{inline(b.text)}</div>
+              <div className="mt-0.5 text-sm leading-relaxed opacity-90">
+                {inlineMarkdown(b.text)}
+              </div>
             </div>
           </div>
         </div>
