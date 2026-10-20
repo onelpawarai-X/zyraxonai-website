@@ -918,11 +918,12 @@ journalctl -p err -n 50 | zyraxon-ask "what broke here?"`,
     ],
     steps: [
       "Open OpenHands and go to **Settings**, then the LLM (model / provider) section.",
-      "Choose **Custom Model**, or **Add a custom provider** if that is what your version offers.",
-      "Enter the four fields above. **Name** is optional — it is only a label.",
+      "Turn **Advanced** on at the top of the page. This matters: the **Base URL** field only takes effect in Advanced mode. In the simple form OpenHands ignores it and sends the request to OpenAI instead — which is what produces `401 Incorrect API key provided: zyraxon`.",
+      "Choose **Custom Model**.",
       `For **Custom Model**, copy \`${LITELLM_MODEL}\` exactly. The \`openai/\` prefix is what LiteLLM reads to pick a handler; without it OpenHands fails before it calls us, with \`LLM Provider NOT provided\`.`,
-      "Press **Save Changes**. Nothing is verified at this point — OpenHands calls the Base URL on the first turn.",
-      "Start a conversation. If the first turn fails, read the `type` field in the error: `upstream_gate` and `provider_unavailable` are both 503 but need different fixes.",
+      `For **Base URL**, copy \`${V1_BASE_URL}\` exactly. If this box is missing, Advanced is not on yet.`,
+      `For **API Key**, use any non-empty value — \`${ANY_API_KEY}\` here.`,
+      "Press **Save Changes**, then start a conversation.",
     ],
     snippets: [
       {
@@ -934,6 +935,39 @@ Base URL          ${V1_BASE_URL}
 API Key           ${ANY_API_KEY}`,
       },
       {
+        label: "Turn Advanced ON first",
+        lang: "text",
+        code: `OpenHands has two modes, and the Base URL only works in one of them.
+
+  Simple form:  there is a "Provider connection" dropdown, no Base URL box
+                -> OpenHands sends the turn to OpenAI itself
+                -> "401 Incorrect API key provided: zyraxon"
+
+  Advanced:     a Base URL box appears
+                -> OpenHands sends the turn to whatever that box says
+
+Turn "Advanced" on at the top of the LLM settings page before you fill
+anything in. The Base URL box appears once it is on.`,
+      },
+      {
+        label: 'The "401 Incorrect API key" error',
+        lang: "text",
+        code: `  Error code: 401 - Incorrect API key provided: ${ANY_API_KEY}.
+  You can find your API key at https://platform.openai.com/account/api-keys
+
+That message comes from OpenAI, not from us — the request never reached the
+ZYRAXON endpoint. It means OpenHands used its default OpenAI URL instead of
+your Base URL, almost always because Advanced mode is off.
+
+Fix: turn Advanced on, then set Base URL to
+  ${V1_BASE_URL}
+
+You can confirm it reaches us, and not OpenAI, in one call:
+
+  curl -s ${MODELS_URL} | jq -r '.data[].id'
+  # prints the ZYRAXON model ids -> the URL is right`,
+      },
+      {
         label: 'The "LLM Provider NOT provided" error',
         lang: "text",
         code: `If OpenHands reports:
@@ -943,8 +977,7 @@ API Key           ${ANY_API_KEY}`,
 
 the Custom Model field is missing its provider prefix. OpenHands routes the
 model through LiteLLM, which reads the text before the first "/" to choose a
-handler and refuses a bare id — it never reaches us, so nothing on our side can
-fix it. Add the prefix:
+handler and refuses a bare id — it never reaches us. Add the prefix:
 
   Custom Model:  ${LITELLM_MODEL}
 
@@ -973,6 +1006,7 @@ curl -s ${CHAT_URL} \\
       },
     ],
     notes: [
+      "**Turn Advanced on.** Without it the Base URL is ignored and OpenHands calls OpenAI, which answers `401 Incorrect API key provided`.",
       "OpenHands needs the model id to exist in the list the base URL serves. `GET /models` publishes all ten, so the form resolves them without a manual override.",
       "Streaming is on by default in OpenHands; the endpoint serves SSE when `stream: true`.",
       `If you see \`LLM Provider NOT provided\`, put \`openai/\` in front of the model: \`${LITELLM_MODEL}\`. OpenHands routed it through LiteLLM, which needs a provider prefix. The endpoint accepts either spelling, so nothing else has to change.`,

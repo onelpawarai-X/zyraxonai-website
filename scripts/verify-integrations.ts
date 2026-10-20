@@ -384,6 +384,25 @@ check(
   (openhands?.snippets ?? []).some((s) => /LLM Provider NOT provided/.test(s.label + s.code)),
 );
 
+// The other half of the OpenHands story: a 401 that names platform.openai.com
+// means the host ignored the base URL, and in OpenHands that is Advanced mode
+// being off. Both must stay documented, and told apart.
+const ohText =
+  (openhands?.steps ?? []).join("\n") + (openhands?.snippets ?? []).map((s) => s.code).join("\n");
+check("the OpenHands entry tells the user to turn Advanced on", /Advanced/.test(ohText));
+check(
+  "the OpenHands entry explains the OpenAI 401 (base URL ignored)",
+  /Incorrect API key/.test(ohText) && /platform\.openai\.com/.test(ohText),
+);
+check(
+  "the two 401s are distinguished in the provider docs",
+  /Tell the two 401s apart|names \`platform\.openai\.com\`/.test(
+    PROVIDER_INTEGRATION_DOCS.flatMap((p) => p.blocks)
+      .map((b) => ("text" in b ? b.text : ""))
+      .join("\n"),
+  ),
+);
+
 console.log("");
 if (failures) {
   console.log(`${failures} CHECK(S) FAILED`);

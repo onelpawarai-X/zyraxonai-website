@@ -340,15 +340,32 @@ export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
         text: "Both calls below are cheap and prove different things: the first that the base URL serves a model list, the second that a turn actually completes.",
       },
       { t: "code", lang: "bash", code: snippet("openhands", "Verify before you save") },
+      { t: "h2", text: "Turn Advanced on — the Base URL only works there" },
+      {
+        t: "p",
+        text: "OpenHands has two settings screens. The simple one has a **Provider connection** dropdown and no Base URL box; the **Advanced** toggle at the top reveals one. If you fill the simple form, OpenHands ignores your Base URL and sends the turn to OpenAI itself.",
+      },
+      {
+        t: "note",
+        kind: "warn",
+        title: "Turn Advanced on before you fill anything in",
+        text: 'The Base URL box appears only once Advanced is on. If your screen shows a "Provider connection: None" dropdown instead of a Base URL field, Advanced is off.',
+      },
+      { t: "code", lang: "text", code: snippet("openhands", "Turn Advanced ON first") },
       { t: "h2", text: "When a turn fails" },
       {
         t: "table",
         head: ["Symptom", "Cause", "Fix"],
         rows: [
           [
+            "`401 Incorrect API key provided`",
+            "This message is OpenAI's, so the request never reached us — OpenHands used its default URL because Advanced mode was off and your Base URL was ignored.",
+            "Turn **Advanced** on, then set Base URL to the value above.",
+          ],
+          [
             "`LLM Provider NOT provided`",
             "OpenHands routed the model through LiteLLM, which needs a `provider/model` string.",
-            `Put \`openai/\` in front of the model: \`openai/${DEFAULT_MODEL}\`. Or set \`LLM_MODEL=\"openai/${DEFAULT_MODEL}\"\` for the OpenHands process.`,
+            `Put \`openai/\` in front of the model: \`${LITELLM_MODEL}\`. Or set \`LLM_MODEL=\"${LITELLM_MODEL}\"\` for the OpenHands process.`,
           ],
           [
             "`Unknown model`",
@@ -356,8 +373,8 @@ export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
             `Use an id from \`${MODELS_URL}\`.`,
           ],
           [
-            "`401 authentication_error`",
-            "The deployment requires a provider key and yours is wrong or missing.",
+            "`401 authentication_error` (type `authentication_error`)",
+            "This one is ours: the deployment requires a provider key and yours is wrong or missing.",
             "Send the key the operator gave you as the API Key field.",
           ],
           [
@@ -371,6 +388,12 @@ export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
             "Honour `Retry-After` and retry with backoff.",
           ],
         ],
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "Tell the two 401s apart",
+        text: `OpenAI's 401 says "Incorrect API key provided" and names \`platform.openai.com\` — that means the request went to OpenAI, not to us. Ours carries \`type: \"authentication_error\"\` in the JSON body. Only the second is about your key.`,
       },
       {
         t: "note",
