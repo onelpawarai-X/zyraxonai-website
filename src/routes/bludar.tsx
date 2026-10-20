@@ -9,17 +9,21 @@ export const Route = createFileRoute("/bludar")({
       { title: "ZYRAXON AI Bludar — Build Without Limits" },
       {
         name: "description",
-        content: "Build, preview, edit, export and publish websites with ZYRAXON AI Bludar website builder.",
+        content:
+          "Build, preview, edit, export and publish websites with ZYRAXON AI Bludar website builder.",
       },
+      { name: "keywords", content: "Bludar Studio, ZYRAXON design studio, AI design tool" },
       { property: "og:title", content: "ZYRAXON AI Bludar" },
       {
         property: "og:description",
-        content: "Build, preview, edit, export and publish websites with ZYRAXON AI Bludar website builder.",
+        content:
+          "Build, preview, edit, export and publish websites with ZYRAXON AI Bludar website builder.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/bludar" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/bludar" }],
     scripts: [
       {
         type: "application/ld+json",
@@ -29,7 +33,8 @@ export const Route = createFileRoute("/bludar")({
           name: "ZYRAXON AI Bludar",
           applicationCategory: "DeveloperApplication",
           operatingSystem: "Web",
-          description: "AI-powered website builder to create, preview, edit and publish websites from natural language.",
+          description:
+            "AI-powered website builder to create, preview, edit and publish websites from natural language.",
           url: "https://zyraxonai.lovable.app/bludar",
         }),
       },

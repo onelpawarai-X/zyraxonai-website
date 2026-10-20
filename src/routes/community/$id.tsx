@@ -6,7 +6,7 @@ import { PageShell } from "@/components/site/PageShell";
 import { ButtonAnchor, ButtonLink, Card, Tag } from "@/components/site/ui";
 
 export const Route = createFileRoute("/community/$id")({
-  head: () => ({
+  head: ({ params }) => ({
     meta: [
       { title: "Community profile — ZYRAXON AI" },
       { name: "description", content: "A verified ZYRAXON AI community member profile." },
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/community/$id")({
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: `https://zyraxonai.lovable.app/community/${params.id}` }],
   }),
   component: CommunityProfile,
 });

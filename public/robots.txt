@@ -1,6 +1,12 @@
 User-agent: *
 Allow: /
+# Endpoints are documented and indexable, but not crawled: a crawler has no
+# reason to hit an API, and letting it would waste both sides' budget. The pages
+# that describe them are what should rank, and /providers links to each one.
 Disallow: /api/
 Disallow: /nebula
 
+# Every page, the API surface, and the pages that only exist at runtime.
 Sitemap: https://zyraxonai.lovable.app/sitemap.xml
+Sitemap: https://zyraxonai.lovable.app/sitemap-api.xml
+Sitemap: https://zyraxonai.lovable.app/api/public/sitemap-dynamic

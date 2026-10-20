@@ -33,6 +33,7 @@ export const Route = createFileRoute("/share/$id")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
       ],
+      links: [{ rel: "canonical", href: url }],
       scripts: [
         {
           type: "application/ld+json",
@@ -161,7 +162,9 @@ function SharePage() {
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
               ZYRAXON AI · Shared session
             </p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              {title}
+            </h1>
             <p className="mt-1 text-[12px] text-muted-foreground">
               Created {new Date(share.timeCreated).toLocaleString()} · Updated{" "}
               {new Date(share.timeUpdated).toLocaleString()}
@@ -208,7 +211,9 @@ function SharePage() {
                 }`}
               >
                 <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <span className={isUser ? "text-primary" : "text-fuchsia-500 dark:text-fuchsia-300"}>
+                  <span
+                    className={isUser ? "text-primary" : "text-fuchsia-500 dark:text-fuchsia-300"}
+                  >
                     {isUser ? "You" : "ZYRAXON"}
                   </span>
                   {msg["model"] ? <span>· {String(msg["model"])}</span> : null}

@@ -83,21 +83,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "google-site-verification", content: "uzagX2DqipxT74MOT4dVhJNvojHGiOBY44B4qIYHVG0" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ZYRAXON AI — All in One. Anything. Nothing is Impossible." },
+      { title: "ZYRAXON AI — Free Desktop AI Agent for Windows, macOS and Linux" },
       {
         name: "description",
         content:
-          "The World's Most Advanced Desktop AI Agent. 888 tools across 63 categories, 11 agent modes, 108 MCP integrations, Screen Vision, Eternal Memory.",
+          "ZYRAXON AI is a free, source-available desktop AI agent for Windows, macOS and Linux: 888 tools across 63 categories, 11 agent modes, 108 app integrations, screen vision and eternal memory.",
       },
       { name: "author", content: "ZYRAXON AI" },
       {
         property: "og:title",
-        content: "ZYRAXON AI — All in One. Anything. Nothing is Impossible.",
+        content: "ZYRAXON AI — Free Desktop AI Agent for Windows, macOS and Linux",
       },
       {
         property: "og:description",
         content:
-          "The World's Most Advanced Desktop AI Agent. 888 tools across 63 categories, 11 agent modes, 108 MCP integrations, Screen Vision, Eternal Memory.",
+          "A free, source-available desktop AI agent: 888 tools, 11 agent modes, 108 app integrations, screen vision and eternal memory.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app" },

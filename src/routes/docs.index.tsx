@@ -26,6 +26,7 @@ export const Route = createFileRoute("/docs/")({
           "Complete technical reference for ZYRAXON-AI: the desktop AI agent with 888 tools across 63 categories, 11 agent modes and build guides.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/docs" }],
   }),
   component: DocsIndex,
 });

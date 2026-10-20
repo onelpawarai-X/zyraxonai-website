@@ -14,6 +14,10 @@ export const Route = createFileRoute("/demo")({
         content:
           "Watch ZYRAXON AI work: full product walkthroughs in English and Bengali, plus screenshots from the desktop agent.",
       },
+      {
+        name: "keywords",
+        content: "ZYRAXON demo, AI agent demo video, ZYRAXON walkthrough, Bengali AI demo",
+      },
       { property: "og:title", content: "Demo — ZYRAXON AI in action" },
       {
         property: "og:description",
@@ -23,6 +27,7 @@ export const Route = createFileRoute("/demo")({
       { property: "og:url", content: "https://zyraxonai.lovable.app/demo" },
       { name: "twitter:card", content: "player" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/demo" }],
   }),
   component: DemoPage,
 });

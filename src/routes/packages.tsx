@@ -13,6 +13,10 @@ export const Route = createFileRoute("/packages")({
         content:
           "Browse all @zyraxon-ai NPM packages: SDKs, core libraries, plugins and TypeScript types for building with ZYRAXON AI.",
       },
+      {
+        name: "keywords",
+        content: "ZYRAXON npm packages, @zyraxon-ai SDK, TypeScript AI SDK, AI packages",
+      },
       { property: "og:title", content: "NPM Packages — ZYRAXON AI" },
       {
         property: "og:description",
@@ -23,6 +27,7 @@ export const Route = createFileRoute("/packages")({
       { property: "og:url", content: "https://zyraxonai.lovable.app/packages" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/packages" }],
   }),
   component: PackagesPage,
 });
@@ -162,7 +167,10 @@ function PackagesPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           {[
             { t: "Type-safe", b: "Full TypeScript with Effect-TS schemas and generated types." },
-            { t: "Multi-provider", b: "OpenAI, Anthropic, Google, Groq, xAI and more behind one API." },
+            {
+              t: "Multi-provider",
+              b: "OpenAI, Anthropic, Google, Groq, xAI and more behind one API.",
+            },
             { t: "Extensible", b: "A plugin system for custom tools and integrations." },
           ].map((c) => (
             <Card key={c.t} hover className="p-6">
@@ -239,7 +247,14 @@ function PackageCard({ pkg }: { pkg: Pkg }) {
           className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-primary"
         >
           npmjs.com
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M7 17L17 7M9 7h8v8" />
           </svg>
         </a>

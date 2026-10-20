@@ -9,27 +9,37 @@ import { ZYRAXON_BRANDS } from "@/lib/providers/zyraxon-brands";
 export const Route = createFileRoute("/providers")({
   head: () => ({
     meta: [
-      { title: "ZYRAXON Provider — Ten Branded AI Models, One OpenAI-Compatible API" },
+      {
+        title:
+          "ZYRAXON Provider — Free OpenAI-Compatible AI API with Ten Models (Termux, OpenHands, Cursor)",
+      },
       {
         name: "description",
         content:
-          "Use the ZYRAXON provider: ten branded models served from a single OpenAI-compatible endpoint. Point any OpenAI client at ZYRAXON and pick a model — no provider keys, no rate-limit juggling.",
+          "Free OpenAI-compatible AI API: ten ZYRAXON models behind one base URL. Works with the OpenAI SDK, LangChain, the Vercel AI SDK, OpenHands, Cursor, Cline, Aider, Termux, mobile apps and any tool that speaks /v1/chat/completions. Streaming, tool calling, images, audio, video and PDF — no API key to buy.",
       },
-      { property: "og:title", content: "ZYRAXON Provider — Ten Branded AI Models" },
+      {
+        name: "keywords",
+        content:
+          "free AI API, OpenAI compatible API, OpenAI alternative, free LLM API, custom provider, base URL API key, OpenAI SDK base URL, LangChain custom provider, OpenHands custom model, Cursor custom model, Cline API, Continue.dev, Aider model, Termux AI, Kali Linux AI, LiteLLM provider, LLM Provider NOT provided, streaming chat completions, tool calling API, multimodal AI API, free GPT alternative, ZYRAXON provider",
+      },
+      { property: "og:title", content: "ZYRAXON Provider — Free OpenAI-Compatible AI API" },
       {
         property: "og:description",
         content:
-          "Ten ZYRAXON models behind one OpenAI-compatible endpoint. Works with the OpenAI SDK, LangChain, and any tool that speaks /v1/chat/completions.",
+          "Ten ZYRAXON models behind one OpenAI-compatible endpoint. Works with the OpenAI SDK, LangChain, OpenHands, Cursor, Termux and anything that speaks /v1/chat/completions.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app/providers" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "ZYRAXON Provider — Ten Branded AI Models" },
+      { name: "twitter:title", content: "ZYRAXON Provider — Free OpenAI-Compatible AI API" },
       {
         name: "twitter:description",
-        content: "Ten ZYRAXON models behind one OpenAI-compatible endpoint.",
+        content:
+          "Ten ZYRAXON models, one base URL, no key to buy. Streaming, tool calls, multimodal.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/providers" }],
     scripts: [
       {
         type: "application/ld+json",
@@ -38,10 +48,100 @@ export const Route = createFileRoute("/providers")({
           "@type": "SoftwareApplication",
           name: "ZYRAXON Provider",
           applicationCategory: "DeveloperApplication",
-          operatingSystem: "Web",
+          operatingSystem: "Web, Windows, macOS, Linux, Android, iOS",
           description:
-            "OpenAI-compatible AI provider exposing ten ZYRAXON branded models behind a single endpoint.",
+            "Free OpenAI-compatible AI provider exposing ten ZYRAXON branded models behind a single base URL, with streaming, tool calling and multimodal input.",
           url: "https://zyraxonai.lovable.app/providers",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          featureList: [
+            "OpenAI-compatible chat completions",
+            "Server-sent event streaming",
+            "Function and tool calling",
+            "Image, audio, video and PDF input",
+            "Ten branded models behind one endpoint",
+            "No API key required",
+          ],
+        }),
+      },
+      {
+        // A FAQ block is what puts a page into the "people also ask" results,
+        // which is where a query like "how do I use a custom provider" is
+        // actually answered. The questions are the ones people type.
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "Is the ZYRAXON provider free?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Yes. Ten models are served over one OpenAI-compatible endpoint with no API key to buy. Send any non-empty string as the API key unless the operator has set one.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "What base URL do I use?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "https://zyraxonai.lovable.app/api/public/zyraxon/v1 — the same base URL works for the OpenAI SDK, LangChain, the Vercel AI SDK, OpenHands, Cursor, Cline, Aider, LiteLLM, Termux and any other OpenAI-compatible client.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "How do I fix 'LLM Provider NOT provided' in OpenHands or LiteLLM?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Put openai/ in front of the model name, for example openai/zyraxon-codex. LiteLLM reads the text before the first slash to choose a handler and refuses a bare model id. This endpoint accepts both spellings.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Can I use this provider from Termux on Android?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Yes. A one-command setup script installs a zyraxon client in Termux that streams replies and can run a tool-calling agent loop on the device. Kali Linux and Kali NetHunter are supported the same way.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Does the provider support tool calling and streaming?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Yes. Define tools in the OpenAI wire shape and the model returns real tool calls; set stream to true and the reply arrives as server-sent events.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Which models are available?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Ten ZYRAXON models including zyraxon-apex, zyraxon-codex, zyraxon-pulse, zyraxon-titan and zyraxon-cyber. GET /api/public/zyraxon/v1/models lists them all with their live context windows and input modalities.",
+              },
+            },
+          ],
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://zyraxonai.lovable.app/",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Provider",
+              item: "https://zyraxonai.lovable.app/providers",
+            },
+          ],
         }),
       },
     ],

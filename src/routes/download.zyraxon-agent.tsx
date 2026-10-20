@@ -86,6 +86,10 @@ export const Route = createFileRoute("/download/zyraxon-agent")({
         content:
           "Download the latest ZYRAXON Agent for Windows, macOS or Linux. Free, source-available desktop AI agent with 888 tools. Direct downloads from the newest release.",
       },
+      {
+        name: "keywords",
+        content: "download ZYRAXON, ZYRAXON Agent installer, Windows macOS Linux AI agent",
+      },
       { property: "og:title", content: "Download ZYRAXON Agent" },
       {
         property: "og:description",
@@ -96,6 +100,7 @@ export const Route = createFileRoute("/download/zyraxon-agent")({
       { property: "og:url", content: "https://zyraxonai.lovable.app/download/zyraxon-agent" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/download/zyraxon-agent" }],
   }),
   component: DownloadZyraxonAgent,
 });

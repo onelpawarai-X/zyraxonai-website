@@ -23,6 +23,10 @@ export const Route = createFileRoute("/extensions/")({
         content:
           "Every extension published by ZYRAXON on the Open VSX registry. Install straight into ZYRAXON Agent or download the .vsix directly.",
       },
+      {
+        name: "keywords",
+        content: "ZYRAXON extensions, Open VSX extensions, AI editor extensions",
+      },
       { property: "og:title", content: "Extensions — ZYRAXON AI" },
       {
         property: "og:description",
@@ -33,6 +37,7 @@ export const Route = createFileRoute("/extensions/")({
       { property: "og:url", content: "https://zyraxonai.lovable.app/extensions" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/extensions" }],
   }),
   component: ExtensionsPage,
 });
