@@ -50,6 +50,7 @@ import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mc
 import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
+import { Route as ApiPublicTtsRouteImport } from './routes/api/public/tts'
 import { Route as ApiPublicVscodeMarketplaceRouteImport } from './routes/api/public/vscode-marketplace'
 import { Route as ApiPublicZyraxonReleasesRouteImport } from './routes/api/public/zyraxon-releases'
 import { Route as ApiSharesIndexRouteImport } from './routes/api/shares/index'
@@ -71,6 +72,7 @@ import { Route as ApiPublicProvidersProviderRouteImport } from './routes/api/pub
 import { Route as ApiPublicSharesIndexRouteImport } from './routes/api/public/shares/index'
 import { Route as ApiPublicSiteContentIndexRouteImport } from './routes/api/public/site-content/index'
 import { Route as ApiPublicSiteContentSlugRouteImport } from './routes/api/public/site-content/$slug'
+import { Route as ApiPublicTtsVoicesRouteImport } from './routes/api/public/tts/voices'
 import { Route as ApiPublicZyraxonHelperRouteImport } from './routes/api/public/zyraxon/helper'
 import { Route as ApiPublicZyraxonSearchRouteImport } from './routes/api/public/zyraxon/search'
 import { Route as ApiSharesIdIndexRouteImport } from './routes/api/shares/$id/index'
@@ -294,6 +296,11 @@ const ApiPublicSttRoute = ApiPublicSttRouteImport.update({
   path: '/api/public/stt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTtsRoute = ApiPublicTtsRouteImport.update({
+  id: '/api/public/tts',
+  path: '/api/public/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicVscodeMarketplaceRoute =
   ApiPublicVscodeMarketplaceRouteImport.update({
     id: '/api/public/vscode-marketplace',
@@ -405,6 +412,11 @@ const ApiPublicSiteContentSlugRoute =
     path: '/api/public/site-content/$slug',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTtsVoicesRoute = ApiPublicTtsVoicesRouteImport.update({
+  id: '/voices',
+  path: '/voices',
+  getParentRoute: () => ApiPublicTtsRoute,
+} as any)
 const ApiPublicZyraxonHelperRoute = ApiPublicZyraxonHelperRouteImport.update({
   id: '/api/public/zyraxon/helper',
   path: '/api/public/zyraxon/helper',
@@ -536,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
+  '/api/public/tts': typeof ApiPublicTtsRouteWithChildren
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -554,6 +567,7 @@ export interface FileRoutesByFullPath {
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
+  '/api/public/tts/voices': typeof ApiPublicTtsVoicesRoute
   '/api/public/zyraxon/helper': typeof ApiPublicZyraxonHelperRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
@@ -616,6 +630,7 @@ export interface FileRoutesByTo {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
+  '/api/public/tts': typeof ApiPublicTtsRouteWithChildren
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -634,6 +649,7 @@ export interface FileRoutesByTo {
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
+  '/api/public/tts/voices': typeof ApiPublicTtsVoicesRoute
   '/api/public/zyraxon/helper': typeof ApiPublicZyraxonHelperRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
@@ -697,6 +713,7 @@ export interface FileRoutesById {
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
   '/api/public/stt': typeof ApiPublicSttRoute
+  '/api/public/tts': typeof ApiPublicTtsRouteWithChildren
   '/api/public/vscode-marketplace': typeof ApiPublicVscodeMarketplaceRoute
   '/api/public/zyraxon-releases': typeof ApiPublicZyraxonReleasesRoute
   '/ecosystem/item/$id': typeof EcosystemItemIdRoute
@@ -715,6 +732,7 @@ export interface FileRoutesById {
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
+  '/api/public/tts/voices': typeof ApiPublicTtsVoicesRoute
   '/api/public/zyraxon/helper': typeof ApiPublicZyraxonHelperRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
@@ -779,6 +797,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
+    | '/api/public/tts'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -797,6 +816,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/site-content/$slug'
+    | '/api/public/tts/voices'
     | '/api/public/zyraxon/helper'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
@@ -859,6 +879,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
+    | '/api/public/tts'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -877,6 +898,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/site-content/$slug'
+    | '/api/public/tts/voices'
     | '/api/public/zyraxon/helper'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
@@ -939,6 +961,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula'
     | '/api/public/npm-packages'
     | '/api/public/stt'
+    | '/api/public/tts'
     | '/api/public/vscode-marketplace'
     | '/api/public/zyraxon-releases'
     | '/ecosystem/item/$id'
@@ -957,6 +980,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/site-content/$slug'
+    | '/api/public/tts/voices'
     | '/api/public/zyraxon/helper'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
@@ -1020,6 +1044,7 @@ export interface RootRouteChildren {
   ApiPublicNebulaRoute: typeof ApiPublicNebulaRouteWithChildren
   ApiPublicNpmPackagesRoute: typeof ApiPublicNpmPackagesRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
+  ApiPublicTtsRoute: typeof ApiPublicTtsRouteWithChildren
   ApiPublicVscodeMarketplaceRoute: typeof ApiPublicVscodeMarketplaceRoute
   ApiPublicZyraxonReleasesRoute: typeof ApiPublicZyraxonReleasesRoute
   EcosystemItemIdRoute: typeof EcosystemItemIdRoute
@@ -1341,6 +1366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSttRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tts': {
+      id: '/api/public/tts'
+      path: '/api/public/tts'
+      fullPath: '/api/public/tts'
+      preLoaderRoute: typeof ApiPublicTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/vscode-marketplace': {
       id: '/api/public/vscode-marketplace'
       path: '/api/public/vscode-marketplace'
@@ -1488,6 +1520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSiteContentSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tts/voices': {
+      id: '/api/public/tts/voices'
+      path: '/voices'
+      fullPath: '/api/public/tts/voices'
+      preLoaderRoute: typeof ApiPublicTtsVoicesRouteImport
+      parentRoute: typeof ApiPublicTtsRoute
+    }
     '/api/public/zyraxon/helper': {
       id: '/api/public/zyraxon/helper'
       path: '/api/public/zyraxon/helper'
@@ -1631,6 +1670,18 @@ const ApiPublicNebulaRouteWithChildren = ApiPublicNebulaRoute._addFileChildren(
   ApiPublicNebulaRouteChildren,
 )
 
+interface ApiPublicTtsRouteChildren {
+  ApiPublicTtsVoicesRoute: typeof ApiPublicTtsVoicesRoute
+}
+
+const ApiPublicTtsRouteChildren: ApiPublicTtsRouteChildren = {
+  ApiPublicTtsVoicesRoute: ApiPublicTtsVoicesRoute,
+}
+
+const ApiPublicTtsRouteWithChildren = ApiPublicTtsRoute._addFileChildren(
+  ApiPublicTtsRouteChildren,
+)
+
 interface ApiPublicAuthGithubRouteChildren {
   ApiPublicAuthGithubCallbackRoute: typeof ApiPublicAuthGithubCallbackRoute
   ApiPublicAuthGithubLogoutRoute: typeof ApiPublicAuthGithubLogoutRoute
@@ -1688,6 +1739,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicNebulaRoute: ApiPublicNebulaRouteWithChildren,
   ApiPublicNpmPackagesRoute: ApiPublicNpmPackagesRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,
+  ApiPublicTtsRoute: ApiPublicTtsRouteWithChildren,
   ApiPublicVscodeMarketplaceRoute: ApiPublicVscodeMarketplaceRoute,
   ApiPublicZyraxonReleasesRoute: ApiPublicZyraxonReleasesRoute,
   EcosystemItemIdRoute: EcosystemItemIdRoute,

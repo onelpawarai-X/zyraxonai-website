@@ -1548,12 +1548,69 @@ journalctl -p err -n 50 | zyraxon_ask "what broke here?"`,
   },
   {
     id: "voice",
-    name: "Voice input",
+    name: "Voice input and speech output",
     category: "Automation & Platforms",
     blurb:
-      "Speech-to-text is a separate endpoint, so a client can record on the device, transcribe it, then send the transcript as a normal chat turn.",
-    tags: ["Speech to text"],
+      "Speech-to-text and text-to-speech are both endpoints. Record on the device, transcribe it, send the transcript as a normal chat turn — then turn any answer back into speech, in the language the answer was written in, streamed as MP3 as it is synthesised.",
+    tags: ["Speech to text", "Text to speech", "322 voices", "75 languages"],
+    fields: [
+      { label: "Speech-to-text", value: `${API_ORIGIN}/api/public/stt` },
+      { label: "Text-to-speech", value: `${API_ORIGIN}/api/public/tts` },
+      { label: "Voices", value: `${API_ORIGIN}/api/public/tts/voices` },
+    ],
+    steps: [
+      "Record audio on the device and POST it to the speech-to-text endpoint as multipart form data.",
+      "Send the transcript to the provider as an ordinary chat turn.",
+      "To speak the answer, POST its text to the text-to-speech endpoint and play the MP3 it streams back.",
+      "Pass `locale` (e.g. `bn`) or `voice` (e.g. `bn-BD-NabanitaNeural`) to choose the voice; without either, an English voice is used.",
+      "Read the voices endpoint to offer a picker, or to match a voice to the language the answer came back in.",
+    ],
     snippets: [
+      {
+        label: "Speak an answer",
+        lang: "bash",
+        code: `# The answer is spoken in the language you name, and the MP3 starts
+# arriving before the sentence finishes being synthesised.
+curl -s ${API_ORIGIN}/api/public/tts \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"Hello from ZYRAXON.","locale":"en"}' \\
+  -o answer.mp3
+
+# Play it
+ffplay -nodisp -autoexit answer.mp3   # or: afplay / aplay / start`,
+      },
+      {
+        label: "A language the answer is already in",
+        lang: "bash",
+        code: `# Bengali answer, Bengali voice — the endpoint picks it from the locale.
+curl -s ${API_ORIGIN}/api/public/tts \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"আমি একটি ZYRAXON মডেল।","locale":"bn"}' \\
+  -o bengali.mp3
+
+# Or name the voice exactly
+curl -s ${API_ORIGIN}/api/public/tts \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"नमस्ते","voice":"hi-IN-SwaraNeural"}' -o hindi.mp3`,
+      },
+      {
+        label: "Which voices exist",
+        lang: "bash",
+        code: `curl -s ${API_ORIGIN}/api/public/tts/voices | jq '{count, languages: (.languages|length)}'
+curl -s ${API_ORIGIN}/api/public/tts/voices | jq -r '.locales[]' | grep '^bn'`,
+      },
+      {
+        label: "In a browser, play it as it streams",
+        lang: "typescript",
+        code: `// The endpoint streams MP3, so the browser can start playing before the
+// whole sentence has been synthesised.
+const res = await fetch("${API_ORIGIN}/api/public/tts", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text: answer, locale: "en" }),
+});
+new Audio(URL.createObjectURL(await res.blob())).play();`,
+      },
       {
         label: "Transcribe a recording",
         lang: "bash",
@@ -1563,7 +1620,11 @@ journalctl -p err -n 50 | zyraxon_ask "what broke here?"`,
       },
     ],
     notes: [
-      "Transcribe first and send text when the model does not accept audio. Check the model list for `audio` before sending an audio part.",
+      "Speech is opt-in: the helper offers a Listen button per answer, and nothing is spoken unless a visitor asks for it.",
+      "The voice is chosen from the language you name, so a Bengali answer is read in Bengali rather than by an English voice.",
+      'Code, links and Markdown are stripped before speaking — a reply that reads a code block aloud is unusable, so it says "a code block, 12 lines" instead.',
+      "The engine is Microsoft Edge's Read Aloud, the same one behind the browser feature: 322 neural voices across 75 languages, no key to buy.",
+      "To speak a reply, transcribe first and send text when the model does not accept audio. Check the model list for `audio` before sending an audio part.",
     ],
   },
 ];

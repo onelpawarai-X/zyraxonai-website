@@ -213,3 +213,26 @@ rather than hopeful.
 If you add anything that caches or shares state across callers, check it against
 that test first: a shared mutable session is exactly what makes one caller's
 failure break everyone else's stream.
+
+### Speech: the Edge engine, and the token that guards it
+
+Every answer can be spoken. `src/lib/tts/edge-speech.server.ts` drives Microsoft
+Edge's Read Aloud engine over a WebSocket, and `/api/public/tts` streams the MP3
+back as it is synthesised. Three things there are easy to get wrong:
+
+- **The token is not a plain hash.** `edge-tts-token.ts` ports the v2
+  `Sec-MS-GEC` algorithm (a modified SHA-256 plus a CS64 mixer) in BigInt. The
+  arithmetic multiplies a 32-bit word by 2^32 + 1 and needs the full 64-bit
+  product, which a JS number cannot hold, so plain numbers produce a token that
+  looks right and is rejected. `verify-tts.ts` compares the output against the
+  reference implementation byte for byte — do not edit that file without it.
+- **The socket URL is https, not wss.** A Workers-style runtime upgrades through
+  `fetch` with an `Upgrade: websocket` header and refuses a `wss://` URL with
+  "Fetch API cannot load". Use the upgrade header.
+- **Binary frames arrive as a Blob**, not an ArrayBuffer. Reading one as a typed
+  array yields nothing and the reply comes back silent. Await
+  `blob.arrayBuffer()`.
+
+`speakable()` strips code, links and Markdown first: reading a code block aloud
+is unusable, so a fence becomes "a code block, N lines". The voice is chosen from
+the answer's language, so a Bengali reply is read by a Bengali voice.

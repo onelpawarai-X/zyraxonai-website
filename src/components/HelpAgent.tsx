@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Markdown from "@/components/site/Markdown";
+import SpeakButton from "@/components/site/SpeakButton";
 
 /** One line of the helper's stream. The route sends newline-delimited JSON so
  *  the browser can show "thinking" and tool use before the answer starts. */
@@ -220,6 +221,9 @@ export default function HelpAgent() {
                 ) : (
                   <div className="max-w-[92%] rounded-2xl bg-foreground/5 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground">
                     <Markdown text={m.content} />
+                    <div className="mt-1.5 border-t border-border/40 pt-1.5">
+                      <SpeakButton text={m.content} />
+                    </div>
                   </div>
                 )}
               </div>
