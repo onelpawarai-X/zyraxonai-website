@@ -111,4 +111,31 @@ that import `system-prompt.txt` need
   every response carries `X-ZYRAXON-Capacity: primary|spill`.
 - `GET /api/public/zyraxon/v1/models` publishes `provider.since` (the launch
   date) and a stable `created` epoch. Do not use `Date.now()` for `created`.
+- A tool-calling client sends the assistant's `tool_calls` block *and* the
+  `role: "tool"` result back on the next turn. Both are carried through
+  `brandChatStream` and forced onto the raw wire path (the SDK message schema
+  has no `tool_call_id`). Dropping either one — e.g. filtering messages to
+  `system|user|assistant` — leaves the result unmatched, and the upstream then
+  asks for the same tool again on every turn instead of answering. `verify-e2e.ts`
+  E2E-6 asserts the upstream receives both.
+
+### Integration surface
+
+The provider is meant to be usable from any client, and the catalogue that
+describes how is `src/lib/providers/integrations.ts` — one module read by the
+`/providers` page, the provider docs (`provider-integration-docs.ts`) and
+`GET /api/public/zyraxon/v1/integrations`. Add a platform there and it appears in
+all three; do not hand-write a snippet into a page.
+
+`public/integrations/termux-setup.sh` and `public/integrations/kali-ask.sh` are
+real, runnable clients, not illustrations. Both are exercised against the live
+endpoint during development. Two bugs they caught that are easy to reintroduce:
+
+- A `... | while read` loop runs in a subshell, so any variable it updates is
+  discarded. The Termux agent loop accumulates the message history inside the
+  loop, so it uses process substitution (`done < <(...)`) instead. With a pipe
+  the model is handed the same history every turn and repeats its tool call.
+- Only a JSON object can carry an error. A streaming response is SSE (`data: `
+  frames), and feeding that to `jq` exits non-zero, which under `set -e` kills
+  the script. Guard with a `case "$raw" in \{*)` before parsing.
 

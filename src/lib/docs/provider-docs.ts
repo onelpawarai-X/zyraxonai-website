@@ -23,7 +23,7 @@ export const PROVIDER_DOCS: DocPage[] = [
       {
         t: "note",
         kind: "info",
-        title: "What \"OpenAI-compatible\" actually means here",
+        title: 'What "OpenAI-compatible" actually means here',
         text: "The request and response shapes match the OpenAI chat-completions schema, including SSE streaming and tool calls. That is what makes the OpenAI SDK, LangChain, the Vercel AI SDK, and anything else that already speaks that schema work without a custom adapter.",
       },
       { t: "h2", text: "The whole integration is two URLs" },
@@ -31,9 +31,21 @@ export const PROVIDER_DOCS: DocPage[] = [
         t: "table",
         head: ["Method", "URL", "What it does"],
         rows: [
-          ["GET", `${V1}/models`, "Lists the ten ZYRAXON models in the standard `{ object: \"list\", data: [...] }` shape."],
-          ["POST", `${V1}/chat/completions`, "Runs a chat turn, streaming or not, with optional media and tools."],
-          ["GET", `${V1}/provider`, "Live provider status: model health, capabilities and capacity."],
+          [
+            "GET",
+            `${V1}/models`,
+            'Lists the ten ZYRAXON models in the standard `{ object: "list", data: [...] }` shape.',
+          ],
+          [
+            "POST",
+            `${V1}/chat/completions`,
+            "Runs a chat turn, streaming or not, with optional media and tools.",
+          ],
+          [
+            "GET",
+            `${V1}/provider`,
+            "Live provider status: model health, capabilities and capacity.",
+          ],
         ],
       },
       { t: "h2", text: "Quickstart with cURL" },
@@ -81,13 +93,30 @@ for await (const chunk of stream) {
         head: ["Header", "Meaning"],
         rows: [
           ["`X-ZYRAXON-Model`", "The ZYRAXON model that answered, never the upstream name."],
-          ["`X-ZYRAXON-Input-Modalities`", "Which modalities the turn actually used — `image`, `audio`, `video`, `pdf`. Present only when media was sent."],
-          ["`X-ZYRAXON-Capacity`", "`primary` when served on ZYRAXON's own budget, `spill` when the overflow pool served it."],
+          [
+            "`X-ZYRAXON-Input-Modalities`",
+            "Which modalities the turn actually used — `image`, `audio`, `video`, `pdf`. Present only when media was sent.",
+          ],
+          [
+            "`X-ZYRAXON-Capacity`",
+            "`primary` when served on ZYRAXON's own budget, `spill` when the overflow pool served it.",
+          ],
         ],
       },
       {
         t: "p",
         text: "Read `X-ZYRAXON-Input-Modalities` when a media answer looks thin: if it lists `image` but you sent audio too, the audio did not reach the model, and that is a fact you can assert rather than guess.",
+      },
+      { t: "h2", text: "Connecting from your own tools" },
+      {
+        t: "p",
+        text: "The endpoint is all you need, but the wiring differs by client. The **Use It From Anywhere** guide covers Termux on Android, OpenHands, editors and CLI agents, mobile apps, the SDKs, and workflow runners — each with the exact fields to enter or code to paste.",
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "One URL to discover the rest",
+        text: `\`GET ${V1}/integrations\` returns the base URL, the key rule, the model list location and a working snippet per platform, as JSON.`,
       },
     ],
   },
@@ -106,7 +135,11 @@ for await (const chunk of stream) {
         t: "table",
         head: ["Model id", "Built for", "Leads with"],
         rows: [
-          ["`zyraxon-apex`", "Flagship reasoning at a million tokens", "Reasoning · image · video · PDF"],
+          [
+            "`zyraxon-apex`",
+            "Flagship reasoning at a million tokens",
+            "Reasoning · image · video · PDF",
+          ],
           ["`zyraxon-matrix`", "Vision plus scale reasoning", "Image · reasoning"],
           ["`zyraxon-pulse`", "Speed on long inputs", "Low latency"],
           ["`zyraxon-titan`", "Heavyweight long context", "Long context"],
@@ -139,7 +172,7 @@ for await (const chunk of stream) {
         t: "note",
         kind: "success",
         title: "Rotation is not an outage",
-        text: "When a model reports `status: \"rotated\"`, its preferred binding is temporarily unavailable and a sibling is covering. The model still answers under the same name and capability profile. This is normal operation, not a failure.",
+        text: 'When a model reports `status: "rotated"`, its preferred binding is temporarily unavailable and a sibling is covering. The model still answers under the same name and capability profile. This is normal operation, not a failure.',
       },
     ],
   },
@@ -243,9 +276,21 @@ for await (const chunk of stream) {
         t: "table",
         head: ["Limit", "Value", "What happens past it"],
         rows: [
-          ["Media parts per request", "12", "Extra parts are dropped; the response still succeeds. Trim client-side and tell your user."],
-          ["Request body", "40 MB", "The request is refused with **413** and `type: payload_too_large`."],
-          ["Messages per request", "48 (most recent kept)", "Older turns are dropped so a long history cannot grow unbounded."],
+          [
+            "Media parts per request",
+            "12",
+            "Extra parts are dropped; the response still succeeds. Trim client-side and tell your user.",
+          ],
+          [
+            "Request body",
+            "40 MB",
+            "The request is refused with **413** and `type: payload_too_large`.",
+          ],
+          [
+            "Messages per request",
+            "48 (most recent kept)",
+            "Older turns are dropped so a long history cannot grow unbounded.",
+          ],
           ["Image / PDF raw size", "2 MB inline", "Compress or downscale before sending."],
         ],
       },
@@ -266,7 +311,7 @@ for await (const chunk of stream) {
     blocks: [
       {
         t: "p",
-        text: "The provider accepts a standard `tools` array. When you define tools, the model can call them: the response carries `finish_reason: \"tool_calls\"` and the call appears in `tool_calls` with a name and JSON arguments. This works on both the streaming and non-streaming paths.",
+        text: 'The provider accepts a standard `tools` array. When you define tools, the model can call them: the response carries `finish_reason: "tool_calls"` and the call appears in `tool_calls` with a name and JSON arguments. This works on both the streaming and non-streaming paths.',
       },
       {
         t: "code",
@@ -328,10 +373,16 @@ for await (const chunk of stream) {
         ordered: true,
         items: [
           "Send your `tools` array with the user message.",
-          "The model replies with `finish_reason: \"tool_calls\"` and one or more calls.",
-          "Run each call yourself, and append a message with `role: \"tool\"`, the matching `tool_call_id`, and the result.",
+          'The model replies with `finish_reason: "tool_calls"` and one or more calls.',
+          'Run each call yourself, and append a message with `role: "tool"`, the matching `tool_call_id`, and the result.',
           "Call the endpoint again with the extended message list. Repeat until `finish_reason` is `stop`.",
         ],
+      },
+      {
+        t: "note",
+        kind: "warn",
+        title: "Send the assistant's tool call back, not only the result",
+        text: 'The message list you send on the second call must include the assistant message that asked for the tools — with its `tool_calls` array and their `id`s — followed by the `role: "tool"` result that names the same `tool_call_id`. Sending only the tool result leaves the result unmatched, and a model that cannot match a result to its call will ask for the same tool again instead of answering.',
       },
       {
         t: "note",
@@ -344,6 +395,43 @@ for await (const chunk of stream) {
         kind: "info",
         title: "Arguments are a JSON string",
         text: "As in the OpenAI schema, `function.arguments` is a string containing JSON, not an object. Parse it before use. Streamed calls arrive as fragments — accumulate them by index, then parse.",
+      },
+      { t: "h2", text: "The second request, in full" },
+      {
+        t: "p",
+        text: 'This is the request that turns a tool call into an answer. The assistant message that requested the tools is echoed back verbatim, then the result is appended as a `role: "tool"` message carrying the same `tool_call_id`.',
+      },
+      {
+        t: "code",
+        lang: "json",
+        code: `{
+  "model": "zyraxon-codex",
+  "messages": [
+    { "role": "user", "content": "Save a hello world file." },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_abc123",
+          "type": "function",
+          "function": {
+            "name": "write_file",
+            "arguments": "{\\"path\\":\\"hello.txt\\",\\"content\\":\\"Hello, world\\"}"
+          }
+        }
+      ]
+    },
+    { "role": "tool", "tool_call_id": "call_abc123", "content": "wrote hello.txt" }
+  ],
+  "tools": [ /* the same tools array as before */ ]
+}`,
+      },
+      {
+        t: "note",
+        kind: "success",
+        title: "How you know it worked",
+        text: 'The reply now has `finish_reason: "stop"` and a normal `content` answer. If you get `finish_reason: "tool_calls"` asking for the same tool again, the assistant\'s `tool_calls` block is missing from what you sent — the model never saw its own call, so it cannot see the result either.',
       },
     ],
   },
@@ -363,10 +451,22 @@ for await (const chunk of stream) {
         t: "table",
         head: ["Tier", "Behaviour"],
         rows: [
-          ["Primary", "Served on ZYRAXON's own lane budget. Responses carry `X-ZYRAXON-Capacity: primary`."],
-          ["Spill", "When primary lanes are full, the turn is handed to the OpenCode Zen free pool. Still a normal, successful answer, marked `spill`."],
-          ["Queue", "A bounded wait for a lane before giving up, so a short burst is smoothed rather than rejected."],
-          ["Shed", "If even the spill tier is saturated, the request returns **503** with `Retry-After` rather than blocking other callers."],
+          [
+            "Primary",
+            "Served on ZYRAXON's own lane budget. Responses carry `X-ZYRAXON-Capacity: primary`.",
+          ],
+          [
+            "Spill",
+            "When primary lanes are full, the turn is handed to the OpenCode Zen free pool. Still a normal, successful answer, marked `spill`.",
+          ],
+          [
+            "Queue",
+            "A bounded wait for a lane before giving up, so a short burst is smoothed rather than rejected.",
+          ],
+          [
+            "Shed",
+            "If even the spill tier is saturated, the request returns **503** with `Retry-After` rather than blocking other callers.",
+          ],
         ],
       },
       {
@@ -380,13 +480,33 @@ for await (const chunk of stream) {
         t: "table",
         head: ["Status", "type", "Meaning and what to do"],
         rows: [
-          ["400", "`invalid_request_error`", "Unknown model, missing messages, or malformed JSON. Check the model id against `/v1/models`."],
-          ["401", "`authentication_error`", "The deployment requires a provider key and yours is missing or wrong. Send `Authorization: Bearer <key>`."],
-          ["413", "`payload_too_large`", "Body over the limit. Compress and slice media, then retry."],
+          [
+            "400",
+            "`invalid_request_error`",
+            "Unknown model, missing messages, or malformed JSON. Check the model id against `/v1/models`.",
+          ],
+          [
+            "401",
+            "`authentication_error`",
+            "The deployment requires a provider key and yours is missing or wrong. Send `Authorization: Bearer <key>`.",
+          ],
+          [
+            "413",
+            "`payload_too_large`",
+            "Body over the limit. Compress and slice media, then retry.",
+          ],
           ["429", "`rate_limit`", "Slow down and retry with backoff."],
-          ["502", "`provider_unavailable`", "Every model in the rotation was unavailable. Retrying usually works."],
+          [
+            "502",
+            "`provider_unavailable`",
+            "Every model in the rotation was unavailable. Retrying usually works.",
+          ],
           ["503", "`overloaded`", "At capacity; shed rather than queued. Honour `Retry-After`."],
-          ["503", "`upstream_gate`", "The upstream free tier refused this network. Set `OPENCODE_ZEN_API_KEY` or call from a served network."],
+          [
+            "503",
+            "`upstream_gate`",
+            "The upstream free tier refused this network. Set `OPENCODE_ZEN_API_KEY` or call from a served network.",
+          ],
         ],
       },
       { t: "h2", text: "Recommended retry policy" },

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/site/PageShell";
 import { PageHeader } from "@/components/site/SiteChrome";
+import { ProviderIntegrations } from "@/components/site/ProviderIntegrations";
 import { Button, ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
 import { ZYRAXON_BRANDS } from "@/lib/providers/zyraxon-brands";
 
@@ -122,8 +123,11 @@ function ProvidersPage() {
           <ButtonAnchor href="#quickstart" variant="primary" external={false}>
             Quickstart
           </ButtonAnchor>
-          <ButtonAnchor href="/docs/provider-overview" external={false}>
-            Read the full guide
+          <ButtonAnchor href="#integrations" external={false}>
+            Use it anywhere
+          </ButtonAnchor>
+          <ButtonAnchor href="/docs/provider-integrations" external={false}>
+            Integration guide
           </ButtonAnchor>
           <ButtonAnchor href="#models">See the models</ButtonAnchor>
           <Tag tone="success">OpenAI-compatible</Tag>
@@ -388,6 +392,8 @@ function ProvidersPage() {
           </pre>
         </Card>
       </Section>
+
+      <ProviderIntegrations />
 
       <Section label="Why a rooted provider" title="One name you control" description="">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

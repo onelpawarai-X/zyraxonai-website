@@ -162,22 +162,34 @@ export async function brandChatStream(
   // takes or what the caller sent. A caller-supplied system message is kept and
   // follows the contract; see `withProviderContract`.
   const contracted = withProviderContract(messages);
-  const canonical = contracted.map((m) => ({
-    role: m.role,
-    content: normaliseContent(m.content),
-  }));
+  const canonical = contracted.map((m) => {
+    const out: any = { role: m.role, content: normaliseContent(m.content) };
+    // A tool turn carries an id that ties it to the call that asked for it, and
+    // an assistant turn that requests tools carries the calls themselves. Both
+    // must survive normalisation or the upstream cannot match result to call.
+    if (m.tool_calls?.length) out.tool_calls = m.tool_calls;
+    if (m.tool_call_id) out.tool_call_id = m.tool_call_id;
+    if (m.name) out.name = m.name;
+    return out;
+  });
   // Audio and video have no AI-SDK message part, so a turn carrying either is
   // posted on the raw OpenAI wire path, where `input_audio`/`video_url` survive.
   // Caller-defined tools force the same path: the SDK path advertises only the
   // gate catalogue, so a `tools` array would be dropped and the model would
-  // answer as though no tools existed. Everything else keeps the SDK path
-  // (retries, tool plumbing, usage).
-  const wire = needsWire(messages) || (tools?.length ?? 0) > 0;
+  // answer as though no tools existed. A tool result (or a turn with a tool
+  // call) does too — the SDK message schema has no room for `tool_call_id`.
+  const wire =
+    needsWire(messages) ||
+    (tools?.length ?? 0) > 0 ||
+    messages.some((m) => m.role === "tool" || (m.tool_calls?.length ?? 0) > 0);
   const useSend = send ?? (wire ? streamWireRaw : streamRaw);
   const useComplete = complete ?? (wire ? completeWireRaw : completeRaw);
-  const finalMessages = canonical.map((m) => ({
+  const finalMessages = canonical.map((m: any) => ({
     role: m.role,
     content: wire ? toWireContent(m.content) : toSdkContent(m.content),
+    ...(m.tool_calls ? { tool_calls: m.tool_calls } : {}),
+    ...(m.tool_call_id ? { tool_call_id: m.tool_call_id } : {}),
+    ...(m.name ? { name: m.name } : {}),
   }));
   // Modality routing reads the *raw* inbound parts, where the caller's own
   // spelling (`image_url`, `video_url`, `input_audio`) still distinguishes
@@ -218,8 +230,24 @@ export async function brandChatStream(
           }
           lane.attemptsLeft--;
           const out = stream
-            ? await useSend(key, upstream, finalMessages, budget, brand.label, lane.sessionId, tools)
-            : await useComplete(key, upstream, finalMessages, budget, brand.label, lane.sessionId, tools);
+            ? await useSend(
+                key,
+                upstream,
+                finalMessages,
+                budget,
+                brand.label,
+                lane.sessionId,
+                tools,
+              )
+            : await useComplete(
+                key,
+                upstream,
+                finalMessages,
+                budget,
+                brand.label,
+                lane.sessionId,
+                tools,
+              );
           if (!("failed" in out)) return { ok: true as const, value: out };
           return {
             ok: false as const,

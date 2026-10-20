@@ -1,0 +1,597 @@
+/** How to use the ZYRAXON provider from every kind of client, as documentation.
+ *
+ *  Kept out of `content.ts` for the same reason `provider-docs.ts` is: the
+ *  integration surface grows by platform, and the general docs registry should
+ *  not grow with it. The shape is the shared `DocPage`, so these pages get the
+ *  sidebar, search and prev/next for free.
+ *
+ *  The snippets and the connection fields are read from
+ *  `@/lib/providers/integrations`, the same catalogue the `/providers` page and
+ *  `GET /v1/integrations` serve. One source means the docs cannot describe a
+ *  base URL the endpoint does not serve. */
+import type { DocPage } from "./content";
+import {
+  ANY_API_KEY,
+  API_ORIGIN,
+  CHAT_URL,
+  DEFAULT_MODEL,
+  INTEGRATIONS_URL,
+  MODELS_URL,
+  PROVIDER_URL,
+  USAGE_RULES,
+  V1_BASE_URL,
+  getIntegration,
+} from "@/lib/providers/integrations";
+
+const ruleBlocks = USAGE_RULES.map((r) => ({ t: "h3" as const, text: r.title })).flatMap((h, i) => [
+  h,
+  { t: "p" as const, text: USAGE_RULES[i]!.text },
+]);
+
+/** Pull a snippet out of the catalogue by id and label, so a docs page can show
+ *  the exact code the endpoint hands out. Throws at build time if the snippet is
+ *  renamed, which is better than silently rendering an empty block. */
+function snippet(id: string, label: string): string {
+  const integration = getIntegration(id);
+  const found = integration?.snippets?.find((s) => s.label === label);
+  if (!found) throw new Error(`integration snippet not found: ${id} / ${label}`);
+  return found.code;
+}
+
+const TERMUX = getIntegration("termux")!;
+const KALI = getIntegration("kali-linux")!;
+const OPENHANDS = getIntegration("openhands")!;
+const MOBILE = getIntegration("mobile-sdk")!;
+const COMPATIBLE = getIntegration("openai-compatible-apps")!;
+
+const fieldTable = (integration: typeof OPENHANDS): string[][] =>
+  (integration.fields ?? []).map((f) => [f.label, f.value, f.note ?? ""]);
+
+export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
+  {
+    slug: "provider-integrations",
+    title: "Use It From Anywhere",
+    group: "ZYRAXON Provider",
+    desc: "Connect Termux, OpenHands, an editor, a mobile app, an SDK or a workflow runner to the ZYRAXON line. One base URL, one model id, no adapter.",
+    blocks: [
+      {
+        t: "p",
+        text: `The ZYRAXON provider speaks the OpenAI chat-completions dialect, so the integration is the same everywhere: point a client at \`${V1_BASE_URL}\`, pick a model id, and build. There is nothing to install on our side, no provider key to buy, and no upstream vendor name in any response.`,
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "The whole connection, in one box",
+        text: `Base URL: \`${V1_BASE_URL}\` · Model: \`${DEFAULT_MODEL}\` · API key: \`${ANY_API_KEY}\` (any non-empty string). Read \`${MODELS_URL}\` for the current model list and live limits.`,
+      },
+      {
+        t: "p",
+        text: "The snippets and the connection fields on this page are read from the same catalogue the `/providers` page and `GET /v1/integrations` serve, so what you read here is exactly what the endpoint hands out.",
+      },
+      { t: "h2", text: "Pick your client" },
+      {
+        t: "table",
+        head: ["If you use", "Go to", "What you do"],
+        rows: [
+          [
+            "Termux on Android",
+            "**Termux on Android**",
+            "Run one setup script, then use the `zyraxon` command.",
+          ],
+          [
+            "Kali Linux or NetHunter",
+            "**Kali Linux and NetHunter**",
+            "Install curl and jq, then use the `zyraxon-ask` script.",
+          ],
+          ["OpenHands", "**OpenHands**", "Fill four fields in the custom-provider form and save."],
+          [
+            "Cursor, Continue, Cline, Zed",
+            "**Editors and CLI Agents**",
+            "Set an OpenAI-compatible base URL.",
+          ],
+          [
+            "A mobile app you are building",
+            "**Mobile apps**",
+            "Call the HTTP endpoint from the platform's own client.",
+          ],
+          [
+            "cURL, the OpenAI SDK, LangChain",
+            "**SDKs and Frameworks**",
+            "Change the base URL and keep your code.",
+          ],
+          [
+            "Go, Rust, PHP, Java, .NET",
+            "**Languages and Runtimes**",
+            "Use the standard library's HTTP client.",
+          ],
+          [
+            "Discord, Slack, Home Assistant",
+            "**Bots and Home Automation**",
+            "One HTTP call per message.",
+          ],
+          [
+            "n8n, Make, Zapier, Postman",
+            "**Automation and HTTP Clients**",
+            "Use an HTTP request node.",
+          ],
+        ],
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "Machine-readable, if you would rather not read",
+        text: `\`GET ${INTEGRATIONS_URL}\` returns this whole page as JSON — the base URL, the key rule, the model list location and a working snippet per platform. Point an installer or an agent at it instead of copying code by hand.`,
+      },
+      { t: "h2", text: "The rules of use" },
+      {
+        t: "p",
+        text: "These apply to every client above. They are the same rules the endpoint publishes from `GET /v1/provider`, so a client can read them at runtime rather than trusting a page.",
+      },
+      ...ruleBlocks,
+      { t: "h2", text: "Prove the connection in one call" },
+      {
+        t: "code",
+        lang: "shell",
+        code: `curl -s ${CHAT_URL} \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${ANY_API_KEY}" \\
+  -d '{"model":"${DEFAULT_MODEL}","messages":[{"role":"user","content":"ping"}]}' \\
+| jq -r '.choices[0].message.content'`,
+      },
+      {
+        t: "p",
+        text: "If that prints a reply, the base URL and key are correct and every client below will work. If it fails, read the `type` field in the error body before changing anything else.",
+      },
+    ],
+  },
+
+  {
+    slug: "provider-integration-termux",
+    title: "Termux on Android",
+    group: "ZYRAXON Provider",
+    desc: "Run the ZYRAXON line from a phone terminal: install the helper, stream a reply, and run a tool-calling agent loop on the device.",
+    blocks: [
+      {
+        t: "p",
+        text: "Termux is a real Linux userland on Android with a real package manager, so the provider works from a phone exactly as it does from a laptop. The setup script installs `curl` and `jq`, writes your settings to `~/.zyraxon/env`, and installs a `zyraxon` command that streams replies and can run a small tool-calling agent loop on the device.",
+      },
+      {
+        t: "note",
+        kind: "warn",
+        title: "Install Termux from F-Droid",
+        text: "The Play Store build is abandoned and its package repositories are stale, so `pkg install` fails against it. Use F-Droid or the GitHub release.",
+      },
+      { t: "h2", text: "Setup" },
+      {
+        t: "p",
+        text: "The script is served as a plain file, so you can read it before you run it. That is deliberate: a piped installer you have not read is a stranger's code running on your phone.",
+      },
+      { t: "code", lang: "bash", code: snippet("termux", "Setup") },
+      {
+        t: "p",
+        text: `Download and read it first if you prefer: \`curl -fsSL ${API_ORIGIN}/integrations/termux-setup.sh\`.`,
+      },
+      { t: "h2", text: "What the script installs" },
+      {
+        t: "list",
+        items: [
+          "**`curl` and `jq`** through `pkg`, so the calls and the JSON parsing have real tools behind them.",
+          "**`~/.zyraxon/env`** holding `ZYRAXON_BASE`, `ZYRAXON_MODEL` and `ZYRAXON_KEY` (mode 600).",
+          "**`~/.local/bin/zyraxon`**, the command, with `~/.local/bin` added to `PATH` in `~/.bashrc`.",
+        ],
+      },
+      { t: "h2", text: "Using it" },
+      {
+        t: "list",
+        items: [
+          '`zyraxon "explain this repo in three bullets"` — stream an answer to the terminal.',
+          '`zyraxon -a "create hello.py and run it"` — the agent loop, which can call tools.',
+          '`echo "what is 2+2?" | zyraxon` — read the prompt from stdin, so it composes with a pipe.',
+          '`zyraxon -m zyraxon-apex "..."` — use another model for one turn.',
+          "`zyraxon --models` — print the live model list.",
+        ],
+      },
+      { t: "h2", text: "Manual setup, without the script" },
+      {
+        t: "p",
+        text: "If you would rather do it by hand, this is everything the script does to make a call work.",
+      },
+      { t: "code", lang: "bash", code: snippet("termux", "Manual setup") },
+      { t: "h2", text: "A streaming one-liner" },
+      {
+        t: "p",
+        text: "This is the whole streaming path in four commands: post, unwrap the SSE frames, drop the terminator, print the deltas.",
+      },
+      { t: "code", lang: "bash", code: snippet("termux", "Streaming one-liner") },
+      { t: "h2", text: "The agent loop, and its limits" },
+      {
+        t: "p",
+        text: "`zyraxon -a` defines three tools — `read_file`, `write_file` and `run_shell` — and runs the OpenAI tool-calling loop: send the tools, receive a call, run it, send the result back, repeat until the model stops calling. It caps at eight turns so a confused model cannot spin forever.",
+      },
+      {
+        t: "note",
+        kind: "warn",
+        title: "It asks before it acts",
+        text: "`write_file` and `run_shell` print the pending action and wait for a `y`. Nothing writes or executes unattended. Read the installed script at `~/.local/bin/zyraxon` if you want to change that policy.",
+      },
+      { t: "h2", text: "Phone-specific notes" },
+      {
+        t: "list",
+        items: TERMUX.notes ?? [],
+      },
+    ],
+  },
+
+  {
+    slug: "provider-integration-kali",
+    title: "Kali Linux and NetHunter",
+    group: "ZYRAXON Provider",
+    desc: "Kali on a laptop and Kali NetHunter on a phone both run the same client: install curl and jq, wire the environment, and pipe real tool output into the model.",
+    blocks: [
+      {
+        t: "p",
+        text: "Kali is a Debian-family distribution with a full shell, so the provider needs no special handling. The one thing worth doing is giving the model real evidence — pipe the output of `nmap`, `ss` or `journalctl` straight into the model instead of describing it, and the answer is grounded in what actually happened.",
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "NetHunter is the same userland",
+        text: "Kali NetHunter runs a full Kali chroot on an Android phone. Anything that works on a Kali desktop works inside the chroot; the phone is the only difference.",
+      },
+      { t: "h2", text: "Setup" },
+      { t: "code", lang: "bash", code: snippet("kali-linux", "Setup") },
+      { t: "h2", text: "The zyraxon-ask script" },
+      {
+        t: "p",
+        text: "Save this as `zyraxon-ask`, `chmod +x` it, and put it on your `PATH`. It streams a reply, reads the prompt from an argument or stdin, and takes `-m` to pick a different model for one turn.",
+      },
+      {
+        t: "p",
+        text: `Download it directly: \`curl -fsSL ${API_ORIGIN}/integrations/kali-ask.sh -o ~/.local/bin/zyraxon-ask && chmod +x ~/.local/bin/zyraxon-ask\`.`,
+      },
+      { t: "code", lang: "bash", code: snippet("kali-linux", "zyraxon-ask script") },
+      { t: "h2", text: "Kali NetHunter on a phone" },
+      { t: "code", lang: "bash", code: snippet("kali-linux", "Kali NetHunter (chroot)") },
+      { t: "h2", text: "Pipe real tool output" },
+      {
+        t: "p",
+        text: "This is where the integration earns its keep: the model reads the same evidence you do, so the answer is analysis rather than a plausible guess.",
+      },
+      { t: "code", lang: "bash", code: snippet("kali-linux", "Pipe tool output") },
+      { t: "h2", text: "Notes" },
+      { t: "list", items: KALI.notes ?? [] },
+    ],
+  },
+
+  {
+    slug: "provider-integration-openhands",
+    title: "Connecting OpenHands",
+    group: "ZYRAXON Provider",
+    desc: "OpenHands takes a custom provider through a small form. The four values to enter, and how to check them before you save.",
+    blocks: [
+      {
+        t: "p",
+        text: "OpenHands is an agent, so it needs a provider it can drive with tools and streaming. ZYRAXON serves both, which makes it a drop-in custom provider: four fields in a form, no code.",
+      },
+      { t: "h2", text: "The four fields" },
+      {
+        t: "table",
+        head: ["Field", "Value", "Why"],
+        rows: fieldTable(OPENHANDS),
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "Name is optional; the model id is not",
+        text: `\`Name\` is only a label for the provider entry. \`Custom Model\` must be an id the endpoint serves — \`${DEFAULT_MODEL}\` is a safe default, and \`${MODELS_URL}\` lists all ten.`,
+      },
+      { t: "h2", text: "Steps" },
+      { t: "list", ordered: true, items: OPENHANDS.steps ?? [] },
+      { t: "h2", text: "The form, as text" },
+      { t: "code", lang: "text", code: snippet("openhands", "Connection fields") },
+      { t: "h2", text: "Verify before you save" },
+      {
+        t: "p",
+        text: "Both calls below are cheap and prove different things: the first that the base URL serves a model list, the second that a turn actually completes.",
+      },
+      { t: "code", lang: "bash", code: snippet("openhands", "Verify before you save") },
+      { t: "h2", text: "When a turn fails" },
+      {
+        t: "table",
+        head: ["Symptom", "Cause", "Fix"],
+        rows: [
+          [
+            "`Unknown model`",
+            "The model id is not in the list the base URL serves.",
+            `Use an id from \`${MODELS_URL}\`.`,
+          ],
+          [
+            "`401 authentication_error`",
+            "The deployment requires a provider key and yours is wrong or missing.",
+            "Send the key the operator gave you as the API Key field.",
+          ],
+          [
+            "`503 upstream_gate`",
+            "The upstream free tier refused this network.",
+            "Call from another network, or ask the operator to set `OPENCODE_ZEN_API_KEY`.",
+          ],
+          [
+            "`503 overloaded`",
+            "At capacity; the request was shed rather than queued.",
+            "Honour `Retry-After` and retry with backoff.",
+          ],
+        ],
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "The same fields work in any agent",
+        text: "OpenHands is one host. Any agent with a *custom provider* or *OpenAI-compatible* option takes the same four values, so this page is the template for the whole class.",
+      },
+    ],
+  },
+
+  {
+    slug: "provider-integration-editors",
+    title: "Editors and CLI Agents",
+    group: "ZYRAXON Provider",
+    desc: "Cursor, Continue, Cline, Aider and any OpenAI-compatible editor: change the base URL and reload the model list.",
+    blocks: [
+      {
+        t: "p",
+        text: "This is the largest group of clients and the one that needs no code at all. If an app offers an OpenAI-compatible or custom base URL setting, it already speaks our dialect.",
+      },
+      { t: "h2", text: "What to enter" },
+      { t: "table", head: ["Field", "Value", "Why"], rows: fieldTable(COMPATIBLE) },
+      { t: "h2", text: "Steps" },
+      { t: "list", ordered: true, items: COMPATIBLE.steps ?? [] },
+      { t: "h2", text: "Continue (config.json)" },
+      {
+        t: "code",
+        lang: "json",
+        code: snippet("openai-compatible-apps", "Continue (config.json)"),
+      },
+      { t: "h2", text: "Aider" },
+      { t: "code", lang: "bash", code: snippet("openai-compatible-apps", "Aider") },
+      { t: "h2", text: "Generic environment variables" },
+      {
+        t: "p",
+        text: "Most command-line agents read one of these names. Setting all three is harmless and saves guessing which one your tool wants.",
+      },
+      {
+        t: "code",
+        lang: "bash",
+        code: snippet("openai-compatible-apps", "Generic environment variables"),
+      },
+      { t: "h2", text: "VS Code: Cline, Roo Code, Kilo Code, Copilot Chat" },
+      {
+        t: "p",
+        text: "The VS Code agent extensions expose the same OpenAI-compatible provider, so the same two values work in all of them.",
+      },
+      {
+        t: "code",
+        lang: "json",
+        code: snippet("vscode-extensions", "Cline / Roo (settings.json)"),
+      },
+      { t: "code", lang: "bash", code: snippet("vscode-extensions", "Copilot Chat / env") },
+      { t: "h2", text: "Zed" },
+      { t: "code", lang: "json", code: snippet("zed", "settings.json") },
+      { t: "h2", text: "Ollama-style and LocalAI-style clients" },
+      {
+        t: "p",
+        text: "A client that expects a local model server on `localhost` can be pointed at us instead — it speaks the same dialect.",
+      },
+      { t: "code", lang: "bash", code: snippet("local-runtime-style", "Environment") },
+      { t: "h2", text: "MCP servers and agent tool hosts" },
+      {
+        t: "p",
+        text: "An MCP server or any agent framework can use ZYRAXON as its model and keep its own tools; they travel in the request and come back as real tool calls.",
+      },
+      { t: "code", lang: "json", code: snippet("mcp-tool-hosts", "Tool-carrying request") },
+      { t: "h2", text: "Notes" },
+      { t: "list", items: COMPATIBLE.notes ?? [] },
+    ],
+  },
+
+  {
+    slug: "provider-integration-mobile",
+    title: "Mobile Apps and Terminals",
+    group: "ZYRAXON Provider",
+    desc: "React Native, Flutter, Kotlin and Swift clients call the endpoint directly — no SDK, no bundler, no adapter.",
+    blocks: [
+      {
+        t: "p",
+        text: 'A mobile app does not need the OpenAI SDK. The endpoint is plain HTTPS with CORS open to `*`, so the platform\'s own HTTP client is enough, and a WebView-based app can call it directly. This is what makes "use ZYRAXON from anything" true for phones rather than only for servers.',
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "The same two values",
+        text: `Base URL \`${V1_BASE_URL}\`, model \`${DEFAULT_MODEL}\`, and \`Authorization: Bearer ${ANY_API_KEY}\` unless the operator set a real key.`,
+      },
+      { t: "h2", text: "React Native and Expo" },
+      { t: "code", lang: "typescript", code: snippet("mobile-sdk", "React Native / Expo") },
+      { t: "h2", text: "Flutter" },
+      { t: "code", lang: "dart", code: snippet("mobile-sdk", "Flutter / Dart") },
+      { t: "h2", text: "Android (Kotlin)" },
+      { t: "code", lang: "kotlin", code: snippet("mobile-sdk", "Android / Kotlin") },
+      { t: "h2", text: "iOS (Swift)" },
+      { t: "code", lang: "swift", code: snippet("mobile-sdk", "iOS / Swift") },
+      { t: "h2", text: "Voice on a phone" },
+      {
+        t: "p",
+        text: "Record on the device, POST the file to the speech endpoint, then send the transcript as an ordinary text turn. This is more reliable than sending audio to a model that may not accept it.",
+      },
+      { t: "code", lang: "bash", code: snippet("voice", "Transcribe a recording") },
+      { t: "h2", text: "Notes" },
+      { t: "list", items: MOBILE.notes ?? [] },
+    ],
+  },
+
+  {
+    slug: "provider-integration-sdks",
+    title: "SDKs and Frameworks",
+    group: "ZYRAXON Provider",
+    desc: "The OpenAI SDK, the Vercel AI SDK and LangChain, with a working tool-calling loop in TypeScript and Python.",
+    blocks: [
+      {
+        t: "p",
+        text: "When you are writing the client rather than configuring one, these are the libraries to reach for. All three take a base URL and need nothing else, and all three support streaming and tool calls against the ZYRAXON line.",
+      },
+      { t: "h2", text: "The OpenAI SDK" },
+      { t: "code", lang: "typescript", code: snippet("openai-sdk", "Node / TypeScript") },
+      { t: "code", lang: "python", code: snippet("openai-sdk", "Python") },
+      { t: "h2", text: "Tool calling, end to end" },
+      {
+        t: "p",
+        text: "The provider returns the call and you run it — that is what keeps the model from touching anything you did not authorise. These two loops are complete: they send the tools, execute the calls and feed the results back until the model stops asking.",
+      },
+      {
+        t: "code",
+        lang: "typescript",
+        code: snippet("openai-sdk", "Tool calling loop (TypeScript)"),
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "The Python loop",
+        text: "The same loop in Python, in the **Automation and HTTP clients** page below or the Python tab on the provider page.",
+      },
+      { t: "h2", text: "Vercel AI SDK" },
+      { t: "code", lang: "typescript", code: snippet("vercel-ai-sdk", "TypeScript") },
+      { t: "h2", text: "LangChain" },
+      { t: "code", lang: "python", code: snippet("langchain", "Python") },
+      { t: "code", lang: "typescript", code: snippet("langchain", "JavaScript") },
+      { t: "h2", text: "Before you ship" },
+      {
+        t: "list",
+        items: [
+          `Fetch \`${MODELS_URL}\` at startup rather than hardcoding a context window; the pool changes.`,
+          "Retry 429, 502 and 503 with backoff and jitter; honour `Retry-After`. Do not retry 400, 401 or 413.",
+          "Log the `type` field, not just the status: `overloaded` and `upstream_gate` are both 503 but need different actions.",
+          "Treat `X-ZYRAXON-Capacity: spill` as a success, and use it as a signal to slow down.",
+        ],
+      },
+    ],
+  },
+
+  {
+    slug: "provider-integration-languages",
+    title: "Languages and Runtimes",
+    group: "ZYRAXON Provider",
+    desc: "Go, Rust, PHP, Java and .NET call the endpoint with the standard library — no client package required.",
+    blocks: [
+      {
+        t: "p",
+        text: "Not every service wants an SDK dependency. The endpoint is HTTPS and JSON, so the standard library of every mainstream language is enough. Each snippet below is a complete, runnable request.",
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "The same three values everywhere",
+        text: `URL \`${CHAT_URL}\`, header \`Authorization: Bearer ${ANY_API_KEY}\`, and a JSON body carrying \`model\` and \`messages\`.`,
+      },
+      { t: "h2", text: "Go" },
+      { t: "code", lang: "go", code: snippet("go", "net/http") },
+      { t: "h2", text: "Rust" },
+      { t: "code", lang: "rust", code: snippet("rust", "reqwest") },
+      { t: "h2", text: "PHP" },
+      { t: "code", lang: "php", code: snippet("php", "cURL") },
+      { t: "h2", text: "Java and the JVM" },
+      { t: "code", lang: "java", code: snippet("java", "HttpClient") },
+      { t: "h2", text: ".NET and C#" },
+      { t: "code", lang: "csharp", code: snippet("dotnet", "HttpClient") },
+      {
+        t: "note",
+        kind: "tip",
+        title: "Streaming in any language",
+        text: 'Set `"stream": true` and read the response as it arrives — the frames are standard server-sent events, so any language with an SSE or line reader can consume them.',
+      },
+    ],
+  },
+
+  {
+    slug: "provider-integration-bots",
+    title: "Bots and Home Automation",
+    group: "ZYRAXON Provider",
+    desc: "Discord, Slack, Telegram, Home Assistant and Node-RED: one HTTP call per message, no special client.",
+    blocks: [
+      {
+        t: "p",
+        text: 'A chat bot and a smart-home automation are both "call an HTTP endpoint and do something with the reply". Because the endpoint is CORS-open and needs no key by default, a bot is a handful of lines.',
+      },
+      { t: "h2", text: "Discord, Slack and Telegram" },
+      { t: "code", lang: "typescript", code: snippet("chat-bots", "discord.js") },
+      {
+        t: "note",
+        kind: "warn",
+        title: "Mind the platform's own limits",
+        text: "Chat platforms cap message length. Truncate or split a long reply before posting it, and rate-limit your own sends so you do not get the bot throttled.",
+      },
+      { t: "h2", text: "Home Assistant and Node-RED" },
+      { t: "code", lang: "yaml", code: snippet("home-automation", "rest_command") },
+      {
+        t: "note",
+        kind: "info",
+        title: "Turn streaming off here",
+        text: 'Automation hosts buffer the whole response, so send `"stream": false` and read `choices[0].message.content`.',
+      },
+      { t: "h2", text: "Where to go next" },
+      {
+        t: "list",
+        items: [
+          "**SDKs and Frameworks** — the OpenAI SDK, the Vercel AI SDK and LangChain, with full tool-calling loops.",
+          "**Languages and Runtimes** — Go, Rust, PHP, Java and .NET with no client package.",
+          "**Automation and HTTP Clients** — n8n, Make, Zapier and Postman.",
+        ],
+      },
+    ],
+  },
+
+  {
+    slug: "provider-integration-automation",
+    title: "Automation and HTTP Clients",
+    group: "ZYRAXON Provider",
+    desc: "n8n, Make, Zapier and Postman reach the endpoint through a plain HTTP request node.",
+    blocks: [
+      {
+        t: "p",
+        text: "No-code runners are ordinary HTTP clients, so they need nothing beyond the chat URL and a JSON body. The one thing to remember is to turn streaming off: most workflow nodes buffer the whole response and cannot parse an event stream.",
+      },
+      { t: "h2", text: "n8n / Make / Zapier" },
+      { t: "code", lang: "json", code: snippet("n8n", "HTTP request node") },
+      {
+        t: "note",
+        kind: "warn",
+        title: "Set stream to false",
+        text: 'A workflow node that buffers the body will choke on SSE frames. Use `"stream": false` and read `choices[0].message.content`.',
+      },
+      { t: "h2", text: "Postman and Insomnia" },
+      { t: "code", lang: "text", code: snippet("http-clients", "Request") },
+      { t: "h2", text: "Python tool-calling loop" },
+      {
+        t: "p",
+        text: "The Python equivalent of the TypeScript loop on the SDKs page, for a runner written in Python.",
+      },
+      { t: "code", lang: "python", code: snippet("openai-sdk", "Tool calling loop (Python)") },
+      { t: "h2", text: "Discovery, from a runner" },
+      {
+        t: "p",
+        text: "An automation can read the endpoint's own description of itself, so it does not need to be updated when the model line changes.",
+      },
+      {
+        t: "code",
+        lang: "shell",
+        code: `curl -s ${MODELS_URL}          | jq -r '.data[].id'
+curl -s ${PROVIDER_URL}        | jq '{modalities, overload, usage}'
+curl -s ${INTEGRATIONS_URL}    | jq '.integrations[] | {id, name, category}'`,
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "Self-describing by design",
+        text: "`/models`, `/provider` and `/integrations` are all public and CORS-open, so a runner can configure itself at startup instead of hardcoding what ZYRAXON serves today.",
+      },
+    ],
+  },
+];
