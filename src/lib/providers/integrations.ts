@@ -764,6 +764,58 @@ const LITELLM_MODEL_PREFIX = `# Why the model string needs a provider prefix, an
 #   zyraxon/codex
 #   openai/zyraxon/codex`;
 
+// ── ready-made clients for the three interactive shells ─────────────────────
+// Each is a real file served from /integrations, so it can be downloaded and
+// read before use. They are the answer to "how do I use this from my own shell".
+const SHELL_PY = `# Fetch it
+curl -fsSL ${API_ORIGIN}/integrations/zyraxon.py -o zyraxon.py
+
+# In any Python shell, REPL or notebook
+>>> from zyraxon import Zyraxon
+>>> ai = Zyraxon()                      # any model; models() lists them live
+>>> ai.ask("explain what a race condition is")
+>>> for piece in ai.stream("write a haiku about the sea"):
+...     print(piece, end="")
+>>> ai.ask("and in Go?")                # the conversation is remembered
+>>> Zyraxon(model="zyraxon-apex").ask("reason about this carefully")
+
+# As a command, for scripts and pipes
+python zyraxon.py "summarise this repo"
+python zyraxon.py -a "create hello.py and run it"     # tool-calling loop
+python zyraxon.py --models
+echo "what is 2+2?" | python zyraxon.py`;
+
+const SHELL_PS = `# Fetch it
+Invoke-WebRequest ${API_ORIGIN}/integrations/zyraxon.ps1 -OutFile zyraxon.ps1
+
+# Dot-source it, then use the functions
+. .\\zyraxon.ps1
+
+Get-ZyraxonModels                                   # any model, live
+Invoke-Zyraxon "explain what a race condition is"
+Invoke-Zyraxon "write a haiku about the sea" -Stream
+Invoke-Zyraxon "reason about this" -Model zyraxon-apex
+Invoke-ZyraxonAgent "create hello.py that prints hi, then run it" -Confirm
+
+# Or a one-shot run
+.\\zyraxon.ps1 "summarise this repo" -Stream
+
+# Point it somewhere else
+Set-ZyraxonConfig -Model zyraxon-pulse`;
+
+const SHELL_BASH = `# Fetch it, then source it in the current shell
+curl -fsSL ${API_ORIGIN}/integrations/zyraxon.sh -o zyraxon.sh
+. ./zyraxon.sh
+
+zyraxon_models                                    # any model, live
+zyraxon_ask "explain what a race condition is"
+zyraxon_stream "write a haiku about the sea"
+zyraxon_ask -m zyraxon-apex "reason about this"
+zyraxon_agent "create hello.py that prints hi, then run it"
+
+# Works in bash and zsh, and composes with a pipe
+cat error.log | zyraxon_ask "what went wrong here?"`;
+
 export const INTEGRATIONS: Integration[] = [
   // ───────────────────────── TERMINAL & MOBILE ─────────────────────────
   {
@@ -1223,6 +1275,144 @@ curl -s ${PROVIDER_URL}    | jq '{modalities, concurrency, fleet}'`,
       "The endpoint is tolerant of the prefix: `zyraxon-codex`, `openai/zyraxon-codex`, `zyraxon/zyraxon-codex` and `zyraxon/codex` all resolve to the same model.",
       "`drop_params: true` in the proxy config avoids LiteLLM sending parameters an OpenAI-compatible endpoint may not accept.",
       "This is the integration to reach for when a client insists on a `provider/model` string.",
+    ],
+  },
+
+  // ───────────────── READY-MADE SHELL CLIENTS ──────────────────────────
+  // The three interactive shells people actually work in. Each client is a
+  // single dependency-free file that talks to the endpoint over the standard
+  // library, so "use it from my shell" has a real answer rather than a snippet.
+  {
+    id: "python-shell",
+    name: "Python shell, REPL and notebooks",
+    category: "SDKs & Frameworks",
+    blurb:
+      "Import one dependency-free file and the provider is a function call. Works in the plain REPL, IPython, Jupyter, Colab, a script or a cron job. Every model works — the list is read live, so nothing is pinned.",
+    tags: ["Python", "REPL", "Jupyter", "Tool calls"],
+    download: { href: "/integrations/zyraxon.py", label: "zyraxon.py" },
+    fields: [
+      { label: "Base URL", value: V1_BASE_URL },
+      {
+        label: "Model",
+        value: DEFAULT_MODEL,
+        note: "Any model id; `ai.models()` lists them live.",
+      },
+      { label: "API key", value: ANY_API_KEY },
+    ],
+    steps: [
+      `Download the client: \`curl -fsSL ${API_ORIGIN}/integrations/zyraxon.py -o zyraxon.py\`.`,
+      "In a shell, import it: `from zyraxon import Zyraxon`.",
+      "Call `ai.ask(...)` for a whole answer, or loop over `ai.stream(...)` to print as it arrives.",
+      "Ask a follow-up on the same `ai` and it remembers the conversation; call `ai.reset()` to start fresh.",
+      "Use `ai.models()` to see every model the provider serves right now, then `Zyraxon(model=...)` to pick one.",
+      "For tool calling, pass `ai.agent(prompt, tools, run)` your own tools — the loop is handled for you.",
+    ],
+    snippets: [
+      { label: "Python shell", lang: "python", code: SHELL_PY },
+      {
+        label: "A tool-calling agent",
+        lang: "python",
+        code: `from zyraxon import Zyraxon, local_tools
+
+ai = Zyraxon()
+tools, run = local_tools(confirm=True)   # read_file, write_file, run_shell
+print(ai.agent("create hello.py that prints hi, then run it", tools, run))`,
+      },
+      {
+        label: "Streaming into your own code",
+        lang: "python",
+        code: `from zyraxon import Zyraxon
+
+ai = Zyraxon(model="zyraxon-pulse")     # the fast one
+for piece in ai.stream("summarise the changes in src/lib"):
+    print(piece, end="", flush=True)`,
+      },
+    ],
+    notes: [
+      "No dependencies: it uses only the standard library, so it runs anywhere Python does — including a locked-down machine where `pip install` is not allowed.",
+      "`ask()` keeps the conversation, so a follow-up has the context. `reset()` clears it.",
+      "Any model works. `models()` reads the list live, so a model added later is usable with no code change.",
+    ],
+  },
+  {
+    id: "powershell",
+    name: "PowerShell",
+    category: "SDKs & Frameworks",
+    blurb:
+      "Dot-source one script and the provider becomes four functions. Works in Windows PowerShell and PowerShell 7 on every platform, with functions for a plain answer, a streamed answer, and the tool-calling agent loop.",
+    tags: ["PowerShell", "Windows", "Tool calls"],
+    download: { href: "/integrations/zyraxon.ps1", label: "zyraxon.ps1" },
+    fields: [
+      { label: "Base URL", value: V1_BASE_URL },
+      {
+        label: "Model",
+        value: DEFAULT_MODEL,
+        note: "Any model id; `Get-ZyraxonModels` lists them live.",
+      },
+      { label: "API key", value: ANY_API_KEY },
+    ],
+    steps: [
+      `Download it: \`Invoke-WebRequest ${API_ORIGIN}/integrations/zyraxon.ps1 -OutFile zyraxon.ps1\`.`,
+      "Dot-source it in your session: `. .\\zyraxon.ps1`.",
+      'Call `Invoke-Zyraxon "..."` for an answer, or add `-Stream` to watch it arrive.',
+      "Use `-Model <id>` for one turn, or `Set-ZyraxonConfig -Model <id>` for the session.",
+      'For tool calling, call `Invoke-ZyraxonAgent "..." -Confirm` so it asks before writing or running anything.',
+      "`Get-ZyraxonModels` lists every model the provider serves right now.",
+    ],
+    snippets: [
+      { label: "PowerShell", lang: "powershell", code: SHELL_PS },
+      {
+        label: "Pipe a file in",
+        lang: "powershell",
+        code: `Get-Content .\\error.log -Raw | ForEach-Object {
+    Invoke-Zyraxon "what went wrong in this log?"
+}`,
+      },
+    ],
+    notes: [
+      "No modules required — it uses `Invoke-RestMethod`, which ships with PowerShell.",
+      "`Invoke-ZyraxonAgent -Confirm` asks before any write or command; without it, it runs unattended.",
+      "`Get-ZyraxonModels` reads the list live, so any model the provider serves works with no change.",
+    ],
+  },
+  {
+    id: "bash-shell",
+    name: "Bash and zsh",
+    category: "SDKs & Frameworks",
+    blurb:
+      "Source one file in the shell you already have open and the provider becomes shell functions. Composes with pipes, so a log, a diff or a command's output can be handed straight to the model.",
+    tags: ["Bash", "zsh", "Pipes", "Tool calls"],
+    download: { href: "/integrations/zyraxon.sh", label: "zyraxon.sh" },
+    fields: [
+      { label: "Base URL", value: V1_BASE_URL },
+      {
+        label: "Model",
+        value: DEFAULT_MODEL,
+        note: "Any model id; `zyraxon_models` lists them live.",
+      },
+      { label: "API key", value: ANY_API_KEY },
+    ],
+    steps: [
+      `Download it: \`curl -fsSL ${API_ORIGIN}/integrations/zyraxon.sh -o zyraxon.sh\`.`,
+      "Source it in the current shell: `. ./zyraxon.sh`.",
+      'Call `zyraxon_ask "..."` for an answer, or `zyraxon_stream "..."` to watch it arrive.',
+      'Use `zyraxon_ask -m <id> "..."` for one turn.',
+      'For tool calling, call `zyraxon_agent "..."`; it asks before writing or running anything.',
+      "`zyraxon_models` lists every model the provider serves right now.",
+    ],
+    snippets: [
+      { label: "Bash / zsh", lang: "bash", code: SHELL_BASH },
+      {
+        label: "Pipe real output",
+        lang: "bash",
+        code: `git diff HEAD~1 | zyraxon_ask "review this change and flag anything risky"
+journalctl -p err -n 50 | zyraxon_ask "what broke here?"`,
+      },
+    ],
+    notes: [
+      "Works in bash and zsh; needs only `curl` and `jq`.",
+      "Sourcing keeps it in your current shell, so no subshell and no PATH changes.",
+      "`zyraxon_models` reads the list live, so any model the provider serves works with no change.",
     ],
   },
 

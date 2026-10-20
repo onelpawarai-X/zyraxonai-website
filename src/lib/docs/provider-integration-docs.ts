@@ -111,6 +111,11 @@ export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
             "One HTTP call per message.",
           ],
           [
+            "A Python, PowerShell or Bash shell",
+            "**Your Shell**",
+            "Download one client and import or source it.",
+          ],
+          [
             "n8n, Make, Zapier, Postman",
             "**Automation and HTTP Clients**",
             "Use an HTTP request node.",
@@ -580,6 +585,124 @@ export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
           "Log the `type` field, not just the status: `overloaded` and `upstream_gate` are both 503 but need different actions.",
           "Treat `X-ZYRAXON-Capacity: spill` as a success, and use it as a signal to slow down.",
         ],
+      },
+    ],
+  },
+
+  {
+    slug: "provider-integration-shells",
+    title: "Your Python, PowerShell or Bash Shell",
+    group: "ZYRAXON Provider",
+    desc: "Three ready-made clients — one per interactive shell — so the provider is a function call in the shell you already have open. Any model, streaming, and the tool-calling agent loop.",
+    blocks: [
+      {
+        t: "p",
+        text: "If you live in a Python REPL, a PowerShell session or a Bash prompt, these clients are the shortest path. Each is a single dependency-free file served from this site, so you can download it, read it, and source or import it. No package to install, no PATH to change.",
+      },
+      {
+        t: "note",
+        kind: "success",
+        title: "Any model, read live",
+        text: "Every client lists the models by asking the provider, so every model it serves today — and any added later — is usable with no code change. Nothing is pinned in the client.",
+      },
+      { t: "h2", text: "Python — a REPL, a notebook or a script" },
+      {
+        t: "code",
+        lang: "python",
+        code: `from zyraxon import Zyraxon
+
+ai = Zyraxon()                       # any model; ai.models() lists them live
+print(ai.ask("explain what a race condition is"))
+
+for piece in ai.stream("write a haiku about the sea"):
+    print(piece, end="", flush=True)
+
+print(ai.ask("and the same in Go?"))  # the conversation is remembered`,
+      },
+      {
+        t: "p",
+        text: `Download it: \`curl -fsSL ${API_ORIGIN}/integrations/zyraxon.py -o zyraxon.py\`.`,
+      },
+      {
+        t: "list",
+        items: [
+          "`Zyraxon(model=..., base_url=..., api_key=...)` — every setting has an environment-variable default.",
+          "`ai.ask(prompt)` — one turn, whole reply as a string.",
+          "`ai.stream(prompt)` — a generator, so the reply can be printed or forwarded as it arrives.",
+          "`ai.models()` — every model the provider serves, with its live context window and modalities.",
+          "`ai.reset()` — forget the conversation, keeping any system message.",
+          "`ai.agent(prompt, tools, run)` — the tool-calling loop, with your tools.",
+        ],
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "It runs the loop for you",
+        text: "`ai.agent(...)` sends your tools, runs whatever the model calls, feeds the result back, and stops when the model answers. It also refuses to call the same tool forever — a model that repeats a call it already ran is stopped rather than looping.",
+      },
+      { t: "h2", text: "PowerShell — Windows PowerShell and PowerShell 7" },
+      {
+        t: "code",
+        lang: "powershell",
+        code: `. .\\zyraxon.ps1
+
+Get-ZyraxonModels
+Invoke-Zyraxon "explain what a race condition is"
+Invoke-Zyraxon "write a haiku about the sea" -Stream
+Invoke-ZyraxonAgent "create hello.py that prints hi, then run it" -Confirm`,
+      },
+      {
+        t: "p",
+        text: `Download it: \`Invoke-WebRequest ${API_ORIGIN}/integrations/zyraxon.ps1 -OutFile zyraxon.ps1\`.`,
+      },
+      {
+        t: "list",
+        items: [
+          '`Invoke-Zyraxon "..."` returns the reply; add `-Stream` to watch it arrive.',
+          "`-Model <id>` picks a model for one turn; `Set-ZyraxonConfig -Model <id>` sets it for the session.",
+          "`Get-ZyraxonModels` lists every model the provider serves.",
+          '`Invoke-ZyraxonAgent "..." -Confirm` runs the tool loop and asks before writing or executing.',
+        ],
+      },
+      { t: "h2", text: "Bash and zsh — source it in the shell you have open" },
+      {
+        t: "code",
+        lang: "bash",
+        code: `. ./zyraxon.sh
+
+zyraxon_models
+zyraxon_ask "explain what a race condition is"
+zyraxon_stream "write a haiku about the sea"
+git diff HEAD~1 | zyraxon_ask "review this change and flag anything risky"`,
+      },
+      {
+        t: "p",
+        text: `Download it: \`curl -fsSL ${API_ORIGIN}/integrations/zyraxon.sh -o zyraxon.sh\`.`,
+      },
+      {
+        t: "list",
+        items: [
+          '`zyraxon_ask [-m model] "..."` returns the reply; a piped stdin is the prompt.',
+          "`zyraxon_stream` prints as it arrives.",
+          "`zyraxon_agent` runs the tool loop; it asks before writing or executing.",
+          "`zyraxon_models` lists every model the provider serves.",
+        ],
+      },
+      { t: "h2", text: "The rules, for every client" },
+      {
+        t: "list",
+        items: [
+          `Base URL \`${V1_BASE_URL}\`; model any id from \`${MODELS_URL}\`; API key any non-empty string unless the operator set a real one.`,
+          "Retries the transient codes (429, 502, 503) with a short backoff, and does not retry 400, 401 or 413.",
+          "Every client names the ZYRAXON model in the reply, never an upstream.",
+          "The agent tools are confined to the current directory and ask before they write or run. They are deliberately not a general shell escape hatch.",
+        ],
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "Which model to pick",
+        text: "`zyraxon-apex` is the fastest to first token in our tests; `zyraxon-pulse` is quick too and good on long input. `zyraxon-codex` is the sensible default for code. Read `models()` for the live list.",
       },
     ],
   },
