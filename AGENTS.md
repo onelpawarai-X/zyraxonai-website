@@ -154,3 +154,26 @@ it, so accepting a new wrapper is a one-line change in one place. Do not narrow
 this back to an exact match: it reintroduces the most common connection failure.
 `verify-integrations.ts` asserts every spelling still resolves.
 
+### Two OpenHands/LiteLLM failures, and where each is fixed
+
+A host that routes the model through LiteLLM (OpenHands does) fails in two
+distinct ways, and they need different fixes. Both were reproduced against the
+live endpoint with LiteLLM installed:
+
+| Sent | Result |
+| --- | --- |
+| `zyraxon-codex` + base URL | `BadRequestError: LLM Provider NOT provided` |
+| `openai/zyraxon-codex` + base URL | answers |
+| `openai/zyraxon-codex`, **no base URL** | `401 Incorrect API key provided` (OpenAI's own error) |
+
+- `LLM Provider NOT provided` is LiteLLM reading the text before the first `/`.
+  The fix is the `openai/` prefix, which is why the OpenHands card's Custom Model
+  field carries `LITELLM_MODEL` rather than `DEFAULT_MODEL`.
+- `401 Incorrect API key provided` names platform.openai.com, so the request went
+  to OpenAI, not to us: the host ignored the base URL. In OpenHands that happens
+  when **Advanced** mode is off — the Base URL field only exists (and only takes
+  effect) in Advanced mode.
+
+Keep this distinction in the docs: our own auth failure returns
+`type: "authentication_error"` in the body and does not mention platform.openai.com.
+
