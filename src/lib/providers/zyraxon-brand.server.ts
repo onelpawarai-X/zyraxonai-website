@@ -52,6 +52,7 @@ export {
   brandView,
   isBrand,
   getBrand,
+  canonicalBrandId,
   rotateThrough,
   isUpstreamGate,
 } from "./zyraxon-brands";

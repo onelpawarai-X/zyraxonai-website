@@ -142,19 +142,41 @@ export const ZYRAXON_BRANDS: Brand[] = [
 const BRAND_BY_ID = new Map<string, Brand>(ZYRAXON_BRANDS.map((b) => [b.id, b]));
 
 export function isBrand(id: string): boolean {
-  return BRAND_BY_ID.has(
-    String(id || "")
-      .trim()
-      .toLowerCase(),
-  );
+  return BRAND_BY_ID.has(canonicalBrandId(id));
 }
 
 export function getBrand(id: string): Brand | undefined {
-  return BRAND_BY_ID.get(
-    String(id || "")
-      .trim()
-      .toLowerCase(),
-  );
+  return BRAND_BY_ID.get(canonicalBrandId(id));
+}
+
+/** Reduce a caller's model id to the ZYRAXON brand it names.
+ *
+ *  Many clients insist on a `provider/model` string and will not send a bare
+ *  model id. LiteLLM, for one, refuses a request whose model has no provider
+ *  prefix ("LLM Provider NOT provided") — so a caller has to write
+ *  `openai/zyraxon-codex`, and the router here would then not recognise it.
+ *  Rather than make every caller learn a second spelling, accept the common
+ *  wrappers: an OpenAI-style `openai/` prefix, and our own `zyraxon/` or
+ *  `zyraxon/zyraxon-` prefixes. The brand id is the last path segment that
+ *  matches a known brand, so `openai/zyraxon/zyraxon-codex` also resolves. */
+export function canonicalBrandId(id: unknown): string {
+  const raw = String(id ?? "")
+    .trim()
+    .toLowerCase();
+  if (!raw) return "";
+  if (BRAND_BY_ID.has(raw)) return raw;
+  // Try the last segment, then any segment, so both `openai/zyraxon-codex` and
+  // `zyraxon/zyraxon-codex` resolve to `zyraxon-codex`.
+  const segments = raw.split("/").filter(Boolean);
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const seg = segments[i]!;
+    if (BRAND_BY_ID.has(seg)) return seg;
+    // `zyraxon/codex` is a friendly shorthand for `zyraxon-codex`.
+    if (i > 0 && segments[i - 1] === "zyraxon" && BRAND_BY_ID.has(`zyraxon-${seg}`)) {
+      return `zyraxon-${seg}`;
+    }
+  }
+  return raw;
 }
 
 /** The shape rotation needs from a pool model. Structural, not nominal, so the

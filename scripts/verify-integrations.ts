@@ -17,7 +17,12 @@ import {
   integrationsByCategory,
   integrationsDocument,
 } from "../src/lib/providers/integrations";
-import { ZYRAXON_BRANDS, isBrand } from "../src/lib/providers/zyraxon-brands";
+import {
+  ZYRAXON_BRANDS,
+  canonicalBrandId,
+  getBrand,
+  isBrand,
+} from "../src/lib/providers/zyraxon-brands";
 import { DOCS } from "../src/lib/docs/content";
 import { PROVIDER_INTEGRATION_DOCS } from "../src/lib/docs/provider-integration-docs";
 
@@ -186,7 +191,7 @@ check(
 );
 
 // ── every downloadable asset must exist on disk ─────────────────────────────
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 const ROOT = new URL("../", import.meta.url).pathname;
 for (const i of INTEGRATIONS) {
   if (!i.download) continue;
@@ -214,6 +219,7 @@ const mustHave = [
   "openai-sdk",
   "vercel-ai-sdk",
   "langchain",
+  "litellm",
   "go",
   "rust",
   "php",
@@ -229,6 +235,101 @@ for (const id of mustHave) {
     INTEGRATIONS.some((i) => i.id === id),
   );
 }
+
+// ── the model id must accept the prefixes clients insist on ─────────────────
+// LiteLLM and friends send `openai/<id>`; a bare id is rejected by them, and a
+// prefixed one used to be rejected by us. Both spellings have to resolve, or
+// the caller is stuck between two systems that each refuse the other's idiom.
+for (const spelling of [
+  DEFAULT_MODEL,
+  `openai/${DEFAULT_MODEL}`,
+  `zyraxon/${DEFAULT_MODEL}`,
+  `zyraxon/${DEFAULT_MODEL.replace("zyraxon-", "")}`,
+  `openai/zyraxon/${DEFAULT_MODEL}`,
+]) {
+  check(`the model id "${spelling}" resolves to a ZYRAXON brand`, isBrand(spelling), spelling);
+  check(
+    `the model id "${spelling}" resolves to the right brand`,
+    getBrand(spelling)?.id === DEFAULT_MODEL,
+    getBrand(spelling)?.id,
+  );
+}
+check(
+  "a genuinely unknown model is still rejected",
+  !isBrand("gpt-4o") && !isBrand("openai/gpt-4o"),
+);
+check("canonicalBrandId leaves an unknown id as-is", canonicalBrandId("gpt-4o") === "gpt-4o");
+
+// ── every client script must exist, be executable, and be reachable ────────
+const SCRIPT_DIR = `${ROOT}public/integrations/`;
+for (const name of ["termux-setup.sh", "kali-ask.sh", "zyraxon-chat.sh"]) {
+  const file = `${SCRIPT_DIR}${name}`;
+  check(`the client ${name} exists`, existsSync(file), file);
+  if (existsSync(file)) {
+    check(
+      `the client ${name} is executable`,
+      (statSync(file).mode & 0o111) !== 0,
+      statSync(file).mode.toString(8),
+    );
+    check(
+      `the client ${name} is non-trivial`,
+      statSync(file).size > 500,
+      `${statSync(file).size} bytes`,
+    );
+  }
+}
+
+// The Termux entry must actually offer the chat box and any-model selection.
+const termuxEntry = INTEGRATIONS.find((i) => i.id === "termux");
+const termuxSnippets = termuxEntry?.snippets ?? [];
+check(
+  "the Termux entry documents the chat box",
+  termuxSnippets.some((s) => s.label === "The chat box"),
+);
+check(
+  "the Termux entry lists the commands, including /model",
+  termuxSnippets.some((s) => s.label === "Commands" && /\/model/.test(s.code)),
+);
+check(
+  "the Termux entry names the standalone client",
+  termuxSnippets.some((s) => s.code.includes("zyraxon-chat.sh")),
+);
+check(
+  "the Termux setup script downloads the client rather than inlining it",
+  readFileSync(`${SCRIPT_DIR}termux-setup.sh`, "utf8").includes("/integrations/zyraxon-chat.sh"),
+);
+// The chat client must read the model list live, not pin one model.
+const chatClient = readFileSync(`${SCRIPT_DIR}zyraxon-chat.sh`, "utf8");
+check("the chat client fetches the model list live", /\/models/.test(chatClient));
+check("the chat client offers a model switch", /\/model/.test(chatClient));
+// A default in the config file and an example in the help text are fine; what
+// must not happen is the client pinning the whole line in code, which is what
+// would go stale as the upstream pool churns.
+const chatCode = chatClient
+  .split("\n")
+  .filter((l) => !/^\s*#/.test(l))
+  .join("\n");
+const hardcodedBrands = ZYRAXON_BRANDS.filter((b) => chatCode.includes(`${b.id}"`)).length;
+check(
+  "the chat client does not pin the model line in code",
+  hardcodedBrands <= 1,
+  `${hardcodedBrands} brand ids assigned in code`,
+);
+
+// The LiteLLM entry must lead with the prefixed model, the exact fix for the
+// "LLM Provider NOT provided" error.
+const litellm = INTEGRATIONS.find((i) => i.id === "litellm");
+check("the LiteLLM entry exists", Boolean(litellm));
+check(
+  "the LiteLLM entry's model field carries the openai/ prefix",
+  (litellm?.fields ?? []).some(
+    (f) => /^model$/i.test(f.label) && f.value === `openai/${DEFAULT_MODEL}`,
+  ),
+);
+check(
+  "the LiteLLM entry shows a proxy config",
+  (litellm?.snippets ?? []).some((s) => s.label === "litellm-config.yaml"),
+);
 
 console.log("");
 if (failures) {
