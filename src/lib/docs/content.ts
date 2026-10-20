@@ -1,5 +1,6 @@
 import { PROVIDER_DOCS } from "./provider-docs";
 import { PROVIDER_INTEGRATION_DOCS } from "./provider-integration-docs";
+import { SPEECH_DOCS } from "./speech-docs";
 
 export type DocBlock =
   | { t: "h2"; text: string }
@@ -31,6 +32,7 @@ export const DOCS: DocPage[] = [
   // ─────────────────────── ZYRAXON PROVIDER ───────────────────────────
   ...PROVIDER_DOCS,
   ...PROVIDER_INTEGRATION_DOCS,
+  ...SPEECH_DOCS,
   // ─────────────────────────────── START ───────────────────────────────
   {
     slug: "getting-started",

@@ -395,6 +395,90 @@ function ProvidersPage() {
 
       <ProviderIntegrations />
 
+      <Section
+        id="speech"
+        label="Speech"
+        title="It can speak, in any language"
+        description="Every answer can be heard, not just read — and in the language the answer was written in. Ask in Bengali and a Bengali voice reads the reply. The same engine behind Edge's Read Aloud: 322 neural voices across 75 languages, streamed as MP3 as it is written."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+              <span className="text-[13px] font-semibold text-foreground">Hear an answer</span>
+              <Tag>POST /api/public/tts</Tag>
+            </div>
+            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
+              <code>{`curl -s ${API_ORIGIN}/api/public/tts \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"Hello from ZYRAXON.","locale":"en"}' \\
+  -o answer.mp3`}</code>
+            </pre>
+          </Card>
+
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+              <span className="text-[13px] font-semibold text-foreground">The same in Bengali</span>
+              <Tag>locale: bn</Tag>
+            </div>
+            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
+              <code>{`curl -s ${API_ORIGIN}/api/public/tts \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"আমি একটি ZYRAXON মডেল।","locale":"bn"}' \\
+  -o bengali.mp3
+
+# bn-BD-NabanitaNeural reads it — a Bengali voice,
+# not an English one reading Bengali letters.`}</code>
+            </pre>
+          </Card>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Every language</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Name the language and the voice follows — Bengali, Hindi, Arabic, English and 71 more.{" "}
+              <a href="/api/public/tts/voices" className="text-primary underline">
+                The full list
+              </a>
+              .
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Streamed, not buffered</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              The MP3 starts arriving before the sentence is finished being synthesised, so playback
+              begins almost immediately.
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">It speaks, not reads code</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Code, links and Markdown are stripped first. A code block becomes “a code block, 12
+              lines” rather than being read character by character.
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Speech in, speech out</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Transcribe a recording with{" "}
+              <a href="/api/public/stt" className="text-primary underline">
+                /api/public/stt
+              </a>
+              , ask the model, then speak the answer. The whole loop is documented.
+            </p>
+          </Card>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <ButtonAnchor href="/docs/speech" external={false} variant="primary">
+            Read the speech guide
+          </ButtonAnchor>
+          <Button onClick={() => navigator.clipboard?.writeText(`${API_ORIGIN}/api/public/tts`)}>
+            Copy the speech URL
+          </Button>
+        </div>
+      </Section>
+
       <Section label="Why a rooted provider" title="One name you control" description="">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="p-5">
