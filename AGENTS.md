@@ -1,4 +1,5 @@
 <!-- LOVABLE:BEGIN -->
+
 > [!IMPORTANT]
 > This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
 > published git history — force pushing, or rebasing/amending/squashing commits
@@ -7,6 +8,7 @@
 >
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
+
 <!-- LOVABLE:END -->
 
 ## Project notes
@@ -52,7 +54,7 @@ Layers, bottom-up:
 
 - `src/lib/builder/zen.server.ts` — the transport. `streamRaw` (SSE) and
   `completeRaw` (one JSON `chat.completion`). The upstream always speaks SSE, so
-  `stream: false` is *implemented* here by draining the stream; it is not
+  `stream: false` is _implemented_ here by draining the stream; it is not
   forwarded. Do not "fix" it by passing `stream: false` upstream.
 - `src/lib/providers/media.ts` — pure content-part normalisation
   (`image_url`/`video_url`/`input_audio`/`file`), modality detection, and the
@@ -60,7 +62,7 @@ Layers, bottom-up:
 - `src/lib/providers/video-compress.client.ts` — browser ffmpeg.wasm compressor
   and slicer, loaded lazily from a CDN only when a file is actually too large.
 - `src/lib/providers/lane-pool.server.ts` — admission control. `run` for
-  non-streaming work; `stream` holds the lane until the SSE body is *drained*.
+  non-streaming work; `stream` holds the lane until the SSE body is _drained_.
   Using `run` for a streaming turn would bound only stream setup, not the number
   of open streams — that is the bug `stream` exists to prevent.
 - `src/lib/providers/zyraxon-brand.server.ts` — the rooted provider. Normalises
@@ -91,7 +93,7 @@ that import `system-prompt.txt` need
 ### Public provider contract: media, tools, capacity
 
 - The public route normalises inbound content parts to the canonical
-  `{ type: "media", kind, url }` shape *before* the provider sees them. Anything
+  `{ type: "media", kind, url }` shape _before_ the provider sees them. Anything
   that inspects parts downstream (`partMediaKind`, `urlOfPart`, `needsWire`) must
   read that canonical shape as well as the raw OpenAI spellings
   (`image_url`/`input_audio`/`video_url`). Reading only the raw spellings makes
@@ -111,7 +113,7 @@ that import `system-prompt.txt` need
   every response carries `X-ZYRAXON-Capacity: primary|spill`.
 - `GET /api/public/zyraxon/v1/models` publishes `provider.since` (the launch
   date) and a stable `created` epoch. Do not use `Date.now()` for `created`.
-- A tool-calling client sends the assistant's `tool_calls` block *and* the
+- A tool-calling client sends the assistant's `tool_calls` block _and_ the
   `role: "tool"` result back on the next turn. Both are carried through
   `brandChatStream` and forced onto the raw wire path (the SDK message schema
   has no `tool_call_id`). Dropping either one — e.g. filtering messages to
@@ -160,10 +162,10 @@ A host that routes the model through LiteLLM (OpenHands does) fails in two
 distinct ways, and they need different fixes. Both were reproduced against the
 live endpoint with LiteLLM installed:
 
-| Sent | Result |
-| --- | --- |
-| `zyraxon-codex` + base URL | `BadRequestError: LLM Provider NOT provided` |
-| `openai/zyraxon-codex` + base URL | answers |
+| Sent                                    | Result                                                |
+| --------------------------------------- | ----------------------------------------------------- |
+| `zyraxon-codex` + base URL              | `BadRequestError: LLM Provider NOT provided`          |
+| `openai/zyraxon-codex` + base URL       | answers                                               |
 | `openai/zyraxon-codex`, **no base URL** | `401 Incorrect API key provided` (OpenAI's own error) |
 
 - `LLM Provider NOT provided` is LiteLLM reading the text before the first `/`.
@@ -177,3 +179,37 @@ live endpoint with LiteLLM installed:
 Keep this distinction in the docs: our own auth failure returns
 `type: "authentication_error"` in the body and does not mention platform.openai.com.
 
+### A stream must never look idle
+
+An intermediary — Cloudflare, a load balancer, a phone's network — drops a
+connection that writes nothing for long enough. A reasoning model can think for
+tens of seconds before its first token, so a relay that only writes when the
+upstream writes goes idle and the caller's answer is cut off mid-flight.
+
+Two things hold the line, and both are needed:
+
+- `sse()` in `zen.server.ts` sends an SSE comment (`: zyraxon-keepalive`) every
+  `HEARTBEAT_MS` (10s) whenever it is waiting. Clients ignore comments, so this
+  is invisible to callers and visible to every proxy. `verify-heartbeat.ts`
+  proves pings flow across a 20s silent upstream.
+- `streamRaw()` pulls the first token before returning the Response, but only for
+  up to `PROBE_MS` (12s). That window is what lets rotation work: a retired or
+  refused model fails inside it and the next model in the chain is tried. A model
+  that is merely slow passes the deadline, the Response is returned at once, and
+  the keepalive covers the rest of the wait. Do not remove the probe to "make it
+  stream sooner" — that silently breaks rotation. Do not make it unbounded
+  either, or a slow model stalls the caller before the keepalive can start.
+
+### Every request is independent
+
+There is no shared session state on the hot path, and there must not be. Each
+request mints its own upstream fingerprint (`newSessionId()`, per call), its own
+lane, and its own stream. One caller's rate limit, stall or disconnect therefore
+cannot touch another's. `verify-isolation.ts` runs 300 concurrent callers and
+asserts every one is answered, none is truncated, and all 300 carry distinct
+fingerprints — the property that makes "a million callers, none blocked" true
+rather than hopeful.
+
+If you add anything that caches or shares state across callers, check it against
+that test first: a shared mutable session is exactly what makes one caller's
+failure break everyone else's stream.

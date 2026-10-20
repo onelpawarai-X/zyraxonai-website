@@ -71,6 +71,7 @@ import { Route as ApiPublicProvidersProviderRouteImport } from './routes/api/pub
 import { Route as ApiPublicSharesIndexRouteImport } from './routes/api/public/shares/index'
 import { Route as ApiPublicSiteContentIndexRouteImport } from './routes/api/public/site-content/index'
 import { Route as ApiPublicSiteContentSlugRouteImport } from './routes/api/public/site-content/$slug'
+import { Route as ApiPublicZyraxonHelperRouteImport } from './routes/api/public/zyraxon/helper'
 import { Route as ApiPublicZyraxonSearchRouteImport } from './routes/api/public/zyraxon/search'
 import { Route as ApiSharesIdIndexRouteImport } from './routes/api/shares/$id/index'
 import { Route as ApiSharesIdDataRouteImport } from './routes/api/shares/$id/data'
@@ -404,6 +405,11 @@ const ApiPublicSiteContentSlugRoute =
     path: '/api/public/site-content/$slug',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicZyraxonHelperRoute = ApiPublicZyraxonHelperRouteImport.update({
+  id: '/api/public/zyraxon/helper',
+  path: '/api/public/zyraxon/helper',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicZyraxonSearchRoute = ApiPublicZyraxonSearchRouteImport.update({
   id: '/api/public/zyraxon/search',
   path: '/api/public/zyraxon/search',
@@ -548,6 +554,7 @@ export interface FileRoutesByFullPath {
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
+  '/api/public/zyraxon/helper': typeof ApiPublicZyraxonHelperRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
@@ -627,6 +634,7 @@ export interface FileRoutesByTo {
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
+  '/api/public/zyraxon/helper': typeof ApiPublicZyraxonHelperRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
@@ -707,6 +715,7 @@ export interface FileRoutesById {
   '/api/public/nebula/search': typeof ApiPublicNebulaSearchRoute
   '/api/public/providers/$provider': typeof ApiPublicProvidersProviderRoute
   '/api/public/site-content/$slug': typeof ApiPublicSiteContentSlugRoute
+  '/api/public/zyraxon/helper': typeof ApiPublicZyraxonHelperRoute
   '/api/public/zyraxon/search': typeof ApiPublicZyraxonSearchRoute
   '/api/shares/$id/data': typeof ApiSharesIdDataRoute
   '/api/shares/$id/sync': typeof ApiSharesIdSyncRoute
@@ -788,6 +797,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/site-content/$slug'
+    | '/api/public/zyraxon/helper'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
@@ -867,6 +877,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/site-content/$slug'
+    | '/api/public/zyraxon/helper'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
@@ -946,6 +957,7 @@ export interface FileRouteTypes {
     | '/api/public/nebula/search'
     | '/api/public/providers/$provider'
     | '/api/public/site-content/$slug'
+    | '/api/public/zyraxon/helper'
     | '/api/public/zyraxon/search'
     | '/api/shares/$id/data'
     | '/api/shares/$id/sync'
@@ -1023,6 +1035,7 @@ export interface RootRouteChildren {
   ApiPublicGithubPublishRoute: typeof ApiPublicGithubPublishRoute
   ApiPublicProvidersProviderRoute: typeof ApiPublicProvidersProviderRoute
   ApiPublicSiteContentSlugRoute: typeof ApiPublicSiteContentSlugRoute
+  ApiPublicZyraxonHelperRoute: typeof ApiPublicZyraxonHelperRoute
   ApiPublicZyraxonSearchRoute: typeof ApiPublicZyraxonSearchRoute
   ApiSharesIdDataRoute: typeof ApiSharesIdDataRoute
   ApiSharesIdSyncRoute: typeof ApiSharesIdSyncRoute
@@ -1475,6 +1488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSiteContentSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zyraxon/helper': {
+      id: '/api/public/zyraxon/helper'
+      path: '/api/public/zyraxon/helper'
+      fullPath: '/api/public/zyraxon/helper'
+      preLoaderRoute: typeof ApiPublicZyraxonHelperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/zyraxon/search': {
       id: '/api/public/zyraxon/search'
       path: '/api/public/zyraxon/search'
@@ -1683,6 +1703,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGithubPublishRoute: ApiPublicGithubPublishRoute,
   ApiPublicProvidersProviderRoute: ApiPublicProvidersProviderRoute,
   ApiPublicSiteContentSlugRoute: ApiPublicSiteContentSlugRoute,
+  ApiPublicZyraxonHelperRoute: ApiPublicZyraxonHelperRoute,
   ApiPublicZyraxonSearchRoute: ApiPublicZyraxonSearchRoute,
   ApiSharesIdDataRoute: ApiSharesIdDataRoute,
   ApiSharesIdSyncRoute: ApiSharesIdSyncRoute,

@@ -22,6 +22,22 @@ export const ZEN_CHAT_URL = `${ZEN_BASE}/chat/completions`;
 export const ZEN_MODELS_URL = `${ZEN_BASE}/models`;
 export const DEFAULT_ZEN_MODEL = "big-pickle";
 
+/** How often to send an SSE comment while the upstream is silent.
+ *
+ *  A reasoning model can think for tens of seconds before its first token, and
+ *  a stream that writes nothing in that window looks dead to Cloudflare, a load
+ *  balancer or a phone's network, which then drops it. A comment line every few
+ *  seconds keeps the connection provably alive without the client seeing
+ *  anything it has to parse. Ten seconds is well under the shortest idle
+ *  timeout we are likely to sit behind. */
+export const HEARTBEAT_MS = Number(process.env.ZYRAXON_HEARTBEAT_MS || 10_000);
+/** How long to wait for a first token before deciding a model is merely slow
+ *  rather than broken. Inside this window a failure can still rotate to another
+ *  model; past it the turn is committed and the keepalive holds the connection
+ *  while the model finishes thinking. Kept well under the caller's own timeout
+ *  so a genuinely dead model still rotates quickly. */
+export const PROBE_MS = Number(process.env.ZYRAXON_PROBE_MS || 12_000);
+
 export type ContentPart =
   | { type: "text"; text: string }
   | { type: "image_url"; image_url: { url: string } }
@@ -355,6 +371,31 @@ function sse(first: string | undefined, iterator: AsyncIterator<string>, upstrea
   const enc = new TextEncoder();
   return new ReadableStream<Uint8Array>({
     async start(c) {
+      // Keep the connection provably alive while the upstream is silent.
+      //
+      // A reasoning model can think for tens of seconds before its first token.
+      // With nothing written in that window, an intermediary — Cloudflare, a
+      // load balancer, a phone's network — treats the stream as dead and drops
+      // it, so the caller sees a truncated answer. An SSE comment every few
+      // seconds is valid, is ignored by every client, and holds the line open.
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const arm = () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          try {
+            c.enqueue(enc.encode(": zyraxon-keepalive\n\n"));
+          } catch {
+            /* the client is gone; the write below will notice */
+          }
+          arm();
+        }, HEARTBEAT_MS);
+        if (typeof timer?.unref === "function") timer.unref();
+      };
+      const disarm = () => {
+        if (timer) clearTimeout(timer);
+        timer = null;
+      };
+      arm();
       try {
         if (first) c.enqueue(frame(enc, { content: first }, null, upstream));
         while (true) {
@@ -362,10 +403,12 @@ function sse(first: string | undefined, iterator: AsyncIterator<string>, upstrea
           if (n.done) break;
           if (n.value) c.enqueue(frame(enc, { content: n.value }, null, upstream));
         }
+        disarm();
         c.enqueue(frame(enc, {}, "stop", upstream));
         c.enqueue(enc.encode("data: [DONE]\n\n"));
         c.close();
       } catch (e) {
+        disarm();
         c.enqueue(
           enc.encode(
             `data: ${JSON.stringify({ error: { message: e instanceof Error ? e.message : "Zen stream failed", type: "opencode_zen_error" } })}\n\n`,
@@ -498,12 +541,38 @@ export async function streamRaw(
         tools: FREE_TIER_GATE_TOOLS as any,
       });
       const iterator = result.fullStream[Symbol.asyncIterator]();
+
+      // Prove the stream is healthy before committing to it, but with a ceiling
+      // on how long that proof may take.
+      //
+      // Two failure modes have to be satisfied at once:
+      //   - a retired or refused model fails at once, and rotation must fall
+      //     through to the next model — so the first token has to be pulled
+      //     here, before the Response is handed back;
+      //   - a reasoning model can legitimately think for a long while before its
+      //     first token, and the caller must not be left with no connection
+      //     during that time, or an intermediary drops the stream.
+      //
+      // So wait for the first token, but only up to PROBE_MS. A failure inside
+      // that window returns `{ failed }` and rotation continues. A model that is
+      // merely slow passes the deadline and the Response is returned at once,
+      // with the keepalive in `sse` holding the connection while it finishes
+      // thinking — the caller is connected, and the answer still arrives.
       let sawActivity = false;
       let firstText = "";
+      let probed = false;
+      const probeDeadline = new Promise<"timeout">((resolve) => {
+        const t = setTimeout(() => resolve("timeout"), PROBE_MS);
+        if (typeof t?.unref === "function") t.unref();
+      });
       for (;;) {
-        const n = await iterator.next();
-        if (n.done) break;
-        const p = n.value as any as {
+        const next = await Promise.race([iterator.next(), probeDeadline]);
+        if (next === "timeout") {
+          probed = true;
+          break;
+        }
+        if (next.done) break;
+        const p = next.value as any as {
           type?: string;
           textDelta?: string;
           text?: string;
@@ -519,28 +588,31 @@ export async function streamRaw(
         if (p.type === "reasoning" || p.type === "reasoning-delta") sawActivity = true;
         else if (p.type === "error") throw p.error ?? new Error("upstream stream error");
       }
-      if (!sawActivity) {
-        // Silent soft-block — one quick same-model retry rescues many of these.
-        if (attempt === 0) {
-          await new Promise((r) => setTimeout(r, 900));
-          continue;
+      if (!probed) {
+        if (!sawActivity) {
+          // A silent, immediate response is the upstream soft-block. One quick
+          // same-model retry rescues many of these; a second failure rotates.
+          if (attempt === 0) {
+            await new Promise((r) => setTimeout(r, 900));
+            continue;
+          }
+          return { failed: { upstream, status: 502, detail: "OpenCode returned an empty stream" } };
         }
-        return { failed: { upstream, status: 502, detail: "OpenCode returned an empty stream" } };
+        if (!firstText) {
+          return {
+            failed: {
+              upstream,
+              status: 502,
+              detail:
+                "model produced reasoning only and hit its output budget before any answer — try another model",
+            },
+          };
+        }
       }
-      if (!firstText)
-        return {
-          failed: {
-            upstream,
-            status: 502,
-            detail:
-              "model produced reasoning only and hit its output budget before any answer — try another model",
-          },
-        };
-      // `firstText` is the delta we already pulled to prove the stream is
-      // healthy. It must be emitted exactly once: as the first frame's content
-      // here, and NOT yielded again by the tail iterator, or the caller sees the
-      // opening words twice.
-      const restText = async function* (): AsyncGenerator<string> {
+
+      // The tail continues from wherever the probe stopped. `firstText`, when it
+      // was already pulled, is emitted once by `sse` and never again here.
+      const pump = async function* (): AsyncGenerator<string> {
         for (;;) {
           const n = await iterator.next();
           if (n.done) break;
@@ -550,7 +622,8 @@ export async function streamRaw(
           if (t) yield t;
         }
       };
-      return new Response(sse(firstText, restText(), label || upstream), {
+
+      return new Response(sse(firstText || undefined, pump(), label || upstream), {
         headers: {
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
@@ -613,20 +686,58 @@ function sseFromOpenAI(body: ReadableStream<Uint8Array>, label: string) {
     chunk.replace(/"model"\s*:\s*"[^"]*"/g, `"model":${JSON.stringify(label)}`);
   return new ReadableStream<Uint8Array>({
     async pull(c) {
-      const { done, value } = await reader.read();
-      if (done) {
-        if (buffer) c.enqueue(enc.encode(rewrite(buffer)));
-        c.close();
-        return;
+      // Hold the connection open while the upstream thinks.
+      //
+      // A reasoning model can be silent for tens of seconds before its first
+      // token. A relay that only writes when the upstream writes goes completely
+      // idle for that whole time, and an intermediary — Cloudflare, a load
+      // balancer, a phone's network — treats an idle stream as dead and drops
+      // it. The caller then sees a truncated answer even though the model was
+      // working fine. A comment line every few seconds is valid SSE that clients
+      // ignore, and it keeps the connection provably alive.
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const ping = () => {
+        try {
+          c.enqueue(enc.encode(": zyraxon-keepalive\n\n"));
+        } catch {
+          /* the client is gone; the read below will notice */
+        }
+      };
+      const arm = () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          ping();
+          arm();
+        }, HEARTBEAT_MS);
+        if (typeof timer?.unref === "function") timer.unref();
+      };
+      const disarm = () => {
+        if (timer) clearTimeout(timer);
+        timer = null;
+      };
+
+      arm();
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          disarm();
+          if (buffer) c.enqueue(enc.encode(rewrite(buffer)));
+          c.close();
+          return;
+        }
+        buffer += dec.decode(value, { stream: true });
+        // Emit only complete SSE events; a partial line stays buffered so a JSON
+        // payload split across two reads is never forwarded half-formed.
+        const cut = buffer.lastIndexOf("\n\n");
+        if (cut === -1) return;
+        const ready = buffer.slice(0, cut + 2);
+        buffer = buffer.slice(cut + 2);
+        disarm();
+        c.enqueue(enc.encode(rewrite(ready)));
+      } catch (e) {
+        disarm();
+        throw e;
       }
-      buffer += dec.decode(value, { stream: true });
-      // Emit only complete SSE events; a partial line stays buffered so a JSON
-      // payload split across two reads is never forwarded half-formed.
-      const cut = buffer.lastIndexOf("\n\n");
-      if (cut === -1) return;
-      const ready = buffer.slice(0, cut + 2);
-      buffer = buffer.slice(cut + 2);
-      c.enqueue(enc.encode(rewrite(ready)));
     },
     cancel() {
       return reader.cancel();
