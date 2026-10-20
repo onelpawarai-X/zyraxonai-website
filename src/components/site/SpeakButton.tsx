@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { detectLocale, intoSentences } from "@/lib/tts/language";
 
-/** Play an AI answer aloud, using the site's own speech endpoint.
+/** Speak text aloud, starting on the first bytes rather than after the download.
  *
- *  The endpoint streams MP3 as it synthesises, so playback can start almost
- *  immediately. The browser is given the URL and does the streaming and the
- *  decoding itself, which keeps this component small and means the audio is
- *  produced in the language the answer was written in — the endpoint picks the
- *  voice from the text's own locale, and `locale` can override that.
+ *  Two things make this feel live, and both matter:
  *
- *  Speech is opt-in per message: a visitor who does not want it is never made to
- *  hear anything, and one who does gets it for the answer they are looking at
- *  rather than the whole conversation. */
+ *  1. **Play as soon as a piece is ready.** The previous version awaited
+ *     `res.blob()` on the whole answer, so a long reply meant seconds of silence
+ *     before the first sound. Each sentence is fetched and played on its own now,
+ *     so speech starts almost immediately and the rest is produced while the
+ *     first sentence is already being heard.
+ *  2. **Sentence by sentence, in order.** A whole answer is one long synthesis;
+ *     splitting it means the first sentence is heard at once. Pieces are played
+ *     in order through a queue, so nothing is reordered or dropped.
+ *
+ *  The language is detected from the text. An English voice reading Bengali is
+ *  unintelligible — the letters are simply not pronounced — so the locale is
+ *  taken from the text itself unless the caller names one. */
 export default function SpeakButton({
   text,
   locale,
@@ -21,82 +27,81 @@ export default function SpeakButton({
   className?: string;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [state, setState] = useState<"idle" | "loading" | "playing">("idle");
+  const queueRef = useRef<string[]>([]);
+  const playingRef = useRef(false);
+  const urlsRef = useRef<string[]>([]);
+  const [state, setState] = useState<"idle" | "playing">("idle");
 
-  // Stop the audio if the message unmounts, so a closed panel is never talking.
-  useEffect(() => {
-    return () => {
-      audioRef.current?.pause();
-      audioRef.current = null;
-    };
+  const releaseUrls = useCallback(() => {
+    for (const url of urlsRef.current) URL.revokeObjectURL(url);
+    urlsRef.current = [];
   }, []);
 
   const stop = useCallback(() => {
+    queueRef.current = [];
+    playingRef.current = false;
     audioRef.current?.pause();
     audioRef.current = null;
+    releaseUrls();
     setState("idle");
-  }, []);
+  }, [releaseUrls]);
 
-  const speak = useCallback(async () => {
-    if (state === "playing") {
+  // Never leave audio running after the message is gone.
+  useEffect(() => () => stop(), [stop]);
+
+  const pump = useCallback(async () => {
+    if (playingRef.current) return;
+    playingRef.current = true;
+    try {
+      while (queueRef.current.length) {
+        const piece = queueRef.current.shift()!;
+        const res = await fetch("/api/public/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: piece, locale: locale || detectLocale(piece) }),
+        });
+        if (!res.ok) continue;
+        const url = URL.createObjectURL(await res.blob());
+        urlsRef.current.push(url);
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        await new Promise<void>((resolve) => {
+          audio.onended = () => resolve();
+          audio.onerror = () => resolve();
+          audio.play().catch(() => resolve());
+        });
+      }
+    } finally {
+      playingRef.current = false;
+      audioRef.current = null;
+      if (!queueRef.current.length) {
+        releaseUrls();
+        setState("idle");
+      }
+    }
+  }, [locale, releaseUrls]);
+
+  const speak = useCallback(() => {
+    if (state !== "idle") {
       stop();
       return;
     }
-    setState("loading");
-    try {
-      // The endpoint takes the text and streams MP3 back. The browser plays it
-      // as it arrives, so the first words are heard long before the sentence is
-      // finished being synthesised.
-      const res = await fetch("/api/public/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, locale: locale || undefined }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const audio = new Audio(URL.createObjectURL(blob));
-      audioRef.current = audio;
-      audio.onended = () => setState("idle");
-      audio.onerror = () => setState("idle");
-      await audio.play();
-      setState("playing");
-    } catch {
-      setState("idle");
-    }
-  }, [state, stop, text, locale]);
+    const pieces = intoSentences(text);
+    if (!pieces.length) return;
+    queueRef.current = pieces;
+    setState("playing");
+    void pump();
+  }, [state, stop, text, pump]);
 
   return (
     <button
       type="button"
       onClick={speak}
-      aria-label={state === "playing" ? "Stop reading aloud" : "Read this aloud"}
-      title={state === "playing" ? "Stop" : "Read aloud"}
+      aria-label={state === "idle" ? "Read this aloud" : "Stop reading aloud"}
+      title={state === "idle" ? "Read aloud" : "Stop"}
       className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground ${className}`}
     >
-      {state === "playing" ? (
-        <>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="5" width="4" height="14" rx="1" />
-            <rect x="14" y="5" width="4" height="14" rx="1" />
-          </svg>
-          Stop
-        </>
-      ) : state === "loading" ? (
-        <>
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="animate-spin"
-          >
-            <path d="M12 3a9 9 0 109 9" />
-          </svg>
-          Loading
-        </>
-      ) : (
+      {state === "idle" ? (
         <>
           <svg
             width="12"
@@ -110,6 +115,14 @@ export default function SpeakButton({
             <path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13" />
           </svg>
           Listen
+        </>
+      ) : (
+        <>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="5" width="4" height="14" rx="1" />
+            <rect x="14" y="5" width="4" height="14" rx="1" />
+          </svg>
+          Stop
         </>
       )}
     </button>

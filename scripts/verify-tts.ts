@@ -9,6 +9,7 @@
 // Run: npx tsx --import ./scripts/raw-import-loader.mjs scripts/verify-tts.ts
 import { execFileSync } from "node:child_process";
 import { pickVoice, speakable, escapeXml, type Voice } from "../src/lib/tts/edge-speech.server";
+import { detectLocale, intoSentences } from "../src/lib/tts/language";
 import { secMsGec, SEC_MS_GEC_VERSION } from "../src/lib/tts/edge-tts-token";
 
 let failures = 0;
@@ -112,6 +113,53 @@ check("bold markers are removed", speakable("**important** thing") === "importan
 check("heading markers are removed", speakable("## Title") === "Title");
 check("bullet markers are removed", speakable("- one\n- two") === "one two");
 check("XML is escaped for SSML", escapeXml("a < b & c > d") === "a &lt; b &amp; c &gt; d");
+
+// ── the answer's language must be detected, not assumed ─────────────────────
+// This is what made Bengali unlistenable: an English voice reading Bengali text.
+check(
+  "Bengali text is detected as Bengali",
+  detectLocale("আমি একটি ZYRAXON মডেল।") === "bn",
+  String(detectLocale("আমি একটি ZYRAXON মডেল।")),
+);
+check("Hindi text is detected as Hindi", detectLocale("नमस्ते, यह ZYRAXON है।") === "hi");
+check("Arabic text is detected as Arabic", detectLocale("مرحبا بك") === "ar");
+check("Latin text leaves the locale unset", detectLocale("Hello from ZYRAXON.") === undefined);
+check(
+  "a mostly-Bengali answer with English words stays Bengali",
+  detectLocale("আমি একটি ZYRAXON মডেল with some English.") === "bn",
+);
+
+// ── sentences must split, so speech can start before the reply ends ─────────
+// Short sentences are deliberately joined up to a budget: fewer requests means
+// speech starts sooner. What must hold is that nothing is lost and that a long
+// answer is still cut into pieces.
+const one = intoSentences("First sentence. Second sentence.");
+check("short text stays one piece", one.length === 1, JSON.stringify(one));
+check(
+  "nothing is lost in the split",
+  one.join(" ") === "First sentence. Second sentence.",
+  one.join(" "),
+);
+const bangla = intoSentences("প্রথম বাক্য। দ্বিতীয় বাক্য।");
+check(
+  "a Bengali danda is respected",
+  bangla.join(" ") === "প্রথম বাক্য। দ্বিতীয় বাক্য।",
+  JSON.stringify(bangla),
+);
+const many = intoSentences(Array.from({ length: 30 }, (_, i) => `Sentence number ${i}.`).join(" "));
+check("a long answer is cut into several pieces", many.length > 1, `${many.length} pieces`);
+check(
+  "every piece is within the budget",
+  many.every((p) => p.length <= 480),
+  JSON.stringify(many.map((p) => p.length)),
+);
+const long = intoSentences("A".repeat(600));
+check(
+  "a very long sentence is still cut",
+  long.length > 1 && long.every((s) => s.length <= 480),
+  JSON.stringify(long.map((s) => s.length)),
+);
+check("empty text produces nothing to say", intoSentences("   ").length === 0);
 
 console.log("");
 if (failures) {

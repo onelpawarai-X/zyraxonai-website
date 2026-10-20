@@ -6,6 +6,7 @@ import {
   speechResponse,
   type Voice,
 } from "@/lib/tts/edge-speech.server";
+import { detectLocale } from "@/lib/tts/language";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -93,7 +94,13 @@ async function speak(
     // Without the catalogue, a named voice still works; only locale matching
     // needs the list.
   }
-  const chosen = voice || pickVoice(locale || "en-US", voices) || "en-US-EmmaMultilingualNeural";
+  // The voice is chosen from the *answer's own language* when the caller did not
+  // name one. Without this an English voice reads Bengali text and the result is
+  // unintelligible — the letters are simply not pronounced — which is exactly
+  // what a Bengali answer sounded like before.
+  const detected = detectLocale(spoken);
+  const chosen =
+    voice || pickVoice(locale || detected || "en-US", voices) || "en-US-EmmaMultilingualNeural";
 
   try {
     const response = speechResponse(spoken, chosen, signal);
