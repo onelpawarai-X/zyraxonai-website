@@ -403,6 +403,65 @@ check(
   ),
 );
 
+// ── the three interactive-shell clients ─────────────────────────────────────
+// Each must exist on disk, be downloadable from the catalogue, and be a real
+// client rather than a snippet: the whole point is that a user can run it.
+for (const [id, file] of [
+  ["python-shell", "zyraxon.py"],
+  ["powershell", "zyraxon.ps1"],
+  ["bash-shell", "zyraxon.sh"],
+] as const) {
+  check(
+    `the catalogue offers "${id}"`,
+    INTEGRATIONS.some((i) => i.id === id),
+  );
+  check(`the client ${file} exists`, existsSync(`${SCRIPT_DIR}${file}`));
+  check(
+    `the catalogue links "${id}" to its download`,
+    INTEGRATIONS.find((i) => i.id === id)?.download?.href === `/integrations/${file}`,
+  );
+}
+
+// Each client must talk to the real endpoint and read the model list live.
+const pyClient = readFileSync(`${SCRIPT_DIR}zyraxon.py`, "utf8");
+check("the Python client imports cleanly (no syntax error)", pyClient.includes("class Zyraxon"));
+check(
+  "the Python client names the real base URL",
+  pyClient.includes("zyraxonai.lovable.app/api/public/zyraxon/v1"),
+);
+check("the Python client reads the model list live", /def models\(/.test(pyClient));
+check("the Python client keeps conversation state", pyClient.includes("self.messages"));
+check("the Python client retries transient failures", /RETRY_STATUS/.test(pyClient));
+check(
+  "the Python client has no third-party imports",
+  !/^\s*(import|from)\s+(requests|openai|httpx)\b/m.test(pyClient),
+);
+
+const psClient = readFileSync(`${SCRIPT_DIR}zyraxon.ps1`, "utf8");
+check("the PowerShell client exposes Invoke-Zyraxon", /function Invoke-Zyraxon\b/.test(psClient));
+check(
+  "the PowerShell client exposes Get-ZyraxonModels",
+  /function Get-ZyraxonModels\b/.test(psClient),
+);
+check(
+  "the PowerShell client exposes the agent loop",
+  /function Invoke-ZyraxonAgent\b/.test(psClient),
+);
+check(
+  "the PowerShell client has no StrictMode-unsafe property reads",
+  !/\$response\.error/.test(psClient),
+);
+check(
+  "the PowerShell client does not shadow the -Stream switch",
+  !/\$stream = \$request/.test(psClient),
+);
+
+const shClient = readFileSync(`${SCRIPT_DIR}zyraxon.sh`, "utf8");
+check("the bash client exposes zyraxon_ask", /^zyraxon_ask\(\)/m.test(shClient));
+check("the bash client exposes zyraxon_models", /^zyraxon_models\(\)/m.test(shClient));
+check("the bash client exposes the agent loop", /^zyraxon_agent\(\)/m.test(shClient));
+check("the bash client uses process substitution for the tool loop", /done < </.test(shClient));
+
 console.log("");
 if (failures) {
   console.log(`${failures} CHECK(S) FAILED`);
