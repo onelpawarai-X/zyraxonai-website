@@ -58,7 +58,8 @@ export function nextEgress(): string | undefined {
 export function egressFor(sessionId: string): string | undefined {
   if (!PROXIES.length) return undefined;
   let h = 0x811c9dc5;
-  for (let i = 0; i < sessionId.length; i++) h = Math.imul(h ^ sessionId.charCodeAt(i), 0x01000193) >>> 0;
+  for (let i = 0; i < sessionId.length; i++)
+    h = Math.imul(h ^ sessionId.charCodeAt(i), 0x01000193) >>> 0;
   return PROXIES[h % PROXIES.length];
 }
 

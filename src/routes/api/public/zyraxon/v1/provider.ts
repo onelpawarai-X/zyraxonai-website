@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { egressStatus } from "@/lib/providers/egress.server";
+import { FLEET_SHARDS, fleetStatus } from "@/lib/providers/fleet.server";
 import { lanePool } from "@/lib/providers/lane-pool.server";
 import { brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
 
@@ -37,16 +38,36 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               context: b.context,
               output: b.output,
               multimodal: b.multimodal,
+              modalities: b.modalities,
               reasoning: b.reasoning,
               // "ready" = serving on its preferred binding. "rotated" = the
               // preferred upstream is unavailable and a sibling is covering,
               // which is a normal, healthy state — not an outage.
               status: b.preferredAvailable ? "ready" : "rotated",
             })),
+            // Which input modalities the line can serve right now, so a client
+            // can tell at a glance whether video or audio is available today.
+            modalities: Array.from(new Set(brands.flatMap((b) => b.modalities))).sort(),
             // Concurrency is per process. Publishing it lets an operator see
             // shedding before callers complain, and says plainly whether the
             // deployment has one egress address or many.
             concurrency: lanePool.stats(),
+            // The fleet-wide picture: how many shards, how many lanes each, and
+            // the product — the number of concurrent turns the deployment can
+            // actually hold before it sheds or spills.
+            fleet: fleetStatus(
+              FLEET_SHARDS,
+              lanePool.capacity().maxActive,
+              lanePool.capacity().spillMax,
+            ),
+            // Overload policy, stated so a caller knows what a 503 meant and an
+            // operator knows where the overflow goes.
+            overload: {
+              spillTo: "opencode-zen-free-pool",
+              spillLanes: lanePool.capacity().spillMax,
+              queueLanes: lanePool.capacity().maxQueued,
+              note: "Primary lanes serve on ZYRAXON's own budget; a full primary tier spills to the OpenCode Zen free pool, then queues, then sheds with 503 + Retry-After. Every response carries X-ZYRAXON-Capacity: primary|spill.",
+            },
             egress: egressStatus(),
           },
           { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },

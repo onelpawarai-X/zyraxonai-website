@@ -52,7 +52,22 @@ const API_ORIGIN = "https://zyraxonai.lovable.app";
 const MODELS_URL = `${API_ORIGIN}/api/public/zyraxon/v1/models`;
 const CHAT_URL = `${API_ORIGIN}/api/public/zyraxon/v1/chat/completions`;
 
-type Live = { id: string; status: "ready" | "rotated"; context: number; output: number };
+type Live = {
+  id: string;
+  status: "ready" | "rotated";
+  context: number;
+  output: number;
+  modalities?: string[];
+  multimodal?: boolean;
+};
+
+const MODALITY_LABEL: Record<string, string> = {
+  text: "text",
+  image: "image",
+  video: "video",
+  audio: "audio",
+  pdf: "PDF",
+};
 
 const CURL_SAMPLE = `curl ${CHAT_URL} \\
   -H "Content-Type: application/json" \\
@@ -110,6 +125,7 @@ function ProvidersPage() {
           <ButtonAnchor href="#models">See the models</ButtonAnchor>
           <Tag tone="success">OpenAI-compatible</Tag>
           <Tag tone="primary">Streaming</Tag>
+          <Tag tone="primary">Multimodal</Tag>
         </div>
       </PageHeader>
 
@@ -129,7 +145,7 @@ function ProvidersPage() {
             </code>
             <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
               Returns the ten ZYRAXON models in the standard OpenAI{" "}
-              <code className="text-[12px]">{"{ object: \"list\", data: [...] }"}</code> shape, so
+              <code className="text-[12px]">{'{ object: "list", data: [...] }'}</code> shape, so
               existing clients read it without special handling.
             </p>
           </Card>
@@ -172,9 +188,7 @@ function ProvidersPage() {
                     <p className="mt-0.5 text-[12.5px] text-muted-foreground">{b.tagline}</p>
                   </div>
                   {state && (
-                    <Tag tone={rotated ? "warn" : "success"}>
-                      {rotated ? "Rotated" : "Ready"}
-                    </Tag>
+                    <Tag tone={rotated ? "warn" : "success"}>{rotated ? "Rotated" : "Ready"}</Tag>
                   )}
                 </div>
 
@@ -185,9 +199,29 @@ function ProvidersPage() {
                 <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-3">
                   <Tag>{b.id}</Tag>
                   {typeof ctx === "number" && ctx > 0 && (
-                    <Tag>{ctx >= 1_000_000 ? `${ctx / 1_000_000}M ctx` : `${Math.round(ctx / 1000)}K ctx`}</Tag>
+                    <Tag>
+                      {ctx >= 1_000_000
+                        ? `${ctx / 1_000_000}M ctx`
+                        : `${Math.round(ctx / 1000)}K ctx`}
+                    </Tag>
                   )}
-                  <Tag>{b.preferred.includes("vl") || b.id === "zyraxon-visionary" ? "vision" : "text"}</Tag>
+                  {(() => {
+                    // Prefer the live modalities the endpoint reports; fall back
+                    // to the brand's declared profile before the first fetch.
+                    const mods =
+                      state?.modalities ??
+                      Object.entries(b.profile)
+                        .filter(([, v]) => v === true)
+                        .map(([k]) => (k === "vision" ? "image" : k))
+                        .filter((k) => ["image", "video", "audio", "pdf"].includes(k));
+                    const extra = mods.filter((m) => m !== "text");
+                    if (!extra.length) return <Tag>text</Tag>;
+                    return extra.map((m) => (
+                      <Tag key={m} tone="primary">
+                        {MODALITY_LABEL[m] ?? m}
+                      </Tag>
+                    ));
+                  })()}
                 </div>
               </Card>
             );
@@ -204,7 +238,15 @@ function ProvidersPage() {
         <Card className="mt-5 p-5">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/12 text-primary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <path d="M4 12a8 8 0 0113.7-5.7M20 12a8 8 0 01-13.7 5.7M17 3v4h-4M7 21v-4h4" />
               </svg>
             </div>
@@ -219,6 +261,89 @@ function ProvidersPage() {
             </div>
           </div>
         </Card>
+      </Section>
+
+      <Section
+        id="media"
+        label="Multimodal"
+        title="Send images, audio, video and documents"
+        description="Chat completions accept the OpenAI content-parts array, so one message can mix text with media. When a turn carries media, it is routed to a model that can actually see it — a video turn is never sent to a text-only model and made to fail."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+              <span className="text-[13px] font-semibold text-foreground">
+                Vision — image + text
+              </span>
+              <Tag>json</Tag>
+            </div>
+            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
+              <code>{`{
+  "model": "zyraxon-matrix",
+  "messages": [{
+    "role": "user",
+    "content": [
+      { "type": "text", "text": "What is in this chart?" },
+      { "type": "image_url",
+        "image_url": { "url": "data:image/png;base64,..." } }
+    ]
+  }]
+}`}</code>
+            </pre>
+          </Card>
+
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+              <span className="text-[13px] font-semibold text-foreground">
+                Audio, video, documents
+              </span>
+              <Tag>json</Tag>
+            </div>
+            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
+              <code>{`{
+  "model": "zyraxon-cyber",
+  "messages": [{
+    "role": "user",
+    "content": [
+      { "type": "text", "text": "Transcribe and summarise" },
+      { "type": "input_audio",
+        "input_audio": { "data": "<base64>", "format": "wav" } },
+      { "type": "video_url",
+        "video_url": { "url": "data:video/mp4;base64,..." } },
+      { "type": "file",
+        "file": { "filename": "report.pdf", "file_data": "data:application/pdf;base64,..." } }
+    ]
+  }]
+}`}</code>
+            </pre>
+          </Card>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Big video just works</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              A long recording is compressed and sliced in the browser before upload, so a
+              multi-gigabyte file becomes a handful of model-sized parts instead of a failed
+              request.
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Capability-aware routing</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              The modalities each model accepts are read live from the serving pool, and a media
+              turn is ordered onto the models that can handle it.
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Told what was used</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              A media response carries{" "}
+              <code className="text-[12px]">X-ZYRAXON-Input-Modalities</code>, so you can tell a
+              real multimodal answer from a text-only one.
+            </p>
+          </Card>
+        </div>
       </Section>
 
       <Section
@@ -261,12 +386,8 @@ function ProvidersPage() {
         </Card>
       </Section>
 
-      <Section
-        label="Why a rooted provider"
-        title="One name you control"
-        description=""
-      >
-        <div className="grid gap-4 sm:grid-cols-3">
+      <Section label="Why a rooted provider" title="One name you control" description="">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="p-5">
             <h3 className="text-[14px] font-semibold text-foreground">Stable names</h3>
             <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
@@ -279,6 +400,16 @@ function ProvidersPage() {
             <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
               Every model in the pool stands behind every brand, so one model's limit is absorbed
               rather than passed to you.
+            </p>
+          </Card>
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Built to hold a flood</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Each request runs in its own lane with its own fingerprint, so one caller's rate limit
+              never stalls another. Under overload a request is shed fast with a{" "}
+              <code className="text-[12px]">503</code> and{" "}
+              <code className="text-[12px]">Retry-After</code> instead of queueing behind a stranger
+              — the lanes already running stay healthy.
             </p>
           </Card>
           <Card className="p-5">

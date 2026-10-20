@@ -71,7 +71,7 @@ export function decodeTimestamp(id: string): number | null {
 export function timestampAgeMs(id: string, now = Date.now()): number | null {
   const t = decodeTimestamp(id);
   if (t === null) return null;
-  const delta = ((now - t) % TIMESTAMP_WINDOW_MS + TIMESTAMP_WINDOW_MS) % TIMESTAMP_WINDOW_MS;
+  const delta = (((now - t) % TIMESTAMP_WINDOW_MS) + TIMESTAMP_WINDOW_MS) % TIMESTAMP_WINDOW_MS;
   return Math.min(delta, TIMESTAMP_WINDOW_MS - delta);
 }
 

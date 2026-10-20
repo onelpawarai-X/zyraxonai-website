@@ -41,6 +41,42 @@ dispatch real `Input.dispatchMouseEvent` clicks so user-activation applies.
 Assert on `elementFromPoint` to prove a control is actually reachable — this is
 what caught a lightbox whose buttons were covered by the sticky header.
 
+### The ZYRAXON provider
+
+Ten branded models (`src/lib/providers/zyraxon-brands.ts`) served over one
+OpenAI-compatible endpoint at `/api/public/zyraxon/v1`. Upstream is the
+OpenCode Zen free pool, discovered LIVE from models.dev — nothing upstream is
+hardcoded except legacy UI aliases.
+
+Layers, bottom-up:
+
+- `src/lib/builder/zen.server.ts` — the transport. `streamRaw` (SSE) and
+  `completeRaw` (one JSON `chat.completion`). The upstream always speaks SSE, so
+  `stream: false` is *implemented* here by draining the stream; it is not
+  forwarded. Do not "fix" it by passing `stream: false` upstream.
+- `src/lib/providers/media.ts` — pure content-part normalisation
+  (`image_url`/`video_url`/`input_audio`/`file`), modality detection, and the
+  size budget for large media. No imports, so it runs in Node and the browser.
+- `src/lib/providers/video-compress.client.ts` — browser ffmpeg.wasm compressor
+  and slicer, loaded lazily from a CDN only when a file is actually too large.
+- `src/lib/providers/lane-pool.server.ts` — admission control. `run` for
+  non-streaming work; `stream` holds the lane until the SSE body is *drained*.
+  Using `run` for a streaming turn would bound only stream setup, not the number
+  of open streams — that is the bug `stream` exists to prevent.
+- `src/lib/providers/zyraxon-brand.server.ts` — the rooted provider. Normalises
+  messages, orders the chain by the modalities a turn needs, rotates upstreams
+  inside one lane, and always labels the response with the ZYRAXON name.
+
+Capacity is per-process and operator-tunable: `ZYRAXON_MAX_LANES`,
+`ZYRAXON_MAX_QUEUED`, `ZYRAXON_QUEUE_TIMEOUT_MS`, `ZYRAXON_MAX_WORK_MS`. A lane
+past its queue deadline or its work deadline is shed with a 503 rather than
+queued forever, so a flood cannot take the process down.
+
+Tests: `npm run test:provider`. Most scripts run under plain `tsx`, but the ones
+that import `system-prompt.txt` need
+`--import ./scripts/raw-import-loader.mjs` (a bare `tsx` run dies with
+`ERR_UNKNOWN_FILE_EXTENSION`).
+
 ### Two gotchas that caused real bugs
 
 - Do not pass `muted` to `<video>` as a JSX prop. React re-applies it on every
