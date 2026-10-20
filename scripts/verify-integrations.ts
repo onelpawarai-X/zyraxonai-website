@@ -8,6 +8,7 @@
 // Run: npx tsx scripts/verify-integrations.ts
 import {
   ANY_API_KEY,
+  LITELLM_MODEL,
   DEFAULT_MODEL,
   INTEGRATIONS,
   INTEGRATIONS_URL,
@@ -360,6 +361,28 @@ for (const i of INTEGRATIONS) {
     );
   }
 }
+
+// The OpenHands card must hand the user a model string LiteLLM accepts.
+// A bare id there is exactly the "LLM Provider NOT provided" failure reported
+// against it, and the value in the form is what a user copies.
+const openhands = INTEGRATIONS.find((i) => i.id === "openhands");
+const ohModelField = (openhands?.fields ?? []).find((f) => /custom model/i.test(f.label));
+check("the OpenHands card has a Custom Model field", Boolean(ohModelField));
+check(
+  "the OpenHands Custom Model carries the openai/ prefix",
+  ohModelField?.value === LITELLM_MODEL,
+  ohModelField?.value,
+);
+check(
+  "the OpenHands copy-block shows the prefixed model",
+  (openhands?.snippets ?? []).some(
+    (s) => s.label === "Copy these four" && s.code.includes(LITELLM_MODEL),
+  ),
+);
+check(
+  "the OpenHands entry documents the LLM Provider error",
+  (openhands?.snippets ?? []).some((s) => /LLM Provider NOT provided/.test(s.label + s.code)),
+);
 
 console.log("");
 if (failures) {
