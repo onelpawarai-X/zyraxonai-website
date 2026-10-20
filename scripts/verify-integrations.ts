@@ -351,6 +351,29 @@ check(
 );
 check("the shared Markdown renderer exists", existsSync(`${ROOT}src/lib/inline-markdown.tsx`));
 
+// ── speech must be discoverable, not just implemented ───────────────────────
+// It was live and correct and still invisible: the docs index had no entry and
+// the provider page hid it inside a collapsed panel. A feature nobody can find
+// is not shipped, so both surfaces are asserted here.
+const speechDoc = DOCS.find((d) => d.slug === "speech");
+check("a speech docs page is registered", Boolean(speechDoc));
+check(
+  "the speech docs page is in the ZYRAXON Provider group",
+  speechDoc?.group === "ZYRAXON Provider",
+);
+const speechText = (speechDoc?.blocks ?? []).map((b) => ("text" in b ? b.text : "")).join("\n");
+check("the speech docs name the synthesis endpoint", /\/api\/public\/tts/.test(speechText));
+check("the speech docs name the voices endpoint", /\/api\/public\/tts\/voices/.test(speechText));
+check("the speech docs cover speech-to-text too", /\/api\/public\/stt/.test(speechText));
+check("the speech docs mention a non-English voice", /bn-/.test(speechText));
+
+const providerPage = readFileSync(`${ROOT}src/routes/providers.tsx`, "utf8");
+check("the provider page has a speech section", /id="speech"/.test(providerPage));
+check("the provider page links to the speech guide", /\/docs\/speech/.test(providerPage));
+
+const sitemap = readFileSync(`${ROOT}public/sitemap.xml`, "utf8");
+check("the sitemap lists the speech page", sitemap.includes("/docs/speech"));
+
 // ── every step string must be free of text a list would double up ───────────
 for (const i of INTEGRATIONS) {
   for (const s of i.steps ?? []) {
