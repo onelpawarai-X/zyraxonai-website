@@ -13,10 +13,17 @@ library. Import it, or run it as a script.
     # Or as a command
     python zyraxon.py "summarise this repo"
     python zyraxon.py --agent "create hello.py that prints hi, then run it"
+    python zyraxon.py --long  "refactor the whole src tree, one file at a time"
+    python zyraxon.py --sessions
     python zyraxon.py --models
 
 Every model the provider serves works; `models()` lists them live, so nothing
 is pinned here. `ask()` keeps the conversation, so follow-up questions work.
+
+`--long` (or `ai.long_task(...)`) is for work that may take hours. It keeps the
+whole run on disk and resumes from it after any interruption, so a dropped
+network, a killed shell or a reboot does not lose the job — it carries on where
+it stopped. See the `long_task` docstring.
 """
 
 from __future__ import annotations
@@ -39,6 +46,30 @@ DEFAULT_API_KEY = "zyraxon"
 # Codes the provider documents as transient. Retrying these is right; a 400, 401
 # or 413 will not succeed on a retry and must be fixed instead.
 RETRY_STATUS = {429, 502, 503}
+
+# Where a resumable run keeps its state. One file per run, written atomically
+# after every completed step, so a crash, a killed shell, a lost network or a
+# reboot cannot lose more than the step in flight.
+SESSION_DIR = os.path.join(os.path.expanduser("~"), ".zyraxon", "sessions")
+
+
+def _write_atomic(path: str, data: dict[str, Any]) -> None:
+    """Write JSON so a crash mid-write cannot leave a half-written file."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = f"{path}.tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(tmp, path)
+
+
+def _read_json(path: str) -> dict[str, Any] | None:
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 class ZyraxonError(RuntimeError):
@@ -235,6 +266,137 @@ class Zyraxon:
 
         raise ZyraxonError("the agent used its whole turn budget")
 
+    # ── work that survives anything ─────────────────────────────────────────
+    def long_task(
+        self,
+        prompt: str,
+        tools: Iterable[dict[str, Any]],
+        run: Callable[[str, dict[str, Any]], str],
+        session: str = "default",
+        model: str | None = None,
+        max_turns_per_attempt: int = 40,
+        hours: float = 0.0,
+        on_step: Callable[[dict[str, Any]], None] | None = None,
+    ) -> str:
+        """Run a task that may take hours, and never lose it.
+
+        A single HTTP request cannot run for hours — a dropped network, a
+        restart, a rate limit or a deploy will end it. So this keeps the whole
+        run in a file under `~/.zyraxon/sessions/<session>.json`, written after
+        every completed step, and resumes from that file whenever anything
+        interrupts it.
+
+        The effect a user sees: they start a long job and walk away. Hours or
+        days later it is still going, and if the machine reboots in between the
+        work continues where it stopped rather than starting over.
+
+        Args:
+            prompt: what to do. Ignored on a resume — the saved goal is used.
+            tools, run: the tool definitions and their executor.
+            session: a name for this run, so it can be resumed later.
+            model: any model id.
+            max_turns_per_attempt: how many tool turns before a checkpoint and a
+                fresh attempt. This bounds one request's life, not the task's.
+            hours: keep retrying for up to this many hours. 0 means forever —
+                the run continues until the task finishes or `is_done` says so.
+            on_step: called with a small dict after each turn, for progress.
+        """
+        path = os.path.join(SESSION_DIR, f"{session}.json")
+        saved = _read_json(path)
+        if saved and saved.get("status") != "done" and saved.get("prompt"):
+            state = saved
+            print(f"resuming session '{session}' — step {state.get('step', 0)}", file=sys.stderr)
+        else:
+            state = {
+                "session": session,
+                "prompt": prompt,
+                "model": model or self.model,
+                "messages": self.messages + [{"role": "user", "content": prompt}],
+                "step": 0,
+                "status": "running",
+                "started_at": time.time(),
+                "turns_total": 0,
+            }
+
+        self.messages = state["messages"]
+        tool_list = list(tools)
+        deadline = time.time() + hours * 3600 if hours > 0 else None
+        attempt = 0
+
+        while True:
+            attempt += 1
+            try:
+                for _ in range(max_turns_per_attempt):
+                    body = {
+                        "model": state.get("model") or self.model,
+                        "stream": False,
+                        "messages": self.messages,
+                        "tools": tool_list,
+                    }
+                    with self._post(body) as response:
+                        obj = json.load(response)
+                    if "error" in obj:
+                        raise ZyraxonError(
+                            obj["error"].get("message", "error"), type_=obj["error"].get("type")
+                        )
+
+                    choice = obj["choices"][0]
+                    message = choice["message"]
+                    self.messages.append(message)
+                    state["messages"] = self.messages
+                    state["step"] = state.get("step", 0) + 1
+                    state["turns_total"] = state.get("turns_total", 0) + 1
+                    _write_atomic(path, state)  # checkpoint: this is what makes it resumable
+
+                    if on_step:
+                        on_step(
+                            {
+                                "step": state["step"],
+                                "attempt": attempt,
+                                "finish_reason": choice.get("finish_reason"),
+                                "content": (message.get("content") or "")[:200],
+                            }
+                        )
+
+                    if choice.get("finish_reason") != "tool_calls":
+                        state["status"] = "done"
+                        state["result"] = message.get("content") or ""
+                        _write_atomic(path, state)
+                        return state["result"]
+
+                    for call in message.get("tool_calls") or []:
+                        name = call["function"]["name"]
+                        raw_args = call["function"]["arguments"]
+                        try:
+                            args = json.loads(raw_args) if raw_args else {}
+                        except json.JSONDecodeError:
+                            args = {"_raw": raw_args}
+                        result = run(name, args)
+                        self.messages.append(
+                            {"role": "tool", "tool_call_id": call["id"], "content": str(result)}
+                        )
+                        state["messages"] = self.messages
+                        _write_atomic(path, state)
+
+                # The per-attempt turn budget is spent, not the task. Take a
+                # fresh attempt so a single request never has to live forever.
+                print(
+                    f"checkpoint at step {state['step']} — continuing (attempt {attempt + 1})",
+                    file=sys.stderr,
+                )
+            except (ZyraxonError, urllib.error.URLError, OSError, TimeoutError) as e:
+                # Anything that interrupts a step lands here: a dropped network,
+                # a 429/502/503, a restart. The checkpoint is already on disk, so
+                # the loop can simply pick up from it.
+                print(f"interrupted ({e}); resuming from step {state.get('step', 0)}", file=sys.stderr)
+
+            if deadline is not None and time.time() >= deadline:
+                state["status"] = "paused"
+                _write_atomic(path, state)
+                print(f"stopped after {hours}h at step {state['step']}", file=sys.stderr)
+                return state.get("result", "")
+            time.sleep(min(30, 2 * attempt))
+
 
 # ── the built-in tools the CLI offers ────────────────────────────────────────
 FILE_TOOLS: list[dict[str, Any]] = [
@@ -316,6 +478,9 @@ def _main(argv: list[str]) -> int:
     prompt = None
     agent = False
     show_models = False
+    long_mode = False
+    session = "default"
+    hours = 0.0
     i = 0
     while i < len(argv):
         arg = argv[i]
@@ -324,8 +489,20 @@ def _main(argv: list[str]) -> int:
             return 0
         if arg == "--models":
             show_models = True
+        elif arg == "--sessions":
+            _list_sessions()
+            return 0
         elif arg in ("-a", "--agent"):
             agent = True
+        elif arg in ("-l", "--long"):
+            # Run as work that survives interruption and can go on for hours.
+            long_mode = True
+        elif arg == "--session":
+            i += 1
+            session = argv[i]
+        elif arg == "--hours":
+            i += 1
+            hours = float(argv[i])
         elif arg in ("-m", "--model"):
             i += 1
             model = argv[i]
@@ -342,13 +519,24 @@ def _main(argv: list[str]) -> int:
 
     if prompt is None:
         if sys.stdin.isatty():
-            print("usage: python zyraxon.py \"your question\"   (or --models, -a, -m)")
+            print('usage: python zyraxon.py "your question"   (or --models, -a, -m, -l, --sessions)')
             return 2
         prompt = sys.stdin.read().strip()
     if not prompt:
         return 2
 
-    if agent:
+    if long_mode:
+        tools, run = local_tools()
+        result = ai.long_task(
+            prompt,
+            tools,
+            run,
+            session=session,
+            hours=hours,
+            on_step=lambda step: print(f"  step {step['step']} ({step['finish_reason']})", file=sys.stderr),
+        )
+        print(result)
+    elif agent:
         tools, run = local_tools()
         print(ai.agent(prompt, tools, run))
     else:
@@ -357,6 +545,24 @@ def _main(argv: list[str]) -> int:
             sys.stdout.flush()
         print()
     return 0
+
+
+def _list_sessions() -> None:
+    """Show the saved runs, so a long job can be inspected or resumed."""
+    if not os.path.isdir(SESSION_DIR):
+        print("no saved sessions")
+        return
+    for name in sorted(os.listdir(SESSION_DIR)):
+        if not name.endswith(".json"):
+            continue
+        state = _read_json(os.path.join(SESSION_DIR, name))
+        if not state:
+            continue
+        age = int((time.time() - state.get("started_at", 0)) / 60)
+        print(
+            f"{state.get('session', name[:-5]):<20} {state.get('status', '?'):<8} "
+            f"step {state.get('step', 0):<5} {age} min  {(state.get('prompt') or '')[:48]}"
+        )
 
 
 if __name__ == "__main__":

@@ -813,8 +813,41 @@ zyraxon_stream "write a haiku about the sea"
 zyraxon_ask -m zyraxon-apex "reason about this"
 zyraxon_agent "create hello.py that prints hi, then run it"
 
+# Work that may take hours, and survives anything
+zyraxon_long -s refactor "rewrite each file in src, one at a time"
+zyraxon_sessions                                  # inspect or resume a run
+
 # Works in bash and zsh, and composes with a pipe
 cat error.log | zyraxon_ask "what went wrong here?"`;
+
+// A long job, for the docs. The point to convey is that it is not one request:
+// the run is on disk and resumes, so it can outlast hours, a reboot, anything.
+const LONG_TASK = `# A job that runs for hours, and is never lost.
+#
+# A single HTTP request cannot live for hours — a dropped network, a restart or
+# a deploy ends it. So the run is kept in ~/.zyraxon/sessions/<name>.json,
+# rewritten after every step, and resumes from there after any interruption.
+# Stop it, kill it, reboot the machine: start it again with the same session
+# name and it continues from the last step instead of starting over.
+
+from zyraxon import Zyraxon, local_tools
+
+ai = Zyraxon(model="zyraxon-apex")
+tools, run = local_tools(confirm=False)
+
+result = ai.long_task(
+    "Rewrite every file under src/lib, one file per step, keeping the tests green.",
+    tools,
+    run,
+    session="refactor",          # same name resumes this run
+    hours=0,                     # 0 = keep going until the task is done
+    on_step=lambda s: print(f"step {s['step']}"),   # progress as it goes
+)
+print(result)
+
+# From a shell, the same thing:
+#   python zyraxon.py --long --session refactor "rewrite each file in src"
+#   python zyraxon.py --sessions          # see saved runs and their step`;
 
 export const INTEGRATIONS: Integration[] = [
   // ───────────────────────── TERMINAL & MOBILE ─────────────────────────
@@ -1309,6 +1342,7 @@ curl -s ${PROVIDER_URL}    | jq '{modalities, concurrency, fleet}'`,
     ],
     snippets: [
       { label: "Python shell", lang: "python", code: SHELL_PY },
+      { label: "Work that runs for hours", lang: "python", code: LONG_TASK },
       {
         label: "A tool-calling agent",
         lang: "python",
@@ -1332,6 +1366,7 @@ for piece in ai.stream("summarise the changes in src/lib"):
       "No dependencies: it uses only the standard library, so it runs anywhere Python does — including a locked-down machine where `pip install` is not allowed.",
       "`ask()` keeps the conversation, so a follow-up has the context. `reset()` clears it.",
       "Any model works. `models()` reads the list live, so a model added later is usable with no code change.",
+      "**Work that runs for hours:** `ai.long_task(...)` keeps the run in `~/.zyraxon/sessions` and resumes from it after any interruption — a dropped network, a killed shell, a reboot. Start it, walk away, and it carries on from the last step instead of starting over.",
     ],
   },
   {

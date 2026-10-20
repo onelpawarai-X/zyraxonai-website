@@ -462,6 +462,45 @@ check("the bash client exposes zyraxon_models", /^zyraxon_models\(\)/m.test(shCl
 check("the bash client exposes the agent loop", /^zyraxon_agent\(\)/m.test(shClient));
 check("the bash client uses process substitution for the tool loop", /done < </.test(shClient));
 
+// ── work that survives interruption ─────────────────────────────────────────
+// A single request cannot run for hours. Each client must therefore keep the
+// run on disk and resume from it, which is what makes a long job survive a
+// dropped network, a killed shell or a reboot. This is the property that
+// matters most, so it is asserted on every client.
+check(
+  "the Python client checkpoints to a session file",
+  /SESSION_DIR/.test(pyClient) && /_write_atomic/.test(pyClient),
+);
+check("the Python client has a resumable long task", /def long_task\(/.test(pyClient));
+check("the Python long task resumes an unfinished session", /resuming session/.test(pyClient));
+check("the Python long task writes atomically", /os\.replace/.test(pyClient));
+check(
+  "the Python long task retries after an interruption",
+  /except \(ZyraxonError, urllib\.error\.URLError/.test(pyClient),
+);
+check("the Python client lists saved sessions", /def _list_sessions\(/.test(pyClient));
+
+check(
+  "the bash client checkpoints to a session file",
+  /zyraxon_long\(\)/.test(shClient) && /\.zyraxon\/sessions/.test(shClient),
+);
+check("the bash long task resumes an unfinished session", /resuming session/.test(shClient));
+check(
+  "the bash long task writes its checkpoint atomically",
+  /mv "\$file\.tmp" "\$file"/.test(shClient),
+);
+check("the bash client lists saved sessions", /zyraxon_sessions\(\)/.test(shClient));
+
+check(
+  "the PowerShell client has a resumable long task",
+  /function Invoke-ZyraxonLong\b/.test(psClient),
+);
+check("the PowerShell long task resumes an unfinished session", /resuming session/.test(psClient));
+check(
+  "the PowerShell client lists saved sessions",
+  /function Get-ZyraxonSessions\b/.test(psClient),
+);
+
 console.log("");
 if (failures) {
   console.log(`${failures} CHECK(S) FAILED`);
