@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button, ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
+import { inlineMarkdown } from "@/lib/inline-markdown";
 import {
   DEFAULT_MODEL,
   INTEGRATIONS_URL,
@@ -32,7 +33,9 @@ function FieldRow({ label, value, note }: { label: string; value: string; note?:
       </div>
       <code className="mt-1 block break-all text-[12px] text-primary">{value}</code>
       {note ? (
-        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">{note}</p>
+        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+          {inlineMarkdown(note)}
+        </p>
       ) : null}
     </div>
   );
@@ -83,7 +86,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             {integration.name}
           </h3>
           <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
-            {integration.blurb}
+            {inlineMarkdown(integration.blurb)}
           </p>
         </div>
       </div>
@@ -138,16 +141,15 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                     Steps
                   </p>
-                  <ol className="mt-2 space-y-1.5">
-                    {integration.steps.map((s, i) => (
+                  {/* The number comes from this list, not from the text: an
+                      earlier version rendered both, so every step read "1. 1." */}
+                  <ol className="mt-2 list-decimal space-y-1.5 pl-5">
+                    {integration.steps.map((s) => (
                       <li
                         key={s}
-                        className="flex gap-2 text-[12.5px] leading-relaxed text-muted-foreground"
+                        className="text-[12.5px] leading-relaxed text-muted-foreground marker:font-mono marker:text-[11px] marker:font-bold marker:text-primary"
                       >
-                        <span className="font-mono text-[11px] font-bold text-primary">
-                          {i + 1}.
-                        </span>
-                        <span>{s}</span>
+                        {inlineMarkdown(s)}
                       </li>
                     ))}
                   </ol>
@@ -171,7 +173,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                       className="flex gap-2 text-[12px] leading-relaxed text-muted-foreground"
                     >
                       <span className="text-primary">•</span>
-                      <span>{n}</span>
+                      <span>{inlineMarkdown(n)}</span>
                     </li>
                   ))}
                 </ul>

@@ -331,6 +331,36 @@ check(
   (litellm?.snippets ?? []).some((s) => s.label === "litellm-config.yaml"),
 );
 
+// ── the provider page must render steps and Markdown correctly ──────────────
+// Two bugs a reader saw on /providers: every step numbered twice ("1. 1.Open"),
+// and inline Markdown printed raw (`**Custom Model**`, `` `GET /models` ``).
+const pageComponent = readFileSync(`${ROOT}src/components/site/ProviderIntegrations.tsx`, "utf8");
+check(
+  "the steps list does not render its own index on top of <ol>",
+  !/\{i \+ 1\}/.test(pageComponent),
+);
+check(
+  "the steps list is an ordered list that draws the numbers itself",
+  /<ol[^>]*list-decimal/.test(pageComponent),
+);
+check("the provider page renders inline Markdown", /inlineMarkdown\(/.test(pageComponent));
+check(
+  "the docs shell renders the shared inline Markdown",
+  /inlineMarkdown\(/.test(readFileSync(`${ROOT}src/components/docs/DocsShell.tsx`, "utf8")),
+);
+check("the shared Markdown renderer exists", existsSync(`${ROOT}src/lib/inline-markdown.tsx`));
+
+// ── every step string must be free of text a list would double up ───────────
+for (const i of INTEGRATIONS) {
+  for (const s of i.steps ?? []) {
+    check(
+      `"${i.name}" step does not carry its own number`,
+      !/^\s*\d+[.)]\s/.test(s),
+      s.slice(0, 60),
+    );
+  }
+}
+
 console.log("");
 if (failures) {
   console.log(`${failures} CHECK(S) FAILED`);

@@ -900,11 +900,12 @@ journalctl -p err -n 50 | zyraxon-ask "what broke here?"`,
       },
     ],
     steps: [
-      "Open Settings, then the LLM / provider section.",
-      "Choose **Custom Model** (or *Add a custom provider*).",
-      `Enter the four fields on the left. Name is optional; \`${DEFAULT_MODEL}\` is a safe default model.`,
-      "Press **Save Changes**.",
-      "Start a conversation. If the first turn fails, read the `type` field in the error — `upstream_gate` and `provider_unavailable` need different fixes.",
+      "Open OpenHands and go to **Settings**, then the LLM (model / provider) section.",
+      "Choose **Custom Model**, or **Add a custom provider** if that is what your version offers.",
+      "Enter the four fields above. **Name** is optional — it is only a label. **Custom Model** must be an id the endpoint serves; on this site that is the ten ZYRAXON models.",
+      "Press **Save Changes**. Nothing is verified at this point — OpenHands will call the Base URL on the first turn.",
+      "Start a conversation. If the first turn fails, read the `type` field in the error: `upstream_gate` and `provider_unavailable` are both 503 but need different fixes.",
+      "If your version of OpenHands faults on the model string with **LLM Provider NOT provided**, see the note below — it reads the model differently.",
     ],
     snippets: [
       {
@@ -914,6 +915,24 @@ journalctl -p err -n 50 | zyraxon-ask "what broke here?"`,
 Custom Model      ${DEFAULT_MODEL}
 Base URL          ${V1_BASE_URL}
 API Key           ${ANY_API_KEY}`,
+      },
+      {
+        label: 'If it says "LLM Provider NOT provided"',
+        lang: "text",
+        code: `Some OpenHands versions route the model through LiteLLM, which picks its
+handler from the text before the first "/" and refuses a bare id:
+
+  BadRequestError: LLM Provider NOT provided. You passed model=${DEFAULT_MODEL}
+
+Two fixes, either works — the endpoint accepts both:
+
+  1. Prefix the model in the form:   openai/${DEFAULT_MODEL}
+  2. Leave the form as is and set the environment for the OpenHands process:
+
+       export LLM_MODEL="openai/${DEFAULT_MODEL}"
+
+Accepted spellings — all reach the same model:
+  ${DEFAULT_MODEL}   openai/${DEFAULT_MODEL}   zyraxon/${DEFAULT_MODEL}`,
       },
       {
         label: "Verify before you save",
@@ -932,6 +951,7 @@ curl -s ${CHAT_URL} \\
     notes: [
       "OpenHands needs the model id to exist in the list the base URL serves. `GET /models` publishes all ten, so the form resolves them without a manual override.",
       "Streaming is on by default in OpenHands; the endpoint serves SSE when `stream: true`.",
+      "If you see `LLM Provider NOT provided`, the model string needs the `openai/` prefix — OpenHands routed it through LiteLLM. The endpoint accepts either spelling, so `openai/zyraxon-codex` and `zyraxon-codex` both work.",
     ],
   },
   {

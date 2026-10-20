@@ -329,6 +329,11 @@ export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
         head: ["Symptom", "Cause", "Fix"],
         rows: [
           [
+            "`LLM Provider NOT provided`",
+            "OpenHands routed the model through LiteLLM, which needs a `provider/model` string.",
+            `Put \`openai/\` in front of the model: \`openai/${DEFAULT_MODEL}\`. Or set \`LLM_MODEL=\"openai/${DEFAULT_MODEL}\"\` for the OpenHands process.`,
+          ],
+          [
             "`Unknown model`",
             "The model id is not in the list the base URL serves.",
             `Use an id from \`${MODELS_URL}\`.`,
@@ -349,6 +354,12 @@ export const PROVIDER_INTEGRATION_DOCS: DocPage[] = [
             "Honour `Retry-After` and retry with backoff.",
           ],
         ],
+      },
+      {
+        t: "note",
+        kind: "success",
+        title: "The model id is tolerant on purpose",
+        text: `\`${DEFAULT_MODEL}\`, \`openai/${DEFAULT_MODEL}\`, \`zyraxon/${DEFAULT_MODEL}\` and \`zyraxon/codex\` all resolve to the same model, so you do not have to know which spelling your version of OpenHands wants.`,
       },
       {
         t: "note",
