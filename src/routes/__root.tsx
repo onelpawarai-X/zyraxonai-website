@@ -1,70 +1,25 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet,
-  Link,
   createRootRouteWithContext,
-  useRouter,
   HeadContent,
+  Outlet,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
-import HelpAgent from "../components/HelpAgent";
-import { ThemeProvider, themeInitScript } from "../lib/theme";
-
-import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import * as React from "react";
+import { ThemeProvider } from "@/lib/theme";
 
 function NotFoundComponent() {
   return (
-    <div className="grid min-h-screen place-items-center bg-[var(--plane)] px-4">
-      <div className="zx-sheet w-full max-w-md px-8 py-10 text-center">
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
-          Error 404
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center text-foreground">
+      <div className="mx-auto max-w-md space-y-4">
+        <span className="inline-block rounded-full border border-border/40 bg-muted/30 px-3 py-1 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+          404 Not Found
+        </span>
+        <h1 className="text-3xl font-bold tracking-tight">Page not found</h1>
+        <p className="text-sm text-muted-foreground">
+          The requested page could not be found or has been moved.
         </p>
-        <h1 className="mt-3 text-5xl font-bold tracking-tight text-foreground">Not found</h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <Link
-          to="/"
-          className="zx-chip zx-sheen mt-6 inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground"
-        >
-          Back to home
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
-  console.error(error);
-  const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
-
-  return (
-    <div className="grid min-h-screen place-items-center bg-[var(--plane)] px-4">
-      <div className="zx-sheet w-full max-w-md px-8 py-10 text-center">
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
-          Something broke
-        </p>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Something went wrong on our end. Try again, or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="zx-chip inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground"
-          >
-            Try again
-          </button>
+        <div className="pt-2">
           <a
             href="/"
             className="zx-chip inline-flex h-11 items-center rounded-full px-6 text-sm font-semibold text-foreground"
@@ -112,45 +67,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "The World's Most Advanced Desktop AI Agent. 888 tools across 63 categories, 11 agent modes, 108 MCP integrations, Screen Vision, Eternal Memory.",
       },
-      {
-        property: "og:image",
-        content: "https://zyraxonai.lovable.app/zyraxon-logo.png",
-      },
-      {
-        name: "twitter:image",
-        content: "https://zyraxonai.lovable.app/zyraxon-logo.png",
-      },
     ],
     links: [
+      { rel: "canonical", href: "https://zyraxonai.lovable.app" },
+      { rel: "icon", href: "/favicon.png" },
       {
-        rel: "stylesheet",
-        href: appCss,
+        rel: "alternate",
+        type: "application/rss+xml",
+        title: "ZYRAXON AI Updates RSS Feed",
+        href: "/updates/rss.xml",
       },
-      { rel: "icon", type: "image/png", href: "/favicon.png" },
-      { rel: "apple-touch-icon", href: "/zyraxon-logo.png" },
+      {
+        rel: "alternate",
+        type: "application/feed+json",
+        title: "ZYRAXON AI Updates JSON Feed",
+        href: "/updates/feed.json",
+      },
     ],
   }),
-  shellComponent: RootShell,
-  component: RootComponent,
   notFoundComponent: NotFoundComponent,
-  errorComponent: ErrorComponent,
+  component: RootComponent,
 });
-
-function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
-      <body>
-        {children}
-        <HelpAgent />
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -158,7 +95,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </ThemeProvider>
     </QueryClientProvider>
