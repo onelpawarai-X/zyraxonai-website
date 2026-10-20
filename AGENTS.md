@@ -88,3 +88,27 @@ that import `system-prompt.txt` need
   covers the overlay's top controls and eats the clicks. Portal in an effect
   (`if (!mounted) return null`) because there is no `document` during SSR.
 
+### Public provider contract: media, tools, capacity
+
+- The public route normalises inbound content parts to the canonical
+  `{ type: "media", kind, url }` shape *before* the provider sees them. Anything
+  that inspects parts downstream (`partMediaKind`, `urlOfPart`, `needsWire`) must
+  read that canonical shape as well as the raw OpenAI spellings
+  (`image_url`/`input_audio`/`video_url`). Reading only the raw spellings makes
+  every audio/video turn invisible to the router, and it silently degrades to a
+  text answer with no error.
+- Caller-defined `tools` are supported and must reach the upstream. The SDK path
+  advertises only the single upstream gate tool (`FREE_TIER_GATE_TOOLS`), so a
+  turn carrying caller tools is routed to the raw wire path instead; the gate
+  tool stays first and caller tools are deduplicated against it. Removing the
+  gate tool makes the upstream refuse the turn.
+- Responses always name the ZYRAXON brand, never the upstream id. This applies to
+  the non-streaming wire path too, which builds its own `chat.completion` object.
+- Capacity is `ceiling = shards * (primary lanes + spill lanes)`
+  (`fleetStatus()` in `fleet.server.ts`). `ZYRAXON_FLEET_SHARDS` defaults to 1 on
+  purpose: with one process deployed, reporting a fleet would misreport capacity.
+  Excess load spills to the OpenCode Zen free pool rather than being shed, and
+  every response carries `X-ZYRAXON-Capacity: primary|spill`.
+- `GET /api/public/zyraxon/v1/models` publishes `provider.since` (the launch
+  date) and a stable `created` epoch. Do not use `Date.now()` for `created`.
+
