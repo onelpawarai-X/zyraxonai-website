@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import Markdown from "@/components/site/Markdown";
 
 /** One line of the helper's stream. The route sends newline-delimited JSON so
  *  the browser can show "thinking" and tool use before the answer starts. */
@@ -6,6 +7,7 @@ type HelperEvent =
   | { type: "thinking"; model: string; round: number }
   | { type: "tool"; name: string }
   | { type: "rotating"; model: string }
+  | { type: "delta"; text: string }
   | { type: "answer"; text: string; model?: string }
   | { type: "done" };
 
@@ -29,6 +31,7 @@ export default function HelpAgent() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [live, setLive] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,7 +41,7 @@ export default function HelpAgent() {
 
   useEffect(() => {
     if (open) scrollToBottom();
-  }, [messages, status, open, scrollToBottom]);
+  }, [messages, status, live, open, scrollToBottom]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -54,6 +57,7 @@ export default function HelpAgent() {
       setInput("");
       setBusy(true);
       setStatus("Thinking");
+      setLive("");
 
       try {
         const res = await fetch("/api/public/zyraxon/helper", {
@@ -90,6 +94,9 @@ export default function HelpAgent() {
               setStatus(TOOL_LABEL[event.name] ?? "Working");
             } else if (event.type === "rotating") {
               setStatus("Switching model");
+            } else if (event.type === "delta") {
+              setStatus(null);
+              setLive((prev) => prev + event.text);
             } else if (event.type === "answer") {
               answer = event.text;
               setStatus(null);
@@ -105,6 +112,7 @@ export default function HelpAgent() {
             timestamp: Date.now(),
           },
         ]);
+        setLive("");
       } catch {
         setMessages((prev) => [
           ...prev,
@@ -118,6 +126,7 @@ export default function HelpAgent() {
       } finally {
         setBusy(false);
         setStatus(null);
+        setLive("");
       }
     },
     [busy, messages],
@@ -204,15 +213,15 @@ export default function HelpAgent() {
                 key={m.timestamp}
                 className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div
-                  className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed ${
-                    m.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-foreground/5 text-foreground"
-                  }`}
-                >
-                  {m.content}
-                </div>
+                {m.role === "user" ? (
+                  <div className="max-w-[88%] whitespace-pre-wrap rounded-2xl bg-primary px-3.5 py-2.5 text-[13px] leading-relaxed text-primary-foreground">
+                    {m.content}
+                  </div>
+                ) : (
+                  <div className="max-w-[92%] rounded-2xl bg-foreground/5 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground">
+                    <Markdown text={m.content} />
+                  </div>
+                )}
               </div>
             ))}
 
@@ -224,6 +233,14 @@ export default function HelpAgent() {
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary" />
                 </span>
                 {status}…
+              </div>
+            )}
+
+            {live && (
+              <div className="flex justify-start">
+                <div className="max-w-[92%] rounded-2xl bg-foreground/5 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground">
+                  <Markdown text={live} />
+                </div>
               </div>
             )}
 

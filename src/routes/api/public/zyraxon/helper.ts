@@ -109,7 +109,30 @@ How to answer:
 - Never invent a download link, a version number or a feature. If the site pages
   do not say, search, and if that fails, say plainly that you do not know.
 - Never mention the upstream model or vendor behind the provider. You are a
-  ZYRAXON assistant.`;
+  ZYRAXON assistant.
+
+Writing code — this is a first-class job, not an afterthought:
+- You are a coding assistant as much as a site guide. When the visitor asks for
+  code, write the complete, runnable thing. No "rest of the code here", no
+  placeholders, no omissions.
+- Always put code in a fenced block with a language tag, e.g. \`\`\`python,
+  \`\`\`bash, \`\`\`typescript, \`\`\`json, \`\`\`html. The panel renders these as
+  real code blocks with a copy button, so an untagged block looks broken.
+- When the code is a file, name the file in the fence info line after the
+  language, e.g. \`\`\`python file:app.py. The panel shows that label.
+- Write code that actually runs. Include the import, the client setup and the
+  call. Prefer the standard library where it is enough.
+- To call the ZYRAXON provider, use base URL
+  https://zyraxonai.lovable.app/api/public/zyraxon/v1 and any model id from
+  /api/public/zyraxon/v1/models. The endpoint is OpenAI-compatible.
+- Do not wrap an explanation inside a code fence. Prose stays prose, code stays
+  in its own fence.
+
+Links:
+- Write every link as Markdown: [label](url). They render as clickable links.
+- A bare https:// URL and a site path like /docs/getting-started are also made
+  clickable, but an explicit [label](url) is clearer.
+- Prefer a link to the exact page over a description of where to look.`;
 }
 
 /** The tools the helper may call. Both run on the server, so the browser never
@@ -191,6 +214,7 @@ async function completeTurn(
   model: string,
   messages: any[],
   withTools: boolean,
+  onDelta?: (text: string) => void,
 ): Promise<{ content: string; toolCalls: any[] } | null> {
   const res = await brandChatStream(model, messages as any, undefined, {
     stream: false,
@@ -201,7 +225,37 @@ async function completeTurn(
   if (!data || data.error) return null;
   const choice = data.choices?.[0];
   if (!choice) return null;
-  return { content: choice.message?.content || "", toolCalls: choice.message?.tool_calls || [] };
+  const content = choice.message?.content || "";
+  const toolCalls = choice.message?.tool_calls || [];
+  // The tool loop is non-streaming, but the final answer should not be: replay
+  // it in pieces so the caller watches it appear rather than landing at once.
+  if (onDelta && content && !toolCalls.length) {
+    for (const piece of chunkForDisplay(content)) {
+      onDelta(piece);
+      await new Promise((r) => setTimeout(r, 12));
+    }
+  }
+  return { content, toolCalls };
+}
+
+/** Split a finished reply into small pieces, for a live-typing effect.
+ *
+ *  The tool loop has to be non-streaming — it needs the whole message to know
+ *  whether the model asked for a tool — so the answer is complete before the
+ *  caller sees any of it. Sending it in small pieces makes the panel fill in as
+ *  it reads instead of jumping from empty to a wall of text. The split keeps the
+ *  text byte-for-byte, so what is displayed is exactly what was written. */
+function chunkForDisplay(text: string): string[] {
+  const out: string[] = [];
+  for (const line of text.split("\n")) {
+    let rest = line;
+    while (rest.length > 24) {
+      out.push(rest.slice(0, 24));
+      rest = rest.slice(24);
+    }
+    out.push(rest + "\n");
+  }
+  return out;
 }
 
 export const Route = createFileRoute("/api/public/zyraxon/helper")({
@@ -282,7 +336,12 @@ export const Route = createFileRoute("/api/public/zyraxon/helper")({
                 let ok = false;
                 for (let round = 0; round < 3; round++) {
                   send({ type: "thinking", model, round });
-                  const turn = await completeTurn(model, working, round < 2);
+                  // Stream the answer out in pieces as it is produced, so the
+                  // panel fills in live rather than showing nothing and then
+                  // everything at once.
+                  const turn = await completeTurn(model, working, round < 2, (delta) =>
+                    send({ type: "delta", text: delta }),
+                  );
                   if (!turn) break;
                   ok = true;
 
