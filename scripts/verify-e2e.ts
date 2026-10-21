@@ -209,6 +209,33 @@ try {
     );
   }
 
+  // The probe ceiling is a latency budget: it is how long a *dead* model may
+  // hold the caller before rotation starts. It must stay well under the caller's
+  // patience, and the default must actually be the shipped value rather than a
+  // stale number left behind after a retune.
+  const { PROBE_MS, HEARTBEAT_MS } = await import("../src/lib/builder/zen.server");
+  check(
+    "the first-token probe is short enough to rotate quickly",
+    PROBE_MS <= 5_000,
+    `${PROBE_MS}ms`,
+  );
+  check(
+    "the probe is long enough to catch a healthy first token",
+    PROBE_MS >= 3_000,
+    `${PROBE_MS}ms`,
+  );
+  // The heartbeat only starts once the Response is handed back, so the longest
+  // the caller can go with no byte at all is the *larger* of the two: the probe
+  // covers the pre-header window, the heartbeat the post-header one. That
+  // combined window is what an intermediary's idle timeout has to tolerate, so
+  // assert on it rather than on the two individually.
+  const worstSilenceMs = Math.max(PROBE_MS, HEARTBEAT_MS);
+  check(
+    "the worst silent window stays well inside a typical idle timeout",
+    worstSilenceMs <= 30_000,
+    `${worstSilenceMs}ms (probe ${PROBE_MS}ms, heartbeat ${HEARTBEAT_MS}ms)`,
+  );
+
 } finally {
   server.close();
 }

@@ -24,6 +24,7 @@ import {
   toWireContent,
   trimToBodyBudget,
   videoSliceCount,
+  type MediaKind,
 } from "../src/lib/providers/media";
 import {
   ZYRAXON_BRANDS,
@@ -242,31 +243,86 @@ const PDF = "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MK";
     { id: "omni", modalities: ["text", "image", "audio", "video"], context: 1_000_000, output: 131_072, reasoning: true },
   ];
 
-  const cyber = getBrand("zyraxon-cyber")!; // prefers mimo-v2.6-flash-free (absent)
+  const cyber = getBrand("zyraxon-cyber")!; // prefers mimo-v2.5-free (absent)
+  // Capability only decides between models when the turn needs the capability,
+  // so the media need is passed in. With no need every model is equally
+  // "capable" and speed alone decides — that is the fix, not a gap.
+  const mediaNeed = new Set<MediaKind>(["image", "video", "audio"]);
   check(
     "a vision brand scores the omni model above text-only",
-    capabilityScore(cyber, pool[2]) > capabilityScore(cyber, pool[0]),
+    capabilityScore(cyber, pool[2], mediaNeed) > capabilityScore(cyber, pool[0], mediaNeed),
   );
   check(
     "an absent preference binds to a capability-compatible model",
-    bindPreferred(cyber, pool, null) === "omni",
-    bindPreferred(cyber, pool, null),
+    bindPreferred(cyber, pool, null, mediaNeed) === "omni",
+    bindPreferred(cyber, pool, null, mediaNeed),
   );
 
-  // The preferred model wins when it is actually served.
+  // The preferred model wins when it is actually served. Use the brand's real
+  // `preferred` id, not a remembered one: a hardcoded id drifts the moment the
+  // upstream pool swaps a model out, and the check then fails for a reason that
+  // has nothing to do with the binding rule.
   const withPreferred: PoolModel[] = [
     ...pool,
-    { id: "mimo-v2.6-flash-free", modalities: ["text", "image", "audio", "video"], context: 200_000 },
+    {
+      id: cyber.preferred,
+      modalities: ["text", "image", "audio", "video"],
+      context: 200_000,
+    },
   ];
   check(
     "a served preference is used as-is",
-    bindPreferred(cyber, withPreferred, null) === "mimo-v2.6-flash-free",
+    bindPreferred(cyber, withPreferred, null) === cyber.preferred,
+    `preferred=${cyber.preferred} bound=${bindPreferred(cyber, withPreferred, null)}`,
+  );
+  // And it must really be served — a preference that is not in the pool is not
+  // "served", so this cannot pass by accident.
+  check(
+    "and the preference is genuinely present in the pool",
+    withPreferred.some((m) => m.id === cyber.preferred),
   );
 
-  // Rotation keeps capable models near the front for a video brand.
-  const chain = rotationFor(getBrand("zyraxon-visionary")!, pool);
-  check("rotation leads with the preference when present", chain[0] === "glm-5.3-flash-free" || true);
-  check("a video brand's chain puts video models first", chain.indexOf("omni") < chain.indexOf("text-only"), chain.join(" → "));
+  // Rotation keeps capable models near the front for a video brand — but only
+  // when the turn actually carries video. A text turn to the same brand must not
+  // be pinned to the one video model in the pool.
+  const visionary = getBrand("zyraxon-visionary")!;
+  const servedPool: PoolModel[] = [
+    ...pool,
+    { id: visionary.preferred, modalities: ["text", "image", "video", "pdf"], context: 200_000 },
+  ];
+  const videoChain = rotationFor(visionary, servedPool, null, new Set<MediaKind>(["video"]));
+  check(
+    "rotation leads with the preference when it is served",
+    videoChain[0] === visionary.preferred,
+    videoChain.join(" → "),
+  );
+  check(
+    "a video brand's video turn puts video models first",
+    videoChain.indexOf("omni") < videoChain.indexOf("text-only"),
+    videoChain.join(" → "),
+  );
+  // Regression: a brand that *supports* a rare modality must not be pinned to
+  // the one model that serves it on turns that do not carry it. Before this, the
+  // pdf bonus alone put the single pdf-capable model ahead of a model that was
+  // equally capable and ten times faster, so an ordinary question to an
+  // every-modality brand landed on the slowest model in the pool.
+  const genesis = getBrand("zyraxon-genesis")!; // profile includes pdf; preference absent here
+  const rarePool: PoolModel[] = [
+    { id: "minimax-m3.1-flash-free", modalities: ["text"], context: 200_000, output: 32_000, reasoning: true },
+    { id: "glm-5.3-flash-free", modalities: ["text", "pdf"], context: 200_000, output: 32_000, reasoning: true },
+  ];
+  check(
+    "a text turn does not chase a brand's rare-modality model",
+    bindPreferred(genesis, rarePool, null) === "minimax-m3.1-flash-free",
+    String(bindPreferred(genesis, rarePool, null)),
+  );
+  // The same pool on a turn that *does* carry a document: now the pdf-capable
+  // model is the better answer, so the preference flips.
+  check(
+    "a document turn does prefer a model that takes the document",
+    bindPreferred(genesis, rarePool, null, new Set<MediaKind>(["pdf"])) === "glm-5.3-flash-free",
+    String(bindPreferred(genesis, rarePool, null, new Set<MediaKind>(["pdf"]))),
+  );
 
   check("every brand carries a profile", ZYRAXON_BRANDS.every((b) => !!b.profile));
   check("exactly ten brands remain", ZYRAXON_BRANDS.length === 10);

@@ -28,19 +28,15 @@ import {
 import { LaneShedError, lanePool } from "./lane-pool.server";
 import { withProviderContract } from "./provider-contract";
 import {
-  fitsModalities,
   normaliseContent,
   requiredModalities,
   toSdkContent,
   toWireContent,
   type MediaKind,
-  type NormalisedPart,
 } from "./media";
 import {
   ZYRAXON_BRANDS,
-  acceptsAudio,
   brandView,
-  capabilityScore,
   getBrand,
   rotateThrough,
   rotationFor,
@@ -68,9 +64,11 @@ export async function brandCatalogue(): Promise<BrandView[]> {
 /** Resolve a brand id to its ordered upstream chain, plus the model the
  *  response should be labelled with (our brand, never the upstream name).
  *
- *  When the turn carries media, the chain is ordered so models that can actually
- *  accept every required modality come first. A request that needs video is
- *  never sent to a text-only model first and made to fail its way down the list. */
+ *  The chain comes from `rotationFor`, so it already puts models that can accept
+ *  every required modality first and the fastest of equals next. The head of the
+ *  chain is therefore the binding, which is what `activeFor` reports for the
+ *  catalogue too — the page and the wire can never disagree about which upstream
+ *  a brand is on. */
 export async function resolveBrandChain(
   modelId: string,
   need: Set<MediaKind> = new Set(),
@@ -78,34 +76,8 @@ export async function resolveBrandChain(
   const brand = getBrand(modelId);
   if (!brand) return null;
   const [pool, live] = await Promise.all([zenFreeModels(), zenLiveIds()]);
-  const chain = rotationFor(brand, pool);
-  const served = live ? chain.filter((id) => live.has(id)) : chain;
-  const base = served.length ? served : [chain[0] || brand.preferred];
-  if (need.size === 0) return { brand, chain: base };
-
-  const byId = new Map(pool.map((m) => [m.id, m]));
-  // A turn carrying audio must go to a model that has actually been probed to
-  // transcribe. The catalogue claims audio for several models that then drop it
-  // and answer "no audio attached", so `fits` would otherwise pick one of them
-  // and the caller would get a text answer for a spoken question.
-  const wantsAudio = need.has("audio");
-  const fits = (id: string) => {
-    const model = byId.get(id);
-    if (!model) return false;
-    if (wantsAudio && !acceptsAudio(model)) return false;
-    return fitsModalities(need, model.modalities ?? ["text"]);
-  };
-  // Capable models first (best capability score among them), then the rest, so a
-  // media turn still degrades to a real attempt instead of a fabricated error.
-  const capable = base.filter(fits).sort((a, b) => {
-    const ma = byId.get(a);
-    const mb = byId.get(b);
-    return capabilityScore(brand, mb ?? { id: b }) - capabilityScore(brand, ma ?? { id: a });
-  });
-  // A model that cannot be handed the audio is still worth trying last: it may
-  // answer the text part of the turn rather than fail outright.
-  const rest = base.filter((id) => !fits(id));
-  return { brand, chain: [...capable, ...rest] };
+  const chain = rotationFor(brand, pool, live, need);
+  return { brand, chain };
 }
 
 /** Run a chat turn for a brand, rotating through the upstream pool when a

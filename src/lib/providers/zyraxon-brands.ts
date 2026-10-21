@@ -3,7 +3,14 @@
  *  This file holds no secrets and touches no network, so both the provider page
  *  and the server-side router import it. The server-only pieces — reading the
  *  live upstream pool and streaming — live in `zyraxon-brand.server.ts`.
+ *
+ *  `media.ts` is imported here deliberately: it is pure and dependency-free, so
+ *  it loads in both a browser bundle and a bare Node process, and the binder can
+ *  then judge modality fitness from the same helper the transport uses instead
+ *  of a second, drifting copy of the rule.
  */
+
+import { fitsModalities, type MediaKind } from "./media";
 
 export type BrandId =
   | "zyraxon-apex"
@@ -222,24 +229,78 @@ export function acceptsAudio(model: PoolModel): boolean {
   return declared.includes("audio") && AUDIO_VERIFIED_UPSTREAMS.has(model.id);
 }
 
+/** Measured median time-to-first-token, in milliseconds, for each upstream.
+ *
+ *  Taken from a live three-run probe of the public endpoint. Latency is the one
+ *  property the catalogue does not publish, and it varies by an order of
+ *  magnitude across the free pool — the same *capability* can be answered in
+ *  1.6s or in 14s. Without this, a brand that has to rotate lands on whichever
+ *  equally-capable model happens to come first in the pool, which is how a
+ *  short question could take fourteen seconds for no reason.
+ *
+ *  An id that is not listed is treated as unmeasured and sorted after every
+ *  timed model, so a newly-added upstream never displaces a known-fast one
+ *  before it has been timed. Measured again when the pool churns. */
+export const MEASURED_TTFT_MS: Record<string, number> = {
+  "minimax-m3.1-flash-free": 1560,
+  "beam-free": 1620,
+  "nemotron-3.5-lightning-free": 2520,
+  "big-pickle": 5120,
+  "longcat-2.5-preview-free": 8860,
+  "glm-5.3-flash-free": 14230,
+  "deepseek-v4.1-flash-free": 27470,
+  "nemotron-3.5-super-vl-free": 36070,
+};
+
+/** Measured first-token latency for an upstream, or `Infinity` when it has not
+ *  been timed. Lower is faster. */
+export function measuredTtftMs(id: string): number {
+  return MEASURED_TTFT_MS[id] ?? Infinity;
+}
+
+/** Order two equally-capable models fastest-first. Used as the tiebreak after
+ *  capability, never before it: capability decides which models may answer a
+ *  turn at all, and speed decides which of those answers soonest. */
+export function bySpeed(a: PoolModel, b: PoolModel): number {
+  return measuredTtftMs(a.id) - measuredTtftMs(b.id);
+}
+
 /** How well a pool model matches a brand's profile. Higher is a better lead.
  *
  *  This is what keeps a vision brand on a vision model as the upstream pool
  *  churns: the brand's `preferred` id is a hint, but when that model is retired
  *  the binder picks the next live model that still fits the brand's intent
- *  instead of blindly taking whichever model happens to be first. */
-export function capabilityScore(brand: Brand, model: PoolModel): number {
+ *  instead of blindly taking whichever model happens to be first.
+ *
+ *  A brand may *support* a modality without every turn needing it. `need` is
+ *  the turn's own requirement, and it only ever widens the field: a modality the
+ *  turn does not carry is scored neutrally rather than as a miss. Without that,
+ *  a brand that supports a rare modality is dragged onto the one pool model that
+ *  serves it for every ordinary text turn — which is how a plain question to an
+ *  every-modality brand could land on the slowest model in the pool. */
+export function capabilityScore(
+  brand: Brand,
+  model: PoolModel,
+  need: Set<MediaKind> = new Set(),
+): number {
   const mods = new Set((model.modalities || []).map((m) => String(m).toLowerCase()));
   const has = (k: string) => mods.has(k);
   const p = brand.profile;
+  // "Does the turn want this?" — a modality the turn does not carry is not a
+  // reason to prefer or penalise a model.
+  const wants = (k: MediaKind) => need.has(k);
   let score = 0;
-  if (p.vision) score += has("image") ? 40 : -8;
-  if (p.video) score += has("video") ? 25 : -6;
+  if (p.vision && wants("image")) score += has("image") ? 40 : -8;
+  if (p.video && wants("video")) score += has("video") ? 25 : -6;
   // Audio is scored against the *probed* set, not the catalogue. A model that
   // claims audio and drops it must not be preferred for an audio turn, or the
   // turn silently degrades to a text answer.
-  if (p.audio) score += acceptsAudio(model) ? 20 : -30;
-  if (p.pdf) score += has("pdf") ? 8 : 0;
+  if (p.audio && wants("audio")) score += acceptsAudio(model) ? 20 : -30;
+  // PDF is deliberately the weakest signal: "pdf" is a serving-pipeline detail
+  // (whether the pool extracts the document before the model sees it), not a
+  // model capability, and in practice one pool model carries it. Letting it
+  // lead would pin every turn to that model. It breaks a tie only.
+  if (p.pdf && wants("pdf")) score += has("pdf") ? 2 : -6;
   if (p.reasoning) score += model.reasoning ? 12 : -6;
   if (p.speed) score += (model.context || 0) <= 300_000 ? 8 : -2;
   if (p.longOutput) score += (model.output || 0) >= 128_000 ? 15 : -3;
@@ -249,44 +310,97 @@ export function capabilityScore(brand: Brand, model: PoolModel): number {
   return score;
 }
 
+/** Order the pool for a brand: capability first, measured speed as the
+ *  tiebreak. Two models that fit the brand equally well are not equally good
+ *  answers — the faster one is strictly better — so speed only ever separates
+ *  models capability has already called equal. */
+function orderForBrand(
+  brand: Brand,
+  models: PoolModel[],
+  need: Set<MediaKind> = new Set(),
+): PoolModel[] {
+  return [...models].sort(
+    (a, b) => capabilityScore(brand, b, need) - capabilityScore(brand, a, need) || bySpeed(a, b),
+  );
+}
+
 /** The live model a brand should actually lead with right now.
  *
  *  Preference order: the brand's named `preferred` model when it is served,
- *  otherwise the best-scoring live model for the brand's profile. Returns null
- *  only when the pool is empty. */
+ *  otherwise the best-scoring live model for the brand's profile — and among
+ *  equally-good models, the fastest measured one. Returns null only when the
+ *  pool is empty. */
 export function bindPreferred(
   brand: Brand,
   pool: PoolModel[],
   live: Set<string> | null,
+  need: Set<MediaKind> = new Set(),
 ): string | null {
   if (!pool.length) return null;
   const served = live ? pool.filter((m) => live.has(m.id)) : pool;
   const candidates = served.length ? served : pool;
   if (candidates.some((m) => m.id === brand.preferred)) return brand.preferred;
-  let best = candidates[0]!.id;
-  let bestScore = -Infinity;
-  for (const m of candidates) {
-    const s = capabilityScore(brand, m);
-    if (s > bestScore) {
-      bestScore = s;
-      best = m.id;
-    }
-  }
-  return best;
+  return orderForBrand(brand, candidates, need)[0]!.id;
+}
+
+/** The model a brand binds to for a whole turn, with the modality a turn
+ *  actually needs folded into the choice.
+ *
+ *  This is the single place the binder is decided, so the SSE label and the
+ *  first upstream attempted can never disagree: `active` names the first entry
+ *  of the chain, whatever ordering was applied. Without `need` it is the same
+ *  answer `bindPreferred` gives. */
+export function activeFor(
+  brand: Brand,
+  pool: PoolModel[],
+  live: Set<string> | null,
+  need: Set<MediaKind> = new Set(),
+): { active: string; chain: string[] } {
+  const chain = rotationFor(brand, pool, live, need);
+  return { active: chain[0] || brand.preferred, chain };
 }
 
 /** The rotation order for a brand: the model it should lead with, then every
- *  other pool model ordered so capability-compatible ones come first. A retired
- *  or rate-limited upstream is swapped transparently rather than surfaced as an
- *  outage, and the swap keeps the brand's modality intent when it can. */
-export function rotationFor(brand: Brand, pool: PoolModel[]): string[] {
-  const ids = pool.map((m) => m.id);
-  const head = ids.includes(brand.preferred) ? [brand.preferred] : [];
-  const rest = pool
-    .filter((m) => m.id !== brand.preferred)
-    .sort((a, b) => capabilityScore(brand, b) - capabilityScore(brand, a))
-    .map((m) => m.id);
-  return [...head, ...rest];
+ *  other pool model ordered so capability-compatible ones come first and, among
+ *  equals, the fastest first. A retired or rate-limited upstream is swapped
+ *  transparently rather than surfaced as an outage, and the swap keeps the
+ *  brand's modality intent when it can.
+ *
+ *  When `need` is given, a model must be able to accept every required modality
+ *  to lead; models that cannot are pushed to the tail so they are still
+ *  attempted (a text-only model may answer the text half of a turn) rather than
+ *  dropped. Audio additionally requires the *probed* set, because several pool
+ *  models declare audio in the catalogue and then silently drop it. A preferred
+ *  model that fails the need does not lead — that is what made a spoken turn
+ *  return a text answer. This is the single ordering the caller and the reported
+ *  `active` both use, so the two cannot disagree. */
+export function rotationFor(
+  brand: Brand,
+  pool: PoolModel[],
+  live: Set<string> | null = null,
+  need: Set<MediaKind> = new Set(),
+): string[] {
+  const served = live ? pool.filter((m) => live.has(m.id)) : pool;
+  const candidates = served.length ? served : pool;
+  const preferred = candidates.find((m) => m.id === brand.preferred);
+  const others = orderForBrand(
+    brand,
+    candidates.filter((m) => m.id !== brand.preferred),
+    need,
+  );
+
+  if (!need.size) {
+    return [...(preferred ? [preferred] : []), ...others].map((m) => m.id);
+  }
+
+  // Audio must never be scored on the catalogue alone: only the probed set is
+  // known to actually transcribe it.
+  const fits = (m: PoolModel) =>
+    (!need.has("audio") || acceptsAudio(m)) && fitsModalities(need, m.modalities ?? ["text"]);
+  const head = preferred && fits(preferred) ? [preferred] : [];
+  const capable = others.filter(fits);
+  const rest = others.filter((m) => !fits(m));
+  return [...head, ...capable, ...rest].map((m) => m.id);
 }
 
 export type BrandView = Brand & {
@@ -306,14 +420,7 @@ export type BrandView = Brand & {
  *  against the models the console is actually serving, so a retired preference
  *  degrades to a capability-compatible sibling rather than a dead end. */
 export function brandView(brand: Brand, pool: PoolModel[], live: Set<string> | null): BrandView {
-  const chain = rotationFor(brand, pool);
-  const served = live ? chain.filter((id) => live.has(id)) : chain;
-  // Prefer a model that fits the brand's profile; fall back to the head of the
-  // chain so a request is still attempted and the caller sees the real upstream
-  // error instead of a blank model name.
-  const bound = bindPreferred(brand, pool, live);
-  const active =
-    (bound && served.includes(bound) ? bound : served[0]) || chain[0] || brand.preferred;
+  const { active, chain } = activeFor(brand, pool, live);
   const meta = pool.find((m) => m.id === active);
   return {
     ...brand,
