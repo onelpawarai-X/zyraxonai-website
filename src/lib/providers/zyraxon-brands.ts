@@ -116,7 +116,11 @@ export const ZYRAXON_BRANDS: Brand[] = [
     id: "zyraxon-cyber",
     label: "ZYRAXON Cyber",
     tagline: "Every input modality, one model",
-    preferred: "mimo-v2.6-flash-free",
+    // Audio is the fragile modality: the catalogue declares it for several
+    // models that then silently drop the audio and answer "no audio attached".
+    // These two were probed with a real spoken clip and transcribed it, so an
+    // audio turn is routed to a model that genuinely hears it.
+    preferred: "mimo-v2.5-free",
     capability: "Text + image + audio + video · 200K context",
     profile: { vision: true, video: true, audio: true },
   },
@@ -133,7 +137,9 @@ export const ZYRAXON_BRANDS: Brand[] = [
     id: "zyraxon-genesis",
     label: "ZYRAXON Genesis",
     tagline: "Fresh from the lab",
-    preferred: "muse-spark-1.2-contributor-free",
+    // Probed with a real spoken clip and transcribed it — the audio-capable
+    // model the rotation reaches for first.
+    preferred: "muse-spark-1.3-contributor-free",
     capability: "Latest experimental reasoning · every modality",
     profile: { vision: true, video: true, audio: true, pdf: true, reasoning: true },
   },
@@ -193,6 +199,29 @@ export type PoolModel = {
   modalities?: string[];
 };
 
+/** Upstream models PROBED to actually transcribe audio.
+ *
+ *  A catalogue entry that lists audio is not proof: several free models declare
+ *  audio, accept the request, drop the audio, and answer "no audio attached".
+ *  That is a silent failure the caller cannot distinguish from a deaf model, and
+ *  it is exactly what made a spoken turn return a text answer.
+ *
+ *  These were each asked to transcribe a real spoken sentence and did. A model
+ *  not on this list is never handed audio, whatever its catalogue says — a turn
+ *  carrying audio is routed to one of these instead. Re-probe before adding. */
+export const AUDIO_VERIFIED_UPSTREAMS = new Set([
+  "mimo-v2.5-free",
+  "muse-spark-1.3-contributor-free",
+  "nemotron-3-nano-omni-30b-a3b-reasoning-free",
+]);
+
+/** True when a model is known to accept audio, from its catalogue entry and the
+ *  probed set together — both must agree. */
+export function acceptsAudio(model: PoolModel): boolean {
+  const declared = (model.modalities || []).map((m) => String(m).toLowerCase());
+  return declared.includes("audio") && AUDIO_VERIFIED_UPSTREAMS.has(model.id);
+}
+
 /** How well a pool model matches a brand's profile. Higher is a better lead.
  *
  *  This is what keeps a vision brand on a vision model as the upstream pool
@@ -206,7 +235,10 @@ export function capabilityScore(brand: Brand, model: PoolModel): number {
   let score = 0;
   if (p.vision) score += has("image") ? 40 : -8;
   if (p.video) score += has("video") ? 25 : -6;
-  if (p.audio) score += has("audio") ? 20 : -5;
+  // Audio is scored against the *probed* set, not the catalogue. A model that
+  // claims audio and drops it must not be preferred for an audio turn, or the
+  // turn silently degrades to a text answer.
+  if (p.audio) score += acceptsAudio(model) ? 20 : -30;
   if (p.pdf) score += has("pdf") ? 8 : 0;
   if (p.reasoning) score += model.reasoning ? 12 : -6;
   if (p.speed) score += (model.context || 0) <= 300_000 ? 8 : -2;

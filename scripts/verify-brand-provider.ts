@@ -4,7 +4,9 @@
 //
 // Run: npx tsx scripts/verify-brand-provider.ts
 import {
+  AUDIO_VERIFIED_UPSTREAMS,
   ZYRAXON_BRANDS,
+  acceptsAudio,
   getBrand,
   isBrand,
 } from "../src/lib/providers/zyraxon-brands";
@@ -208,6 +210,42 @@ check(
     notFoundCalls.length === 2,
     notFoundCalls.join(","),
   );
+}
+
+// ── audio routing must not trust the catalogue ──────────────────────────────
+// The catalogue declares audio for models that then drop it and answer "no
+// audio attached". Only the probed set may be handed audio.
+{
+  const claimsAudio = (id: string) => ({
+    id,
+    modalities: ["text", "audio"],
+    context: 200000,
+    output: 32000,
+  });
+  check(
+    "a model the catalogue calls audio-capable but was not probed is refused",
+    !acceptsAudio(claimsAudio("mimo-v2.6-flash-free")),
+  );
+  for (const id of [
+    "mimo-v2.5-free",
+    "muse-spark-1.3-contributor-free",
+    "nemotron-3-nano-omni-30b-a3b-reasoning-free",
+  ]) {
+    check(`the probed audio model ${id} is accepted`, acceptsAudio(claimsAudio(id)));
+  }
+  check(
+    "a text-only model is never given audio",
+    !acceptsAudio({ id: "mimo-v2.5-free", modalities: ["text"] }),
+  );
+  // Every brand that leads with audio must point at a probed upstream, or an
+  // audio turn would be routed to a model that cannot hear it.
+  for (const brand of ZYRAXON_BRANDS.filter((b) => b.profile.audio)) {
+    check(
+      `${brand.id} prefers a probed audio upstream`,
+      AUDIO_VERIFIED_UPSTREAMS.has(brand.preferred),
+      brand.preferred,
+    );
+  }
 }
 
 console.log(`\n${failures === 0 ? "ALL BRAND CHECKS PASSED" : failures + " CHECK(S) FAILED"}`);

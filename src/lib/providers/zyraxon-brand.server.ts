@@ -38,6 +38,7 @@ import {
 } from "./media";
 import {
   ZYRAXON_BRANDS,
+  acceptsAudio,
   brandView,
   capabilityScore,
   getBrand,
@@ -83,7 +84,17 @@ export async function resolveBrandChain(
   if (need.size === 0) return { brand, chain: base };
 
   const byId = new Map(pool.map((m) => [m.id, m]));
-  const fits = (id: string) => fitsModalities(need, byId.get(id)?.modalities ?? ["text"]);
+  // A turn carrying audio must go to a model that has actually been probed to
+  // transcribe. The catalogue claims audio for several models that then drop it
+  // and answer "no audio attached", so `fits` would otherwise pick one of them
+  // and the caller would get a text answer for a spoken question.
+  const wantsAudio = need.has("audio");
+  const fits = (id: string) => {
+    const model = byId.get(id);
+    if (!model) return false;
+    if (wantsAudio && !acceptsAudio(model)) return false;
+    return fitsModalities(need, model.modalities ?? ["text"]);
+  };
   // Capable models first (best capability score among them), then the rest, so a
   // media turn still degrades to a real attempt instead of a fabricated error.
   const capable = base.filter(fits).sort((a, b) => {
@@ -91,6 +102,8 @@ export async function resolveBrandChain(
     const mb = byId.get(b);
     return capabilityScore(brand, mb ?? { id: b }) - capabilityScore(brand, ma ?? { id: a });
   });
+  // A model that cannot be handed the audio is still worth trying last: it may
+  // answer the text part of the turn rather than fail outright.
   const rest = base.filter((id) => !fits(id));
   return { brand, chain: [...capable, ...rest] };
 }

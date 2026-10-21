@@ -17,8 +17,13 @@ export const CHAT_URL = `${V1_BASE_URL}/chat/completions`;
 export const PROVIDER_URL = `${V1_BASE_URL}/provider`;
 export const INTEGRATIONS_URL = `${V1_BASE_URL}/integrations`;
 
-/** The model a client should pick when it has no reason to pick another. */
-export const DEFAULT_MODEL = "zyraxon-codex";
+/** The model a client should pick when it has no reason to pick another.
+ *
+ *  `zyraxon-apex`, because it is the fastest to first token by measurement
+ *  (1.04s median against 16.23s for `zyraxon-codex`), and it is also the
+ *  strongest reasoner. A slow default is the single biggest cause of a "this
+ *  feels slow" report, so the default is the fast one. */
+export const DEFAULT_MODEL = "zyraxon-apex";
 
 /** What to put in an `apiKey` field. The endpoint only checks a key when the
  *  deployment sets `ZYRAXON_PROVIDER_KEY`; until then any non-empty string
