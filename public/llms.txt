@@ -1,0 +1,47 @@
+# ZYRAXON
+
+> Free OpenAI-compatible AI provider. Ten ZYRAXON models behind one base URL,
+> plus text-to-speech and speech-to-text. No API key to buy. Everything below is
+> public and can be fetched without authentication.
+
+## Start here
+
+- [Provider overview](https://zyraxonai.lovable.app/providers): the whole API
+  surface on one page — chat and streaming, the model catalogue, text to speech,
+  speech to text, and integration steps for every host application. This page is
+  the canonical description and is safe to read in full.
+- [Endpoints as JSON](https://zyraxonai.lovable.app/api/public/zyraxon/v1/endpoints):
+  the same catalogue in machine-readable form, for an agent that would rather
+  parse than render.
+- [Model catalogue](https://zyraxonai.lovable.app/api/public/zyraxon/v1/models):
+  the ten models, in the standard OpenAI list shape.
+- [Integration catalogue](https://zyraxonai.lovable.app/api/public/zyraxon/v1/integrations):
+  the exact values and snippets for OpenHands, Cursor, Cline, Aider, LiteLLM,
+  LangChain, the Vercel AI SDK, Termux and others.
+
+## Endpoints
+
+- Chat completions: `POST https://zyraxonai.lovable.app/api/public/zyraxon/v1/chat/completions`
+  — OpenAI chat-completions semantics, with server-sent-event streaming.
+- Models: `GET https://zyraxonai.lovable.app/api/public/zyraxon/v1/models`
+- Provider status: `GET https://zyraxonai.lovable.app/api/public/zyraxon/v1/provider`
+- Text to speech: `POST https://zyraxonai.lovable.app/api/public/tts` — 322 voices, 75 languages.
+- Voices: `GET https://zyraxonai.lovable.app/api/public/tts/voices`
+- Speech to text: `POST https://zyraxonai.lovable.app/api/public/stt` — one endpoint,
+  two modes: send a recording for the whole transcript, or stream audio and
+  receive text as it is recognised. `GET` on this URL returns its own contract.
+
+## Facts an agent should not guess at
+
+- Authentication: none. Send any non-empty string as the API key if a client
+  insists on one.
+- The `language` field on the speech endpoint is required, in both modes. The
+  recogniser does not detect language; it will answer confidently in the wrong
+  one if asked, so the caller names the language rather than letting it guess.
+- Model ids are ZYRAXON names (for example `zyraxon-apex`). They stay stable
+  when the upstream pool behind them rotates.
+
+## Optional
+
+- [Documentation](https://zyraxonai.lovable.app/docs): longer guides, including
+  speech, provider integrations and the endpoint reference.
