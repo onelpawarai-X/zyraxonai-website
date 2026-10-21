@@ -35,8 +35,18 @@ export const HEARTBEAT_MS = Number(process.env.ZYRAXON_HEARTBEAT_MS || 10_000);
  *  rather than broken. Inside this window a failure can still rotate to another
  *  model; past it the turn is committed and the keepalive holds the connection
  *  while the model finishes thinking. Kept well under the caller's own timeout
- *  so a genuinely dead model still rotates quickly. */
-export const PROBE_MS = Number(process.env.ZYRAXON_PROBE_MS || 12_000);
+ *  so a genuinely dead model still rotates quickly.
+ *
+ *  A real first token is fast: measured across the free pool, the median is
+ *  1.6–2.5s and the slowest healthy model still answers in under four seconds.
+ *  The only models that exceed that are reasoning models that emit their
+ *  thinking before their answer, and those already stream reasoning deltas —
+ *  which count as activity and commit the turn without waiting for text. So the
+ *  ceiling only has to be long enough to catch a token on a slow network, and
+ *  every millisecond past that is a millisecond a *dead* model delays rotation.
+ *  Four seconds is comfortably above the healthy distribution and short enough
+ *  that a broken model is swapped before the caller gives up. */
+export const PROBE_MS = Number(process.env.ZYRAXON_PROBE_MS || 4_000);
 
 export type ContentPart =
   | { type: "text"; text: string }

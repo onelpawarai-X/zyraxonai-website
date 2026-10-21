@@ -79,6 +79,43 @@ that import `system-prompt.txt` need
 `--import ./scripts/raw-import-loader.mjs` (a bare `tsx` run dies with
 `ERR_UNKNOWN_FILE_EXTENSION`).
 
+#### Choosing an upstream (latency and modality)
+
+Two rules decide which upstream a brand leads with. Both live in
+`src/lib/providers/zyraxon-brands.ts` and are the single source of truth — the
+SSE label, the catalogue the provider page reads, and the first model attempted
+all go through `rotationFor`/`activeFor`, so they cannot disagree.
+
+1. Capability only counts when the turn needs it. `capabilityScore` takes the
+   turn's own `need` set; a modality the caller did not send is scored neutral,
+   not as a miss. A brand may *support* a rare modality (pdf, audio) without every
+   turn carrying it, and scoring the profile unconditionally pinned every plain
+   text turn to the one model that served that modality — in practice the slowest
+   model in the pool. Pass the need.
+2. Capability first, then measured speed. `MEASURED_TTFT_MS` is a live
+   three-run probe of the public endpoint (medians range from ~1.6s to ~36s, an
+   order of magnitude for the same capability). `bySpeed` is only a tiebreak
+   after capability, and an unmeasured id sorts last so a new upstream never
+   displaces a timed one. Re-measure when the pool churns.
+
+Audio is special: the catalogue lies about it. Several free models declare audio,
+accept the request, drop it, and answer "no audio attached". Only
+`AUDIO_VERIFIED_UPSTREAMS` — ids probed with a real spoken clip — may lead an
+audio turn. Keep that set in step with the live pool when it churns.
+
+`PROBE_MS` (`ZYRAXON_PROBE_MS`, default 4s) is the first-token ceiling: inside it
+a failure can still rotate, past it the keepalive holds the connection. The
+heartbeat only starts after the Response is handed back, so the longest a caller
+can see no byte at all is `max(PROBE_MS, HEARTBEAT_MS)` — check that, not the two
+values separately, when tuning.
+
+`scripts/verify-lane-pool.ts` pins `Date.now` for the seeded-session check: the
+seeded tail is a pure function of `(seed, epoch-ms)`, so two calls only agree
+within one millisecond and the check is flaky without a pinned clock.
+
+Remove any `scripts/_tmp-*.ts` scratch file before committing; they are not part
+of the suite.
+
 ### Two gotchas that caused real bugs
 
 - Do not pass `muted` to `<video>` as a JSX prop. React re-applies it on every

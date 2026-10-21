@@ -25,11 +25,27 @@ function check(name: string, ok: boolean, detail?: unknown) {
   check("session ids are gate-shaped", isGateShapedSessionId(a), a);
   check("two calls never share an id", a !== b);
 
+  // The seeded tail is a pure function of (seed, epoch-millisecond), so the two
+  // calls only agree when they land in the same millisecond — which they usually
+  // do, and occasionally do not. Pin the clock so the check tests the rule
+  // rather than the machine's timing luck.
+  const realNow = Date.now;
+  Date.now = () => 1_760_000_000_000;
   const seeded1 = newSessionId("user-7");
   const seeded2 = newSessionId("user-7");
+  const other = newSessionId("user-8");
+  Date.now = realNow;
   check("a seed is stable for the same caller", seeded1.slice(12) === seeded2.slice(12), seeded1);
-  check("a different caller gets a different id", newSessionId("user-8") !== seeded1);
+  check("a different caller gets a different id", other.slice(12) !== seeded1.slice(12), other);
   check("a seeded id is still gate-shaped", isGateShapedSessionId(seeded1));
+  // Two calls a millisecond apart must differ, or the id would be a constant an
+  // upstream could fingerprint.
+  Date.now = () => 1_760_000_000_000;
+  const atT = newSessionId("user-7");
+  Date.now = () => 1_760_000_000_001;
+  const atT1 = newSessionId("user-7");
+  Date.now = realNow;
+  check("the same seed a millisecond later is a different id", atT !== atT1, `${atT} vs ${atT1}`);
 
   // The first twelve hex characters must decode to a recent creation time. The
   // scheme keeps six bytes, so the timestamp repeats every 2^36 ms; the honest

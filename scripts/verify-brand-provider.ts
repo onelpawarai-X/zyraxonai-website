@@ -5,10 +5,14 @@
 // Run: npx tsx scripts/verify-brand-provider.ts
 import {
   AUDIO_VERIFIED_UPSTREAMS,
+  MEASURED_TTFT_MS,
   ZYRAXON_BRANDS,
   acceptsAudio,
+  activeFor,
+  capabilityScore,
   getBrand,
   isBrand,
+  measuredTtftMs,
 } from "../src/lib/providers/zyraxon-brands";
 import {
   rotationFor,
@@ -210,6 +214,101 @@ check(
     notFoundCalls.length === 2,
     notFoundCalls.join(","),
   );
+}
+
+// ── speed must break ties, but never override capability ────────────────────
+// Two models that fit a brand equally are not equally good: the faster one is
+// the answer. The order must put the fast model first, and it must NOT put a
+// fast-but-incapable model ahead of a slower capable one.
+{
+  // Two synthetic models of equal capability but different measured speed: the
+  // tiebreak must put the faster one first, and the slower one after it. Both
+  // carry `reasoning` so they score identically for a reasoning-only brand.
+  const fast: PoolModel = {
+    id: "beam-free", // measured 1620ms
+    modalities: ["text"],
+    context: 200_000,
+    reasoning: true,
+  };
+  const slow: PoolModel = {
+    id: "deepseek-v4.1-flash-free", // measured 27470ms
+    modalities: ["text"],
+    context: 200_000,
+    reasoning: true,
+  };
+  check("measured latency is read for a known model", measuredTtftMs("minimax-m3.1-flash-free") === 1560);
+  check("an unmeasured model sorts last (Infinity)", measuredTtftMs("brand-new-free") === Infinity);
+
+  // Both fit equally (same score), so the tiebreak decides. `zyraxon-neural`
+  // prefers big-pickle, which is absent from this pool.
+  const neural = getBrand("zyraxon-neural")!; // prefers big-pickle, profile reasoning only
+  const pool: PoolModel[] = [slow, fast];
+  check(
+    "the two models score equally for this brand",
+    capabilityScore(neural, fast) === capabilityScore(neural, slow),
+    `${capabilityScore(neural, fast)} vs ${capabilityScore(neural, slow)}`,
+  );
+  const ordered = rotationFor(neural, pool, null);
+  check(
+    "the faster of two equal models leads",
+    ordered[0] === "beam-free" && ordered[1] === "deepseek-v4.1-flash-free",
+    ordered.join(" → "),
+  );
+
+  // Real-world shape: the pool the console actually serves, minus the brand's
+  // preference, must lead with the fastest capable model — not with whatever
+  // happens to be first in the alphabetical pool.
+  const livePool: PoolModel[] = [
+    { id: "deepseek-v4.1-flash-free", modalities: ["text", "image"], context: 200_000 },
+    { id: "glm-5.3-flash-free", modalities: ["text", "image", "video", "pdf"], context: 200_000 },
+    { id: "longcat-2.5-preview-free", modalities: ["text", "image"], context: 1_000_000 },
+    { id: "minimax-m3.1-flash-free", modalities: ["text", "image", "video"], context: 1_000_000 },
+    { id: "big-pickle", modalities: ["text"], context: 200_000 },
+  ];
+  // A vision brand with its preference absent must not land on the 27s or 14s
+  // model when the 1.6s model fits exactly as well.
+  const matrix = getBrand("zyraxon-matrix")!;
+  const matrixChain = rotationFor(matrix, livePool, null);
+  check(
+    "a vision brand with an absent preference leads with the fastest vision model",
+    matrixChain[0] === "minimax-m3.1-flash-free",
+    matrixChain.join(" → "),
+  );
+
+  // Need-dependence, cleanly: a fast text-only model and a slower video-capable
+  // one, for a brand whose profile does not itself demand video. Without media
+  // the fast model leads; with a video part required the capable model must.
+  const depPool: PoolModel[] = [
+    { id: "beam-free", modalities: ["text"], context: 262_144, reasoning: true },
+    { id: "glm-5.3-flash-free", modalities: ["text", "image", "video"], context: 262_144, reasoning: true },
+  ];
+  const general = getBrand("zyraxon-neural")!; // reasoning only
+  check(
+    "the two need-dependency models tie on capability",
+    capabilityScore(general, depPool[0]) === capabilityScore(general, depPool[1]),
+    `${capabilityScore(general, depPool[0])} vs ${capabilityScore(general, depPool[1])}`,
+  );
+  check(
+    "with no media needed, the faster model leads",
+    rotationFor(general, depPool, null)[0] === "beam-free",
+    rotationFor(general, depPool, null).join(" → "),
+  );
+  check(
+    "with video needed, the capable model leads even though it is slower",
+    rotationFor(general, depPool, null, new Set(["video"] as const))[0] === "glm-5.3-flash-free",
+    rotationFor(general, depPool, null, new Set(["video"] as const)).join(" → "),
+  );
+
+  // MEASURED_TTFT_MS must not silently drift from what the pool serves: every
+  // id in it should be a real free-pool upstream shape, and every timed value
+  // must be a finite, positive number.
+  check("every measured latency is finite and positive", Object.values(MEASURED_TTFT_MS).every((v) => Number.isFinite(v) && v > 0));
+  check("the measured table is not empty", Object.keys(MEASURED_TTFT_MS).length > 0);
+
+  // The reported binding and the chain head must be the same model, so the
+  // catalogue page cannot name one upstream while the wire uses another.
+  const { active, chain } = activeFor(matrix, livePool, null);
+  check("activeFor reports the head of the chain", active === chain[0], `${active} vs ${chain[0]}`);
 }
 
 // ── audio routing must not trust the catalogue ──────────────────────────────
