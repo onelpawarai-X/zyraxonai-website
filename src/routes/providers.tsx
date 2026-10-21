@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { PageShell } from "@/components/site/PageShell";
 import { PageHeader } from "@/components/site/SiteChrome";
 import { ProviderIntegrations } from "@/components/site/ProviderIntegrations";
+import { ProviderRotator } from "@/components/site/ProviderRotator";
 import { Button, ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
 import { ZYRAXON_BRANDS } from "@/lib/providers/zyraxon-brands";
+import { ENDPOINT_STATS } from "@/lib/providers/endpoints";
 
 export const Route = createFileRoute("/providers")({
   head: () => ({
@@ -16,12 +18,12 @@ export const Route = createFileRoute("/providers")({
       {
         name: "description",
         content:
-          "Free OpenAI-compatible AI API: ten ZYRAXON models behind one base URL. Works with the OpenAI SDK, LangChain, the Vercel AI SDK, OpenHands, Cursor, Cline, Aider, Termux, mobile apps and any tool that speaks /v1/chat/completions. Streaming, tool calling, images, audio, video and PDF — no API key to buy.",
+          "Free OpenAI-compatible AI API: ten ZYRAXON models behind one base URL, plus text to speech in 75 languages and speech to text that works on a recording or live as you speak. Works with the OpenAI SDK, LangChain, the Vercel AI SDK, OpenHands, Cursor, Cline, Aider, Termux, mobile apps and any tool that speaks /v1/chat/completions. Streaming, tool calling, images, audio, video and PDF — no API key to buy.",
       },
       {
         name: "keywords",
         content:
-          "free AI API, OpenAI compatible API, OpenAI alternative, free LLM API, custom provider, base URL API key, OpenAI SDK base URL, LangChain custom provider, OpenHands custom model, Cursor custom model, Cline API, Continue.dev, Aider model, Termux AI, Kali Linux AI, LiteLLM provider, LLM Provider NOT provided, streaming chat completions, tool calling API, multimodal AI API, free GPT alternative, ZYRAXON provider",
+          "free AI API, OpenAI compatible API, OpenAI alternative, free LLM API, custom provider, base URL API key, OpenAI SDK base URL, LangChain custom provider, OpenHands custom model, Cursor custom model, Cline API, Continue.dev, Aider model, Termux AI, Kali Linux AI, LiteLLM provider, LLM Provider NOT provided, streaming chat completions, tool calling API, multimodal AI API, free GPT alternative, ZYRAXON provider, free text to speech API, free speech to text API, live transcription API, real-time speech recognition, whisper alternative, Bengali speech to text, Bengali text to speech, SSE transcription, no API key speech API",
       },
       { property: "og:title", content: "ZYRAXON Provider — Free OpenAI-Compatible AI API" },
       {
@@ -59,6 +61,9 @@ export const Route = createFileRoute("/providers")({
             "Function and tool calling",
             "Image, audio, video and PDF input",
             "Ten branded models behind one endpoint",
+            "Text to speech in 322 voices across 75 languages",
+            "Speech to text, batch or live streaming",
+            "Machine-readable endpoint catalogue",
             "No API key required",
           ],
         }),
@@ -110,6 +115,30 @@ export const Route = createFileRoute("/providers")({
               acceptedAnswer: {
                 "@type": "Answer",
                 text: "Yes. Define tools in the OpenAI wire shape and the model returns real tool calls; set stream to true and the reply arrives as server-sent events.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Can I do text to speech and speech to text for free?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Yes, and without a key. POST /api/public/tts speaks text in 322 voices across 75 languages, and POST /api/public/stt transcribes audio. The speech endpoint is one URL with two modes: send a recording for the whole transcript, or stream raw PCM and receive text as the person is still speaking.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Why does the speech endpoint need a language?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Because the recogniser does not detect language. Asked for English about Bengali audio it returns English-sounding words at high confidence rather than failing, so a guess produces a confident wrong transcript. Send language=bn (or bn-BD) and the answer is right the first time.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "How do I get the whole API surface in one read?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "GET https://zyraxonai.lovable.app/api/public/zyraxon/v1/endpoints returns every endpoint with its fields, response shape and example, as JSON. The /providers page carries the same catalogue for a human reader.",
               },
             },
             {
@@ -217,62 +246,29 @@ function ProvidersPage() {
       <PageHeader
         label="Provider"
         title="Ten models. One endpoint. Yours."
-        description="ZYRAXON serves its own line of ten branded models over a single OpenAI-compatible API. Point any OpenAI client at the endpoint below, pick a ZYRAXON model, and build. No upstream keys, no provider switching, no rate-limit juggling."
+        description={`ZYRAXON serves its own line of ten branded models over a single OpenAI-compatible API, and rotates the pool behind those names so your code never has to change when an upstream model does. Chat and streaming, the model catalogue, text to speech and speech to text — ${ENDPOINT_STATS.total} endpoints, no key to buy, and every one of them described in full on this page.`}
       >
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          <ButtonAnchor href="#quickstart" variant="primary" external={false}>
+          <ButtonAnchor href="#endpoints" variant="primary" external={false}>
+            The endpoints
+          </ButtonAnchor>
+          <ButtonAnchor href="#models" external={false}>
+            The models
+          </ButtonAnchor>
+          <ButtonAnchor href="#quickstart" external={false}>
             Quickstart
           </ButtonAnchor>
           <ButtonAnchor href="#integrations" external={false}>
             Use it anywhere
           </ButtonAnchor>
-          <ButtonAnchor href="/docs/provider-integrations" external={false}>
-            Integration guide
-          </ButtonAnchor>
-          <ButtonAnchor href="#models">See the models</ButtonAnchor>
           <Tag tone="success">OpenAI-compatible</Tag>
           <Tag tone="primary">Streaming</Tag>
-          <Tag tone="primary">Multimodal</Tag>
+          <Tag tone="primary">Speech, both ways</Tag>
+          <Tag tone="primary">No key</Tag>
         </div>
       </PageHeader>
 
-      <Section
-        label="Endpoint"
-        title="Two URLs, that is the whole integration"
-        description="The models list is what a client reads to discover us. The chat URL is what it calls to use us."
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="p-5">
-            <div className="mb-2 flex items-center gap-2">
-              <Tag tone="primary">GET</Tag>
-              <span className="text-[13px] font-semibold text-foreground">Model catalogue</span>
-            </div>
-            <code className="block break-all rounded-lg bg-foreground/5 px-3 py-2 text-[12px] text-foreground">
-              {MODELS_URL}
-            </code>
-            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
-              Returns the ten ZYRAXON models in the standard OpenAI{" "}
-              <code className="text-[12px]">{'{ object: "list", data: [...] }'}</code> shape, so
-              existing clients read it without special handling.
-            </p>
-          </Card>
-
-          <Card className="p-5">
-            <div className="mb-2 flex items-center gap-2">
-              <Tag tone="primary">POST</Tag>
-              <span className="text-[13px] font-semibold text-foreground">Chat completions</span>
-            </div>
-            <code className="block break-all rounded-lg bg-foreground/5 px-3 py-2 text-[12px] text-foreground">
-              {CHAT_URL}
-            </code>
-            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
-              OpenAI chat-completions semantics, including server-sent-event streaming when{" "}
-              <code className="text-[12px]">"stream": true</code>. Responses name the ZYRAXON model
-              you asked for.
-            </p>
-          </Card>
-        </div>
-      </Section>
+      <ProviderRotator />
 
       <Section
         id="models"
@@ -371,6 +367,46 @@ function ProvidersPage() {
       </Section>
 
       <Section
+        id="quickstart"
+        label="Quickstart"
+        title="Point your client at us"
+        description="Any OpenAI-compatible client works. Two examples below."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+              <span className="text-[13px] font-semibold text-foreground">cURL</span>
+              <Tag>shell</Tag>
+            </div>
+            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
+              <code>{CURL_SAMPLE}</code>
+            </pre>
+          </Card>
+
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+              <span className="text-[13px] font-semibold text-foreground">OpenAI SDK</span>
+              <Tag>typescript</Tag>
+            </div>
+            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
+              <code>{SDK_SAMPLE}</code>
+            </pre>
+          </Card>
+        </div>
+
+        <Card className="mt-5 p-5">
+          <h3 className="text-[14px] font-semibold text-foreground">Response shape</h3>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            Standard chat-completion chunks. The <code className="text-[12px]">model</code> field
+            carries the ZYRAXON name you requested, so your logs and billing stay yours.
+          </p>
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 text-[12px] text-foreground">
+            <code>{`data: {"id":"zyraxon-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}],"model":"ZYRAXON Apex"}`}</code>
+          </pre>
+        </Card>
+      </Section>
+
+      <Section
         id="media"
         label="Multimodal"
         title="Send images, audio, video and documents"
@@ -453,133 +489,8 @@ function ProvidersPage() {
         </div>
       </Section>
 
-      <Section
-        id="quickstart"
-        label="Quickstart"
-        title="Point your client at us"
-        description="Any OpenAI-compatible client works. Two examples below."
-      >
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="overflow-hidden p-0">
-            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
-              <span className="text-[13px] font-semibold text-foreground">cURL</span>
-              <Tag>shell</Tag>
-            </div>
-            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
-              <code>{CURL_SAMPLE}</code>
-            </pre>
-          </Card>
-
-          <Card className="overflow-hidden p-0">
-            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
-              <span className="text-[13px] font-semibold text-foreground">OpenAI SDK</span>
-              <Tag>typescript</Tag>
-            </div>
-            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
-              <code>{SDK_SAMPLE}</code>
-            </pre>
-          </Card>
-        </div>
-
-        <Card className="mt-5 p-5">
-          <h3 className="text-[14px] font-semibold text-foreground">Response shape</h3>
-          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-            Standard chat-completion chunks. The <code className="text-[12px]">model</code> field
-            carries the ZYRAXON name you requested, so your logs and billing stay yours.
-          </p>
-          <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 text-[12px] text-foreground">
-            <code>{`data: {"id":"zyraxon-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}],"model":"ZYRAXON Apex"}`}</code>
-          </pre>
-        </Card>
-      </Section>
-
       <ProviderIntegrations />
-
-      <Section
-        id="speech"
-        label="Speech"
-        title="It can speak, in any language"
-        description="Every answer can be heard, not just read — and in the language the answer was written in. Ask in Bengali and a Bengali voice reads the reply. The same engine behind Edge's Read Aloud: 322 neural voices across 75 languages, streamed as MP3 as it is written."
-      >
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="overflow-hidden p-0">
-            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
-              <span className="text-[13px] font-semibold text-foreground">Hear an answer</span>
-              <Tag>POST /api/public/tts</Tag>
-            </div>
-            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
-              <code>{`curl -s ${API_ORIGIN}/api/public/tts \\
-  -H "Content-Type: application/json" \\
-  -d '{"text":"Hello from ZYRAXON.","locale":"en"}' \\
-  -o answer.mp3`}</code>
-            </pre>
-          </Card>
-
-          <Card className="overflow-hidden p-0">
-            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
-              <span className="text-[13px] font-semibold text-foreground">The same in Bengali</span>
-              <Tag>locale: bn</Tag>
-            </div>
-            <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-foreground">
-              <code>{`curl -s ${API_ORIGIN}/api/public/tts \\
-  -H "Content-Type: application/json" \\
-  -d '{"text":"আমি একটি ZYRAXON মডেল।","locale":"bn"}' \\
-  -o bengali.mp3
-
-# bn-BD-NabanitaNeural reads it — a Bengali voice,
-# not an English one reading Bengali letters.`}</code>
-            </pre>
-          </Card>
-        </div>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="p-5">
-            <h3 className="text-[14px] font-semibold text-foreground">Every language</h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-              Name the language and the voice follows — Bengali, Hindi, Arabic, English and 71 more.{" "}
-              <a href="/api/public/tts/voices" className="text-primary underline">
-                The full list
-              </a>
-              .
-            </p>
-          </Card>
-          <Card className="p-5">
-            <h3 className="text-[14px] font-semibold text-foreground">Streamed, not buffered</h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-              The MP3 starts arriving before the sentence is finished being synthesised, so playback
-              begins almost immediately.
-            </p>
-          </Card>
-          <Card className="p-5">
-            <h3 className="text-[14px] font-semibold text-foreground">It speaks, not reads code</h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-              Code, links and Markdown are stripped first. A code block becomes “a code block, 12
-              lines” rather than being read character by character.
-            </p>
-          </Card>
-          <Card className="p-5">
-            <h3 className="text-[14px] font-semibold text-foreground">Speech in, speech out</h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-              Transcribe a recording with{" "}
-              <a href="/api/public/stt" className="text-primary underline">
-                /api/public/stt
-              </a>
-              , ask the model, then speak the answer. The whole loop is documented.
-            </p>
-          </Card>
-        </div>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          <ButtonAnchor href="/docs/speech" external={false} variant="primary">
-            Read the speech guide
-          </ButtonAnchor>
-          <Button onClick={() => navigator.clipboard?.writeText(`${API_ORIGIN}/api/public/tts`)}>
-            Copy the speech URL
-          </Button>
-        </div>
-      </Section>
-
-      <Section label="Why a rooted provider" title="One name you control" description="">
+      <Section id="why" label="Why a rooted provider" title="One name you control" description="">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="p-5">
             <h3 className="text-[14px] font-semibold text-foreground">Stable names</h3>

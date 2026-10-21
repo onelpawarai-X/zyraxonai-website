@@ -1,0 +1,99 @@
+/** Codec decoding for the speech-to-text endpoint — the one layer that needs a
+ *  library.
+ *
+ *  Container parsing lives in `audio.ts` and is ours. Turning compressed frames
+ *  into samples needs a real decoder, and writing an Opus or MP3 decoder from
+ *  scratch would be a decade of work. So exactly one small, MIT-licensed,
+ *  self-contained WebAssembly decoder is used, and it is loaded lazily: a client
+ *  that sends WAV or FLAC — which is what a careful client does, and what our
+ *  own browser recorder produces when configured for it — never pays for it.
+ *
+ *  Both packages are single-purpose and vendor-neutral:
+ *    - `mpg123-decoder` — MP3, the format phone and desktop recorders produce.
+ *    - `opus-decoder`   — Opus, the format browsers produce.
+ *  Neither talks to a network, neither needs a key, and both are wasm blobs
+ *  bundled with the app, so there is no CDN to disappear. */
+
+import type { Pcm } from "./audio";
+import { oggOpusPackets, webmOpusFrames } from "./audio";
+
+/** Decoded frames at the codec's own rate; the caller resamples. */
+type DecodeResult = { samples: Int16Array; sampleRate: number };
+
+/** Decode a WebM/Opus stream — what a browser's MediaRecorder emits. */
+export async function decodeWebm(bytes: Uint8Array): Promise<Pcm> {
+  const frames = webmOpusFrames(bytes);
+  if (!frames.length) throw new Error("no audio frames found in the WebM stream");
+  return decodeOpusFrames(frames);
+}
+
+/** Decode an Ogg/Opus stream — what a desktop or Android recorder emits. */
+export async function decodeOgg(bytes: Uint8Array): Promise<Pcm> {
+  const packets = oggOpusPackets(bytes);
+  if (!packets.length) throw new Error("no audio packets found in the Ogg stream");
+  return decodeOpusFrames(packets);
+}
+
+async function decodeOpusFrames(frames: Uint8Array[]): Promise<Pcm> {
+  const { OpusDecoder } = await import("opus-decoder");
+  const decoder = new OpusDecoder();
+  await decoder.ready;
+  try {
+    const result = decoder.decodeFrames(frames);
+    const channels: Float32Array[] = result.channelData;
+    const rate = result.sampleRate;
+    const frames2 = result.samplesDecoded;
+    if (!frames2) throw new Error("the Opus stream decoded to no samples");
+    return { samples: floatsToInt16(channels, frames2), sampleRate: rate };
+  } finally {
+    // The wasm heap is large; release it rather than wait for the collector.
+    decoder.free();
+  }
+}
+
+/** Decode an MP3 stream — what phone and desktop recorders emit. */
+export async function decodeMp3(bytes: Uint8Array): Promise<Pcm> {
+  const { MPEGDecoder } = await import("mpg123-decoder");
+  const decoder = new MPEGDecoder();
+  await decoder.ready;
+  try {
+    const result = decoder.decode(bytes);
+    const channels: Float32Array[] = result.channelData;
+    const frames = result.samplesDecoded;
+    if (!frames) throw new Error("the MP3 stream decoded to no samples");
+    return { samples: floatsToInt16(channels, frames), sampleRate: result.sampleRate };
+  } finally {
+    decoder.free();
+  }
+}
+
+/** Average the decoder's float channels into one 16-bit track. The decoders hand
+ *  back planar float audio; the engine wants interleaved-free signed 16-bit. */
+function floatsToInt16(channels: Float32Array[], frames: number): Int16Array {
+  const out = new Int16Array(frames);
+  const n = channels.length;
+  if (n === 0) return out;
+  if (n === 1) {
+    const c = channels[0]!;
+    for (let i = 0; i < frames; i++) {
+      const v = Math.max(-1, Math.min(1, c[i] ?? 0));
+      out[i] = Math.round(v * 32767);
+    }
+    return out;
+  }
+  for (let i = 0; i < frames; i++) {
+    let sum = 0;
+    for (let c = 0; c < n; c++) sum += channels[c]![i] ?? 0;
+    const v = Math.max(-1, Math.min(1, sum / n));
+    out[i] = Math.round(v * 32767);
+  }
+  return out;
+}
+
+/** True when a decoder for this container is available. Used by the endpoint to
+ *  explain an unsupported upload rather than fail with a decode error. */
+export function canDecode(container: string): boolean {
+  return container === "webm" || container === "ogg" || container === "mp3";
+}
+
+export type { DecodeResult };

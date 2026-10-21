@@ -88,7 +88,7 @@ all go through `rotationFor`/`activeFor`, so they cannot disagree.
 
 1. Capability only counts when the turn needs it. `capabilityScore` takes the
    turn's own `need` set; a modality the caller did not send is scored neutral,
-   not as a miss. A brand may *support* a rare modality (pdf, audio) without every
+   not as a miss. A brand may _support_ a rare modality (pdf, audio) without every
    turn carrying it, and scoring the profile unconditionally pinned every plain
    text turn to the one model that served that modality — in practice the slowest
    model in the pool. Pass the need.
@@ -273,3 +273,51 @@ back as it is synthesised. Three things there are easy to get wrong:
 `speakable()` strips code, links and Markdown first: reading a code block aloud
 is unusable, so a fence becomes "a code block, N lines". The voice is chosen from
 the answer's language, so a Bengali reply is read by a Bengali voice.
+
+### Speech to text: one endpoint, two modes, a language you must state
+
+`POST /api/public/stt` is the only speech-to-text URL. It answers in two shapes
+and picks between them from the request, so a client never has to find a second
+endpoint:
+
+- **Batch** — send a whole recording (`multipart/form-data` with a `file`, or
+  JSON with a base64 `audio` field) and get `{ text, language }` back once.
+- **Live** — `?mode=live` plus raw 16-bit PCM in the body, and the reply is SSE:
+  `ready`, then `partial` as words arrive, `segment` when a chunk is committed,
+  and a final `done`. PCM only: a compressed container cannot be cut at an
+  arbitrary byte, so a WebM/Opus frame would have to be decoded as a unit. A
+  browser produces PCM directly from an AudioWorklet.
+
+`language` is **required** in both modes — a form field, a JSON field, or the
+`?language=` query. There is no auto-detection, and it was deliberately removed:
+the recogniser does not detect language, so asked for English about Bengali audio
+it returns English-sounding words at high confidence rather than failing. A guess
+therefore produces a confident wrong transcript, which is worse than an error.
+A missing `language` is a 422 naming the field. `GET` on the same URL returns the
+endpoint's own contract (modes, required fields, languages) so a client can read
+it without the docs.
+
+`src/lib/stt/stream.ts` holds the live path. Committed text never rewrites, and
+each segment carries the last `overlapSeconds` into the next so a word on the
+boundary is heard whole and then trimmed — that is what keeps captions from
+flickering. The partial-prefix check in `verify-stt-stream.ts` compares against
+the committed text _as it stood when the partial was emitted_, in order; an
+earlier version compared the first four characters against every segment and
+passed a genuinely truncated partial by accident.
+
+### The provider page is a catalogue, and the catalogue is the source
+
+Every endpoint the provider serves is described once, in
+`src/lib/providers/endpoints.ts`. `/providers` renders it through
+`ProviderRotator` (the four that do the work, then the rest) and
+`GET /api/public/zyraxon/v1/endpoints` serves the same list as JSON. Add an
+endpoint to the module and it appears in both; do not hand-write one into the page.
+
+The page is written to be read by a search or fetch tool as well as a person, so
+its detail lives in `<details>` rather than behind `useState`. A collapsed
+`<details>` still keeps its contents in the HTML; a state toggle does not, which
+would put every integration field, step and snippet out of reach of exactly the
+reader the page is meant to serve. `public/llms.txt` is the plain-text map that
+points such a tool at the page and the JSON contracts, and `robots.txt` allows
+the four contract URLs (`/v1/endpoints`, `/v1/models`, `/v1/provider`,
+`/v1/integrations`) while still disallowing the rest of `/api/`.
