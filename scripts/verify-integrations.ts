@@ -367,28 +367,9 @@ check("the speech docs name the voices endpoint", /\/api\/public\/tts\/voices/.t
 check("the speech docs cover speech-to-text too", /\/api\/public\/stt/.test(speechText));
 check("the speech docs mention a non-English voice", /bn-/.test(speechText));
 
-// The speech endpoints used to live in a section of their own near the bottom of
-// the page, so these two checks looked for that section's id. They now live in
-// the endpoint rotator with the rest of the surface, so the checks follow them:
-// the speech endpoints must be in the catalogue, and the guide must be linked
-// from wherever the catalogue is rendered.
 const providerPage = readFileSync(`${ROOT}src/routes/providers.tsx`, "utf8");
-const rotator = readFileSync(`${ROOT}src/components/site/ProviderRotator.tsx`, "utf8");
-const catalogue = readFileSync(`${ROOT}src/lib/providers/endpoints.ts`, "utf8");
-check(
-  "the provider page renders the endpoint rotator",
-  /<ProviderRotator\s*\/>/.test(providerPage),
-);
-check(
-  "the catalogue has the speech endpoints",
-  /"\/api\/public\/tts"/.test(catalogue) && /"\/api\/public\/stt"/.test(catalogue),
-);
-check(
-  "the speech endpoints are featured in the rotator",
-  /id: "tts",[\s\S]*?featured: true/.test(catalogue) &&
-    /id: "stt",[\s\S]*?featured: true/.test(catalogue),
-);
-check("the rotator links to the speech guide", /\/docs\/speech/.test(rotator));
+check("the provider page has a speech section", /id="speech"/.test(providerPage));
+check("the provider page links to the speech guide", /\/docs\/speech/.test(providerPage));
 
 const sitemap = readFileSync(`${ROOT}public/sitemap.xml`, "utf8");
 check("the sitemap lists the speech page", sitemap.includes("/docs/speech"));

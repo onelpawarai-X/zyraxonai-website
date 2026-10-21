@@ -112,7 +112,6 @@ for (const endpoint of [
   "/api/public/tts/voices",
   "/api/public/stt",
   "/api/public/zyraxon/v1/integrations",
-  "/api/public/zyraxon/v1/endpoints",
 ]) {
   check(`the API sitemap lists ${endpoint}`, apiSitemap.includes(endpoint));
 }

@@ -87,24 +87,18 @@ async function speak(
     );
   }
 
-  // The catalogue is only needed to *choose* a voice. A caller who named one
-  // exactly has already made that decision, so the 322-voice fetch is skipped —
-  // it is a network round trip in front of the first byte of audio, which is the
-  // difference between a reply that starts instantly and one that waits.
   let voices: Voice[] = [];
-  if (!voice) {
-    try {
-      voices = await listVoices();
-    } catch {
-      // Without the catalogue a language still resolves through the fallback
-      // below; only locale matching needs the list.
-    }
+  try {
+    voices = await listVoices();
+  } catch {
+    // Without the catalogue, a named voice still works; only locale matching
+    // needs the list.
   }
   // The voice is chosen from the *answer's own language* when the caller did not
   // name one. Without this an English voice reads Bengali text and the result is
   // unintelligible — the letters are simply not pronounced — which is exactly
   // what a Bengali answer sounded like before.
-  const detected = voice ? undefined : detectLocale(spoken);
+  const detected = detectLocale(spoken);
   const chosen =
     voice || pickVoice(locale || detected || "en-US", voices) || "en-US-EmmaMultilingualNeural";
 

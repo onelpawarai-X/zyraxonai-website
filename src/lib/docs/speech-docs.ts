@@ -25,7 +25,7 @@ export const SPEECH_DOCS: DocPage[] = [
         t: "note",
         kind: "success",
         title: "The whole feature is three endpoints",
-        text: `**Listen:** \`POST ${TTS}\` — send text, get streamed MP3.\n**Voices:** \`GET ${VOICES}\` — 322 voices across 75 languages.\n**Speak:** \`POST ${STT}\` — send a recording, or stream audio live, and get the transcript.`,
+        text: `**Listen:** \`POST ${TTS}\` — send text, get streamed MP3.\n**Voices:** \`GET ${VOICES}\` — 322 voices across 75 languages.\n**Speak:** \`POST ${STT}\` — send a recording, get the transcript.`,
       },
       { t: "h2", text: "Hear an answer" },
       {
@@ -179,12 +179,6 @@ await audio.play();`,
         text: "Record on the device, transcribe it, then send the transcript as an ordinary chat turn. That is the input half of the loop.",
       },
       {
-        t: "note",
-        kind: "warn",
-        title: "You must say which language is being spoken",
-        text: "`language` is required, in both the recording and the live mode. The recogniser does not detect language — asked for English about Bengali audio it returns English-sounding words at high confidence instead of failing — so a guess is a confident wrong answer. The caller knows the language; the endpoint asks rather than assumes.",
-      },
-      {
         t: "code",
         lang: "bash",
         code: `TEXT=$(curl -s ${STT} -F "file=@recording.mp3" -F "language=bn" | jq -r '.text')
@@ -193,57 +187,6 @@ curl -s ${API_ORIGIN}/api/public/zyraxon/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -d "{\\"model\\":\\"zyraxon-codex\\",\\"messages\\":[{\\"role\\":\\"user\\",\\"content\\":\\"$TEXT\\"}]}" \\
 | jq -r '.choices[0].message.content'`,
-      },
-      { t: "h2", text: "Hear it while it is being said" },
-      {
-        t: "p",
-        text: "The same endpoint transcribes **as you speak**. Send raw PCM and the response is a stream of server-sent events: a partial that grows word by word, and a committed segment every few seconds. The request picks the mode — an `Accept: text/event-stream` header, `?stream=1`, or a raw PCM content type.",
-      },
-      {
-        t: "code",
-        lang: "bash",
-        code: `# Live, from any audio source. One second of 16 kHz mono PCM is 32000 bytes.
-ffmpeg -i recording.mp3 -ar 16000 -ac 1 -f s16le - \\
-| curl -sN -X POST "${STT}?stream=1&language=bn" \\
-    -H "Content-Type: audio/l16; rate=16000" \\
-    -H "Accept: text/event-stream" \\
-    --data-binary @-
-
-# event: ready     {"rate":16000,"language":"bn-BD"}
-# event: partial   {"text":"আজ আকাশ"}
-# event: partial   {"text":"আজ আকাশ পরিষ্কার"}
-# event: segment   {"text":"আজ আকাশ পরিষ্কার এবং সূর্য উজ্জ্বল।","seconds":4.2}
-# event: done      {"text":"...","segments":2,"seconds":8.1}`,
-      },
-      {
-        t: "table",
-        head: ["Event", "When", "What it holds"],
-        rows: [
-          ["`ready`", "Immediately", "The rate it is reading, and the language you asked for."],
-          [
-            "`partial`",
-            "About every 1.2 seconds",
-            "The transcript so far, growing. Replace the last line with it.",
-          ],
-          ["`segment`", "Every 4 seconds", "Text committed so far. This part never changes again."],
-          [
-            "`done`",
-            "When the audio ends",
-            "The whole transcript, how many chunks, and how long it heard.",
-          ],
-        ],
-      },
-      {
-        t: "note",
-        kind: "info",
-        title: "Why live mode takes PCM and not a recording",
-        text: "A WebM or Opus frame has to be decoded as a whole unit, so a compressed stream cannot be cut at an arbitrary moment without corrupting the audio. Raw PCM samples can be split anywhere, which is what lets the endpoint commit a segment mid-sentence. A browser produces PCM directly from an `AudioWorklet`, so this costs the client nothing.",
-      },
-      {
-        t: "note",
-        kind: "tip",
-        title: "A word on the boundary is not lost",
-        text: "When a segment closes, the last fraction of a second carries into the next one, so a word straddling the cut is heard whole rather than clipped in half. Committed text is never rewritten, so a display only ever grows.",
       },
       { t: "h2", text: "A complete spoken conversation" },
       {
@@ -258,7 +201,6 @@ ffmpeg -i recording.mp3 -ar 16000 -ac 1 -f s16le - \\
 set -euo pipefail
 
 ORIGIN="https://zyraxonai.lovable.app"
-# language is required — the recogniser does not detect it.
 QUESTION=$(curl -s "\${ORIGIN}/api/public/stt" -F "file=@$1" -F "language=bn" | jq -r '.text')
 echo "You said: $QUESTION"
 
@@ -303,16 +245,6 @@ ffplay -nodisp -autoexit reply.mp3`,
         text: "Synthesis runs on Microsoft Edge's Read Aloud engine — the same one behind the browser feature — through the same protocol. That is what gives 322 neural voices in 75 languages with no key to buy and no per-character bill. Audio is MP3 at 24 kHz mono.",
       },
       {
-        t: "p",
-        text: "Recognition runs on the speech service the Chromium browser uses, reached with its published client key — the same arrangement, on the other side of the conversation. It takes raw PCM and FLAC, and it does not detect language, which is why `language` is required rather than guessed.",
-      },
-      {
-        t: "note",
-        kind: "info",
-        title: "Neither engine is hard-wired in",
-        text: "Both are written as interchangeable backends behind one function (`src/lib/stt/engine.ts` for recognition, `src/lib/tts/edge-speech.server.ts` for synthesis). If either service changes its contract, a second backend is added beside the first and the fallback order changes — no caller is touched, and nothing needs to be rewritten.",
-      },
-      {
         t: "note",
         kind: "info",
         title: "What you receive",
@@ -329,11 +261,6 @@ ffplay -nodisp -autoexit reply.mp3`,
             "Send the answer's text.",
           ],
           ["`413`", "The text is over 5000 characters.", "Split it and speak it in parts."],
-          [
-            "`422`",
-            "`language` was not sent to `/api/public/stt`.",
-            "Send it, e.g. `bn`. The endpoint does not detect language.",
-          ],
           ["`502`", "The speech engine refused the connection.", "Retry; it is usually transient."],
         ],
       },

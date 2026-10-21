@@ -56,7 +56,6 @@ const ENDPOINTS: Entry[] = [
   { path: "/api/public/zyraxon/v1/models", changefreq: "weekly", priority: "0.8" },
   { path: "/api/public/zyraxon/v1/provider", changefreq: "weekly", priority: "0.7" },
   { path: "/api/public/zyraxon/v1/integrations", changefreq: "weekly", priority: "0.7" },
-  { path: "/api/public/zyraxon/v1/endpoints", changefreq: "weekly", priority: "0.7" },
   { path: "/api/public/tts", changefreq: "weekly", priority: "0.8" },
   { path: "/api/public/tts/voices", changefreq: "weekly", priority: "0.7" },
   { path: "/api/public/stt", changefreq: "weekly", priority: "0.7" },

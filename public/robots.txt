@@ -1,25 +1,12 @@
 User-agent: *
 Allow: /
-# A search or fetch tool pointed at the provider should be able to read the
-# contract as data, not only as a rendered page. These four are the contract:
-# the catalogue itself, and the three live lists it refers to.
-Allow: /api/public/zyraxon/v1/endpoints
-Allow: /api/public/zyraxon/v1/models
-Allow: /api/public/zyraxon/v1/provider
-Allow: /api/public/zyraxon/v1/integrations
-Allow: /api/public/stt
-
-# Everything else under the API is a call, not a document: a crawler has no
-# reason to hit one, and letting it would waste both sides' budget. The pages
+# Endpoints are documented and indexable, but not crawled: a crawler has no
+# reason to hit an API, and letting it would waste both sides' budget. The pages
 # that describe them are what should rank, and /providers links to each one.
 Disallow: /api/
 Disallow: /nebula
 
 # Every page, the API surface, and the pages that only exist at runtime.
-# A plain-text map of the provider, for a search or fetch tool that would rather
-# read one file than crawl. Points at the canonical page and the JSON contracts.
-# https://zyraxonai.lovable.app/llms.txt
-
 Sitemap: https://zyraxonai.lovable.app/sitemap.xml
 Sitemap: https://zyraxonai.lovable.app/sitemap-api.xml
 Sitemap: https://zyraxonai.lovable.app/api/public/sitemap-dynamic
