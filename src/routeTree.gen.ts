@@ -86,6 +86,7 @@ import { Route as ApiPublicAuthGithubStartRouteImport } from './routes/api/publi
 import { Route as ApiPublicSharesIdIndexRouteImport } from './routes/api/public/shares/$id/index'
 import { Route as ApiPublicSharesIdDataRouteImport } from './routes/api/public/shares/$id/data'
 import { Route as ApiPublicSharesIdSyncRouteImport } from './routes/api/public/shares/$id/sync'
+import { Route as ApiPublicZyraxonV1EndpointsRouteImport } from './routes/api/public/zyraxon/v1/endpoints'
 import { Route as ApiPublicZyraxonV1IntegrationsRouteImport } from './routes/api/public/zyraxon/v1/integrations'
 import { Route as ApiPublicZyraxonV1ModelsRouteImport } from './routes/api/public/zyraxon/v1/models'
 import { Route as ApiPublicZyraxonV1ProviderRouteImport } from './routes/api/public/zyraxon/v1/provider'
@@ -487,6 +488,12 @@ const ApiPublicSharesIdSyncRoute = ApiPublicSharesIdSyncRouteImport.update({
   path: '/api/public/shares/$id/sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicZyraxonV1EndpointsRoute =
+  ApiPublicZyraxonV1EndpointsRouteImport.update({
+    id: '/api/public/zyraxon/v1/endpoints',
+    path: '/api/public/zyraxon/v1/endpoints',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicZyraxonV1IntegrationsRoute =
   ApiPublicZyraxonV1IntegrationsRouteImport.update({
     id: '/api/public/zyraxon/v1/integrations',
@@ -595,6 +602,7 @@ export interface FileRoutesByFullPath {
   '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
+  '/api/public/zyraxon/v1/endpoints': typeof ApiPublicZyraxonV1EndpointsRoute
   '/api/public/zyraxon/v1/integrations': typeof ApiPublicZyraxonV1IntegrationsRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
   '/api/public/zyraxon/v1/provider': typeof ApiPublicZyraxonV1ProviderRoute
@@ -679,6 +687,7 @@ export interface FileRoutesByTo {
   '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
+  '/api/public/zyraxon/v1/endpoints': typeof ApiPublicZyraxonV1EndpointsRoute
   '/api/public/zyraxon/v1/integrations': typeof ApiPublicZyraxonV1IntegrationsRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
   '/api/public/zyraxon/v1/provider': typeof ApiPublicZyraxonV1ProviderRoute
@@ -764,6 +773,7 @@ export interface FileRoutesById {
   '/api/public/auth/github/start': typeof ApiPublicAuthGithubStartRoute
   '/api/public/shares/$id/data': typeof ApiPublicSharesIdDataRoute
   '/api/public/shares/$id/sync': typeof ApiPublicSharesIdSyncRoute
+  '/api/public/zyraxon/v1/endpoints': typeof ApiPublicZyraxonV1EndpointsRoute
   '/api/public/zyraxon/v1/integrations': typeof ApiPublicZyraxonV1IntegrationsRoute
   '/api/public/zyraxon/v1/models': typeof ApiPublicZyraxonV1ModelsRoute
   '/api/public/zyraxon/v1/provider': typeof ApiPublicZyraxonV1ProviderRoute
@@ -850,6 +860,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/github/start'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
+    | '/api/public/zyraxon/v1/endpoints'
     | '/api/public/zyraxon/v1/integrations'
     | '/api/public/zyraxon/v1/models'
     | '/api/public/zyraxon/v1/provider'
@@ -934,6 +945,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/github/start'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
+    | '/api/public/zyraxon/v1/endpoints'
     | '/api/public/zyraxon/v1/integrations'
     | '/api/public/zyraxon/v1/models'
     | '/api/public/zyraxon/v1/provider'
@@ -1018,6 +1030,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/github/start'
     | '/api/public/shares/$id/data'
     | '/api/public/shares/$id/sync'
+    | '/api/public/zyraxon/v1/endpoints'
     | '/api/public/zyraxon/v1/integrations'
     | '/api/public/zyraxon/v1/models'
     | '/api/public/zyraxon/v1/provider'
@@ -1096,6 +1109,7 @@ export interface RootRouteChildren {
   ApiSharesIdIndexRoute: typeof ApiSharesIdIndexRoute
   ApiPublicSharesIdDataRoute: typeof ApiPublicSharesIdDataRoute
   ApiPublicSharesIdSyncRoute: typeof ApiPublicSharesIdSyncRoute
+  ApiPublicZyraxonV1EndpointsRoute: typeof ApiPublicZyraxonV1EndpointsRoute
   ApiPublicZyraxonV1IntegrationsRoute: typeof ApiPublicZyraxonV1IntegrationsRoute
   ApiPublicZyraxonV1ModelsRoute: typeof ApiPublicZyraxonV1ModelsRoute
   ApiPublicZyraxonV1ProviderRoute: typeof ApiPublicZyraxonV1ProviderRoute
@@ -1644,6 +1658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSharesIdSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zyraxon/v1/endpoints': {
+      id: '/api/public/zyraxon/v1/endpoints'
+      path: '/api/public/zyraxon/v1/endpoints'
+      fullPath: '/api/public/zyraxon/v1/endpoints'
+      preLoaderRoute: typeof ApiPublicZyraxonV1EndpointsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/zyraxon/v1/integrations': {
       id: '/api/public/zyraxon/v1/integrations'
       path: '/api/public/zyraxon/v1/integrations'
@@ -1807,6 +1828,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSharesIdIndexRoute: ApiSharesIdIndexRoute,
   ApiPublicSharesIdDataRoute: ApiPublicSharesIdDataRoute,
   ApiPublicSharesIdSyncRoute: ApiPublicSharesIdSyncRoute,
+  ApiPublicZyraxonV1EndpointsRoute: ApiPublicZyraxonV1EndpointsRoute,
   ApiPublicZyraxonV1IntegrationsRoute: ApiPublicZyraxonV1IntegrationsRoute,
   ApiPublicZyraxonV1ModelsRoute: ApiPublicZyraxonV1ModelsRoute,
   ApiPublicZyraxonV1ProviderRoute: ApiPublicZyraxonV1ProviderRoute,

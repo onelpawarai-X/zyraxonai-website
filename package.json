@@ -67,6 +67,8 @@
     "input-otp": "^1.4.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.575.0",
+    "mpg123-decoder": "^1.0.3",
+    "opus-decoder": "^0.7.12",
     "pdf-lib": "^1.17.1",
     "peerjs": "^1.5.5",
     "react": "^19.2.0",

@@ -1,34 +1,51 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { sniff } from "@/lib/stt/audio";
+import { recognize } from "@/lib/stt/engine";
+import { decodeContainer, toInput, type Decoded } from "@/lib/stt/ingest";
+import { liveTranscript, segmentPlan, type LiveEvent } from "@/lib/stt/stream";
 
 /**
- * POST /api/public/stt
+ * POST /api/public/stt — speech to text.
  *
- * Speech-to-Text endpoint for the ZYRAXON-AI Electron app.
+ * ONE endpoint, two modes, chosen by the request itself:
  *
- * Two ways to call it:
+ *   BATCH  — send a recording, get the whole transcript.
+ *     multipart/form-data : file=<audio>, language=bn
+ *     raw body            : Content-Type: audio/wav (or webm, mpeg, …), ?language=bn
+ *     JSON                : { "audio": "<base64>", "language": "bn" }
  *
- * 1) multipart/form-data (recommended)
- *    FormData fields:
- *      - file  : audio blob (wav / mp3 / mp4 / webm)
- *      - model : optional, defaults to "openai/gpt-4o-mini-transcribe"
- *      - language : optional ISO-639-1 (e.g. "en", "bn"); omit to auto-detect
+ *   LIVE   — stream audio while speaking, receive text as it is recognised.
+ *     raw body            : Content-Type: audio/l16; rate=16000
+ *     Accept: text/event-stream      (also auto-selected by ?stream=1)
+ *     the response is Server-Sent Events:
+ *       event: ready      { rate, language }
+ *       event: partial    { text }            grows as you speak
+ *       event: segment    { text, seconds }   a committed chunk
+ *       event: done       { text, segments, seconds }
  *
- * 2) raw binary body
- *    Headers: Content-Type: audio/wav (or audio/webm, audio/mpeg, audio/mp4)
- *    Query params:
- *      - language : optional
- *      - model    : optional
+ * `language` is REQUIRED in both modes. The recogniser does not detect language
+ * — asked for English about Bengali audio it returns English-sounding words at
+ * high confidence rather than failing — so a guess is worse than no answer. The
+ * caller knows which language is being spoken; the endpoint does not pretend to.
  *
- * Response JSON:
- *   { success: boolean, text: string, language?: string, error?: string }
+ * A GET returns this same documentation as JSON, so the endpoint explains
+ * itself to a human and to a coding assistant without a separate page.
  *
- * CORS is open (*), so an Electron renderer or any origin can call it.
+ * Accepted containers: wav, mp3, flac, ogg, webm, and raw PCM. The format is
+ * read from the bytes, not from the Content-Type, so a mislabelled upload still
+ * works.
+ *
+ * No API key is needed. The recogniser is the speech service the Chromium
+ * browser uses, reached with its published client key, the same arrangement the
+ * text-to-speech endpoint uses for Edge's voices. Nothing here bills per call,
+ * so it cannot be switched off by a credit balance — which is how the previous
+ * implementation failed.
  */
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept",
   "Access-Control-Max-Age": "86400",
 } as const;
 
@@ -38,22 +55,269 @@ const JSON_HEADERS = {
   ...CORS_HEADERS,
 } as const;
 
-const DEFAULT_MODEL = "openai/gpt-4o-mini-transcribe";
-const MAX_BYTES = 25 * 1024 * 1024; // 25 MiB (gateway cap)
+/** Largest upload accepted in batch mode. A clip longer than this is a
+ *  recording, not a question, and belongs on the live mode. */
+const MAX_BYTES = 25 * 1024 * 1024;
 
-function jsonResponse(body: any, status = 200) {
+/** Longest audio sent to the recogniser in one call. The service truncates
+ *  somewhere past a minute, so a longer recording is cut into windows and the
+ *  transcripts joined — which is what the live path does too. */
+const MAX_WINDOW_SECONDS = 25;
+
+function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
 }
 
-function extForMime(mime: string): string {
-  const m = mime.split(";")[0].trim().toLowerCase();
-  if (m.includes("wav")) return "wav";
-  if (m.includes("mpeg") || m.includes("mp3")) return "mp3";
-  if (m.includes("mp4") || m.includes("m4a") || m.includes("aac")) return "mp4";
-  if (m.includes("ogg") || m.includes("opus")) return "ogg";
-  if (m.includes("webm")) return "webm";
-  if (m.includes("flac")) return "flac";
-  return "webm";
+function fail(error: string, status = 400): Response {
+  return json({ success: false, text: "", error }, status);
+}
+
+/** The languages the recogniser is known to accept, each with the region that
+ *  is the sensible default for it. A caller sends `bn` and gets `bn-BD`; a
+ *  caller who cares sends `bn-IN` and gets exactly that.
+ *
+ *  This list is published in the GET documentation so a client can offer a
+ *  language picker without guessing at what is supported. */
+export const LANGUAGES: { code: string; locale: string; name: string }[] = [
+  { code: "bn", locale: "bn-BD", name: "Bengali" },
+  { code: "en", locale: "en-US", name: "English" },
+  { code: "hi", locale: "hi-IN", name: "Hindi" },
+  { code: "ur", locale: "ur-PK", name: "Urdu" },
+  { code: "ar", locale: "ar-SA", name: "Arabic" },
+  { code: "es", locale: "es-ES", name: "Spanish" },
+  { code: "fr", locale: "fr-FR", name: "French" },
+  { code: "de", locale: "de-DE", name: "German" },
+  { code: "it", locale: "it-IT", name: "Italian" },
+  { code: "pt", locale: "pt-BR", name: "Portuguese" },
+  { code: "ru", locale: "ru-RU", name: "Russian" },
+  { code: "uk", locale: "uk-UA", name: "Ukrainian" },
+  { code: "nl", locale: "nl-NL", name: "Dutch" },
+  { code: "pl", locale: "pl-PL", name: "Polish" },
+  { code: "sv", locale: "sv-SE", name: "Swedish" },
+  { code: "tr", locale: "tr-TR", name: "Turkish" },
+  { code: "fa", locale: "fa-IR", name: "Persian" },
+  { code: "he", locale: "he-IL", name: "Hebrew" },
+  { code: "el", locale: "el-GR", name: "Greek" },
+  { code: "th", locale: "th-TH", name: "Thai" },
+  { code: "vi", locale: "vi-VN", name: "Vietnamese" },
+  { code: "id", locale: "id-ID", name: "Indonesian" },
+  { code: "ta", locale: "ta-IN", name: "Tamil" },
+  { code: "te", locale: "te-IN", name: "Telugu" },
+  { code: "ml", locale: "ml-IN", name: "Malayalam" },
+  { code: "kn", locale: "kn-IN", name: "Kannada" },
+  { code: "gu", locale: "gu-IN", name: "Gujarati" },
+  { code: "pa", locale: "pa-IN", name: "Punjabi" },
+  { code: "mr", locale: "mr-IN", name: "Marathi" },
+  { code: "ne", locale: "ne-NP", name: "Nepali" },
+  { code: "si", locale: "si-LK", name: "Sinhala" },
+  { code: "zh", locale: "zh-CN", name: "Chinese" },
+  { code: "ja", locale: "ja-JP", name: "Japanese" },
+  { code: "ko", locale: "ko-KR", name: "Korean" },
+];
+
+/** Locale defaults for a bare language code, because the recogniser wants a
+ *  region and a caller should not have to know that. */
+const REGION: Record<string, string> = Object.fromEntries(LANGUAGES.map((l) => [l.code, l.locale]));
+
+/** Everything a caller may name a language with, reduced to a locale.
+ *
+ *  Returns undefined only when nothing was sent. An unrecognised code is passed
+ *  through with a region rather than rejected, because the recogniser's own
+ *  language coverage is wider than any list we could keep current — but "auto"
+ *  is refused, since this endpoint does not detect language and silently
+ *  substituting a default would be a wrong answer dressed as a right one. */
+function normaliseLanguage(value: string | null | undefined): string | undefined {
+  const raw = String(value ?? "").trim();
+  if (!raw) return undefined;
+  const cleaned = raw.replace("_", "-");
+  if (cleaned.includes("-")) return cleaned;
+  const lang = cleaned.toLowerCase();
+  return REGION[lang] ?? `${lang}-${lang.toUpperCase()}`;
+}
+
+/** Read the audio out of whichever of the three batch shapes the caller used. */
+async function readInput(
+  request: Request,
+): Promise<{ bytes: Uint8Array; declared: string; language?: string } | Response> {
+  const url = new URL(request.url);
+  const contentType = (request.headers.get("content-type") || "").toLowerCase();
+  const queryLanguage = normaliseLanguage(url.searchParams.get("language"));
+
+  if (contentType.includes("multipart/form-data")) {
+    const form = await request.formData();
+    const file = form.get("file");
+    if (!(file instanceof Blob)) return fail('Missing "file" field in the form data.');
+    const field = form.get("language");
+    return {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      declared: file.type || "",
+      language: normaliseLanguage(typeof field === "string" ? field : null) ?? queryLanguage,
+    };
+  }
+
+  if (contentType.includes("application/json")) {
+    // The JSON shape is the caller's, so it is read as unknown and each field is
+    // narrowed where it is used rather than trusted.
+    let body: Record<string, unknown>;
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return fail("The request body is not valid JSON.");
+    }
+    const base64 = String(body?.audio ?? body?.file ?? "").trim();
+    if (!base64) return fail('JSON calls need an "audio" field holding base64 audio.');
+    const bytes = base64ToBytes(base64);
+    if (!bytes) return fail('The "audio" field is not valid base64.');
+    return {
+      bytes,
+      declared: typeof body.format === "string" ? `audio/${body.format}` : "",
+      language:
+        normaliseLanguage(typeof body.language === "string" ? body.language : null) ??
+        queryLanguage,
+    };
+  }
+
+  const buffer = await request.arrayBuffer();
+  if (!buffer || buffer.byteLength === 0) return fail("The request body is empty.");
+  return { bytes: new Uint8Array(buffer), declared: contentType, language: queryLanguage };
+}
+
+function base64ToBytes(value: string): Uint8Array | null {
+  const payload = value.includes(",") ? value.slice(value.indexOf(",") + 1) : value;
+  try {
+    const binary = atob(payload);
+    const out = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/** Transcribe a clip that may be longer than one request can carry.
+ *
+ *  A caller who uploads a five-minute recording gets the whole transcript rather
+ *  than the first minute, and because the windows are taken in order the result
+ *  reads continuously. */
+async function transcribeLong(
+  decoded: Decoded,
+  locale: string,
+  signal?: AbortSignal,
+): Promise<{ text: string; confidence: number; engine: string }> {
+  const input = toInput(decoded);
+  if (
+    input.kind === "flac" ||
+    input.pcm.samples.length <= MAX_WINDOW_SECONDS * input.pcm.sampleRate
+  ) {
+    const one = await recognize(input, locale, signal);
+    return { text: one.text.trim(), confidence: one.confidence, engine: one.engine };
+  }
+
+  const perWindow = MAX_WINDOW_SECONDS * input.pcm.sampleRate;
+  const parts: string[] = [];
+  let confidence = 0;
+  let engine = "";
+  for (let at = 0; at < input.pcm.samples.length; at += perWindow) {
+    const window = {
+      kind: "pcm" as const,
+      pcm: {
+        samples: input.pcm.samples.subarray(at, Math.min(input.pcm.samples.length, at + perWindow)),
+        sampleRate: input.pcm.sampleRate,
+      },
+    };
+    // A tail shorter than half a second is not worth a round trip.
+    if (window.pcm.samples.length < input.pcm.sampleRate * 0.4) break;
+    const one = await recognize(window, locale, signal);
+    if (one.text.trim()) parts.push(one.text.trim());
+    if (one.confidence > confidence) confidence = one.confidence;
+    engine = one.engine;
+  }
+  return { text: parts.join(" ").trim(), confidence, engine };
+}
+
+/** True when the caller wants live transcription rather than a batch answer. */
+function wantsStream(request: Request): boolean {
+  const url = new URL(request.url);
+  if (url.searchParams.get("stream") === "1") return true;
+  if (url.searchParams.get("mode") === "live") return true;
+  const accept = (request.headers.get("accept") || "").toLowerCase();
+  if (accept.includes("text/event-stream")) return true;
+  // A raw PCM body has no container to decode and no length to wait for, so it
+  // can only be a live stream.
+  const contentType = (request.headers.get("content-type") || "").toLowerCase();
+  return contentType.includes("audio/l16") || contentType.includes("audio/pcm");
+}
+
+/** The rate a raw PCM stream is arriving at, from the Content-Type. */
+function declaredRate(request: Request): number {
+  const contentType = request.headers.get("content-type") || "";
+  const match = /rate\s*=\s*(\d+)/i.exec(contentType);
+  const url = new URL(request.url);
+  const fromQuery = Number(url.searchParams.get("rate") || 0);
+  const rate = match ? Number(match[1]) : fromQuery;
+  return rate > 0 ? rate : 16000;
+}
+
+/** Server-Sent Events for the live mode. */
+function streamResponse(request: Request): Response {
+  const rate = declaredRate(request);
+  const url = new URL(request.url);
+  const language = normaliseLanguage(url.searchParams.get("language"));
+  const segmentSeconds = Number(url.searchParams.get("segment") || 0) || undefined;
+  const partialSeconds = Number(url.searchParams.get("partial") || 0) || undefined;
+
+  if (!language) {
+    return fail(
+      "The `language` query parameter is required, e.g. `?language=bn`. This endpoint does not detect language.",
+      422,
+    );
+  }
+  if (!request.body) return fail("The live mode needs an audio body.");
+
+  const encoder = new TextEncoder();
+  const source = request.body;
+  const signal = request.signal;
+
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: LiveEvent) => {
+        controller.enqueue(
+          encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`),
+        );
+      };
+      try {
+        for await (const event of liveTranscript(source, {
+          rate,
+          language,
+          segmentSeconds,
+          partialSeconds,
+          signal,
+        })) {
+          send(event);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "transcription failed";
+        controller.enqueue(
+          encoder.encode(`event: error\ndata: ${JSON.stringify({ error: message })}\n\n`),
+        );
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      // Stops a proxy from buffering the stream and turning live text into one
+      // delayed lump.
+      "X-Accel-Buffering": "no",
+      ...CORS_HEADERS,
+    },
+  });
 }
 
 export const Route = createFileRoute("/api/public/stt")({
@@ -61,118 +325,119 @@ export const Route = createFileRoute("/api/public/stt")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS_HEADERS }),
 
+      // The endpoint documents itself. A coding assistant that is handed this
+      // URL can read the contract without a human explaining it.
+      GET: async () =>
+        json({
+          endpoint: "/api/public/stt",
+          methods: ["POST"],
+          modes: {
+            batch: {
+              when: "You already have a recording.",
+              contentTypes: ["multipart/form-data", "audio/*", "application/json"],
+              multipart: { file: "the audio", language: "required, e.g. bn or bn-BD" },
+              json: { audio: "base64 audio", language: "required", format: "optional, e.g. webm" },
+              response: {
+                success: "boolean",
+                text: "the transcript",
+                language: "the language you asked for, e.g. bn",
+                confidence: "0..1",
+                engine: "which recogniser answered",
+                container: "what the bytes were read as",
+                duration: "seconds of audio",
+                elapsed: "seconds spent transcribing",
+              },
+            },
+            live: {
+              when: "Someone is speaking now and you want text as they speak.",
+              contentType: "audio/l16; rate=16000",
+              accept: "text/event-stream",
+              body: "raw 16-bit mono PCM, streamed; one second is 32000 bytes",
+              query: {
+                language: "required, e.g. bn or bn-BD",
+                segment: "seconds per commit, default 4",
+                partial: "seconds between partials, default 1.2",
+              },
+              events: {
+                ready: "{ rate, language }",
+                partial: "{ text } — grows as the speaker continues",
+                segment: "{ text, seconds } — a committed chunk",
+                done: {
+                  text: "the whole transcript",
+                  segments: "how many chunks",
+                  seconds: "audio heard",
+                },
+              },
+            },
+          },
+          containers: ["wav", "mp3", "flac", "ogg", "webm", "pcm"],
+          languageRequired: true,
+          languageNote:
+            "The recogniser does not detect language. Name the language being spoken; the endpoint will not guess.",
+          languages: LANGUAGES,
+          limits: { maxBytes: MAX_BYTES, maxWindowSeconds: MAX_WINDOW_SECONDS },
+          plan: segmentPlan(16000),
+          auth: "none required",
+          cost: "free; the recogniser needs no key and bills nothing per call",
+        }),
+
       POST: async ({ request }) => {
         try {
-          const apiKey = process.env.LOVABLE_API_KEY;
-          if (!apiKey) {
-            return jsonResponse(
-              {
-                success: false,
-                text: "",
-                error:
-                  "LOVABLE_API_KEY is not configured on the server. Enable Lovable AI in the workspace.",
-              },
-              500,
+          // Live mode: the caller is streaming audio now and wants text as it
+          // arrives. Chosen by the request itself — an SSE Accept header, a
+          // `?stream=1`, or a raw PCM content type.
+          if (wantsStream(request)) return streamResponse(request);
+
+          const read = await readInput(request);
+          if (read instanceof Response) return read;
+          const { bytes, declared, language } = read;
+
+          // Required, not defaulted. Guessing here is how a Bengali question
+          // comes back as confident Hindi: the recogniser answers in whatever
+          // language it is asked, so a wrong guess is a wrong transcript.
+          if (!language) {
+            return fail(
+              "The `language` field is required, e.g. `bn` or `bn-BD`. This endpoint does not detect language.",
+              422,
             );
           }
 
-          const url = new URL(request.url);
-          const qLang = url.searchParams.get("language") || undefined;
-          const qModel = url.searchParams.get("model") || undefined;
-
-          const contentType = request.headers.get("content-type") || "";
-
-          let audioBlob: Blob;
-          let filename = "recording.webm";
-          let language: string | undefined = qLang;
-          let model: string = qModel || DEFAULT_MODEL;
-
-          if (contentType.includes("multipart/form-data")) {
-            const form = await request.formData();
-            const f = form.get("file");
-            if (!(f instanceof Blob)) {
-              return jsonResponse(
-                { success: false, text: "", error: 'Missing "file" field in form data.' },
-                400,
-              );
-            }
-            audioBlob = f;
-            filename = (f as File).name || `recording.${extForMime(f.type || "audio/webm")}`;
-            const lf = form.get("language");
-            if (typeof lf === "string" && lf) language = lf;
-            const mf = form.get("model");
-            if (typeof mf === "string" && mf) model = mf;
-          } else {
-            // Raw binary body
-            const buf = await request.arrayBuffer();
-            if (!buf || buf.byteLength === 0) {
-              return jsonResponse({ success: false, text: "", error: "Empty request body." }, 400);
-            }
-            if (buf.byteLength > MAX_BYTES) {
-              return jsonResponse(
-                { success: false, text: "", error: "Audio too large (>25 MiB)." },
-                413,
-              );
-            }
-            const mime = contentType || "audio/webm";
-            audioBlob = new Blob([buf], { type: mime });
-            filename = `recording.${extForMime(mime)}`;
+          if (bytes.length === 0) return fail("The audio is empty.");
+          if (bytes.length > MAX_BYTES) {
+            return fail(`The audio is too large (${bytes.length} bytes, limit ${MAX_BYTES}).`, 413);
           }
 
-          if (audioBlob.size === 0) {
-            return jsonResponse({ success: false, text: "", error: "Audio blob is empty." }, 400);
-          }
-          if (audioBlob.size > MAX_BYTES) {
-            return jsonResponse(
-              { success: false, text: "", error: "Audio too large (>25 MiB)." },
-              413,
+          const container = sniff(bytes);
+          if (container === "unknown") {
+            return fail(
+              "The upload does not look like audio. Send WAV, MP3, FLAC, Ogg, WebM, or raw PCM.",
             );
           }
 
-          const upstream = new FormData();
-          upstream.append("model", model);
-          upstream.append("file", audioBlob, filename);
-          if (language) upstream.append("language", language);
+          const decoded = await decodeContainer(bytes, container, declared);
+          const started = Date.now();
+          const result = await transcribeLong(decoded, language, request.signal);
 
-          const gwRes = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${apiKey}` },
-            body: upstream,
-          });
-
-          if (!gwRes.ok) {
-            const errText = await gwRes.text().catch(() => "");
-            console.error("[STT] gateway error", gwRes.status, errText);
-            return jsonResponse(
-              {
-                success: false,
-                text: "",
-                error: `Transcription failed (${gwRes.status}): ${errText.slice(0, 300)}`,
-              },
-              gwRes.status === 402 || gwRes.status === 429 ? gwRes.status : 502,
-            );
-          }
-
-          const data = (await gwRes.json()) as {
-            text?: string;
-            language?: string;
-          };
-
-          return jsonResponse({
+          return json({
             success: true,
-            text: data.text ?? "",
-            language: data.language ?? language,
+            text: result.text,
+            // Echoed back so a client can confirm what it asked for without
+            // tracking the request itself.
+            language: language.split("-")[0],
+            locale: language,
+            confidence: Number(result.confidence.toFixed(4)),
+            engine: result.engine,
+            container,
+            duration: Number(decoded.seconds.toFixed(2)),
+            elapsed: Number(((Date.now() - started) / 1000).toFixed(2)),
           });
         } catch (error) {
+          const message = error instanceof Error ? error.message : "Internal server error";
+          // A caller who disconnected is not an error worth reporting.
+          if (/abort/i.test(message))
+            return new Response(null, { status: 499, headers: CORS_HEADERS });
           console.error("[STT] handler error", error);
-          return jsonResponse(
-            {
-              success: false,
-              text: "",
-              error: error instanceof Error ? error.message : "Internal server error",
-            },
-            500,
-          );
+          return json({ success: false, text: "", error: message }, 502);
         }
       },
     },
