@@ -342,9 +342,18 @@ The fix hands each decoder an already-compiled module:
   "This page didn't load", not just speech. In `serve` the plugin instead
   generates a module that compiles its own bytes, which Node allows and workerd
   does not need to, because dev is never the runtime this protects.
-- `decode.ts` sets `OpusDecoder.module` / `MPEGDecoder.module` before building a
-  decoder. That static property is undocumented in the published types, hence
-  `src/types/wasm-audio-decoders.d.ts`.
+- `decode.ts` sets `Decoder.module` on the inner class — `OpusDecoder`,
+  `MPEGDecoder`, the FLAC inner `Decoder`, and the OggVorbis/AAC ones — before
+  building a decoder. That static property is undocumented in the published
+  types, hence `src/types/wasm-audio-decoders.d.ts` and
+  `src/types/vorbis-aac-decoder-inner.d.ts`. The inner class must come from the
+  same module as the public class it is handed to.
+- Ogg is routed by the codec its first page declares: Vorbis has its own decoder,
+  Opus its own. WebM is still Opus-only — its Vorbis codec is refused by name,
+  because a Vorbis packet fed to the Opus decoder crashes its wasm and a crash in
+  the request path is cancelled rather than answered. Raw AAC (ADTS) decodes; the
+  MP4/M4A wrapper is refused by name because lifting the audio out of it means
+  walking the box tree.
 - `src/lib/stt/wasm/*.wasm` are byte-identical to what each library embeds, so
   there is no third-party blob to trust and nothing to re-download.
 
