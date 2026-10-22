@@ -51,9 +51,19 @@ function assetNameFor(index: string): string | null {
 }
 
 export function wasmModulePlugin(): Plugin {
+  // Dev never bundles, so the asset rewrite below never runs there and the
+  // virtual asset id would reach Vite's loader as if it were a file path — the
+  // null byte in the id makes `readFile` throw and takes the whole module graph
+  // down with it. Dev generates a self-contained module instead.
+  let serving = false;
+
   return {
     name: "zyraxon:wasm-module",
     enforce: "pre" as const,
+
+    configResolved(config) {
+      serving = config.command === "serve";
+    },
 
     async resolveId(id: string, importer?: string) {
       if (id.startsWith(ASSET_PREFIX)) return { id, external: true };
@@ -70,6 +80,21 @@ export function wasmModulePlugin(): Plugin {
     load(id: string) {
       if (!id.startsWith(MODULE_PREFIX)) return null;
       const index = id.slice(MODULE_PREFIX.length);
+      const file = FILES[Number(index)];
+      if (!file) return null;
+      if (serving) {
+        // Compiling wasm at runtime is what the Workers runtime forbids and
+        // what this plugin exists to avoid — but only in a build. Dev runs on
+        // Node, which allows it, and a dev-only compile keeps the virtual asset
+        // id out of the module graph.
+        const base64 = readFileSync(file).toString("base64");
+        return {
+          code:
+            `const _bytes = Uint8Array.from(atob(${JSON.stringify(base64)}), (c) => c.charCodeAt(0));\n` +
+            `export default new WebAssembly.Module(_bytes);\n`,
+          map: { mappings: "" },
+        };
+      }
       return {
         code: `import _mod from ${JSON.stringify(ASSET_PREFIX + index)};\nexport default _mod;\n`,
         map: { mappings: "" },

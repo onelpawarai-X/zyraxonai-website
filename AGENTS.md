@@ -333,6 +333,15 @@ The fix hands each decoder an already-compiled module:
   import to a compiled module in every environment and writes the wasm bytes
   beside the importing chunk (in `generateBundle` + `closeBundle`; `emitFile` in
   `generateBundle` alone is not copied into a `no_bundle` Nitro output).
+- The plugin has two outputs, and dev needs the other one. In a build it emits a
+  virtual asset import and rewrites it in `generateBundle`, but dev never
+  bundles, so the rewrite never runs — the virtual id then reaches Vite's loader
+  as a file path, and the null byte in it makes `readFile` throw
+  (`ERR_INVALID_ARG_VALUE ... '\x00zyraxon-wasm-asset:0'`). That one throw takes
+  down the whole module graph, so the home page and every route failed with
+  "This page didn't load", not just speech. In `serve` the plugin instead
+  generates a module that compiles its own bytes, which Node allows and workerd
+  does not need to, because dev is never the runtime this protects.
 - `decode.ts` sets `OpusDecoder.module` / `MPEGDecoder.module` before building a
   decoder. That static property is undocumented in the published types, hence
   `src/types/wasm-audio-decoders.d.ts`.

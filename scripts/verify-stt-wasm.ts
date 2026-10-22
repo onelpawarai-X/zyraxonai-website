@@ -22,6 +22,7 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { isMp3, isOgg, isWebm, isSilent, secondsOf, sniff } from "../src/lib/stt/audio";
+import { wasmModulePlugin } from "../src/lib/stt/wasm/vite-plugin";
 
 let failures = 0;
 const check = (label: string, ok: boolean, detail = "") => {
@@ -208,6 +209,37 @@ check(
   !importsEntryPoint && decodeSource.includes('"@wasm-audio-decoders/flac/src/FLACDecoder.js"'),
   importsEntryPoint ? "the package entry point is imported as well" : "",
 );
+
+// The dev server must not see the virtual asset specifier. In a build the
+// plugin rewrites that specifier in `generateBundle`; dev never bundles, so the
+// rewrite never runs and the specifier reaches Vite's loader as if it were a
+// file path — the null byte in it makes `readFile` throw, and the whole module
+// graph dies with it. That took the home page and every route down, so the two
+// outputs are asserted here rather than trusted.
+const flacWasmPath = new URL("../src/lib/stt/wasm/flac.wasm", import.meta.url).pathname;
+for (const command of ["serve", "build"] as const) {
+  const plugin = wasmModulePlugin() as unknown as {
+    configResolved(config: { command: string }): void;
+    resolveId(this: unknown, id: string, importer?: string): Promise<unknown>;
+    load(id: string): { code: string } | null;
+  };
+  plugin.configResolved({ command });
+  const resolved = (await plugin.resolveId.call(
+    { resolve: async () => ({ id: flacWasmPath }) },
+    "./flac.wasm",
+    "/anywhere.ts",
+  )) as { id?: string } | string | null;
+  const id = typeof resolved === "string" ? resolved : (resolved?.id ?? "");
+  const code = plugin.load(id)?.code ?? "";
+  const selfContained = code.includes("WebAssembly.Module") && !code.includes("zyraxon-wasm-asset");
+  check(
+    command === "serve"
+      ? "dev compiles the wasm itself, with no virtual asset specifier"
+      : "build still defers to the bundled asset",
+    command === "serve" ? selfContained : code.includes("zyraxon-wasm-asset"),
+    (code.split("\n")[0] ?? "").slice(0, 60),
+  );
+}
 
 console.log(failures ? `\n${failures} check(s) failed` : "\nall wasm decode checks passed");
 process.exit(failures ? 1 : 0);
