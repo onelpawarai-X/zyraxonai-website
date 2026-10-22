@@ -83,6 +83,23 @@ function isRemote(url: unknown): url is string {
   return typeof url === "string" && /^https?:\/\//i.test(url);
 }
 
+/** The identity we fetch under.
+ *
+ *  A Worker's outbound `fetch` sends no `User-Agent`, and a host that filters on
+ *  it — Wikimedia and a number of CDNs return 403 to a request without one —
+ *  would make an otherwise public file look unreachable. Identifying ourselves
+ *  is also what those hosts ask for: a real name and a URL to reach us at. */
+const USER_AGENT = "ZYRAXON/1.0 (+https://zyraxonai.lovable.app; media intake)";
+
+/** The `accept` a media host expects for each kind, so a server that negotiates
+ *  returns the file rather than an HTML page about it. */
+const ACCEPT: Record<MediaKind, string> = {
+  image: "image/*,*/*;q=0.8",
+  audio: "audio/*,*/*;q=0.8",
+  video: "video/*,*/*;q=0.8",
+  pdf: "application/pdf,*/*;q=0.8",
+};
+
 function kindFor(url: string, declared?: MediaKind): MediaKind {
   if (declared) return declared;
   const ext = (/\.([a-z0-9]{1,5})(?:[?#]|$)/i.exec(url)?.[1] || "").toLowerCase();
@@ -213,6 +230,7 @@ export async function fetchRemoteBytes(
   url: string,
   capBytes: number = MAX_REMOTE_BYTES,
   fallbackMime: string = "application/octet-stream",
+  kind?: MediaKind,
 ): Promise<{ bytes: Uint8Array; mime: string } | { reason: string }> {
   if (!isRemote(url)) return { reason: "not an http(s) URL" };
   if (capBytes <= 0) return { reason: "size budget exhausted" };
@@ -221,7 +239,10 @@ export async function fetchRemoteBytes(
     res = await fetch(url, {
       redirect: "follow",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { accept: "*/*" },
+      headers: {
+        accept: (kind && ACCEPT[kind]) || "*/*",
+        "user-agent": USER_AGENT,
+      },
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -229,6 +250,13 @@ export async function fetchRemoteBytes(
   }
   if (!res.ok) {
     await res.body?.cancel().catch(() => {});
+    // A 403 from a host that filters on identity is worth one retry under a
+    // plain browser-shaped request: some CDNs reject an unknown client but
+    // serve anyone who looks like a browser, and the bytes are public either way.
+    if (res.status === 403 || res.status === 429) {
+      const retry = await fetchWithBrowserShape(url, kind, capBytes);
+      if (retry) return retry;
+    }
     return { reason: `HTTP ${res.status}` };
   }
   let bytes: Uint8Array;
@@ -238,15 +266,55 @@ export async function fetchRemoteBytes(
     return { reason: e instanceof Error ? e.message : String(e) };
   }
   const declared = String(res.headers.get("content-type") || "").split(";")[0].trim();
+  // A page instead of a file means the URL needs a login or is an HTML wrapper.
+  // Inlining it would send the model a document it cannot read, so it is
+  // reported as a failure and the caller is told to fetch it themselves.
+  if (/^text\/html/i.test(declared)) {
+    return { reason: "URL returned an HTML page, not media" };
+  }
   const mime = declared && declared !== "application/octet-stream" ? declared : fallbackMime;
   return { bytes, mime };
+}
+
+/** One retry of a rejected fetch under a browser-shaped request. Returns null
+ *  when the retry fails too, so the caller reports the original status. */
+async function fetchWithBrowserShape(
+  url: string,
+  kind: MediaKind | undefined,
+  capBytes: number,
+): Promise<{ bytes: Uint8Array; mime: string } | { reason: string } | null> {
+  try {
+    const res = await fetch(url, {
+      redirect: "follow",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: {
+        accept: (kind && ACCEPT[kind]) || "*/*",
+        "user-agent": USER_AGENT,
+        "accept-language": "en-US,en;q=0.9",
+      },
+    });
+    if (!res.ok) {
+      await res.body?.cancel().catch(() => {});
+      return null;
+    }
+    const declared = String(res.headers.get("content-type") || "").split(";")[0].trim();
+    if (/^text\/html/i.test(declared)) {
+      await res.body?.cancel().catch(() => {});
+      return { reason: "URL returned an HTML page, not media" };
+    }
+    const bytes = await readCapped(res, capBytes);
+    const mime = declared && declared !== "application/octet-stream" ? declared : "application/octet-stream";
+    return { bytes, mime };
+  } catch {
+    return null;
+  }
 }
 
 /** Fetch one remote reference and rewrite it in place as a data URL. */
 async function inlineSlot(slot: Slot, budget: number): Promise<{ bytes: number } | { reason: string }> {
   const cap = Math.min(MAX_REMOTE_BYTES, budget);
   if (cap <= 0) return { reason: "turn media budget exhausted" };
-  const got = await fetchRemoteBytes(slot.url, cap, DEFAULT_MIME[slot.kind]);
+  const got = await fetchRemoteBytes(slot.url, cap, DEFAULT_MIME[slot.kind], slot.kind);
   if ("reason" in got) return { reason: got.reason };
   slot.holder[slot.key] = `data:${got.mime};base64,${toBase64(got.bytes)}`;
   return { bytes: got.bytes.byteLength };

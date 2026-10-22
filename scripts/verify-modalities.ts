@@ -222,5 +222,110 @@ const POOL: PoolModel[] = [
   }
 }
 
+// ── 7. the fetch identifies itself, refuses an HTML page, and retries a 403 ──
+{
+  const realFetch = globalThis.fetch;
+  const seen: Array<{ url: string; ua: string; accept: string }> = [];
+  globalThis.fetch = (async (input: any, init: any) => {
+    const headers = (init?.headers || {}) as Record<string, string>;
+    seen.push({ url: String(input), ua: String(headers["user-agent"] || ""), accept: String(headers.accept || "") });
+    return new Response(new TextEncoder().encode("ID3-fake"), {
+      status: 200,
+      headers: { "content-type": "audio/mpeg" },
+    });
+  }) as typeof fetch;
+  try {
+    const { stats } = await inlineRemoteMedia([
+      { role: "user", content: [{ type: "input_audio", input_audio: { url: "https://cdn.example.com/a.mp3" } }] },
+    ] as any);
+    check("the fetch succeeds", stats.fetched === 1 && stats.failures.length === 0, JSON.stringify(stats));
+    check(
+      "the request identifies itself with a user-agent",
+      seen[0]?.ua.length > 0 && /ZYRAXON/.test(seen[0]?.ua || ""),
+      seen[0]?.ua,
+    );
+    check(
+      "the request asks for the media kind it expects",
+      /audio\//.test(seen[0]?.accept || ""),
+      seen[0]?.accept,
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// A host that answers with an HTML page is a failure, not a media file: sending
+// the model a login page as if it were audio is the silent failure to avoid.
+{
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response("<html><body>sign in</body></html>", {
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    })) as typeof fetch;
+  try {
+    const { stats } = await inlineRemoteMedia([
+      { role: "user", content: [{ type: "image_url", image_url: { url: "https://cdn.example.com/login" } }] },
+    ] as any);
+    check("an HTML page is reported as a failure", stats.failures.length === 1, JSON.stringify(stats.failures));
+    check(
+      "the reason says it was not media",
+      /HTML/i.test(stats.failures[0]?.reason || ""),
+      stats.failures[0]?.reason,
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// A 403 to an unidentified client is retried once under a browser-shaped
+// request, because a CDN that rejects an unknown client often serves the same
+// public bytes to a browser.
+{
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls++;
+    if (calls === 1) return new Response("forbidden", { status: 403 });
+    return new Response(new TextEncoder().encode("\x89PNG-fake"), {
+      status: 200,
+      headers: { "content-type": "image/png" },
+    });
+  }) as typeof fetch;
+  try {
+    const { messages, stats } = await inlineRemoteMedia([
+      { role: "user", content: [{ type: "image_url", image_url: { url: "https://cdn.example.com/pic.png" } }] },
+    ] as any);
+    check("a 403 is retried once", calls === 2, String(calls));
+    check("the retry recovers the media", stats.fetched === 1, JSON.stringify(stats));
+    check(
+      "the recovered media is inlined",
+      /^data:image\/png;base64,/.test((messages[0] as any).content[0].image_url.url),
+      String((messages[0] as any).content[0].image_url.url).slice(0, 30),
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// A host that rejects both attempts is still a clean, loud failure.
+{
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response("forbidden", { status: 403 })) as typeof fetch;
+  try {
+    const { stats } = await inlineRemoteMedia([
+      { role: "user", content: [{ type: "image_url", image_url: { url: "https://cdn.example.com/private.png" } }] },
+    ] as any);
+    check("a doubly-rejected URL fails the turn", stats.failures.length === 1, JSON.stringify(stats.failures));
+    check(
+      "the reason names the status",
+      /403/.test(stats.failures[0]?.reason || ""),
+      stats.failures[0]?.reason,
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
 console.log(`\n${failures === 0 ? "ALL MODALITY CHECKS PASSED" : failures + " CHECK(S) FAILED"}`);
 process.exit(failures === 0 ? 0 : 1);

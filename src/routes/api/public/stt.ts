@@ -174,7 +174,7 @@ async function readInput(
     // not valid base64 and would otherwise be rejected as malformed.
     const remote = String(body?.url ?? body?.audio_url ?? "").trim();
     if (remote) {
-      const got = await fetchRemoteBytes(remote, MAX_BYTES, "audio/wav");
+      const got = await fetchRemoteBytes(remote, MAX_BYTES, "audio/wav", "audio");
       if ("reason" in got) {
         return fail(`Could not read remote audio: ${got.reason} (${remote}).`, 400);
       }
