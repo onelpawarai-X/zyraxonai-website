@@ -206,27 +206,100 @@ export type PoolModel = {
   modalities?: string[];
 };
 
+/** A measurement of what a model can actually take, as opposed to what its
+ *  catalogue entry claims.
+ *
+ *  Injected rather than imported so this module keeps its no-dependency
+ *  property: it is loaded by the provider page in a browser, and the real
+ *  implementation carries the base64 probe fixtures. The server passes the
+ *  measured map; a browser or a test may pass nothing, and the catalogue is
+ *  then the only signal — which is the pre-existing behaviour, not a
+ *  regression. Returns undefined when the modality has not been measured. */
+export type CapabilityOracle = (
+  id: string,
+  modality: "image" | "audio" | "video",
+) => boolean | undefined;
+
 /** Upstream models PROBED to actually transcribe audio.
  *
- *  A catalogue entry that lists audio is not proof: several free models declare
- *  audio, accept the request, drop the audio, and answer "no audio attached".
- *  That is a silent failure the caller cannot distinguish from a deaf model, and
- *  it is exactly what made a spoken turn return a text answer.
+ *  Kept only as a *seed* for the very first turn after a cold start, when no
+ *  measurement exists yet. The authoritative answer is the live capability map
+ *  in `media-capability.server.ts`, which re-probes every model on a timer and
+ *  learns from real traffic. A hardcoded set is what broke audio in the first
+ *  place: every id below was retired upstream, so `acceptsAudio` returned false
+ *  for the whole pool and audio turns were silently routed to a text-only model.
  *
- *  These were each asked to transcribe a real spoken sentence and did. A model
- *  not on this list is never handed audio, whatever its catalogue says — a turn
- *  carrying audio is routed to one of these instead. Re-probe before adding. */
-export const AUDIO_VERIFIED_UPSTREAMS = new Set([
-  "mimo-v2.5-free",
-  "muse-spark-1.3-contributor-free",
-  "nemotron-3-nano-omni-30b-a3b-reasoning-free",
+ *  Do not extend this list. Let the probe decide. */
+export const AUDIO_VERIFIED_SEED = new Set(["mimo-v2.6-flash-free"]);
+
+/** Upstream models PROBED to actually accept video.
+ *
+ *  Same role as `AUDIO_VERIFIED_SEED`: a bootstrap hint for the first turn
+ *  after a cold start, before the sweep has measured anything. Every id here
+ *  was asked to describe a short clip and did; the catalogue's claim is not
+ *  enough, because several models declare video and then drop it.
+ *
+ *  The measurement always wins once it exists. Do not extend this list by hand
+ *  — let the probe decide. */
+export const VIDEO_VERIFIED_SEED = new Set([
+  "mimo-v2.6-flash-free",
+  "minimax-m3.1-flash-free",
+  "big-pickle",
 ]);
 
-/** True when a model is known to accept audio, from its catalogue entry and the
- *  probed set together — both must agree. */
-export function acceptsAudio(model: PoolModel): boolean {
+/** True when a model is known to accept audio.
+ *
+ *  Measured capability wins when it exists. Without a measurement the seed is
+ *  consulted, never the catalogue alone — several pool models declare audio and
+ *  then silently drop it, so a declaration is not evidence. */
+export function acceptsAudio(model: PoolModel, oracle?: CapabilityOracle): boolean {
+  return acceptsModality(model, "audio", oracle) === true;
+}
+
+/** The probed bootstrap set for a modality, or null when the catalogue is a
+ *  usable fallback.
+ *
+ *  Audio and video need a set because the catalogue is not trustworthy for
+ *  them: every pool model declares both, and most then drop the bytes. Image
+ *  does not, because a model that declares image really does take it. */
+function seedFor(kind: "image" | "audio" | "video"): Set<string> | null {
+  if (kind === "audio") return AUDIO_VERIFIED_SEED;
+  if (kind === "video") return VIDEO_VERIFIED_SEED;
+  return null;
+}
+
+/** Whether a model can accept `kind`, preferring a measurement, then the probed
+ *  seed, then the catalogue.
+ *
+ *  `undefined` means "not established", which the callers treat as "let it try"
+ *  rather than "refuse". That distinction is the difference between a first turn
+ *  that works and one that is silently downgraded. */
+export function acceptsModality(
+  model: PoolModel,
+  kind: "image" | "audio" | "video",
+  oracle?: CapabilityOracle,
+): boolean | undefined {
+  const measured = oracle?.(model.id, kind);
+  if (measured !== undefined) return measured;
+  const seed = seedFor(kind);
+  if (seed) return seed.has(model.id);
   const declared = (model.modalities || []).map((m) => String(m).toLowerCase());
-  return declared.includes("audio") && AUDIO_VERIFIED_UPSTREAMS.has(model.id);
+  return declared.includes(kind);
+}
+
+/** Contribution of one *needed* modality to a model's score.
+ *
+ *  A measured "yes" outranks a catalogue claim, because the claim is what the
+ *  probe exists to check. A measured "no" is a penalty and not a veto: the
+ *  model may still answer the text half of the turn, so it stays in the chain
+ *  rather than being dropped. When nothing is established, the model neither
+ *  gains nor loses — scoring an unknown as a miss would make every model equal
+ *  and hand the choice to latency, which is how a video turn landed on a model
+ *  that cannot see. */
+function modalityScore(accepts: boolean | undefined, yes: number, no: number): number {
+  if (accepts === true) return yes + 10;
+  if (accepts === false) return no - 20;
+  return 0;
 }
 
 /** Measured median time-to-first-token, in milliseconds, for each upstream.
@@ -282,20 +355,22 @@ export function capabilityScore(
   brand: Brand,
   model: PoolModel,
   need: Set<MediaKind> = new Set(),
+  oracle?: CapabilityOracle,
 ): number {
   const mods = new Set((model.modalities || []).map((m) => String(m).toLowerCase()));
   const has = (k: string) => mods.has(k);
+  const accepts = (k: "image" | "audio" | "video") => acceptsModality(model, k, oracle);
   const p = brand.profile;
   // "Does the turn want this?" — a modality the turn does not carry is not a
   // reason to prefer or penalise a model.
   const wants = (k: MediaKind) => need.has(k);
   let score = 0;
-  if (p.vision && wants("image")) score += has("image") ? 40 : -8;
-  if (p.video && wants("video")) score += has("video") ? 25 : -6;
-  // Audio is scored against the *probed* set, not the catalogue. A model that
+  if (p.vision && wants("image")) score += modalityScore(accepts("image"), 40, -8);
+  if (p.video && wants("video")) score += modalityScore(accepts("video"), 25, -6);
+  // Audio is scored against what was *measured*, not the catalogue. A model that
   // claims audio and drops it must not be preferred for an audio turn, or the
-  // turn silently degrades to a text answer.
-  if (p.audio && wants("audio")) score += acceptsAudio(model) ? 20 : -30;
+  // turn silently degrades to a text answer — the exact failure this fixes.
+  if (p.audio && wants("audio")) score += modalityScore(accepts("audio"), 20, -30);
   // PDF is deliberately the weakest signal: "pdf" is a serving-pipeline detail
   // (whether the pool extracts the document before the model sees it), not a
   // model capability, and in practice one pool model carries it. Letting it
@@ -318,9 +393,12 @@ function orderForBrand(
   brand: Brand,
   models: PoolModel[],
   need: Set<MediaKind> = new Set(),
+  oracle?: CapabilityOracle,
 ): PoolModel[] {
   return [...models].sort(
-    (a, b) => capabilityScore(brand, b, need) - capabilityScore(brand, a, need) || bySpeed(a, b),
+    (a, b) =>
+      capabilityScore(brand, b, need, oracle) - capabilityScore(brand, a, need, oracle) ||
+      bySpeed(a, b),
   );
 }
 
@@ -335,12 +413,36 @@ export function bindPreferred(
   pool: PoolModel[],
   live: Set<string> | null,
   need: Set<MediaKind> = new Set(),
+  oracle?: CapabilityOracle,
 ): string | null {
   if (!pool.length) return null;
   const served = live ? pool.filter((m) => live.has(m.id)) : pool;
   const candidates = served.length ? served : pool;
-  if (candidates.some((m) => m.id === brand.preferred)) return brand.preferred;
-  return orderForBrand(brand, candidates, need)[0]!.id;
+  const preferred = candidates.find((m) => m.id === brand.preferred);
+  if (preferred && (!need.size || fitsNeed(preferred, need, oracle))) return brand.preferred;
+  return orderForBrand(brand, candidates, need, oracle)[0]!.id;
+}
+
+/** True when a model can accept every modality the turn actually carries.
+ *
+ *  Audio is checked against the measurement and never the catalogue, because a
+ *  catalogue that lists audio and then drops the bytes is the silent failure
+ *  this whole module exists to prevent. Image and video follow the same rule
+ *  when a measurement exists. */
+function fitsNeed(model: PoolModel, need: Set<MediaKind>, oracle?: CapabilityOracle): boolean {
+  const declared = model.modalities ?? ["text"];
+  for (const kind of need) {
+    // A media modality is judged by measurement first, then by the probed seed.
+    // Never by the catalogue alone for audio and video: those are exactly the
+    // declarations that lie, and treating an unproven "yes" as a fit is what let
+    // a video turn lead with a model that cannot see.
+    if (kind === "image" || kind === "video" || kind === "audio") {
+      if (acceptsModality(model, kind, oracle) !== true) return false;
+      continue;
+    }
+    if (!fitsModalities(new Set([kind]), declared)) return false;
+  }
+  return true;
 }
 
 /** The model a brand binds to for a whole turn, with the modality a turn
@@ -355,8 +457,9 @@ export function activeFor(
   pool: PoolModel[],
   live: Set<string> | null,
   need: Set<MediaKind> = new Set(),
+  oracle?: CapabilityOracle,
 ): { active: string; chain: string[] } {
-  const chain = rotationFor(brand, pool, live, need);
+  const chain = rotationFor(brand, pool, live, need, oracle);
   return { active: chain[0] || brand.preferred, chain };
 }
 
@@ -369,16 +472,18 @@ export function activeFor(
  *  When `need` is given, a model must be able to accept every required modality
  *  to lead; models that cannot are pushed to the tail so they are still
  *  attempted (a text-only model may answer the text half of a turn) rather than
- *  dropped. Audio additionally requires the *probed* set, because several pool
- *  models declare audio in the catalogue and then silently drop it. A preferred
- *  model that fails the need does not lead — that is what made a spoken turn
- *  return a text answer. This is the single ordering the caller and the reported
- *  `active` both use, so the two cannot disagree. */
+ *  dropped. The verdict comes from `oracle` — a live measurement — when one
+ *  exists, and from the catalogue only as a fallback, because several pool
+ *  models declare a modality in the catalogue and then silently drop it. A
+ *  preferred model that fails the need does not lead — that is what made a
+ *  spoken turn return a text answer. This is the single ordering the caller and
+ *  the reported `active` both use, so the two cannot disagree. */
 export function rotationFor(
   brand: Brand,
   pool: PoolModel[],
   live: Set<string> | null = null,
   need: Set<MediaKind> = new Set(),
+  oracle?: CapabilityOracle,
 ): string[] {
   const served = live ? pool.filter((m) => live.has(m.id)) : pool;
   const candidates = served.length ? served : pool;
@@ -387,16 +492,14 @@ export function rotationFor(
     brand,
     candidates.filter((m) => m.id !== brand.preferred),
     need,
+    oracle,
   );
 
   if (!need.size) {
     return [...(preferred ? [preferred] : []), ...others].map((m) => m.id);
   }
 
-  // Audio must never be scored on the catalogue alone: only the probed set is
-  // known to actually transcribe it.
-  const fits = (m: PoolModel) =>
-    (!need.has("audio") || acceptsAudio(m)) && fitsModalities(need, m.modalities ?? ["text"]);
+  const fits = (m: PoolModel) => fitsNeed(m, need, oracle);
   const head = preferred && fits(preferred) ? [preferred] : [];
   const capable = others.filter(fits);
   const rest = others.filter((m) => !fits(m));
@@ -419,8 +522,13 @@ export type BrandView = Brand & {
 /** A brand's live state. `active` is chosen by walking the rotation chain
  *  against the models the console is actually serving, so a retired preference
  *  degrades to a capability-compatible sibling rather than a dead end. */
-export function brandView(brand: Brand, pool: PoolModel[], live: Set<string> | null): BrandView {
-  const { active, chain } = activeFor(brand, pool, live);
+export function brandView(
+  brand: Brand,
+  pool: PoolModel[],
+  live: Set<string> | null,
+  oracle?: CapabilityOracle,
+): BrandView {
+  const { active, chain } = activeFor(brand, pool, live, new Set(), oracle);
   const meta = pool.find((m) => m.id === active);
   return {
     ...brand,
@@ -452,23 +560,45 @@ export type RotationOutcome<T> =
  *  Walks `chain` in order, returning the first success. Stops early on a
  *  rejected credential (401 fails for every model) and on the upstream gate
  *  (an account decision that also fails for every model) — continuing would
- *  only add latency before the same answer. */
+ *  only add latency before the same answer.
+ *
+ *  `retry` decides, after a failed attempt, whether the *same* upstream is worth
+ *  asking again. That is not a general-purpose retry: it exists for the one case
+ *  where rotating away is strictly worse than repeating — a media turn on a
+ *  modality only one model in the pool can serve. If that model answers "no
+ *  audio attached" (it does so intermittently), the next model in the chain
+ *  cannot hear either, so rotating turns a recoverable miss into a guaranteed
+ *  wrong answer. Re-asking the only model that can do the job is the correct
+ *  move. */
 export async function rotateThrough<T>(
   chain: string[],
   attempt: (
     upstream: string,
   ) => Promise<{ ok: true; value: T } | { ok: false; status: number; detail: string }>,
   max = 8,
+  retry?: (
+    upstream: string,
+    failure: AttemptFailure,
+    attemptNumber: number,
+  ) => boolean | Promise<boolean>,
 ): Promise<RotationOutcome<T>> {
   const tried: AttemptFailure[] = [];
   let gate = false;
+  const perUpstream = new Map<string, number>();
   for (const upstream of chain.slice(0, max)) {
-    const out = await attempt(upstream);
-    if (out.ok) return { ok: true, value: out.value, upstream };
-    const g = isUpstreamGate(out.detail);
-    if (g) gate = true;
-    tried.push({ upstream, status: out.status, detail: out.detail, gate: g });
-    if (out.status === 401 || g) break;
+    for (;;) {
+      const out = await attempt(upstream);
+      if (out.ok) return { ok: true, value: out.value, upstream };
+      const g = isUpstreamGate(out.detail);
+      if (g) gate = true;
+      const failure: AttemptFailure = { upstream, status: out.status, detail: out.detail, gate: g };
+      tried.push(failure);
+      if (out.status === 401 || g) return { ok: false, tried, gate };
+      const n = (perUpstream.get(upstream) ?? 0) + 1;
+      perUpstream.set(upstream, n);
+      if (await retry?.(upstream, failure, n)) continue;
+      break;
+    }
   }
   return { ok: false, tried, gate };
 }

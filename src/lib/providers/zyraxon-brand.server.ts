@@ -35,6 +35,15 @@ import {
   type MediaKind,
 } from "./media";
 import {
+  MEDIA_DENIAL,
+  ensureCapabilities,
+  recordOutcome,
+  registerProbeTransport,
+  supports,
+} from "./media-capability.server";
+import {
+  AUDIO_VERIFIED_SEED,
+  VIDEO_VERIFIED_SEED,
   ZYRAXON_BRANDS,
   brandView,
   getBrand,
@@ -55,10 +64,50 @@ export {
 } from "./zyraxon-brands";
 export type { BrandView, BrandId } from "./zyraxon-brands";
 
+/** The measured capability of the live pool, as the brand router needs it.
+ *
+ *  `ensureCapabilities` has its own deadline, so a cold start delays the first
+ *  catalogue read by at most that deadline and never fails it.
+ */
+async function measuredOracle(
+  ids: string[],
+): Promise<((id: string, m: "image" | "audio" | "video") => boolean | undefined) | undefined> {
+  if (!ids.length) return undefined;
+  try {
+    await ensureCapabilities(ids);
+  } catch {
+    return undefined;
+  }
+  return (id, m) => supports(id, m);
+}
+
+/** Teach the capability registry how to reach an upstream.
+ *
+ *  Registered once at module load, from the one place that already knows the
+ *  transport. The registry is kept free of this import so it can be driven by a
+ *  test without a network, and so the base64 fixtures never reach a module the
+ *  browser bundle pulls in. */
+registerProbeTransport(async (upstream, messages, maxTokens) => {
+  const out = await completeWireRaw(
+    resolveApiKey(undefined),
+    upstream,
+    messages,
+    maxTokens,
+    "capability-probe",
+  );
+  if ("failed" in out) return { ok: false, status: out.failed.status, detail: out.failed.detail };
+  const body = (await out.json().catch(() => null)) as {
+    choices?: Array<{ message?: { content?: unknown } }>;
+  } | null;
+  const content = body?.choices?.[0]?.message?.content;
+  return { ok: true, text: typeof content === "string" ? content : "" };
+});
+
 /** Every brand with its live binding, in one catalogue read. */
 export async function brandCatalogue(): Promise<BrandView[]> {
   const [pool, live] = await Promise.all([zenFreeModels(), zenLiveIds()]);
-  return ZYRAXON_BRANDS.map((b) => brandView(b, pool, live));
+  const oracle = await measuredOracle(pool.map((m) => m.id));
+  return ZYRAXON_BRANDS.map((b) => brandView(b, pool, live, oracle));
 }
 
 /** Resolve a brand id to its ordered upstream chain, plus the model the
@@ -68,7 +117,11 @@ export async function brandCatalogue(): Promise<BrandView[]> {
  *  every required modality first and the fastest of equals next. The head of the
  *  chain is therefore the binding, which is what `activeFor` reports for the
  *  catalogue too — the page and the wire can never disagree about which upstream
- *  a brand is on. */
+ *  a brand is on.
+ *
+ *  `need` is what the turn actually carries, so the measured capability map is
+ *  consulted for those modalities and only those. A turn with no media skips the
+ *  probe entirely and keeps its previous, faster path. */
 export async function resolveBrandChain(
   modelId: string,
   need: Set<MediaKind> = new Set(),
@@ -76,7 +129,10 @@ export async function resolveBrandChain(
   const brand = getBrand(modelId);
   if (!brand) return null;
   const [pool, live] = await Promise.all([zenFreeModels(), zenLiveIds()]);
-  const chain = rotationFor(brand, pool, live, need);
+  // Only measure when the turn carries media; a plain text turn has nothing to
+  // measure and should not pay for a sweep.
+  const oracle = need.size ? await measuredOracle(pool.map((m) => m.id)) : undefined;
+  const chain = rotationFor(brand, pool, live, need, oracle);
   return { brand, chain };
 }
 
@@ -208,6 +264,12 @@ export async function brandChatStream(
       : (work: (lane: any) => Promise<Response>, seed?: string) => lanePool.run(work, seed);
 
     return await runner(async (lane) => {
+      // A media turn must not be answered by a model that never received the
+      // bytes. Such a model still returns 200 with a denial, so the refusal is
+      // detected here and the attempt is re-asked — or rotated — rather than
+      // passed to the caller as an answer.
+      const mediaNeed = need.size > 0;
+      const rejectsDenial = (text: string) => mediaNeed && MEDIA_DENIAL.test(text);
       const outcome = await rotateThrough(
         chain,
         async (upstream) => {
@@ -224,6 +286,7 @@ export async function brandChatStream(
                 brand.label,
                 lane.sessionId,
                 tools,
+                mediaNeed ? { reject: rejectsDenial } : undefined,
               )
             : await useComplete(
                 key,
@@ -233,6 +296,7 @@ export async function brandChatStream(
                 brand.label,
                 lane.sessionId,
                 tools,
+                mediaNeed ? { reject: rejectsDenial } : undefined,
               );
           if (!("failed" in out)) return { ok: true as const, value: out };
           return {
@@ -242,9 +306,42 @@ export async function brandChatStream(
           };
         },
         lane.attemptsLeft,
+        // A denial from a model that can hear is worth asking again: the refusal
+        // is intermittent, and every other model in the chain is deaf to the
+        // modality, so rotating would turn a recoverable miss into a wrong
+        // answer. The model the probe verified gets the most retries, because it
+        // is the only one that can do the job at all. A model already measured
+        // unable is not re-asked — nothing is expected to change, and the chain
+        // should move on.
+        async (upstream, failure, n) => {
+          if (failure.status !== 422) return false;
+          const seeded = need.has("audio")
+            ? AUDIO_VERIFIED_SEED.has(upstream)
+            : need.has("video")
+              ? VIDEO_VERIFIED_SEED.has(upstream)
+              : false;
+          const able = ["image", "audio", "video"].some(
+            (k) => need.has(k as MediaKind) && supports(upstream, k as never) === true,
+          );
+          if (!seeded && !able) return false;
+          const limit = seeded ? 3 : 2;
+          if (n >= limit) return false;
+          // Space the retries: a back-to-back repeat tends to reproduce the same
+          // miss, and a short pause lets the upstream's own load rebalance.
+          await new Promise((r) => setTimeout(r, 250 * n));
+          return true;
+        },
       );
       if (outcome.ok) {
         const res = outcome.value as Response;
+        // A real answer from a model that received the media is the strongest
+        // evidence there is, so the map learns from the caller's own payload.
+        if (mediaNeed) {
+          for (const k of need) {
+            if (k === "image" || k === "audio" || k === "video")
+              recordOutcome(outcome.upstream, k, true);
+          }
+        }
         // Advertise two things the caller (and an operator) can act on: the
         // modalities the turn actually used, so a real media answer is
         // distinguishable from a degraded text-only one, and the capacity tier

@@ -32,6 +32,7 @@ import {
   capabilityScore,
   getBrand,
   rotationFor,
+  type CapabilityOracle,
   type PoolModel,
 } from "../src/lib/providers/zyraxon-brands";
 import { brandChatStream } from "../src/lib/providers/zyraxon-brand.server";
@@ -248,14 +249,22 @@ const PDF = "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MK";
   // so the media need is passed in. With no need every model is equally
   // "capable" and speed alone decides — that is the fix, not a gap.
   const mediaNeed = new Set<MediaKind>(["image", "video", "audio"]);
+  // The verdict now comes from a measurement, not the catalogue: a model that
+  // merely *declares* a modality is not evidence that it accepts it. So the
+  // synthetic pool is given an oracle that has actually measured `omni` (and,
+  // below, each brand's preference) as able.
+  const visionary = getBrand("zyraxon-visionary")!;
+  const capable = new Set(["omni", cyber.preferred, visionary.preferred]);
+  const oracle: CapabilityOracle = (id) => capable.has(id);
+
   check(
     "a vision brand scores the omni model above text-only",
-    capabilityScore(cyber, pool[2], mediaNeed) > capabilityScore(cyber, pool[0], mediaNeed),
+    capabilityScore(cyber, pool[2], mediaNeed, oracle) > capabilityScore(cyber, pool[0], mediaNeed, oracle),
   );
   check(
     "an absent preference binds to a capability-compatible model",
-    bindPreferred(cyber, pool, null, mediaNeed) === "omni",
-    bindPreferred(cyber, pool, null, mediaNeed),
+    bindPreferred(cyber, pool, null, mediaNeed, oracle) === "omni",
+    String(bindPreferred(cyber, pool, null, mediaNeed, oracle)),
   );
 
   // The preferred model wins when it is actually served. Use the brand's real
@@ -285,14 +294,13 @@ const PDF = "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MK";
   // Rotation keeps capable models near the front for a video brand — but only
   // when the turn actually carries video. A text turn to the same brand must not
   // be pinned to the one video model in the pool.
-  const visionary = getBrand("zyraxon-visionary")!;
   const servedPool: PoolModel[] = [
     ...pool,
     { id: visionary.preferred, modalities: ["text", "image", "video", "pdf"], context: 200_000 },
   ];
-  const videoChain = rotationFor(visionary, servedPool, null, new Set<MediaKind>(["video"]));
+  const videoChain = rotationFor(visionary, servedPool, null, new Set<MediaKind>(["video"]), oracle);
   check(
-    "rotation leads with the preference when it is served",
+    "rotation leads with the preference when it is served and measured able",
     videoChain[0] === visionary.preferred,
     videoChain.join(" → "),
   );
@@ -300,6 +308,19 @@ const PDF = "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MK";
     "a video brand's video turn puts video models first",
     videoChain.indexOf("omni") < videoChain.indexOf("text-only"),
     videoChain.join(" → "),
+  );
+  // The negative case: a model that merely declares video but was measured
+  // unable must not lead a video turn. This is the regression guard for the
+  // audio bug's video twin — the catalogue's word is not evidence.
+  const liarPool: PoolModel[] = [
+    { id: "liar", modalities: ["text", "image", "audio", "video"], context: 1_000_000, output: 131_072 },
+    { id: "honest", modalities: ["text", "image", "video"], context: 200_000, output: 32_000 },
+  ];
+  const truthOracle: CapabilityOracle = (id, m) => (id === "liar" ? false : m === "video" || m === "image");
+  check(
+    "a model measured unable to see video does not lead a video turn",
+    rotationFor(visionary, liarPool, null, new Set<MediaKind>(["video"]), truthOracle)[0] === "honest",
+    rotationFor(visionary, liarPool, null, new Set<MediaKind>(["video"]), truthOracle).join(" → "),
   );
   // Regression: a brand that *supports* a rare modality must not be pinned to
   // the one model that serves it on turns that do not carry it. Before this, the

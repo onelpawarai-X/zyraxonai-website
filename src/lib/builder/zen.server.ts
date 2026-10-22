@@ -770,6 +770,15 @@ export async function streamWireRaw(
   label?: string,
   sessionId?: string,
   tools?: WireTool[],
+  opts?: {
+    /** Called with the answer text seen so far, before any of it is forwarded.
+     *  Returning true abandons the attempt as `status: 422` so the rotation can
+     *  try a different upstream. This exists because a model that did not
+     *  receive the media still answers 200 with a denial ("no audio was
+     *  attached"); without the check that 200 looks like success and the turn
+     *  stops on a model that never saw the file. */
+    reject?: (textSoFar: string) => boolean;
+  },
 ): Promise<Response | { failed: any }> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -796,20 +805,136 @@ export async function streamWireRaw(
       const c = classify(detail || `HTTP ${res.status}`);
       return { failed: { upstream, status: res.status || c.status, detail: c.detail } };
     }
-    return new Response(sseFromOpenAI(res.body, label || upstream), {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no",
-        "Access-Control-Allow-Origin": "*",
-        "X-ZYRAXON-Model": label || upstream,
-      },
+    if (!opts?.reject) {
+      return new Response(sseFromOpenAI(res.body, label || upstream), {
+        headers: wireHeaders(label || upstream),
+      });
+    }
+    // Read just far enough to judge the answer, then hand the caller a stream
+    // that replays what was buffered and continues live. The peek is bounded by
+    // both a byte ceiling and a deadline, so a model that is simply slow to
+    // start is never mistaken for one that is refusing.
+    const peek = await peekForRejection(res.body, opts.reject);
+    if (peek.rejected) {
+      return {
+        failed: {
+          upstream,
+          status: 422,
+          detail: `media not received: ${peek.text.slice(0, 160)}`,
+        },
+      };
+    }
+    return new Response(replayThenPipe(peek.raw, peek.rest, label || upstream), {
+      headers: wireHeaders(label || upstream),
     });
   } catch (e) {
     const c = classify(e);
     return { failed: { upstream, status: c.status, detail: c.detail } };
   }
+}
+
+function wireHeaders(label: string): Record<string, string> {
+  return {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+    "Access-Control-Allow-Origin": "*",
+    "X-ZYRAXON-Model": label,
+  };
+}
+
+/** How much answer text is enough to judge whether the model received the
+ *  media. A denial is stated up front; an answer that has run this long without
+ *  one has plainly engaged with the request. */
+const PEEK_MAX_CHARS = 240;
+const PEEK_MAX_BYTES = 16 * 1024;
+const PEEK_DEADLINE_MS = 1_500;
+
+/** Read the head of an upstream SSE body and decide whether to keep it.
+ *
+ *  Returns every byte consumed in `raw` (so the caller can replay it verbatim
+ *  rather than re-serialise it) and the untouched remainder as a reader. */
+async function peekForRejection(
+  body: ReadableStream<Uint8Array>,
+  reject: (text: string) => boolean,
+): Promise<{
+  rejected: boolean;
+  text: string;
+  raw: Uint8Array[];
+  rest: ReadableStreamDefaultReader<Uint8Array>;
+}> {
+  const dec = new TextDecoder();
+  const reader = body.getReader();
+  const raw: Uint8Array[] = [];
+  let bytes = 0;
+  let text = "";
+  const deadline = Date.now() + PEEK_DEADLINE_MS;
+  try {
+    while (text.length < PEEK_MAX_CHARS && bytes < PEEK_MAX_BYTES && Date.now() < deadline) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      raw.push(value);
+      bytes += value.byteLength;
+      text += dec.decode(value, { stream: true });
+      if (reject(text)) return { rejected: true, text, raw, rest: reader };
+    }
+  } catch {
+    /* a read failure is not a denial; fall through and let the stream surface it */
+  }
+  return { rejected: false, text, raw, rest: reader };
+}
+
+/** Replay the bytes already read, then continue streaming the upstream body. */
+function replayThenPipe(
+  raw: Uint8Array[],
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  label: string,
+): ReadableStream<Uint8Array> {
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const rewrite = (chunk: string) =>
+    chunk.replace(/"model"\s*:\s*"[^"]*"/g, `"model":${JSON.stringify(label)}`);
+  let buffered = "";
+  let replayed = false;
+  return new ReadableStream<Uint8Array>({
+    async pull(c) {
+      if (!replayed) {
+        replayed = true;
+        // Decode the replayed bytes as one stream so a JSON payload split across
+        // the peek boundary is still forwarded whole.
+        const joined = raw.reduce((n, v) => n + v.byteLength, 0);
+        const merged = new Uint8Array(joined);
+        let at = 0;
+        for (const v of raw) {
+          merged.set(v, at);
+          at += v.byteLength;
+        }
+        buffered += dec.decode(merged, { stream: true });
+        const cut = buffered.lastIndexOf("\n\n");
+        if (cut !== -1) {
+          c.enqueue(enc.encode(rewrite(buffered.slice(0, cut + 2))));
+          buffered = buffered.slice(cut + 2);
+        }
+        return;
+      }
+      const { done, value } = await reader.read();
+      if (done) {
+        if (buffered) c.enqueue(enc.encode(rewrite(buffered)));
+        c.close();
+        return;
+      }
+      buffered += dec.decode(value, { stream: true });
+      const cut = buffered.lastIndexOf("\n\n");
+      if (cut === -1) return;
+      c.enqueue(enc.encode(rewrite(buffered.slice(0, cut + 2))));
+      buffered = buffered.slice(cut + 2);
+    },
+    cancel() {
+      return reader.cancel();
+    },
+  });
 }
 
 /** Read an upstream OpenAI SSE body to completion and build one
@@ -922,6 +1047,11 @@ export async function completeWireRaw(
   label?: string,
   sessionId?: string,
   tools?: WireTool[],
+  opts?: {
+    /** Same contract as `streamWireRaw`'s `reject`: return true to abandon this
+     *  attempt as `status: 422` so the rotation can retry or move on. */
+    reject?: (text: string) => boolean;
+  },
 ): Promise<Response | { failed: any }> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -943,10 +1073,35 @@ export async function completeWireRaw(
       const c = classify(detail || `HTTP ${res.status}`);
       return { failed: { upstream, status: res.status || c.status, detail: c.detail } };
     }
-    return await drainOpenAi(res.body, upstream, label);
+    const built = await drainOpenAi(res.body, upstream, label);
+    if (opts?.reject && !("failed" in built)) {
+      const text = await readAnswerText(built);
+      if (opts.reject(text)) {
+        return {
+          failed: { upstream, status: 422, detail: `media not received: ${text.slice(0, 160)}` },
+        };
+      }
+    }
+    return built;
   } catch (e) {
     const c = classify(e);
     return { failed: { upstream, status: c.status, detail: c.detail } };
+  }
+}
+
+/** The answer text of a built `chat.completion` response, without consuming it
+ *  for the caller (the body is cloned). */
+async function readAnswerText(res: Response): Promise<string> {
+  try {
+    const body = (await res.clone().json()) as {
+      choices?: Array<{ message?: { content?: unknown; reasoning_content?: unknown } }>;
+    };
+    const m = body?.choices?.[0]?.message;
+    const content = typeof m?.content === "string" ? m.content : "";
+    const reasoning = typeof m?.reasoning_content === "string" ? m.reasoning_content : "";
+    return `${content}\n${reasoning}`;
+  } catch {
+    return "";
   }
 }
 

@@ -4,7 +4,7 @@
 //
 // Run: npx tsx scripts/verify-brand-provider.ts
 import {
-  AUDIO_VERIFIED_UPSTREAMS,
+  AUDIO_VERIFIED_SEED,
   MEASURED_TTFT_MS,
   ZYRAXON_BRANDS,
   acceptsAudio,
@@ -13,6 +13,7 @@ import {
   getBrand,
   isBrand,
   measuredTtftMs,
+  type CapabilityOracle,
 } from "../src/lib/providers/zyraxon-brands";
 import {
   rotationFor,
@@ -293,10 +294,14 @@ check(
     rotationFor(general, depPool, null)[0] === "beam-free",
     rotationFor(general, depPool, null).join(" → "),
   );
+  // A declaration is not evidence, so the capable model only leads once a
+  // measurement says it can see. `glm` is measured able; `beam` was not measured
+  // for video at all, which is not the same as being measured unable.
+  const videoOracle: CapabilityOracle = (id, m) => (id === "glm-5.3-flash-free" ? m === "video" : undefined);
   check(
-    "with video needed, the capable model leads even though it is slower",
-    rotationFor(general, depPool, null, new Set(["video"] as const))[0] === "glm-5.3-flash-free",
-    rotationFor(general, depPool, null, new Set(["video"] as const)).join(" → "),
+    "with video needed, the measured-capable model leads even though it is slower",
+    rotationFor(general, depPool, null, new Set(["video"] as const), videoOracle)[0] === "glm-5.3-flash-free",
+    rotationFor(general, depPool, null, new Set(["video"] as const), videoOracle).join(" → "),
   );
 
   // MEASURED_TTFT_MS must not silently drift from what the pool serves: every
@@ -313,7 +318,8 @@ check(
 
 // ── audio routing must not trust the catalogue ──────────────────────────────
 // The catalogue declares audio for models that then drop it and answer "no
-// audio attached". Only the probed set may be handed audio.
+// audio attached". Only the probed seed, or a live measurement, may be handed
+// audio — never the catalogue alone.
 {
   const claimsAudio = (id: string) => ({
     id,
@@ -322,27 +328,42 @@ check(
     output: 32000,
   });
   check(
-    "a model the catalogue calls audio-capable but was not probed is refused",
-    !acceptsAudio(claimsAudio("mimo-v2.6-flash-free")),
+    "a model the catalogue calls audio-capable but was never probed is refused",
+    !acceptsAudio(claimsAudio("some-model-that-declares-audio")),
   );
-  for (const id of [
-    "mimo-v2.5-free",
-    "muse-spark-1.3-contributor-free",
-    "nemotron-3-nano-omni-30b-a3b-reasoning-free",
-  ]) {
-    check(`the probed audio model ${id} is accepted`, acceptsAudio(claimsAudio(id)));
+  for (const id of AUDIO_VERIFIED_SEED) {
+    check(`the probed audio seed ${id} is accepted`, acceptsAudio(claimsAudio(id)));
   }
   check(
-    "a text-only model is never given audio",
-    !acceptsAudio({ id: "mimo-v2.5-free", modalities: ["text"] }),
+    "a text-only model that is not a probed seed is never given audio",
+    !acceptsAudio({ id: "some-text-only-model", modalities: ["text"] }),
   );
-  // Every brand that leads with audio must point at a probed upstream, or an
-  // audio turn would be routed to a model that cannot hear it.
+  // A measurement overrides the seed in both directions: it can promote a model
+  // the seed does not list, and it can demote one the seed lists once that model
+  // is found to drop audio.
+  const saysYes = () => true;
+  const saysNo = () => false;
+  check(
+    "a measurement can promote a model the seed does not list",
+    acceptsAudio(claimsAudio("some-model-that-declares-audio"), saysYes),
+  );
+  check(
+    "a measurement can demote a model the seed lists",
+    !acceptsAudio(claimsAudio("mimo-v2.6-flash-free"), saysNo),
+  );
+  // Every brand that leads with audio must resolve to a probed upstream, or an
+  // audio turn would be routed to a model that cannot hear it. The brand's
+  // preference need not be the probed one — the rotation swaps to a model that
+  // hears — so the check is on the chain, not on the preference alone.
   for (const brand of ZYRAXON_BRANDS.filter((b) => b.profile.audio)) {
+    const chain = rotationFor(brand, [
+      mk(brand.preferred, { modalities: ["text", "audio", "image", "video"] }),
+      mk("mimo-v2.6-flash-free", { modalities: ["text", "audio", "image", "video"] }),
+    ], null, new Set(["audio"]));
     check(
-      `${brand.id} prefers a probed audio upstream`,
-      AUDIO_VERIFIED_UPSTREAMS.has(brand.preferred),
-      brand.preferred,
+      `${brand.id} resolves an audio turn to a probed upstream`,
+      chain.some((id) => AUDIO_VERIFIED_SEED.has(id)),
+      chain.join(" → "),
     );
   }
 }
