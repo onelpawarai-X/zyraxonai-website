@@ -10,8 +10,9 @@
 // need no decoder — kept working. On a dev machine the bug was invisible,
 // because Node happily compiles wasm.
 //
-// So the test removes the ability to compile wasm and then decodes each
-// compressed container. If a decoder ever goes back to compiling at runtime,
+// So the test removes the ability to compile wasm and then decodes every
+// container that needs a decoder — MP3, WebM, Ogg, and FLAC, which now decodes
+// too so that a long recording can be windowed. If a decoder ever goes back to compiling at runtime,
 // this fails here instead of in production.
 //
 // Run: npx tsx --import ./scripts/raw-import-loader.mjs scripts/verify-stt-wasm.ts
@@ -70,12 +71,17 @@ function forbidRuntimeWasmCompilation(): void {
 await import("../src/lib/stt/wasm");
 
 forbidRuntimeWasmCompilation();
-const { decodeMp3, decodeOgg, decodeWebm } = await import("../src/lib/stt/decode");
+const { decodeFlac, decodeMp3, decodeOgg, decodeWebm } = await import("../src/lib/stt/decode");
 
 /** A spoken clip plus the containers built from it, so the decode result is real
  *  speech rather than a tone that could pass even if a decoder mis-read the
  *  stream. */
-function buildSamples(): { mp3: Uint8Array; webm: Uint8Array; ogg: Uint8Array } | null {
+function buildSamples(): {
+  mp3: Uint8Array;
+  webm: Uint8Array;
+  ogg: Uint8Array;
+  flac: Uint8Array;
+} | null {
   let ffmpeg = true;
   try {
     execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
@@ -109,6 +115,9 @@ function buildSamples(): { mp3: Uint8Array; webm: Uint8Array; ogg: Uint8Array } 
     mp3: encode("speech.mp3", ["-ar", "44100", "-ac", "1", "-b:a", "96k"]),
     webm: encode("speech.webm", ["-c:a", "libopus", "-b:a", "32k"]),
     ogg: encode("speech.ogg", ["-c:a", "libopus", "-b:a", "32k"]),
+    // 22 050 Hz, like ffmpeg's FLAC default, so a hard-coded rate in the request
+    // would be wrong — which is the second half of the FLAC bug.
+    flac: encode("speech.flac", ["-ar", "22050", "-ac", "1"]),
   };
 }
 
@@ -117,7 +126,7 @@ if (!samples) {
   console.log("SKIP  wasm decode tests (ffmpeg is not installed)");
   process.exit(failures ? 1 : 0);
 }
-const { mp3, webm, ogg } = samples;
+const { mp3, webm, ogg, flac } = samples;
 
 check("the sample is sniffed as MP3", isMp3(mp3) && sniff(mp3) === "mp3", sniff(mp3));
 
@@ -137,11 +146,20 @@ const oggPcm = await decodeOgg(ogg);
 check("Ogg/Opus decodes with runtime wasm compilation forbidden",
   oggPcm.samples.length > 1000, `${oggPcm.samples.length} samples @ ${oggPcm.sampleRate}`);
 
-// The decoders must agree: the same audio in three containers, one duration.
+// FLAC: the container that used to bypass decoding, and so bypassed windowing
+// and rate detection with it.
+const flacPcm = await decodeFlac(flac);
+check("FLAC decodes with runtime wasm compilation forbidden",
+  flacPcm.samples.length > 1000, `${flacPcm.samples.length} samples @ ${flacPcm.sampleRate}`);
+check("the decoded FLAC is not silence", !isSilent(flacPcm));
+
+// The decoders must agree: the same audio in every container, one duration.
 const mp3s = secondsOf(mp3Pcm);
-check("MP3, WebM and Ogg decode to the same duration",
-  Math.abs(secondsOf(webmPcm) - mp3s) < 0.25 && Math.abs(secondsOf(oggPcm) - mp3s) < 0.25,
-  `${mp3s.toFixed(2)}s vs ${secondsOf(webmPcm).toFixed(2)}s vs ${secondsOf(oggPcm).toFixed(2)}s`);
+check("MP3, WebM, Ogg and FLAC decode to the same duration",
+  Math.abs(secondsOf(webmPcm) - mp3s) < 0.25 &&
+    Math.abs(secondsOf(oggPcm) - mp3s) < 0.25 &&
+    Math.abs(secondsOf(flacPcm) - mp3s) < 0.25,
+  `${mp3s.toFixed(2)}s vs ${secondsOf(webmPcm).toFixed(2)}s vs ${secondsOf(oggPcm).toFixed(2)}s vs ${secondsOf(flacPcm).toFixed(2)}s`);
 
 // A second decode, to catch a decoder that only worked because the first call
 // left a compiled module cached.

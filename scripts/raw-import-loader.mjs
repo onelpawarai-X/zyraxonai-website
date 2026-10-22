@@ -5,12 +5,27 @@
 // compiled `WebAssembly.Module`; Node can compile wasm, so the loader does the
 // same thing here. Without this the speech decoders — which are only reachable
 // through the wasm import — could not be exercised by the test suite at all.
-import { registerHooks } from "node:module";
+import { createRequire, registerHooks } from "node:module";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+// The FLAC decoder hides the file that carries its inner class behind an
+// `exports` map, so a bare deep specifier is refused. The app aliases it in
+// `vite.config.ts`; the test runner needs the same alias. See `decode.ts`.
+const flacInner = pathToFileURL(
+  join(
+    dirname(createRequire(import.meta.url).resolve("@wasm-audio-decoders/flac")),
+    "src",
+    "FLACDecoder.js",
+  ),
+).href;
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
+    if (specifier === "@wasm-audio-decoders/flac/src/FLACDecoder.js") {
+      return { url: flacInner, shortCircuit: true };
+    }
     if (specifier.endsWith("?raw")) {
       const r = nextResolve(specifier.slice(0, -4), context);
       return { url: r.url + "?raw", shortCircuit: true };

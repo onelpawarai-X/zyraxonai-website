@@ -5,9 +5,10 @@
  *  works everywhere. The order is: read the container, decode the codec if there
  *  is one, resample, and report what happened.
  *
- *  FLAC is the exception. The engine reads it natively, so decoding and
- *  re-encoding a lossless container would cost time and quality for nothing; it
- *  is passed through untouched, and only measured. */
+ *  Every container ends up as PCM. FLAC used to be handed to the engine
+ *  untouched, because the engine can read it — but only up to the length of a
+ *  single request, so a long FLAC recording came back truncated. Decoding it
+ *  here puts it on the same windowed path as everything else. */
 
 import {
   isSilent,
@@ -18,7 +19,7 @@ import {
   type Container,
   type Pcm,
 } from "./audio";
-import { decodeMp3, decodeOgg, decodeWebm } from "./decode";
+import { decodeFlac, decodeMp3, decodeOgg, decodeWebm } from "./decode";
 import type { AudioInput } from "./engine";
 
 export type Decoded = {
@@ -31,6 +32,12 @@ export type Decoded = {
    *  opened its microphone and said nothing sends exactly this. */
   silent: boolean;
 };
+
+/** Said plainly, because the format arrives by default from every iPhone and
+ *  Safari recorder and the endpoint cannot transcribe it. */
+export const MP4_REFUSAL =
+  "M4A/MP4/AAC is not supported. It is what iPhone and Safari recorders produce " +
+  "by default, so re-record as WebM (browsers) or MP3 (phones), or convert it first.";
 
 /** Decode any supported container to what the recogniser takes.
  *
@@ -49,12 +56,7 @@ export async function decodeContainer(
       return fromPcm(parsed, "wav");
     }
     case "flac":
-      return {
-        input: { kind: "flac", bytes },
-        container: "flac",
-        seconds: estimateFlacSeconds(bytes),
-        silent: false,
-      };
+      return fromPcm(await decodeFlac(bytes), "flac");
     case "webm":
       return fromPcm(await decodeWebm(bytes), "webm");
     case "ogg":
@@ -63,6 +65,8 @@ export async function decodeContainer(
       return fromPcm(await decodeMp3(bytes), "mp3");
     case "pcm":
       return fromPcm(rawPcm(bytes, declared), "pcm");
+    case "mp4":
+      throw new Error(MP4_REFUSAL);
     default:
       throw new Error("unsupported audio format");
   }
@@ -93,36 +97,12 @@ function fromPcm(pcm: Pcm, container: Container): Decoded {
   };
 }
 
-/** Duration of a FLAC stream, read from its STREAMINFO block.
- *
- *  STREAMINFO is the first metadata block and holds the total sample count and
- *  the sample rate as two 20-bit fields. Reading them is four lines and avoids
- *  reporting every FLAC upload as zero seconds. */
-function estimateFlacSeconds(bytes: Uint8Array): number {
-  // "fLaC" + a 4-byte block header, then the 34-byte STREAMINFO body.
-  if (bytes.length < 4 + 4 + 34) return 0;
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const body = 8;
-  // Sample rate: 20 bits starting at byte 10 of the body. Total samples: 36 bits
-  // starting 4 bits into byte 13.
-  const rate =
-    (view.getUint8(body + 10) << 12) |
-    (view.getUint8(body + 11) << 4) |
-    (view.getUint8(body + 12) >> 4);
-  const high = view.getUint8(body + 13) & 0x0f;
-  const samples = high * 2 ** 32 + view.getUint32(body + 14, false);
-  if (!rate || !samples) return 0;
-  return samples / rate;
-}
-
-/** Resample a decoded PCM buffer to the rate the recogniser is fed. FLAC passes
- *  through untouched, so it returns its input unchanged. */
+/** Resample a decoded PCM buffer to the rate the recogniser is fed. */
 export function toInput(decoded: Decoded): AudioInput {
-  if (decoded.input.kind === "flac") return decoded.input;
   return { kind: "pcm", pcm: resampleTo16k(decoded.input.pcm) };
 }
 
 /** Seconds of audio in the input the engine will actually receive. */
 export function inputSeconds(input: AudioInput): number {
-  return input.kind === "pcm" ? secondsOf(input.pcm) : 0;
+  return secondsOf(input.pcm);
 }

@@ -21,7 +21,7 @@ export type Pcm = { samples: Int16Array; sampleRate: number };
  *  the engine transcribes most accurately. */
 export const TARGET_RATE = 16000;
 
-export type Container = "wav" | "flac" | "ogg" | "webm" | "mp3" | "pcm" | "unknown";
+export type Container = "wav" | "flac" | "ogg" | "webm" | "mp3" | "mp4" | "pcm" | "unknown";
 
 /* ───────────────────────────── container sniffing ───────────────────────── */
 
@@ -36,12 +36,26 @@ export function isWav(b: Uint8Array): boolean {
 export function isFlac(b: Uint8Array): boolean {
   return b.length > 4 && ascii(b, 0, "fLaC");
 }
+
 export function isOgg(b: Uint8Array): boolean {
   return b.length > 4 && ascii(b, 0, "OggS");
 }
 export function isWebm(b: Uint8Array): boolean {
   // EBML magic; Matroska and WebM share it.
   return b.length > 4 && b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3;
+}
+/** MP4-family container: `.m4a`, `.mp4`, `.aac` in a wrapper. Every ISO base
+ *  media file opens with a `ftyp` box, so the brand it names tells them apart
+ *  from the formats this endpoint can actually decode.
+ *
+ *  Recognised only so the caller gets an honest refusal. An `.m4a` upload is
+ *  what an iPhone or Safari produces by default, so it arrives often; the
+ *  recogniser will not accept one (it answers 400 to both MP4 and raw AAC), and
+ *  there is no AAC decoder here. Detecting it turns a silent empty transcript —
+ *  indistinguishable from "nobody spoke" — into a message that names the format
+ *  and the formats that do work. */
+export function isMp4(b: Uint8Array): boolean {
+  return b.length > 12 && ascii(b, 4, "ftyp");
 }
 export function isMp3(b: Uint8Array): boolean {
   if (b.length < 3) return false;
@@ -58,6 +72,7 @@ export function sniff(bytes: Uint8Array): Container {
   if (isOgg(bytes)) return "ogg";
   if (isWebm(bytes)) return "webm";
   if (isMp3(bytes)) return "mp3";
+  if (isMp4(bytes)) return "mp4";
   // No header at all: a client streaming a live microphone often sends bare
   // samples, which is exactly the shape the engine wants.
   return bytes.length >= 2 ? "pcm" : "unknown";

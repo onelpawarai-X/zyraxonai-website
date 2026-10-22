@@ -1,6 +1,6 @@
 /** The decoder wasm, compiled at build time rather than at request time.
  *
- *  The decoder libraries ship their wasm as an encoded string and call
+ *  The decoders each ship their wasm as an encoded string and call
  *  `WebAssembly.compile()` the first time a decoder is built. That is fine in a
  *  browser and in Node, and fatal on Cloudflare Workers: workerd refuses to
  *  compile wasm from bytes at runtime — "Wasm code generation disallowed by
@@ -18,10 +18,12 @@
  *  same import is resolved by `scripts/raw-import-loader.mjs` into an
  *  identically compiled module, so one code path serves both. */
 
+import flacWasm from "./flac.wasm";
 import mpg123Wasm from "./mpg123.wasm";
 import opusWasm from "./opus.wasm";
 
 /** An import of a `.wasm` file is a compiled module everywhere this app runs.
  *  The cast is for TypeScript, which has no type for that import. */
+export const flacModule = flacWasm as unknown as WebAssembly.Module;
 export const mpg123Module = mpg123Wasm as unknown as WebAssembly.Module;
 export const opusModule = opusWasm as unknown as WebAssembly.Module;

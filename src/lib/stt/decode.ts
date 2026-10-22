@@ -20,7 +20,7 @@
 
 import type { Pcm } from "./audio";
 import { oggOpusPackets, webmOpusFrames } from "./audio";
-import { mpg123Module, opusModule } from "./wasm";
+import { flacModule, mpg123Module, opusModule } from "./wasm";
 
 /** Decoded frames at the codec's own rate; the caller resamples. */
 type DecodeResult = { samples: Int16Array; sampleRate: number };
@@ -55,6 +55,35 @@ async function decodeOpusFrames(frames: Uint8Array[]): Promise<Pcm> {
     return { samples: floatsToInt16(channels, frames2), sampleRate: rate };
   } finally {
     // The wasm heap is large; release it rather than wait for the collector.
+    decoder.free();
+  }
+}
+
+/** Decode a FLAC stream to PCM.
+ *
+ *  FLAC is the one container the recogniser could read itself, so it used to be
+ *  passed through untouched. That was wrong for anything longer than the
+ *  service's single-request limit: a long recording came back truncated, or —
+ *  with the rate field hard-coded — empty. Decoding it here puts FLAC on the
+ *  same path as every other container: one buffer of PCM, cut into windows of
+ *  the length the service accepts, joined back together. */
+export async function decodeFlac(bytes: Uint8Array): Promise<Pcm> {
+  const { _FLACDecoder } = await import("@wasm-audio-decoders/flac/src/FLACDecoder.js");
+  // Hand over the build-time module. The library's own loader compiles its wasm
+  // at runtime, which the Workers runtime refuses; and its public class reads
+  // the module from the inner `_FLACDecoder`, not from itself, so the hook goes
+  // there. See `./wasm/index.ts`.
+  _FLACDecoder.module = flacModule;
+  const { FLACDecoder } = await import("@wasm-audio-decoders/flac");
+  const decoder = new FLACDecoder();
+  await decoder.ready;
+  try {
+    const result = await decoder.decodeFile(bytes);
+    const channels: Float32Array[] = result.channelData;
+    const frames = result.samplesDecoded;
+    if (!frames) throw new Error("the FLAC stream decoded to no samples");
+    return { samples: floatsToInt16(channels, frames), sampleRate: result.sampleRate };
+  } finally {
     decoder.free();
   }
 }

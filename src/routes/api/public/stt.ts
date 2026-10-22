@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { sniff } from "@/lib/stt/audio";
 import { recognize } from "@/lib/stt/engine";
 import { decodeContainer, toInput, type Decoded } from "@/lib/stt/ingest";
+
 import { liveTranscript, segmentPlan, type LiveEvent } from "@/lib/stt/stream";
 
 /**
@@ -205,10 +206,7 @@ async function transcribeLong(
   signal?: AbortSignal,
 ): Promise<{ text: string; confidence: number; engine: string }> {
   const input = toInput(decoded);
-  if (
-    input.kind === "flac" ||
-    input.pcm.samples.length <= MAX_WINDOW_SECONDS * input.pcm.sampleRate
-  ) {
+  if (input.pcm.samples.length <= MAX_WINDOW_SECONDS * input.pcm.sampleRate) {
     const one = await recognize(input, locale, signal);
     return { text: one.text.trim(), confidence: one.confidence, engine: one.engine };
   }
@@ -371,6 +369,10 @@ export const Route = createFileRoute("/api/public/stt")({
             },
           },
           containers: ["wav", "mp3", "flac", "ogg", "webm", "pcm"],
+          notSupported: {
+            "m4a/mp4/aac":
+              "recognised and refused with 415; the recogniser rejects these and no AAC decoder is bundled",
+          },
           languageRequired: true,
           languageNote:
             "The recogniser does not detect language. Name the language being spoken; the endpoint will not guess.",
@@ -414,7 +416,19 @@ export const Route = createFileRoute("/api/public/stt")({
             );
           }
 
-          const decoded = await decodeContainer(bytes, container, declared);
+          let decoded: Decoded;
+          try {
+            decoded = await decodeContainer(bytes, container, declared);
+          } catch (error) {
+            // A format the endpoint cannot read is the caller's mistake, not a
+            // server fault, so it gets 415 and a message naming the format
+            // rather than a 502 that reads like an outage.
+            const message = error instanceof Error ? error.message : "unsupported audio format";
+            const unsupported = /not supported|unsupported audio format|could not be read/i.test(
+              message,
+            );
+            return fail(message, unsupported ? 415 : 502);
+          }
           const started = Date.now();
           const result = await transcribeLong(decoded, language, request.signal);
 

@@ -23,10 +23,10 @@
 
 import { encodeWav, type Pcm } from "./audio";
 
-/** What a backend is handed. PCM is the common case; FLAC passes through
- *  undecoded because the engine reads it natively and re-encoding a lossless
- *  container would only cost time and quality. */
-export type AudioInput = { kind: "pcm"; pcm: Pcm } | { kind: "flac"; bytes: Uint8Array };
+/** What a backend is handed: always PCM, at the container's own rate. Every
+ *  container is decoded before it reaches here, so there is no second shape to
+ *  handle and no rate to guess. */
+export type AudioInput = { kind: "pcm"; pcm: Pcm };
 
 /** One transcription answer. */
 export type Recognition = {
@@ -136,9 +136,6 @@ export function parseResponse(raw: string): { text: string; confidence: number }
  *  count; FLAC goes as-is. The bytes are copied into a plain `ArrayBuffer`
  *  because a `subarray` view over a shared buffer is not a valid fetch body. */
 function bodyFor(input: AudioInput): { body: ArrayBuffer; contentType: string } {
-  if (input.kind === "flac") {
-    return { body: toArrayBuffer(input.bytes), contentType: "audio/x-flac; rate=16000" };
-  }
   return {
     body: toArrayBuffer(encodeWav(input.pcm)),
     contentType: `audio/l16; rate=${input.pcm.sampleRate}`,

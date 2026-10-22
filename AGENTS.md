@@ -312,6 +312,76 @@ the committed text _as it stood when the partial was emitted_, in order; an
 earlier version compared the first four characters against every segment and
 passed a genuinely truncated partial by accident.
 
+#### The decoders' wasm must be compiled at build time
+
+`mpg123-decoder` and `opus-decoder` call `WebAssembly.compile()` the first time a
+decoder is built. workerd refuses to compile wasm from bytes at request time —
+`Wasm code generation disallowed by embedder` — and a worker that reaches that
+call is **cancelled rather than answered**, which surfaces as a 502. That is why
+MP3, WebM and Ogg uploads failed while WAV and FLAC (no decoder needed) worked,
+and why it is invisible on a dev machine: Node compiles wasm happily.
+
+The fix hands each decoder an already-compiled module:
+
+- `src/lib/stt/wasm/index.ts` imports the two `.wasm` files; the bundler turns
+  those imports into `WebAssembly.Module` values.
+- `src/lib/stt/wasm/vite-plugin.ts` is what makes that true. Nitro ships the same
+  behaviour as `unwasm`, but only in Nitro's environment — the speech route is
+  bundled by the TanStack Start **SSR** environment first, so without this plugin
+  the import arrives as a bare file with no `default` export and the build fails
+  with `[MISSING_EXPORT] "default" is not exported`. The plugin resolves the
+  import to a compiled module in every environment and writes the wasm bytes
+  beside the importing chunk (in `generateBundle` + `closeBundle`; `emitFile` in
+  `generateBundle` alone is not copied into a `no_bundle` Nitro output).
+- `decode.ts` sets `OpusDecoder.module` / `MPEGDecoder.module` before building a
+  decoder. That static property is undocumented in the published types, hence
+  `src/types/wasm-audio-decoders.d.ts`.
+- `src/lib/stt/wasm/*.wasm` are byte-identical to what each library embeds, so
+  there is no third-party blob to trust and nothing to re-download.
+
+Do not "simplify" this by letting the libraries compile their own wasm, and do
+not read the wasm at runtime: both reintroduce the 502. `scripts/verify-stt-wasm.ts`
+is the guard — it forbids runtime wasm compilation exactly as workerd does and
+then decodes MP3, WebM, Ogg and FLAC, so a regression fails in CI instead of in
+production. It is part of `test:stt`.
+
+FLAC is the exception to the hook's shape: `@wasm-audio-decoders/flac` reads the
+module from its **inner** class `_FLACDecoder`, not from the `FLACDecoder` it
+exports, so `decode.ts` imports `_FLACDecoder` from a deep path and sets
+`_FLACDecoder.module`. That path is not in the package's `exports` map, so
+`vite.config.ts` aliases it and `scripts/raw-import-loader.mjs` resolves it for
+the test runner. Both resolve through the package's own entry point, so a layout
+change inside the package does not silently break the alias.
+
+#### FLAC is decoded, not passed through
+
+The engine reads FLAC natively, so FLAC used to be handed to it untouched. That
+was wrong twice over, and both halves failed silently — an empty transcript, not
+an error:
+
+- The declared sample rate was hard-coded to `16000`. The engine takes that on
+  trust and returns nothing when it does not match the stream, and ffmpeg's FLAC
+  default is `22050`.
+- A single request is capped at about thirty seconds. Anything longer was
+  truncated with no indication that text was lost.
+
+So FLAC now goes through `decodeFlac()` like every other container: one PCM
+buffer, cut into windows by `transcribeLong`. The decoder reports the rate it
+found, and `verify-stt.ts` asserts it against a 22 050 Hz fixture, so neither
+half of the bug can come back unnoticed.
+
+#### M4A/AAC is refused, not silently emptied
+
+An `.m4a` from an iPhone or Safari is an MP4 container, and it used to fall
+through `sniff()`'s header checks to the `"pcm"` fallback — so it was read as raw
+samples, produced no speech, and came back as an empty transcript that looked
+exactly like "nobody spoke". The recogniser rejects both MP4 and raw AAC with a
+400, so there is no pass-through to fall back on and no AAC decoder is bundled.
+`sniff()` now detects the `ftyp` box and returns `"mp4"`, and
+`decodeContainer()` refuses it with a message naming the format and the formats
+that work. The endpoint returns 415 for it, not 502: it is the caller's format,
+not a server fault.
+
 ### The provider page is a catalogue, and the catalogue is the source
 
 Every endpoint the provider serves is described once, in
