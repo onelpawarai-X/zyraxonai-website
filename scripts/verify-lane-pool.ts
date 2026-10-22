@@ -252,6 +252,75 @@ function check(name: string, ok: boolean, detail?: unknown) {
   check("the stall is counted", pool.stats().timedOut >= 1, pool.stats().timedOut);
 }
 
+// ── a media turn is given the longer backstop ───────────────────────────────
+// A model handed audio or video reasons for minutes before its first visible
+// token. The text window would cut that stream right as the answer began, so a
+// media turn must outlive the text deadline without outliving a finite one.
+{
+  const pool = new LanePool({
+    maxActive: 1,
+    spillMax: 0,
+    maxQueued: 4,
+    queueTimeoutMs: 500,
+    maxWorkMs: 60,
+    mediaWorkMs: 5_000,
+  });
+  check("the pool exposes the media backstop", pool.mediaWorkMs === 5_000, pool.mediaWorkMs);
+
+  // Silence past the text deadline, then an answer: the text deadline alone
+  // would have abandoned this, the media one must not.
+  const late = new ReadableStream<Uint8Array>({
+    start(c) {
+      setTimeout(() => {
+        c.enqueue(new TextEncoder().encode("answer"));
+        c.close();
+      }, 400);
+    },
+  });
+  const res = await pool.stream(async () => new Response(late), undefined, undefined, {
+    workMs: pool.mediaWorkMs,
+  });
+  const reader = res.body!.getReader();
+  const chunks: string[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(new TextDecoder().decode(value));
+  }
+  check("a media turn survives past the text deadline", chunks.join("") === "answer", chunks.join(""));
+  check("and its lane is returned", pool.stats().active === 0, pool.stats().active);
+  check("the media turn is not counted as a timeout", pool.stats().timedOut === 0, pool.stats().timedOut);
+
+  // The media window is still finite: a wedged socket must give its slot back.
+  const wedged = new ReadableStream<Uint8Array>({
+    start(c) {
+      c.enqueue(new TextEncoder().encode("partial"));
+    },
+  });
+  const wedgedRes = await pool.stream(async () => new Response(wedged), undefined, undefined, {
+    workMs: pool.mediaWorkMs,
+  });
+  const wedgedReader = wedgedRes.body!.getReader();
+  await wedgedReader.read();
+  // The lane's deadline timer is unref'd (a lane must never hold the process
+  // open), so a ref'd handle has to keep the loop alive for it to fire — in a
+  // live server there always is one.
+  const keepalive = setInterval(() => {}, 200);
+  let wedgedError: unknown = null;
+  try {
+    for (;;) {
+      const { done } = await wedgedReader.read();
+      if (done) break;
+    }
+  } catch (e) {
+    wedgedError = e;
+  } finally {
+    clearInterval(keepalive);
+  }
+  check("a wedged media stream is still abandoned", wedgedError instanceof LaneShedError, String(wedgedError));
+  check("and the media slot is returned", pool.stats().active === 0, pool.stats().active);
+}
+
 // ── a throwing lane releases its slot ───────────────────────────────────────
 {
   const pool = new LanePool({ maxActive: 1, maxQueued: 1, queueTimeoutMs: 500 });

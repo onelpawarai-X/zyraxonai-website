@@ -77,7 +77,35 @@ function gate(req, res, raw) {
     // second's answer and never the refusal.
     if (parsed?.model === "beam-free") return streamText(res, parsed, "No audio came through with your message — the only thing I received was text.");
   }
+  if (scenario === "media-denial-reasoning") {
+    // The same refusal, but behind a long reasoning preamble. The peek that
+    // decides whether to keep the answer must read the answer, not the
+    // reasoning: counting reasoning against its budget spends the whole budget
+    // before the refusal appears, and the refusal then reaches the caller.
+    if (parsed?.model === "beam-free") {
+      return streamReasoningThenText(
+        res,
+        parsed,
+        Array.from({ length: 40 }, (_, i) => `thinking step ${i} about the audio and what it might contain`),
+        "No audio came through with your message — the only thing I received was text.",
+      );
+    }
+  }
   stream(res, parsed);
+}
+
+/** Stream a reasoning preamble, then a fixed answer, in the upstream's shape. */
+function streamReasoningThenText(res, parsed, reasoning, text) {
+  const id = "chatcmpl-mock";
+  const model = parsed && parsed.model;
+  res.writeHead(200, { "Content-Type": "text/event-stream" });
+  const chunk = (delta, finish) => ({ id, object: "chat.completion.chunk", choices: [{ index: 0, delta, finish_reason: finish }], model });
+  for (const r of reasoning) {
+    res.write("data: " + JSON.stringify(chunk({ content: "", reasoning: r + " " }, null)) + "\n\n");
+  }
+  res.write("data: " + JSON.stringify(chunk({ content: text }, null)) + "\n\n");
+  res.write("data: " + JSON.stringify(chunk({}, "stop")) + "\n\n");
+  res.end();
 }
 
 /** Stream a single fixed answer, in the same SSE shape as `stream`. */

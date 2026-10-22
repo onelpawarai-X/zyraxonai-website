@@ -60,6 +60,12 @@ export type LanePoolOptions = {
    *  starve every other caller. The deadline is the backstop that guarantees a
    *  lane is always eventually returned. */
   maxWorkMs: number;
+  /** The same backstop for a turn that carries media. A model handed audio or
+   *  video can spend minutes reasoning about it before its first visible token,
+   *  and the answer is only useful once it arrives — cutting the stream at the
+   *  text ceiling would return an empty answer for work that was nearly done.
+   *  Still a backstop, not a budget: it bounds a wedged socket, nothing else. */
+  mediaWorkMs: number;
 };
 
 export const DEFAULT_LANE_OPTIONS: LanePoolOptions = {
@@ -76,6 +82,11 @@ export const DEFAULT_LANE_OPTIONS: LanePoolOptions = {
   // Generous enough for a long streamed answer, short enough that a wedged
   // connection cannot permanently consume a slot.
   maxWorkMs: 180_000,
+  // A media turn is a different shape of work: the model has to take in the
+  // bytes before it can say anything, and the strongest free models do that by
+  // reasoning for a minute or more. The window is therefore measured in
+  // minutes, but it is still finite, so a stalled socket still returns its slot.
+  mediaWorkMs: 600_000,
 };
 
 export type LaneStats = {
@@ -99,6 +110,12 @@ export type LaneStats = {
 
 export class LanePool {
   private readonly opts: LanePoolOptions;
+
+  /** The media backstop, so a caller that knows its turn carries media can ask
+   *  for the longer window without reaching into the pool's configuration. */
+  get mediaWorkMs(): number {
+    return this.opts.mediaWorkMs;
+  }
   private active = 0;
   private spillActive = 0;
   private waiting: Array<{ resolve: () => void; reject: (e: Error) => void; timer: any }> = [];
@@ -198,7 +215,12 @@ export class LanePool {
    *  ignored. Without this, an upstream that connects and then never answers
    *  would hold a slot for the life of the process, and a handful of those would
    *  take the whole pool down. */
-  async run<T>(work: (lane: Lane) => Promise<T>, seed?: string, attempts = 8): Promise<T> {
+  async run<T>(
+    work: (lane: Lane) => Promise<T>,
+    seed?: string,
+    attempts = 8,
+    opts?: { workMs?: number },
+  ): Promise<T> {
     const tier = await this.acquire();
     const lane: Lane = {
       id: laneId(),
@@ -209,6 +231,7 @@ export class LanePool {
       state: "active",
     };
     this.counters.opened++;
+    const workMs = opts?.workMs ?? this.opts.maxWorkMs;
     let timer: ReturnType<typeof setTimeout> | null = null;
     let timedOut = false;
     const deadline = new Promise<never>((_, reject) => {
@@ -216,7 +239,7 @@ export class LanePool {
         timedOut = true;
         this.counters.timedOut++;
         reject(new LaneShedError("lane work deadline exceeded"));
-      }, this.opts.maxWorkMs);
+      }, workMs);
       if (typeof timer?.unref === "function") timer.unref();
     });
     try {
@@ -255,6 +278,7 @@ export class LanePool {
     work: (lane: Lane) => Promise<Response>,
     seed?: string,
     attempts = 8,
+    opts?: { workMs?: number },
   ): Promise<Response> {
     const tier = await this.acquire();
     const lane: Lane = {
@@ -266,6 +290,7 @@ export class LanePool {
       state: "active",
     };
     this.counters.opened++;
+    const workMs = opts?.workMs ?? this.opts.maxWorkMs;
     let released = false;
     const release = () => {
       if (released) return;
@@ -296,7 +321,7 @@ export class LanePool {
             setupTimedOut = true;
             this.counters.timedOut++;
             reject(new LaneShedError("lane work deadline exceeded"));
-          }, this.opts.maxWorkMs);
+          }, workMs);
           if (typeof setupTimer?.unref === "function") setupTimer.unref();
         }),
       ]);
@@ -330,7 +355,7 @@ export class LanePool {
         source.cancel().catch(() => {});
         clearStream();
         controllerRef?.error(new LaneShedError("lane stream stalled"));
-      }, this.opts.maxWorkMs);
+      }, workMs);
       if (typeof streamTimer?.unref === "function") streamTimer.unref();
     };
     const body = new ReadableStream<Uint8Array>({

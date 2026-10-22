@@ -259,9 +259,18 @@ export async function brandChatStream(
     // A streaming turn holds its lane until the body is drained; a non-streaming
     // turn releases as soon as the JSON is built. Either way `maxActive` bounds
     // the number of concurrent upstream conversations, not just their setup.
+    //
+    // A media turn gets the longer backstop: the model has to take in the bytes
+    // before it can answer, and the free models that can do that think for a
+    // minute or more first. The text backstop would cut the stream right as the
+    // answer began, handing the caller an empty body for a turn that had nearly
+    // finished.
+    const laneOpts = need.size > 0 ? { workMs: lanePool.mediaWorkMs } : undefined;
     const runner = stream
-      ? (work: (lane: any) => Promise<Response>, seed?: string) => lanePool.stream(work, seed)
-      : (work: (lane: any) => Promise<Response>, seed?: string) => lanePool.run(work, seed);
+      ? (work: (lane: any) => Promise<Response>, seed?: string) =>
+          lanePool.stream(work, seed, undefined, laneOpts)
+      : (work: (lane: any) => Promise<Response>, seed?: string) =>
+          lanePool.run(work, seed, undefined, laneOpts);
 
     return await runner(async (lane) => {
       // A media turn must not be answered by a model that never received the

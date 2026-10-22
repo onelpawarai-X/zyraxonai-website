@@ -814,7 +814,7 @@ export async function streamWireRaw(
     // that replays what was buffered and continues live. The peek is bounded by
     // both a byte ceiling and a deadline, so a model that is simply slow to
     // start is never mistaken for one that is refusing.
-    const peek = await peekForRejection(res.body, opts.reject);
+    const peek = await peekForRejection(res.body, opts.reject, PEEK_MEDIA_DEADLINE_MS);
     if (peek.rejected) {
       return {
         failed: {
@@ -844,12 +844,43 @@ function wireHeaders(label: string): Record<string, string> {
   };
 }
 
-/** How much answer text is enough to judge whether the model received the
+/** How much *answer* text is enough to judge whether the model received the
  *  media. A denial is stated up front; an answer that has run this long without
- *  one has plainly engaged with the request. */
+ *  one has plainly engaged with the request.
+ *
+ *  This is measured on the answer alone, never on the raw stream: a reasoning
+ *  model emits its thinking as a separate `reasoning` field, and counting that
+ *  would spend the whole budget before the first word of the answer arrived —
+ *  which is exactly how a denial used to slip through. */
 const PEEK_MAX_CHARS = 240;
-const PEEK_MAX_BYTES = 16 * 1024;
+const PEEK_MAX_BYTES = 512 * 1024;
+/** How long to wait for the answer to begin, for a turn with no media. */
 const PEEK_DEADLINE_MS = 1_500;
+/** The same wait for a turn that carries media. A model handed audio or video
+ *  reasons about it for a while before it says anything, and the refusal — if
+ *  there is one — only appears once it starts answering. The window is longer,
+ *  but still short enough that the caller is not left in silence. */
+const PEEK_MEDIA_DEADLINE_MS = 30_000;
+
+/** The visible answer text in an upstream SSE chunk, or "" for a chunk that
+ *  carries only reasoning, role, or usage. */
+function answerTextOf(chunk: string): string {
+  let out = "";
+  const re = /"delta"\s*:\s*\{([\s\S]*?)\}\s*[,}]/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(chunk))) {
+    const body = m[1];
+    const c = /"content"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(body);
+    if (c) out += c[1];
+  }
+  // A non-streaming chunk (`message` instead of `delta`) carries the whole
+  // answer at once.
+  if (!out) {
+    const c = /"message"\s*:\s*\{[\s\S]*?"content"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(chunk);
+    if (c) out = c[1];
+  }
+  return out;
+}
 
 /** Read the head of an upstream SSE body and decide whether to keep it.
  *
@@ -858,38 +889,80 @@ const PEEK_DEADLINE_MS = 1_500;
 async function peekForRejection(
   body: ReadableStream<Uint8Array>,
   reject: (text: string) => boolean,
+  deadlineMs = PEEK_DEADLINE_MS,
 ): Promise<{
   rejected: boolean;
   text: string;
   raw: Uint8Array[];
-  rest: ReadableStreamDefaultReader<Uint8Array>;
+  rest: StreamReader;
 }> {
   const dec = new TextDecoder();
   const reader = body.getReader();
   const raw: Uint8Array[] = [];
   let bytes = 0;
-  let text = "";
-  const deadline = Date.now() + PEEK_DEADLINE_MS;
+  let answer = "";
+  // Race each read against the deadline. A read is a promise that only settles
+  // when the upstream sends something, so checking the clock between reads
+  // would never run again on a socket that went quiet — the peek itself would
+  // hang and the caller would get no answer at all.
+  //
+  // A read that is still pending when the deadline fires is *not* abandoned:
+  // dropping it would lose whatever chunk it eventually carried. It is carried
+  // forward and becomes the first read of the continuation.
+  let pending: Promise<{ done: boolean; value?: Uint8Array }> | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const expired = new Promise<"expired">((resolve) => {
+    timer = setTimeout(() => resolve("expired"), Math.max(0, deadlineMs));
+  });
+  const rest: StreamReader = {
+    read: () => {
+      if (pending) {
+        const p = pending;
+        pending = null;
+        return p;
+      }
+      return reader.read();
+    },
+    cancel: (reason?: unknown) => reader.cancel(reason),
+  };
   try {
-    while (text.length < PEEK_MAX_CHARS && bytes < PEEK_MAX_BYTES && Date.now() < deadline) {
-      const { done, value } = await reader.read();
+    for (;;) {
+      const p = reader.read();
+      const next = await Promise.race([p, expired]);
+      if (next === "expired") {
+        // Hand the un-settled read to the continuation; its chunk is not lost.
+        pending = p;
+        break;
+      }
+      pending = null;
+      const { done, value } = next;
       if (done) break;
       if (!value) continue;
       raw.push(value);
       bytes += value.byteLength;
-      text += dec.decode(value, { stream: true });
-      if (reject(text)) return { rejected: true, text, raw, rest: reader };
+      answer += answerTextOf(dec.decode(value, { stream: true }));
+      if (answer && reject(answer)) return { rejected: true, text: answer, raw, rest };
+      if (answer.length >= PEEK_MAX_CHARS || bytes >= PEEK_MAX_BYTES) break;
     }
   } catch {
     /* a read failure is not a denial; fall through and let the stream surface it */
+  } finally {
+    if (timer) clearTimeout(timer);
   }
-  return { rejected: false, text, raw, rest: reader };
+  return { rejected: false, text: answer, raw, rest };
 }
+
+/** The read half of the upstream body after a peek: the standard reader, except
+ *  that a read left pending by the deadline is served first. */
+type StreamReader = {
+  read: () => Promise<{ done: boolean; value?: Uint8Array }>;
+  cancel: (reason?: unknown) => Promise<void>;
+};
 
 /** Replay the bytes already read, then continue streaming the upstream body. */
 function replayThenPipe(
   raw: Uint8Array[],
-  reader: ReadableStreamDefaultReader<Uint8Array>,
+  reader: StreamReader,
   label: string,
 ): ReadableStream<Uint8Array> {
   const enc = new TextEncoder();
@@ -1099,7 +1172,11 @@ async function readAnswerText(res: Response): Promise<string> {
     const m = body?.choices?.[0]?.message;
     const content = typeof m?.content === "string" ? m.content : "";
     const reasoning = typeof m?.reasoning_content === "string" ? m.reasoning_content : "";
-    return `${content}\n${reasoning}`;
+    // Judge the answer, not the thinking. A model may muse about whether the
+    // media is really there and still answer correctly; only its visible answer
+    // decides. Reasoning is consulted solely when there is no answer at all,
+    // which is the reasoning-only failure the caller must not receive either.
+    return content || reasoning;
   } catch {
     return "";
   }

@@ -121,6 +121,40 @@ try {
   }
 
   // -----------------------------------------------------------------
+  // E2E-2c: the same refusal, hidden behind a reasoning preamble. The
+  // peek must measure the answer, not the reasoning — a model that
+  // thinks for a long time and *then* refuses is still refusing.
+  // -----------------------------------------------------------------
+  setScenario("media-denial-reasoning");
+  {
+    requests.length = 0;
+    const audioPart = {
+      type: "input_audio",
+      input_audio: { data: "UklGRiQAAABXQVZF", format: "wav" },
+    };
+    const res = await brandChatStream(
+      "zyraxonai-apex",
+      [{ role: "user", content: [{ type: "text", text: "transcribe" }, audioPart] }],
+      undefined,
+      {
+        stream: true,
+        resolve: served("zyraxonai-apex", ["beam-free", "big-pickle"]),
+      },
+    );
+    const body = await drain(res);
+    const visited = requests
+      .filter((r) => r.url.endsWith("/chat/completions"))
+      .map((v) => JSON.parse(v.body).model);
+    check("E2E a reasoned refusal does not end the turn", res.status === 200, res.status);
+    check("the turn moved past the reasoning refusal", visited.includes("big-pickle"), visited.join(","));
+    check(
+      "the reasoned refusal never reaches the caller",
+      !/no audio came through/i.test(body),
+      body.slice(0, 200),
+    );
+  }
+
+  // -----------------------------------------------------------------
   // E2E-3: credential gate. Everything answers 403; the turn must come
   // back 503 upstream_gate (not 502) and name the brand, not the pool.
   // -----------------------------------------------------------------
