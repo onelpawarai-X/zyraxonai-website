@@ -77,7 +77,14 @@ queued forever, so a flood cannot take the process down.
 Tests: `npm run test:provider`. Most scripts run under plain `tsx`, but the ones
 that import `system-prompt.txt` need
 `--import ./scripts/raw-import-loader.mjs` (a bare `tsx` run dies with
-`ERR_UNKNOWN_FILE_EXTENSION`).
+`ERR_UNKNOWN_FILE_EXTENSION`). The speech suites are part of it: `test:stt`
+(`verify-stt.ts` plus `verify-stt-stream.ts`) and `test:tts`.
+
+`.github/workflows/provider-checks.yml` runs the same suite plus `tsc` on every
+PR, and installs `ffmpeg` and `espeak-ng` first. The two audio verifiers build
+their own sample with those tools when no clip is passed, so the decode, resample
+and live-stream assertions actually run in CI instead of printing SKIP — a skipped
+audio check is how the MP3/WebM/Ogg decode path stayed broken unnoticed.
 
 #### Choosing an upstream (latency and modality)
 

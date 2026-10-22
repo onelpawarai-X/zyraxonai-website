@@ -10,7 +10,9 @@
 // Run: npx tsx scripts/verify-stt.ts [path-to-audio]
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   encodeWav,
   isFlac,
@@ -98,8 +100,6 @@ check("a live window keeps only the newest half second",
   Math.abs(secondsOf(clipped) - 0.5) < 0.01, secondsOf(clipped).toFixed(3));
 
 // ── real containers, decoded through the real decoders ──────────────────────
-const arg = process.argv[2];
-const mp3Path = arg && arg.endsWith(".mp3") ? arg : "/tmp/rt.mp3";
 const haveFfmpeg = (() => {
   try {
     execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
@@ -108,6 +108,46 @@ const haveFfmpeg = (() => {
     return false;
   }
 })();
+
+// The decode path is the part that broke before, so it is never skipped when we
+// can help it. If the caller did not hand us a clip, build one with ffmpeg so
+// the MP3/WebM/Ogg assertions always run. A spoken clip is preferred over a
+// tone because it lets the engine assertions run too, so espeak-ng is used when
+// it is present. Only a machine with no ffmpeg at all falls back to skipping.
+const arg = process.argv[2];
+let mp3Path = arg && arg.endsWith(".mp3") ? arg : "/tmp/rt.mp3";
+let sampleIsSpeech = Boolean(arg);
+const haveEspeak = (() => {
+  try {
+    execFileSync("espeak-ng", ["--version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+if (!existsSync(mp3Path) && haveFfmpeg) {
+  const dir = mkdtempSync(join(tmpdir(), "zyraxon-stt-"));
+  if (haveEspeak) {
+    const spoken = join(dir, "speech.wav");
+    execFileSync("espeak-ng", [
+      "-w", spoken, "-s", "150",
+      "hello world this is a test of the speech to text engine",
+    ]);
+    execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", spoken,
+      "-ar", "44100", "-ac", "1", "-b:a", "96k", join(dir, "speech.mp3")]);
+    mp3Path = join(dir, "speech.mp3");
+    sampleIsSpeech = true;
+  } else {
+    const generated = join(dir, "sample.mp3");
+    execFileSync("ffmpeg", [
+      "-y", "-loglevel", "error",
+      "-f", "lavfi", "-i", "sine=frequency=440:duration=3",
+      "-ar", "44100", "-ac", "1", "-b:a", "64k", generated,
+    ]);
+    mp3Path = generated;
+  }
+}
 
 let realPcm: Pcm | null = null;
 if (existsSync(mp3Path)) {
@@ -154,8 +194,10 @@ if (haveFfmpeg) {
   console.log("SKIP  WebM/Ogg/FLAC container tests (ffmpeg is not installed)");
 }
 
-// ── the engine, when the network allows ─────────────────────────────────────
-if (realPcm) {
+// ── the engine, when the network allows and the clip holds speech ───────────
+// A pure tone transcribes to empty text by design, so the transcription checks
+// only run for a spoken sample. Decode and resample above are always asserted.
+if (realPcm && sampleIsSpeech) {
   try {
     const one = await recognize(pcmInput(realPcm), "en-US");
     check("the engine transcribes a real clip", one.text.trim().length > 0,
@@ -177,6 +219,8 @@ if (realPcm) {
   } catch (error) {
     console.log(`SKIP  engine calls (${error instanceof Error ? error.message : String(error)})`);
   }
+} else if (realPcm) {
+  console.log("SKIP  engine transcription checks (no spoken sample; espeak-ng is not installed)");
 }
 
 console.log(failures === 0 ? "\nall speech-to-text checks passed" : `\n${failures} check(s) failed`);
