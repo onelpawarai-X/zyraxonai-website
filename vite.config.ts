@@ -5,8 +5,13 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { wasmModulePlugin } from "./src/lib/stt/wasm/vite-plugin";
 
 export default defineConfig({
+  // The speech decoders are wasm, and the Workers runtime forbids compiling wasm
+  // at request time. Nitro's own wasm plugin does not reach the SSR environment
+  // that bundles the speech route, so this one supplies the same behaviour there.
+  vite: { plugins: [wasmModulePlugin()] },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     server: { entry: "server" },

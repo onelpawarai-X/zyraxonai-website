@@ -12,10 +12,15 @@
  *    - `mpg123-decoder` — MP3, the format phone and desktop recorders produce.
  *    - `opus-decoder`   — Opus, the format browsers produce.
  *  Neither talks to a network, neither needs a key, and both are wasm blobs
- *  bundled with the app, so there is no CDN to disappear. */
+ *  bundled with the app, so there is no CDN to disappear.
+ *
+ *  Each decoder is handed an already-compiled wasm module from `./wasm`, because
+ *  their own loader compiles wasm at runtime and the Workers runtime forbids
+ *  that. See `./wasm/index.ts`. */
 
 import type { Pcm } from "./audio";
 import { oggOpusPackets, webmOpusFrames } from "./audio";
+import { mpg123Module, opusModule } from "./wasm";
 
 /** Decoded frames at the codec's own rate; the caller resamples. */
 type DecodeResult = { samples: Int16Array; sampleRate: number };
@@ -36,6 +41,9 @@ export async function decodeOgg(bytes: Uint8Array): Promise<Pcm> {
 
 async function decodeOpusFrames(frames: Uint8Array[]): Promise<Pcm> {
   const { OpusDecoder } = await import("opus-decoder");
+  // Hand over the build-time module so the library never compiles wasm itself,
+  // which the Workers runtime refuses to do.
+  OpusDecoder.module = opusModule;
   const decoder = new OpusDecoder();
   await decoder.ready;
   try {
@@ -54,6 +62,8 @@ async function decodeOpusFrames(frames: Uint8Array[]): Promise<Pcm> {
 /** Decode an MP3 stream — what phone and desktop recorders emit. */
 export async function decodeMp3(bytes: Uint8Array): Promise<Pcm> {
   const { MPEGDecoder } = await import("mpg123-decoder");
+  // As with Opus: the module comes from the build, not from a runtime compile.
+  MPEGDecoder.module = mpg123Module;
   const decoder = new MPEGDecoder();
   await decoder.ready;
   try {
