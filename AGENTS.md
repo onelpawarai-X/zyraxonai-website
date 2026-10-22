@@ -353,6 +353,21 @@ exports, so `decode.ts` imports `_FLACDecoder` from a deep path and sets
 the test runner. Both resolve through the package's own entry point, so a layout
 change inside the package does not silently break the alias.
 
+Both FLAC classes must be imported from that **same** specifier. Taking the
+public `FLACDecoder` from the package entry point as well bundles a second copy
+of `FLACDecoder.js`, the hook lands on the copy the public class never reads, and
+the runtime compile comes back — a request that hangs until workerd cancels it,
+not an error. Node hands both specifiers one module, so no Node test can see
+this; `verify-stt-wasm.ts` asserts the import shape instead, and the real proof
+is a request against `wrangler dev`.
+
+The FLAC decoder hook and the codec guards are only observable on workerd. Node
+resolves the deep specifier to the same module as the entry point, so a duplicate
+copy cannot appear, and Node lets the Opus decoder read Vorbis packets without
+crashing. Run `npx wrangler --cwd ./.output dev` after a build and post one file
+per format; the matrix should be WAV, FLAC, MP3, Ogg Opus and WebM Opus at 200,
+and M4A, Ogg Vorbis and WebM Vorbis at 415.
+
 #### FLAC is decoded, not passed through
 
 The engine reads FLAC natively, so FLAC used to be handed to it untouched. That

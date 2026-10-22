@@ -390,6 +390,40 @@ if (haveFfmpeg) {
     console.log("SKIP  M4A refusal test (ffmpeg has no AAC encoder here)");
   }
 
+  // Ogg and WebM both carry Vorbis as readily as Opus, and a Vorbis packet fed
+  // to the Opus decoder crashes its wasm — a 502 that reads like an outage. The
+  // codec must be read and refused by name instead.
+  for (const [label, args, decode] of [
+    ["Ogg Vorbis", ["-c:a", "libvorbis", "-f", "ogg", "pipe:1"], decodeOgg],
+    ["WebM Vorbis", ["-c:a", "libvorbis", "-f", "webm", "pipe:1"], decodeWebm],
+  ] as const) {
+    let vorbis: Uint8Array | null = null;
+    try {
+      vorbis = new Uint8Array(
+        execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", mp3Path, ...args], {
+          maxBuffer: 64 * 1024 * 1024,
+        }),
+      );
+    } catch {
+      vorbis = null;
+    }
+    if (!vorbis) {
+      console.log(`SKIP  ${label} refusal test (no Vorbis encoder here)`);
+      continue;
+    }
+    let refusal = "";
+    try {
+      await decode(vorbis);
+    } catch (error) {
+      refusal = error instanceof Error ? error.message : String(error);
+    }
+    check(
+      `${label} is refused by name, not crashed`,
+      /not supported/i.test(refusal),
+      refusal || "(no error raised)",
+    );
+  }
+
   // The demuxers must agree with each other: the same audio in two containers
   // should decode to about the same duration.
   if (realPcm) {

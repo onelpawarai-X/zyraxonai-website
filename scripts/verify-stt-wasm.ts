@@ -40,9 +40,7 @@ function forbidRuntimeWasmCompilation(): void {
     throw new Error("Wasm code generation disallowed by embedder");
   };
   const isBytes = (value: unknown): boolean =>
-    value instanceof Uint8Array ||
-    value instanceof ArrayBuffer ||
-    ArrayBuffer.isView(value);
+    value instanceof Uint8Array || value instanceof ArrayBuffer || ArrayBuffer.isView(value);
 
   WebAssembly.compile = ((bytes: unknown) =>
     isBytes(bytes) ? refuse() : (undefined as never)) as typeof WebAssembly.compile;
@@ -94,14 +92,26 @@ function buildSamples(): {
   const wav = join(dir, "speech.wav");
   try {
     execFileSync("espeak-ng", [
-      "-w", wav, "-s", "150",
+      "-w",
+      wav,
+      "-s",
+      "150",
       "hello world this is a test of the speech to text engine",
     ]);
   } catch {
     execFileSync("ffmpeg", [
-      "-y", "-loglevel", "error",
-      "-f", "lavfi", "-i", "sine=frequency=440:duration=2",
-      "-ar", "44100", "-ac", "1", wav,
+      "-y",
+      "-loglevel",
+      "error",
+      "-f",
+      "lavfi",
+      "-i",
+      "sine=frequency=440:duration=2",
+      "-ar",
+      "44100",
+      "-ac",
+      "1",
+      wav,
     ]);
   }
 
@@ -132,40 +142,72 @@ check("the sample is sniffed as MP3", isMp3(mp3) && sniff(mp3) === "mp3", sniff(
 
 // ── the three containers that need a decoder ────────────────────────────────
 const mp3Pcm = await decodeMp3(mp3);
-check("MP3 decodes with runtime wasm compilation forbidden",
-  mp3Pcm.samples.length > 1000, `${mp3Pcm.samples.length} samples @ ${mp3Pcm.sampleRate}`);
+check(
+  "MP3 decodes with runtime wasm compilation forbidden",
+  mp3Pcm.samples.length > 1000,
+  `${mp3Pcm.samples.length} samples @ ${mp3Pcm.sampleRate}`,
+);
 check("the decoded MP3 is not silence", !isSilent(mp3Pcm));
 
 check("the WebM sample is sniffed as WebM", isWebm(webm) && sniff(webm) === "webm");
 const webmPcm = await decodeWebm(webm);
-check("WebM/Opus decodes with runtime wasm compilation forbidden",
-  webmPcm.samples.length > 1000, `${webmPcm.samples.length} samples @ ${webmPcm.sampleRate}`);
+check(
+  "WebM/Opus decodes with runtime wasm compilation forbidden",
+  webmPcm.samples.length > 1000,
+  `${webmPcm.samples.length} samples @ ${webmPcm.sampleRate}`,
+);
 
 check("the Ogg sample is sniffed as Ogg", isOgg(ogg) && sniff(ogg) === "ogg");
 const oggPcm = await decodeOgg(ogg);
-check("Ogg/Opus decodes with runtime wasm compilation forbidden",
-  oggPcm.samples.length > 1000, `${oggPcm.samples.length} samples @ ${oggPcm.sampleRate}`);
+check(
+  "Ogg/Opus decodes with runtime wasm compilation forbidden",
+  oggPcm.samples.length > 1000,
+  `${oggPcm.samples.length} samples @ ${oggPcm.sampleRate}`,
+);
 
 // FLAC: the container that used to bypass decoding, and so bypassed windowing
 // and rate detection with it.
 const flacPcm = await decodeFlac(flac);
-check("FLAC decodes with runtime wasm compilation forbidden",
-  flacPcm.samples.length > 1000, `${flacPcm.samples.length} samples @ ${flacPcm.sampleRate}`);
+check(
+  "FLAC decodes with runtime wasm compilation forbidden",
+  flacPcm.samples.length > 1000,
+  `${flacPcm.samples.length} samples @ ${flacPcm.sampleRate}`,
+);
 check("the decoded FLAC is not silence", !isSilent(flacPcm));
 
 // The decoders must agree: the same audio in every container, one duration.
 const mp3s = secondsOf(mp3Pcm);
-check("MP3, WebM, Ogg and FLAC decode to the same duration",
+check(
+  "MP3, WebM, Ogg and FLAC decode to the same duration",
   Math.abs(secondsOf(webmPcm) - mp3s) < 0.25 &&
     Math.abs(secondsOf(oggPcm) - mp3s) < 0.25 &&
     Math.abs(secondsOf(flacPcm) - mp3s) < 0.25,
-  `${mp3s.toFixed(2)}s vs ${secondsOf(webmPcm).toFixed(2)}s vs ${secondsOf(oggPcm).toFixed(2)}s vs ${secondsOf(flacPcm).toFixed(2)}s`);
+  `${mp3s.toFixed(2)}s vs ${secondsOf(webmPcm).toFixed(2)}s vs ${secondsOf(oggPcm).toFixed(2)}s vs ${secondsOf(flacPcm).toFixed(2)}s`,
+);
 
 // A second decode, to catch a decoder that only worked because the first call
 // left a compiled module cached.
 const again = await decodeMp3(mp3);
-check("a second MP3 decode still works (no cached compile needed)",
-  again.samples.length > 1000, `${again.samples.length} samples`);
+check(
+  "a second MP3 decode still works (no cached compile needed)",
+  again.samples.length > 1000,
+  `${again.samples.length} samples`,
+);
+
+// The FLAC hook lives on an inner class, and the public class reads it from the
+// same module. If the two are ever imported through different specifiers — the
+// package entry for one, the deep path for the other — a bundler emits two
+// copies of the file and the hook lands on the copy nothing reads, which puts
+// the runtime compile back and hangs the request. Node resolves both to one
+// module, so the decode above cannot see it; this checks the shape that the
+// bundler acts on.
+const decodeSource = readFileSync(new URL("../src/lib/stt/decode.ts", import.meta.url), "utf8");
+const importsEntryPoint = /from\s+"@wasm-audio-decoders\/flac"/.test(decodeSource);
+check(
+  "the FLAC classes are imported from one specifier only",
+  !importsEntryPoint && decodeSource.includes('"@wasm-audio-decoders/flac/src/FLACDecoder.js"'),
+  importsEntryPoint ? "the package entry point is imported as well" : "",
+);
 
 console.log(failures ? `\n${failures} check(s) failed` : "\nall wasm decode checks passed");
 process.exit(failures ? 1 : 0);

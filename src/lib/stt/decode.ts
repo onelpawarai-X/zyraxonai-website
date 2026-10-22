@@ -19,7 +19,7 @@
  *  that. See `./wasm/index.ts`. */
 
 import type { Pcm } from "./audio";
-import { oggOpusPackets, webmOpusFrames } from "./audio";
+import { oggCodec, oggOpusPackets, webmOpusFrames } from "./audio";
 import { flacModule, mpg123Module, opusModule } from "./wasm";
 
 /** Decoded frames at the codec's own rate; the caller resamples. */
@@ -34,6 +34,11 @@ export async function decodeWebm(bytes: Uint8Array): Promise<Pcm> {
 
 /** Decode an Ogg/Opus stream — what a desktop or Android recorder emits. */
 export async function decodeOgg(bytes: Uint8Array): Promise<Pcm> {
+  // Ogg carries Vorbis as often as Opus, and Vorbis packets fed to the Opus
+  // decoder crash its wasm. Refuse by name instead of 502.
+  const codec = oggCodec(bytes);
+  if (codec !== "opus" && codec !== "unknown")
+    throw new Error(`Ogg ${codec} is not supported; only Ogg Opus is`);
   const packets = oggOpusPackets(bytes);
   if (!packets.length) throw new Error("no audio packets found in the Ogg stream");
   return decodeOpusFrames(packets);
@@ -68,13 +73,18 @@ async function decodeOpusFrames(frames: Uint8Array[]): Promise<Pcm> {
  *  same path as every other container: one buffer of PCM, cut into windows of
  *  the length the service accepts, joined back together. */
 export async function decodeFlac(bytes: Uint8Array): Promise<Pcm> {
-  const { _FLACDecoder } = await import("@wasm-audio-decoders/flac/src/FLACDecoder.js");
-  // Hand over the build-time module. The library's own loader compiles its wasm
-  // at runtime, which the Workers runtime refuses; and its public class reads
-  // the module from the inner `_FLACDecoder`, not from itself, so the hook goes
-  // there. See `./wasm/index.ts`.
+  // Both classes must come from this one file, and never from the package's
+  // entry point as well. The public class builds its decoder from the inner
+  // `_FLACDecoder`, so the module hook has to be set on the very object the
+  // public class will use — and importing the entry point too bundles a second
+  // copy of the file, which leaves the hook on the copy nothing reads. The
+  // symptom is the original bug back again: a runtime compile the Workers
+  // runtime refuses, and a request that hangs rather than fails.
+  const { default: FLACDecoder, _FLACDecoder } =
+    await import("@wasm-audio-decoders/flac/src/FLACDecoder.js");
+  // Hand over the build-time module, so nothing compiles wasm at request time.
+  // See `./wasm/index.ts`.
   _FLACDecoder.module = flacModule;
-  const { FLACDecoder } = await import("@wasm-audio-decoders/flac");
   const decoder = new FLACDecoder();
   await decoder.ready;
   try {

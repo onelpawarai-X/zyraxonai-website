@@ -424,9 +424,12 @@ export const Route = createFileRoute("/api/public/stt")({
             // server fault, so it gets 415 and a message naming the format
             // rather than a 502 that reads like an outage.
             const message = error instanceof Error ? error.message : "unsupported audio format";
-            const unsupported = /not supported|unsupported audio format|could not be read/i.test(
-              message,
-            );
+            // Everything a caller can fix by re-recording is 415; a failure
+            // that is ours stays a 502.
+            const unsupported =
+              /not supported|unsupported audio format|could not be read|no audio (frames|packets) found/i.test(
+                message,
+              );
             return fail(message, unsupported ? 415 : 502);
           }
           const started = Date.now();

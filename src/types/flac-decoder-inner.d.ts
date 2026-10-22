@@ -11,4 +11,17 @@ declare module "@wasm-audio-decoders/flac/src/FLACDecoder.js" {
   export namespace _FLACDecoder {
     let module: WebAssembly.Module | undefined;
   }
+  /** The public class. The app takes this from the same file as `_FLACDecoder`
+   *  so both share one module instance and the hook above is the one that is
+   *  read. */
+  export default class FLACDecoder {
+    constructor();
+    ready: Promise<void>;
+    decodeFile(data: Uint8Array): Promise<{
+      channelData: Float32Array[];
+      samplesDecoded: number;
+      sampleRate: number;
+    }>;
+    free(): void;
+  }
 }

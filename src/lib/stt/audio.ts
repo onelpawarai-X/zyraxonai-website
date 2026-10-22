@@ -263,6 +263,29 @@ export function oggOpusPackets(bytes: Uint8Array): Uint8Array[] {
   return packets.filter((p) => !ascii(p, 0, "OpusHead") && !ascii(p, 0, "OpusTags"));
 }
 
+/** The codec an Ogg stream carries, read from its identification header.
+ *
+ *  Ogg is a container, not a codec: a desktop converter writes Vorbis by
+ *  default. The demuxer here only knows Opus, and handing it Vorbis packets
+ *  crashes the decoder wasm — a 502 that reads like an outage. Naming the codec
+ *  turns that into an honest refusal. */
+export function oggCodec(bytes: Uint8Array): "opus" | "vorbis" | "flac" | "unknown" {
+  if (!isOgg(bytes) || bytes.length < 35) return "unknown";
+  const bodyAt = 27 + bytes[26]!;
+  if (bodyAt + 8 > bytes.length) return "unknown";
+  if (ascii(bytes, bodyAt, "OpusHead")) return "opus";
+  if (bytes[bodyAt] === 0x01 && ascii(bytes, bodyAt + 1, "vorbis")) return "vorbis";
+  if (ascii(bytes, bodyAt, "fLaC") || ascii(bytes, bodyAt, "\x7fFLAC")) return "flac";
+  return "unknown";
+}
+
+/** A byte range read as latin1 text, for searching EBML string elements. */
+function asciiOf(b: Uint8Array, from: number, to: number): string {
+  let out = "";
+  for (let i = from; i < to; i++) out += String.fromCharCode(b[i]!);
+  return out;
+}
+
 /* ─────────────────────────── WebM / Opus demux ─────────────────────────── */
 
 /** Read an EBML variable-length integer.
@@ -318,6 +341,13 @@ function frameFromBlock(b: Uint8Array, at: number, end: number): Uint8Array | nu
  *  Segment, then Cluster, then Block — because a full EBML walk would cost more
  *  than the decode it feeds. */
 export function webmOpusFrames(bytes: Uint8Array): Uint8Array[] {
+  // A WebM can carry Vorbis too, and its packets would crash the Opus decoder.
+  // The `CodecID` sits in the header, so a bounded search over the first
+  // kilobytes settles it without walking the whole tree.
+  const head = asciiOf(bytes, 0, Math.min(bytes.length, 8192));
+  if (head.includes("A_VORBIS") && !head.includes("A_OPUS"))
+    throw new Error("WebM Vorbis is not supported; only WebM Opus is");
+
   const frames: Uint8Array[] = [];
   const SEGMENT = 0x18538067;
   const CLUSTER = 0x1f43b675;
