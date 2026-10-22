@@ -376,6 +376,17 @@ export function capabilityScore(
   // model capability, and in practice one pool model carries it. Letting it
   // lead would pin every turn to that model. It breaks a tie only.
   if (p.pdf && wants("pdf")) score += has("pdf") ? 2 : -6;
+  // A turn that carries no media at all is a text turn, and a text turn should
+  // land on a text model: the models that declare only `text` are the cheap,
+  // fast, always-available ones, and spending an omni model on "hello" both
+  // costs latency and occupies the one upstream an audio turn would need. The
+  // bonus is small — it reorders equals, it does not override capability — and
+  // it disappears the moment the turn carries anything, so an image turn is
+  // still led by the vision model.
+  if (!need.size) {
+    const extra = Array.from(mods).filter((m) => m !== "text").length;
+    score += extra === 0 ? 8 : -2 * extra;
+  }
   if (p.reasoning) score += model.reasoning ? 12 : -6;
   if (p.speed) score += (model.context || 0) <= 300_000 ? 8 : -2;
   if (p.longOutput) score += (model.output || 0) >= 128_000 ? 15 : -3;
@@ -503,6 +514,11 @@ export function rotationFor(
   const head = preferred && fits(preferred) ? [preferred] : [];
   const capable = others.filter(fits);
   const rest = others.filter((m) => !fits(m));
+  // When nothing is measured able to take the media, the turn still runs: the
+  // chain is ordered so the least-bad candidate leads, and the refusal detector
+  // downstream turns a model that silently dropped the bytes into a retry or a
+  // truthful error rather than a text answer. Refusing here instead would deny
+  // the turn on the strength of a declaration we already do not trust.
   return [...head, ...capable, ...rest].map((m) => m.id);
 }
 
@@ -515,9 +531,26 @@ export type BrandView = Brand & {
   output: number;
   multimodal: boolean;
   reasoning: boolean;
-  /** Input modalities the active model accepts. */
+  /** Input modalities the brand accepts from a caller: always every modality we
+   *  serve. A caller picks a model by name, not by capability, so the catalogue
+   *  must not make them choose — the routing below sends each turn to a model
+   *  that was measured able to handle the parts it carries. */
   modalities: string[];
+  /** Input modalities the *currently bound upstream* was measured to accept.
+   *  This is the routing truth, published so an operator can see which model is
+   *  doing the media work today. A caller does not need it: whatever it sends
+   *  is routed to a model that can take it. */
+  routed_modalities: string[];
 };
+
+/** Every input modality the ZYRAXON line accepts from a caller.
+ *
+ *  The catalogue advertises all of them on every brand on purpose. Which
+ *  upstream model actually receives a given turn is decided server-side from a
+ *  live measurement of that model, not from what it declares, and a caller that
+ *  had to pick the right model by hand would be choosing on the same unreliable
+ *  declarations we do not trust ourselves. */
+export const ADVERTISED_INPUT_MODALITIES = ["text", "image", "audio", "video", "pdf"] as const;
 
 /** A brand's live state. `active` is chosen by walking the rotation chain
  *  against the models the console is actually serving, so a retired preference
@@ -530,15 +563,17 @@ export function brandView(
 ): BrandView {
   const { active, chain } = activeFor(brand, pool, live, new Set(), oracle);
   const meta = pool.find((m) => m.id === active);
+  const routed = meta?.modalities ?? ["text"];
   return {
     ...brand,
     active,
     preferredAvailable: active === brand.preferred,
     context: meta?.context ?? 0,
     output: meta?.output ?? 0,
-    multimodal: meta?.multimodal ?? false,
+    multimodal: true,
     reasoning: meta?.reasoning ?? false,
-    modalities: meta?.modalities ?? ["text"],
+    modalities: [...ADVERTISED_INPUT_MODALITIES],
+    routed_modalities: routed,
   };
 }
 

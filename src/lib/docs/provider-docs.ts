@@ -129,7 +129,7 @@ for await (const chunk of stream) {
     blocks: [
       {
         t: "p",
-        text: "Every model is the same provider underneath, tuned and bound for a different job. The list below is the intended character of each; the **live** capability, context window and modality set for a given model is whatever `GET /api/public/zyraxon/v1/models` reports right now, because the serving pool changes.",
+        text: "Every model accepts **text, images, audio, video and PDFs**. You do not have to pick a model to match your input: send whatever you have to whichever ZYRAXON model you like, and the line routes the turn to an upstream that can actually process it. The list below is the intended *character* of each model — what it is tuned for — not a list of what it can accept. Live context and output limits are whatever `GET /api/public/zyraxon/v1/models` reports right now, because the serving pool changes.",
       },
       {
         t: "table",
@@ -138,7 +138,7 @@ for await (const chunk of stream) {
           [
             "`zyraxon-apex`",
             "Flagship reasoning at a million tokens",
-            "Reasoning · image · video · PDF",
+            "Reasoning · long context",
           ],
           ["`zyraxon-matrix`", "Vision plus scale reasoning", "Image · reasoning"],
           ["`zyraxon-pulse`", "Speed on long inputs", "Low latency"],
@@ -153,6 +153,12 @@ for await (const chunk of stream) {
       },
       {
         t: "note",
+        kind: "info",
+        title: "Every model takes every modality",
+        text: "The catalogue reports `input_modalities: [\"text\",\"image\",\"audio\",\"video\",\"pdf\"]` on **all ten** models, and that is a real promise: the bytes are accepted and processed. Which upstream model inside the line actually handles your turn is chosen server-side, from a live measurement of each upstream — not from what it declares — so you never have to know or care. See **Routing: how your input reaches the right model**.",
+      },
+      {
+        t: "note",
         kind: "warn",
         title: "Do not hardcode a model's context window",
         text: "A model's advertised context and output limits move with the pool. Read them from the models list at startup, or from `GET /api/public/zyraxon/v1/provider`, instead of baking a number into your client.",
@@ -161,11 +167,11 @@ for await (const chunk of stream) {
       {
         t: "list",
         items: [
-          "Sending an image, a PDF, or a video? Prefer a model whose catalogue entry lists that modality. A text-only model will answer, but it cannot see the media.",
-          "Sending audio? Check the model lists `audio`. If none does, the audio will be ignored — say so to your user rather than pretending it was read.",
-          "Building a project or writing code? `zyraxon-codex` is the intended default.",
+          "**You usually do not need to choose by input type.** Any model accepts any media; the routing picks the upstream. Choose by what the answer should be like.",
+          "Writing code or building a project? `zyraxon-codex` is the intended default.",
           "Need the longest possible answer? `zyraxon-genesis` or `zyraxon-titan`.",
           "Need the fastest turnaround on a long prompt? `zyraxon-pulse`.",
+          "Want the strongest reasoning? `zyraxon-apex`.",
         ],
       },
       {
@@ -192,6 +198,57 @@ for await (const chunk of stream) {
         kind: "warn",
         title: "Read this before sending large files",
         text: "One request carries at most **12 media parts** and a body under **40 MB**. Base64 encoding adds about a third to a file's size, so a 30 MB video becomes ~40 MB on the wire. Compress and slice before you send; do not send a single huge part and expect the server to sort it out.",
+      },
+      { t: "h2", text: "Two ways to send media: inline or by URL" },
+      {
+        t: "p",
+        text: "Every media part can be given either as **inline base64** or as an **http(s) URL**. The URL form is usually what you want: your file already lives somewhere, and a URL keeps the request body small.",
+      },
+      {
+        t: "table",
+        head: ["How", "Where the bytes go", "Use it when"],
+        rows: [
+          [
+            "Inline data URL",
+            "`data:<mime>;base64,<BASE64>` in the part itself",
+            "The file is small, or you have already read it into memory (a browser upload, a paste, a screenshot).",
+          ],
+          [
+            "Remote URL",
+            "`https://…` in the same field",
+            "The file is large, already hosted, or produced by another service. **The server fetches it for you** and inlines it before the model is called.",
+          ],
+        ],
+      },
+      {
+        t: "note",
+        kind: "success",
+        title: "URLs are fetched server-side, so the model always gets bytes",
+        text: "Most upstream models cannot open a URL, and an `input_audio` part has no URL form at all. So when you send a URL, ZYRAXON fetches it, re-encodes it as a data URL, and routes the turn exactly as if you had sent base64. You never have to inline a large file yourself. A URL that cannot be read (404, timeout, private host) fails the turn with a clear message instead of being silently dropped.",
+      },
+      {
+        t: "code",
+        lang: "json",
+        code: `{
+  "role": "user",
+  "content": [
+    { "type": "text", "text": "Describe this recording and transcribe it." },
+    { "type": "input_audio", "input_audio": { "url": "https://cdn.example.com/talk.mp3" } },
+    { "type": "image_url", "image_url": { "url": "https://cdn.example.com/diagram.png" } },
+    { "type": "video_url", "video_url": { "url": "https://cdn.example.com/clip.mp4" } },
+    { "type": "file", "file": { "filename": "report.pdf", "file_data": "https://cdn.example.com/report.pdf" } }
+  ]
+}`,
+      },
+      {
+        t: "table",
+        head: ["Field", "Inline", "Remote URL"],
+        rows: [
+          ["Image", "`image_url: { url: \"data:image/png;base64,…\" }`", "`image_url: { url: \"https://…\" }`"],
+          ["Audio", "`input_audio: { data: \"<BASE64>\", format: \"mp3\" }`", "`input_audio: { url: \"https://…\" }`"],
+          ["Video", "`video_url: { url: \"data:video/mp4;base64,…\" }`", "`video_url: { url: \"https://…\" }`"],
+          ["PDF", "`file: { filename, file_data: \"data:application/pdf;base64,…\" }`", "`file: { filename, file_data: \"https://…\" }`"],
+        ],
       },
       { t: "h2", text: "Images" },
       {
@@ -299,6 +356,95 @@ for await (const chunk of stream) {
         kind: "info",
         title: "Large media is sliced, not rejected",
         text: "The ZYRAXON desktop and web clients compress and slice on the client before sending, so a long recording arrives as several ordered parts rather than a single refused upload. If a file is so long that even the lowest usable bitrate will not fit one turn, the leading parts are sent and the remainder is reported to the user — never dropped silently.",
+      },
+    ],
+  },
+
+  {
+    slug: "provider-routing",
+    title: "Routing: How Your Input Reaches the Right Model",
+    group: "ZYRAXON Provider",
+    desc: "Every model accepts every modality. Which upstream handles your turn is decided server-side, from live measurement — here is exactly how.",
+    blocks: [
+      {
+        t: "p",
+        text: "A ZYRAXON model id is a **stable name for a routing policy**, not a fixed machine. When you send a turn to `zyraxon-apex`, the line looks at what the turn actually carries, finds an upstream model measured able to process exactly that, and sends it there. You address a brand; the brand addresses a model. This is why every model can truthfully advertise `input_modalities: [\"text\",\"image\",\"audio\",\"video\",\"pdf\"]` — the media is always handled, whichever name you used.",
+      },
+      { t: "h2", text: "What happens to one request" },
+      {
+        t: "list",
+        items: [
+          "**1. Your media is resolved.** Any part you sent as an `http(s)` URL is fetched and inlined (see **Sending Images, Audio, Video and PDFs**). After this step the turn is fully inline and looks the same no matter how you sent it.",
+          "**2. The turn's requirement is read.** The line collects which modalities the turn actually carries: `text` alone, or `text + image`, `text + audio`, `text + video`, and so on. This set is the only thing that decides the routing.",
+          "**3. A capable upstream is chosen.** Candidates are filtered to those **measured** able to take every modality in the set — measurement, not declaration, because the pool's self-descriptions are known to be wrong in both directions.",
+          "**4. Speed breaks the tie.** Among the capable models, the fastest measured one leads. If it fails, the chain walks to the next capable model.",
+          "**5. A refusal is caught, not served.** A model that returns 200 while ignoring the media is detected and the turn is re-asked on the next capable model, instead of handing you an answer that pretends to have read the file.",
+        ],
+      },
+      {
+        t: "note",
+        kind: "success",
+        title: "The game is played behind the line, and you never see it",
+        text: "You do not choose a model to match your input, and you do not have to know which upstream can see, hear or watch. Send text, an image, an audio file or a video to **any** ZYRAXON model. The line picks the machine. That is the entire point of the brand.",
+      },
+      { t: "h2", text: "Which model leads, by what the turn carries" },
+      {
+        t: "table",
+        head: ["Your turn carries", "The line routes it to", "Why"],
+        rows: [
+          [
+            "Text only",
+            "A **text model** when one is available and equally able",
+            "Text models are the fastest and cheapest, and using an omni model for plain text spends the one upstream a media turn may need. If no text model is live, a media-capable model answers — you get a correct reply either way.",
+          ],
+          [
+            "Text + image",
+            "A model measured able to **see images**",
+            "The image is only processed if the model receives it. An image turn is never routed to a text-only model.",
+          ],
+          [
+            "Text + audio",
+            "A model measured able to **take audio**",
+            "Audio capability is the least reliably declared, so it is only trusted after measurement.",
+          ],
+          [
+            "Text + video",
+            "A model measured able to **take video**",
+            "Video is the rarest capability; the chain prefers a model that handles both text and video.",
+          ],
+          [
+            "Image only (no text)",
+            "A model measured able to **see** — never a text-only model",
+            "With nothing to read as text, the media *is* the request.",
+          ],
+          [
+            "Video only (no text)",
+            "A model measured able to **take video**",
+            "Same rule, for the rarest modality.",
+          ],
+          [
+            "Anything + PDF",
+            "A model that can take the document, plus whatever else the turn carries",
+            "A PDF is treated as a document, not as text.",
+          ],
+        ],
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "Mixed turns are matched on the whole set",
+        text: "If you send text **and** an image, the line needs a model that takes both — a text-only model is excluded even though it could answer the text half, because an answer that ignores your image is not an answer to your request.",
+      },
+      { t: "h2", text: "When the pool changes under you" },
+      {
+        t: "p",
+        text: "The upstream pool is added to and retired without notice. The line re-reads it on a short interval and re-binds every brand to a live model, so a retired upstream degrades to a capable sibling rather than a dead end. You keep calling the same ZYRAXON name and it keeps working. A brand whose preferred upstream is temporarily absent reports `status: \"rotated\"` in the models list; it still answers.",
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "You can watch the routing decisions",
+        text: "`GET /api/public/zyraxon/v1/models` publishes `input_modalities` (what the brand accepts — always all five) alongside `routed_modalities` (what the upstream currently bound to that brand was measured to accept). The second field is the live, operational view, and it is safe to log for debugging. Do not branch your client on it: the routing already did that work.",
       },
     ],
   },

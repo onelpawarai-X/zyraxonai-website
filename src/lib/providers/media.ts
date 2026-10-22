@@ -126,6 +126,10 @@ function urlOfPart(part: any, kind: MediaKind): string {
   if (kind === "video") return part.video_url?.url ?? part.url ?? part.video ?? "";
   if (kind === "audio") {
     const a = part.input_audio ?? {};
+    // A remote reference the server has already resolved arrives as a data URL
+    // in `url` (the spec has no URL form for `input_audio`), so it is read
+    // before `data` is assumed to hold bare base64.
+    if (typeof a.url === "string" && a.url) return a.url;
     if (typeof a.data === "string") {
       const fmt = a.format ? `;base64` : ";base64";
       return /^data:/i.test(a.data) ? a.data : `data:audio/${a.format || "mp3"}${fmt},${a.data}`;

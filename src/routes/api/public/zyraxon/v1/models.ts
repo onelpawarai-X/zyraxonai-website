@@ -49,9 +49,18 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/models")({
               // ZYRAXON extensions: the modalities the model accepts and its
               // live token limits. A client that only knows OpenAI ignores them;
               // one that sends media can use them to pick a model.
+              //
+              // Every brand advertises the full media intake. Choosing a model
+              // is not how a caller gets media handled — the line routes each
+              // turn to an upstream measured able to take the parts it carries —
+              // so the catalogue must not present media support as a per-model
+              // decision the caller has to get right.
               context_window: b.context,
               max_output_tokens: b.output,
               input_modalities: b.modalities,
+              // Which modalities the upstream currently bound to this brand was
+              // measured to accept. Operational detail, not a caller's concern.
+              routed_modalities: b.routed_modalities,
               reasoning: b.reasoning,
             })),
           },

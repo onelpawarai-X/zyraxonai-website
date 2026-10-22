@@ -194,6 +194,30 @@ curl -s ${API_ORIGIN}/api/public/zyraxon/v1/chat/completions \\
   -d "{\\"model\\":\\"zyraxon-codex\\",\\"messages\\":[{\\"role\\":\\"user\\",\\"content\\":\\"$TEXT\\"}]}" \\
 | jq -r '.choices[0].message.content'`,
       },
+      {
+        t: "p",
+        text: "The recording can be uploaded, or you can point at it with a URL and let the server fetch it. Three shapes reach the same recogniser, so a browser, a server and a webhook can each send what they already have:",
+      },
+      {
+        t: "code",
+        lang: "bash",
+        code: `# 1. upload the bytes
+curl -s ${STT} -F "file=@recording.mp3" -F "language=bn"
+
+# 2. base64 in JSON
+curl -s ${STT} -H "Content-Type: application/json" \\
+  -d '{"audio":"'"$(base64 -w0 recording.mp3)"'","language":"bn"}'
+
+# 3. a URL the server fetches for you — no upload, no base64 inflation
+curl -s ${STT} -H "Content-Type: application/json" \\
+  -d '{"url":"https://example.com/recording.mp3","language":"bn"}'`,
+      },
+      {
+        t: "note",
+        kind: "info",
+        title: "A URL is a first-class input, not a convenience",
+        text: "When you send `url`, the server downloads the audio itself, under the same size ceiling as an upload. This is what makes the endpoint usable from a webhook or a chat platform that hands you a link rather than a file, and it keeps a large recording out of your request body.",
+      },
       { t: "h2", text: "Hear it while it is being said" },
       {
         t: "p",

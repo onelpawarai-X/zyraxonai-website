@@ -462,7 +462,15 @@ function ProvidersPage() {
           </Card>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="p-5">
+            <h3 className="text-[14px] font-semibold text-foreground">Send it inline or by URL</h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Every media part takes either base64 or an{" "}
+              <code className="text-[12px]">https://</code> URL. Send a URL and the server fetches
+              it for you, so a large file never has to pass through your request body.
+            </p>
+          </Card>
           <Card className="p-5">
             <h3 className="text-[14px] font-semibold text-foreground">Big video just works</h3>
             <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
@@ -474,8 +482,8 @@ function ProvidersPage() {
           <Card className="p-5">
             <h3 className="text-[14px] font-semibold text-foreground">Capability-aware routing</h3>
             <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-              The modalities each model accepts are read live from the serving pool, and a media
-              turn is ordered onto the models that can handle it.
+              Every model accepts every modality. Which upstream handles your turn is measured live
+              and chosen server-side, so the right model takes it without you choosing one.
             </p>
           </Card>
           <Card className="p-5">

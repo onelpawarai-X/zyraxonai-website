@@ -41,6 +41,7 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               output: b.output,
               multimodal: b.multimodal,
               modalities: b.modalities,
+              routed_modalities: b.routed_modalities,
               reasoning: b.reasoning,
               // "ready" = serving on its preferred binding. "rotated" = the
               // preferred upstream is unavailable and a sibling is covering,

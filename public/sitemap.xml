@@ -235,6 +235,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://zyraxonai.lovable.app/docs/provider-routing</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://zyraxonai.lovable.app/docs/provider-tools</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>

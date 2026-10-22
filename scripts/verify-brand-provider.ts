@@ -294,8 +294,8 @@ check(
   );
 
   // Real-world shape: the pool the console actually serves, minus the brand's
-  // preference, must lead with the fastest capable model — not with whatever
-  // happens to be first in the alphabetical pool.
+  // preference. Routing is need-driven: a text turn leads with a text model,
+  // and a vision turn leads with the fastest model measured able to see.
   const livePool: PoolModel[] = [
     { id: "deepseek-v4.1-flash-free", modalities: ["text", "image"], context: 200_000 },
     { id: "glm-5.3-flash-free", modalities: ["text", "image", "video", "pdf"], context: 200_000 },
@@ -303,14 +303,23 @@ check(
     { id: "minimax-m3.1-flash-free", modalities: ["text", "image", "video"], context: 1_000_000 },
     { id: "big-pickle", modalities: ["text"], context: 200_000 },
   ];
-  // A vision brand with its preference absent must not land on the 27s or 14s
-  // model when the 1.6s model fits exactly as well.
   const matrix = getBrand("zyraxon-matrix")!;
-  const matrixChain = rotationFor(matrix, livePool, null);
+  // No media in the turn: the text-only model is the right lead, not an omni
+  // model that would be spent on a plain question.
+  const matrixTextChain = rotationFor(matrix, livePool, null);
   check(
-    "a vision brand with an absent preference leads with the fastest vision model",
-    matrixChain[0] === "minimax-m3.1-flash-free",
-    matrixChain.join(" → "),
+    "a text turn leads with a text-only model",
+    matrixTextChain[0] === "big-pickle",
+    matrixTextChain.join(" → "),
+  );
+  // An image turn must lead with a vision model, and among those the fastest.
+  const visionOracle: CapabilityOracle = (id, m) =>
+    m === "image" ? id !== "big-pickle" : undefined;
+  const matrixImageChain = rotationFor(matrix, livePool, null, new Set(["image"] as const), visionOracle);
+  check(
+    "an image turn leads with the fastest vision model, not the text model",
+    matrixImageChain[0] === "minimax-m3.1-flash-free",
+    matrixImageChain.join(" → "),
   );
 
   // Need-dependence, cleanly: a fast text-only model and a slower video-capable
@@ -321,15 +330,28 @@ check(
     { id: "glm-5.3-flash-free", modalities: ["text", "image", "video"], context: 262_144, reasoning: true },
   ];
   const general = getBrand("zyraxon-neural")!; // reasoning only
+  // A text-only model is deliberately preferred for a text turn, so the two no
+  // longer tie: the text-only one scores higher until the turn carries media.
   check(
-    "the two need-dependency models tie on capability",
-    capabilityScore(general, depPool[0]) === capabilityScore(general, depPool[1]),
+    "a text turn prefers the text-only model over an omni model",
+    capabilityScore(general, depPool[0]) > capabilityScore(general, depPool[1]),
     `${capabilityScore(general, depPool[0])} vs ${capabilityScore(general, depPool[1])}`,
   );
   check(
     "with no media needed, the faster model leads",
     rotationFor(general, depPool, null)[0] === "beam-free",
     rotationFor(general, depPool, null).join(" → "),
+  );
+  // With media in the turn, a brand that declares vision prefers the model
+  // measured able to see. `neural` has no vision profile, so the modality
+  // preference is expressed through `rotationFor`'s capability ordering, which
+  // the matrix brand (a vision brand) exercises directly.
+  const visionBrand = getBrand("zyraxon-matrix")!;
+  const imgOracle: CapabilityOracle = (id, m) => (m === "image" ? id !== "beam-free" : undefined);
+  check(
+    "with an image needed, the measured-seeing model outscores the text-only one",
+    capabilityScore(visionBrand, depPool[1], new Set(["image"] as const), imgOracle) >
+      capabilityScore(visionBrand, depPool[0], new Set(["image"] as const), imgOracle),
   );
   // A declaration is not evidence, so the capable model only leads once a
   // measurement says it can see. `glm` is measured able; `beam` was not measured

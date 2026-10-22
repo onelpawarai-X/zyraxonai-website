@@ -34,6 +34,7 @@ import {
   toWireContent,
   type MediaKind,
 } from "./media";
+import { inlineRemoteMedia } from "./remote-media.server";
 import {
   MEDIA_DENIAL,
   ensureCapabilities,
@@ -194,6 +195,27 @@ export async function brandChatStream(
     tools,
   } = options;
 
+  // Resolve any media the caller pointed at rather than embedded. This runs
+  // before every other shaping step, so `needsWire`, modality routing and the
+  // upstream payload all see the same fully-inline turn. A remote reference
+  // that cannot be read fails the turn: answering without the media a caller
+  // sent is the one outcome worse than not answering.
+  const inlined = await inlineRemoteMedia(messages);
+  if (inlined.stats.failures.length) {
+    const first = inlined.stats.failures[0];
+    return Response.json(
+      {
+        error: {
+          message: `Could not read remote media: ${first.reason} (${first.url}). Fetch the file yourself and send it inline as a data URL, or make the URL publicly reachable.`,
+          type: "invalid_request_error",
+          failed_urls: inlined.stats.failures,
+        },
+      },
+      { status: 400, headers: { "Access-Control-Allow-Origin": "*" } },
+    );
+  }
+  const inbound = inlined.messages as ChatMessage[];
+
   // Shape every message once. The SDK shape is the default, because the SDK
   // gives us retries and tool plumbing; but audio and video have no SDK part at
   // all, so a turn carrying either is posted on the raw wire path instead, where
@@ -203,7 +225,7 @@ export async function brandChatStream(
   // first thing the model reads on every turn regardless of which path the turn
   // takes or what the caller sent. A caller-supplied system message is kept and
   // follows the contract; see `withProviderContract`.
-  const contracted = withProviderContract(messages);
+  const contracted = withProviderContract(inbound);
   const canonical = contracted.map((m) => {
     const out: any = { role: m.role, content: normaliseContent(m.content) };
     // A tool turn carries an id that ties it to the call that asked for it, and
@@ -221,9 +243,9 @@ export async function brandChatStream(
   // answer as though no tools existed. A tool result (or a turn with a tool
   // call) does too — the SDK message schema has no room for `tool_call_id`.
   const wire =
-    needsWire(messages) ||
+    needsWire(inbound) ||
     (tools?.length ?? 0) > 0 ||
-    messages.some((m) => m.role === "tool" || (m.tool_calls?.length ?? 0) > 0);
+    inbound.some((m) => m.role === "tool" || (m.tool_calls?.length ?? 0) > 0);
   const useSend = send ?? (wire ? streamWireRaw : streamRaw);
   const useComplete = complete ?? (wire ? completeWireRaw : completeRaw);
   const finalMessages = canonical.map((m: any) => ({
@@ -237,7 +259,7 @@ export async function brandChatStream(
   // spelling (`image_url`, `video_url`, `input_audio`) still distinguishes
   // image from audio from video. The SDK shape collapses all three into
   // `image`/`file`, which is too coarse to route on.
-  const need = requiredModalities(messages.map((m) => ({ content: m.content })));
+  const need = requiredModalities(inbound.map((m) => ({ content: m.content })));
 
   const resolved = await resolve(modelId, need);
   if (!resolved) {

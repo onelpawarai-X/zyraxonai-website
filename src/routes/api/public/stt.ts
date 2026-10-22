@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fetchRemoteBytes } from "@/lib/providers/remote-media.server";
 import { sniff } from "@/lib/stt/audio";
 import { recognize } from "@/lib/stt/engine";
 import { decodeContainer, toInput, type Decoded } from "@/lib/stt/ingest";
@@ -165,16 +166,32 @@ async function readInput(
     } catch {
       return fail("The request body is not valid JSON.");
     }
+    const language =
+      normaliseLanguage(typeof body.language === "string" ? body.language : null) ?? queryLanguage;
+    // A URL is accepted wherever audio is: the caller points at the file and the
+    // server fetches it, so a large recording never has to be base64-inflated
+    // through the request body. This is checked before base64, because a URL is
+    // not valid base64 and would otherwise be rejected as malformed.
+    const remote = String(body?.url ?? body?.audio_url ?? "").trim();
+    if (remote) {
+      const got = await fetchRemoteBytes(remote, MAX_BYTES, "audio/wav");
+      if ("reason" in got) {
+        return fail(`Could not read remote audio: ${got.reason} (${remote}).`, 400);
+      }
+      return {
+        bytes: got.bytes,
+        declared: typeof body.format === "string" ? `audio/${body.format}` : got.mime,
+        language,
+      };
+    }
     const base64 = String(body?.audio ?? body?.file ?? "").trim();
-    if (!base64) return fail('JSON calls need an "audio" field holding base64 audio.');
+    if (!base64) return fail('JSON calls need an "audio" field holding base64 audio, or a "url" field pointing at it.');
     const bytes = base64ToBytes(base64);
     if (!bytes) return fail('The "audio" field is not valid base64.');
     return {
       bytes,
       declared: typeof body.format === "string" ? `audio/${body.format}` : "",
-      language:
-        normaliseLanguage(typeof body.language === "string" ? body.language : null) ??
-        queryLanguage,
+      language,
     };
   }
 
@@ -334,7 +351,12 @@ export const Route = createFileRoute("/api/public/stt")({
               when: "You already have a recording.",
               contentTypes: ["multipart/form-data", "audio/*", "application/json"],
               multipart: { file: "the audio", language: "required, e.g. bn or bn-BD" },
-              json: { audio: "base64 audio", language: "required", format: "optional, e.g. webm" },
+              json: {
+                audio: "base64 audio",
+                url: "or an http(s) URL the server will fetch instead of base64",
+                language: "required",
+                format: "optional, e.g. webm",
+              },
               response: {
                 success: "boolean",
                 text: "the transcript",
