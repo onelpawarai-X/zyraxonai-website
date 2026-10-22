@@ -7,8 +7,10 @@
 //
 // Run: npx tsx scripts/verify-stt-stream.ts [path-to-audio]
 
-import { readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { encodeWav, secondsOf, type Pcm } from "../src/lib/stt/audio";
 import { segmentPlan, toSamples, liveTranscript, type LiveEvent } from "../src/lib/stt/stream";
 
@@ -110,7 +112,12 @@ check(
 check("silence produces no committed text", !!done && done.text === "", JSON.stringify(done?.text));
 
 // ── the real path: a real clip, streamed in one-second pieces ───────────────
-const audioPath = process.argv[2] ?? "/tmp/rt.mp3";
+// The live run needs a clip that actually holds speech, because a tone commits
+// no text by design. One is generated with espeak-ng when the caller did not
+// supply a path, so the run is exercised rather than silently skipped on a
+// machine that has the tooling.
+const arg = process.argv[2];
+let audioPath = arg ?? "/tmp/rt.mp3";
 let haveFfmpeg = false;
 try {
   execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
@@ -118,8 +125,27 @@ try {
 } catch {
   haveFfmpeg = false;
 }
+const haveEspeak = (() => {
+  try {
+    execFileSync("espeak-ng", ["--version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+if (!arg && !existsSync(audioPath) && haveFfmpeg && haveEspeak) {
+  const dir = mkdtempSync(join(tmpdir(), "zyraxon-stt-live-"));
+  const spoken = join(dir, "speech.wav");
+  execFileSync("espeak-ng", [
+    "-w", spoken, "-s", "150",
+    "hello world this is a test of the live speech to text stream",
+  ]);
+  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", spoken,
+    "-ar", "16000", "-ac", "1", "-b:a", "96k", join(dir, "speech.mp3")]);
+  audioPath = join(dir, "speech.mp3");
+}
 
-if (haveFfmpeg) {
+if (haveFfmpeg && existsSync(audioPath)) {
   const pcm = new Uint8Array(
     execFileSync(
       "ffmpeg",
@@ -221,7 +247,9 @@ if (haveFfmpeg) {
     );
   }
 } else {
-  console.log("\nSKIP  real-audio live run (ffmpeg is not installed)");
+  console.log(
+    "\nSKIP  real-audio live run (needs ffmpeg and espeak-ng, or a path argument)",
+  );
 }
 
 console.log(
