@@ -21,7 +21,7 @@ export type Pcm = { samples: Int16Array; sampleRate: number };
  *  the engine transcribes most accurately. */
 export const TARGET_RATE = 16000;
 
-export type Container = "wav" | "flac" | "ogg" | "webm" | "mp3" | "mp4" | "pcm" | "unknown";
+export type Container = "wav" | "flac" | "ogg" | "webm" | "mp3" | "aac" | "mp4" | "pcm" | "unknown";
 
 /* ───────────────────────────── container sniffing ───────────────────────── */
 
@@ -49,17 +49,28 @@ export function isWebm(b: Uint8Array): boolean {
  *  from the formats this endpoint can actually decode.
  *
  *  Recognised only so the caller gets an honest refusal. An `.m4a` upload is
- *  what an iPhone or Safari produces by default, so it arrives often; the
- *  recogniser will not accept one (it answers 400 to both MP4 and raw AAC), and
- *  there is no AAC decoder here. Detecting it turns a silent empty transcript —
- *  indistinguishable from "nobody spoke" — into a message that names the format
- *  and the formats that do work. */
+ *  what an iPhone or Safari produces by default, so it arrives often, and the
+ *  audio inside it is AAC. A bare AAC stream is now decoded; the wrapper is not,
+ *  because lifting the audio out means walking the box tree, which is a separate
+ *  job. Detecting the wrapper turns a silent empty transcript — indistinguishable
+ *  from "nobody spoke" — into a message that names the format and what works. */
 export function isMp4(b: Uint8Array): boolean {
   return b.length > 12 && ascii(b, 4, "ftyp");
+}
+/** Raw AAC in an ADTS wrapper — a `.aac` file, or the audio a recorder wrote
+ *  without an MP4 container around it.
+ *
+ *  The sync word is twelve set bits, and the two bits after it are the layer,
+ *  which is always `00` here. An MP3 frame sync is eleven set bits with a
+ *  non-zero layer, so the twelve-bit test has to run first or every ADTS stream
+ *  would be claimed as MP3. */
+export function isAdts(b: Uint8Array): boolean {
+  return b.length > 2 && b[0] === 0xff && (b[1]! & 0xf6) === 0xf0;
 }
 export function isMp3(b: Uint8Array): boolean {
   if (b.length < 3) return false;
   if (ascii(b, 0, "ID3")) return true;
+  if (isAdts(b)) return false;
   // Frame sync: eleven set bits.
   return b[0] === 0xff && (b[1]! & 0xe0) === 0xe0;
 }
@@ -71,6 +82,9 @@ export function sniff(bytes: Uint8Array): Container {
   if (isFlac(bytes)) return "flac";
   if (isOgg(bytes)) return "ogg";
   if (isWebm(bytes)) return "webm";
+  // ADTS before MP3: the MP3 test accepts an ADTS sync word, so the narrower
+  // twelve-bit test has to be asked first.
+  if (isAdts(bytes)) return "aac";
   if (isMp3(bytes)) return "mp3";
   if (isMp4(bytes)) return "mp4";
   // No header at all: a client streaming a live microphone often sends bare
@@ -340,12 +354,18 @@ function frameFromBlock(b: Uint8Array, at: number, end: number): Uint8Array | nu
  *  `Block` payloads carry audio. The tree is walked only as deep as those live —
  *  Segment, then Cluster, then Block — because a full EBML walk would cost more
  *  than the decode it feeds. */
-export function webmOpusFrames(bytes: Uint8Array): Uint8Array[] {
-  // A WebM can carry Vorbis too, and its packets would crash the Opus decoder.
+export function webmCodec(bytes: Uint8Array): "opus" | "vorbis" | "unknown" {
   // The `CodecID` sits in the header, so a bounded search over the first
   // kilobytes settles it without walking the whole tree.
   const head = asciiOf(bytes, 0, Math.min(bytes.length, 8192));
-  if (head.includes("A_VORBIS") && !head.includes("A_OPUS"))
+  if (head.includes("A_OPUS")) return "opus";
+  if (head.includes("A_VORBIS")) return "vorbis";
+  return "unknown";
+}
+
+export function webmOpusFrames(bytes: Uint8Array): Uint8Array[] {
+  // A WebM can carry Vorbis too, and its packets would crash the Opus decoder.
+  if (webmCodec(bytes) === "vorbis")
     throw new Error("WebM Vorbis is not supported; only WebM Opus is");
 
   const frames: Uint8Array[] = [];

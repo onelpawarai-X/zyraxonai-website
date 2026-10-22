@@ -17,3 +17,4 @@ declare module "opus-decoder" {
     let module: WebAssembly.Module | undefined;
   }
 }
+

@@ -21,7 +21,16 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { isMp3, isOgg, isWebm, isSilent, secondsOf, sniff } from "../src/lib/stt/audio";
+import {
+  isAdts,
+  isMp3,
+  isOgg,
+  isWebm,
+  isSilent,
+  oggCodec,
+  secondsOf,
+  sniff,
+} from "../src/lib/stt/audio";
 import { wasmModulePlugin } from "../src/lib/stt/wasm/vite-plugin";
 
 let failures = 0;
@@ -70,7 +79,9 @@ function forbidRuntimeWasmCompilation(): void {
 await import("../src/lib/stt/wasm");
 
 forbidRuntimeWasmCompilation();
-const { decodeFlac, decodeMp3, decodeOgg, decodeWebm } = await import("../src/lib/stt/decode");
+const { decodeAac, decodeFlac, decodeMp3, decodeOgg, decodeVorbis, decodeWebm } = await import(
+  "../src/lib/stt/decode"
+);
 
 /** A spoken clip plus the containers built from it, so the decode result is real
  *  speech rather than a tone that could pass even if a decoder mis-read the
@@ -79,6 +90,8 @@ function buildSamples(): {
   mp3: Uint8Array;
   webm: Uint8Array;
   ogg: Uint8Array;
+  vorbis: Uint8Array;
+  aac: Uint8Array;
   flac: Uint8Array;
 } | null {
   let ffmpeg = true;
@@ -126,6 +139,11 @@ function buildSamples(): {
     mp3: encode("speech.mp3", ["-ar", "44100", "-ac", "1", "-b:a", "96k"]),
     webm: encode("speech.webm", ["-c:a", "libopus", "-b:a", "32k"]),
     ogg: encode("speech.ogg", ["-c:a", "libopus", "-b:a", "32k"]),
+    // Vorbis, the codec Wikimedia serves and the one the endpoint used to refuse
+    // by name. A different codec inside the same container is the whole point.
+    vorbis: encode("speech-vorbis.ogg", ["-c:a", "libvorbis", "-b:a", "64k"]),
+    // Raw AAC in an ADTS wrapper — the `.aac` file, without an MP4 around it.
+    aac: encode("speech.aac", ["-c:a", "aac", "-b:a", "96k", "-f", "adts"]),
     // 22 050 Hz, like ffmpeg's FLAC default, so a hard-coded rate in the request
     // would be wrong — which is the second half of the FLAC bug.
     flac: encode("speech.flac", ["-ar", "22050", "-ac", "1"]),
@@ -137,7 +155,7 @@ if (!samples) {
   console.log("SKIP  wasm decode tests (ffmpeg is not installed)");
   process.exit(failures ? 1 : 0);
 }
-const { mp3, webm, ogg, flac } = samples;
+const { mp3, webm, ogg, vorbis, aac, flac } = samples;
 
 check("the sample is sniffed as MP3", isMp3(mp3) && sniff(mp3) === "mp3", sniff(mp3));
 
@@ -166,6 +184,31 @@ check(
   `${oggPcm.samples.length} samples @ ${oggPcm.sampleRate}`,
 );
 
+// Ogg/Vorbis: a different codec in the same container as the Opus sample above.
+check(
+  "the Vorbis sample is sniffed as Ogg/Vorbis",
+  isOgg(vorbis) && oggCodec(vorbis) === "vorbis",
+  oggCodec(vorbis),
+);
+const vorbisPcm = await decodeVorbis(vorbis);
+check(
+  "Ogg/Vorbis decodes with runtime wasm compilation forbidden",
+  vorbisPcm.samples.length > 1000,
+  `${vorbisPcm.samples.length} samples @ ${vorbisPcm.sampleRate}`,
+);
+check("the decoded Vorbis is not silence", !isSilent(vorbisPcm));
+
+// Raw AAC (ADTS). The twelve-bit sync word also satisfies the eleven-bit MP3
+// test, so sniffing is where this format is easy to lose.
+check("the AAC sample is sniffed as AAC", isAdts(aac) && sniff(aac) === "aac", sniff(aac));
+const aacPcm = await decodeAac(aac);
+check(
+  "raw AAC decodes with runtime wasm compilation forbidden",
+  aacPcm.samples.length > 1000,
+  `${aacPcm.samples.length} samples @ ${aacPcm.sampleRate}`,
+);
+check("the decoded AAC is not silence", !isSilent(aacPcm));
+
 // FLAC: the container that used to bypass decoding, and so bypassed windowing
 // and rate detection with it.
 const flacPcm = await decodeFlac(flac);
@@ -178,12 +221,19 @@ check("the decoded FLAC is not silence", !isSilent(flacPcm));
 
 // The decoders must agree: the same audio in every container, one duration.
 const mp3s = secondsOf(mp3Pcm);
+const durations = {
+  WebM: secondsOf(webmPcm),
+  Ogg: secondsOf(oggPcm),
+  Vorbis: secondsOf(vorbisPcm),
+  AAC: secondsOf(aacPcm),
+  FLAC: secondsOf(flacPcm),
+};
 check(
-  "MP3, WebM, Ogg and FLAC decode to the same duration",
-  Math.abs(secondsOf(webmPcm) - mp3s) < 0.25 &&
-    Math.abs(secondsOf(oggPcm) - mp3s) < 0.25 &&
-    Math.abs(secondsOf(flacPcm) - mp3s) < 0.25,
-  `${mp3s.toFixed(2)}s vs ${secondsOf(webmPcm).toFixed(2)}s vs ${secondsOf(oggPcm).toFixed(2)}s vs ${secondsOf(flacPcm).toFixed(2)}s`,
+  "every container decodes to the same duration",
+  Object.values(durations).every((d) => Math.abs(d - mp3s) < 0.25),
+  `${mp3s.toFixed(2)}s vs ${Object.entries(durations)
+    .map(([k, d]) => `${k} ${d.toFixed(2)}s`)
+    .join(" vs ")}`,
 );
 
 // A second decode, to catch a decoder that only worked because the first call
@@ -203,12 +253,22 @@ check(
 // module, so the decode above cannot see it; this checks the shape that the
 // bundler acts on.
 const decodeSource = readFileSync(new URL("../src/lib/stt/decode.ts", import.meta.url), "utf8");
-const importsEntryPoint = /from\s+"@wasm-audio-decoders\/flac"/.test(decodeSource);
-check(
-  "the FLAC classes are imported from one specifier only",
-  !importsEntryPoint && decodeSource.includes('"@wasm-audio-decoders/flac/src/FLACDecoder.js"'),
-  importsEntryPoint ? "the package entry point is imported as well" : "",
-);
+for (const [name, pkg, inner] of [
+  ["FLAC", "@wasm-audio-decoders/flac", "@wasm-audio-decoders/flac/src/FLACDecoder.js"],
+  [
+    "Ogg/Vorbis",
+    "@wasm-audio-decoders/ogg-vorbis",
+    "@wasm-audio-decoders/ogg-vorbis/src/OggVorbisDecoder.js",
+  ],
+  ["AAC", "@wasm-audio-decoders/aac", "@wasm-audio-decoders/aac/src/AACDecoder.js"],
+] as const) {
+  const importsEntryPoint = new RegExp(`from\\s+"${pkg}"`).test(decodeSource);
+  check(
+    `the ${name} classes are imported from one specifier only`,
+    !importsEntryPoint && decodeSource.includes(`"${inner}"`),
+    importsEntryPoint ? "the package entry point is imported as well" : "",
+  );
+}
 
 // The dev server must not see the virtual asset specifier. In a build the
 // plugin rewrites that specifier in `generateBundle`; dev never bundles, so the

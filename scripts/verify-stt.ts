@@ -390,12 +390,13 @@ if (haveFfmpeg) {
     console.log("SKIP  M4A refusal test (ffmpeg has no AAC encoder here)");
   }
 
-  // Ogg and WebM both carry Vorbis as readily as Opus, and a Vorbis packet fed
-  // to the Opus decoder crashes its wasm — a 502 that reads like an outage. The
-  // codec must be read and refused by name instead.
-  for (const [label, args, decode] of [
-    ["Ogg Vorbis", ["-c:a", "libvorbis", "-f", "ogg", "pipe:1"], decodeOgg],
-    ["WebM Vorbis", ["-c:a", "libvorbis", "-f", "webm", "pipe:1"], decodeWebm],
+  // Ogg carries Vorbis as readily as Opus, and a Vorbis packet fed to the Opus
+  // decoder crashes its wasm — a 502 that reads like an outage. Ogg/Vorbis now
+  // has its own decoder, so it must decode; WebM/Vorbis still has none, so it
+  // must be refused by name rather than crash.
+  for (const [label, args, decode, expectDecode] of [
+    ["Ogg Vorbis", ["-c:a", "libvorbis", "-f", "ogg", "pipe:1"], decodeOgg, true],
+    ["WebM Vorbis", ["-c:a", "libvorbis", "-f", "webm", "pipe:1"], decodeWebm, false],
   ] as const) {
     let vorbis: Uint8Array | null = null;
     try {
@@ -408,20 +409,29 @@ if (haveFfmpeg) {
       vorbis = null;
     }
     if (!vorbis) {
-      console.log(`SKIP  ${label} refusal test (no Vorbis encoder here)`);
+      console.log(`SKIP  ${label} codec test (no Vorbis encoder here)`);
       continue;
     }
-    let refusal = "";
+    let failure = "";
+    let samples = 0;
     try {
-      await decode(vorbis);
+      samples = (await decode(vorbis)).samples.length;
     } catch (error) {
-      refusal = error instanceof Error ? error.message : String(error);
+      failure = error instanceof Error ? error.message : String(error);
     }
-    check(
-      `${label} is refused by name, not crashed`,
-      /not supported/i.test(refusal),
-      refusal || "(no error raised)",
-    );
+    if (expectDecode) {
+      check(
+        `${label} decodes instead of being refused`,
+        samples > 1000,
+        failure || `${samples} samples`,
+      );
+    } else {
+      check(
+        `${label} is refused by name, not crashed`,
+        /not supported/i.test(failure),
+        failure || "(no error raised)",
+      );
+    }
   }
 
   // The demuxers must agree with each other: the same audio in two containers

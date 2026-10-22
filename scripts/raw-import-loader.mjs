@@ -13,18 +13,28 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 // The FLAC decoder hides the file that carries its inner class behind an
 // `exports` map, so a bare deep specifier is refused. The app aliases it in
 // `vite.config.ts`; the test runner needs the same alias. See `decode.ts`.
-const flacInner = pathToFileURL(
-  join(
-    dirname(createRequire(import.meta.url).resolve("@wasm-audio-decoders/flac")),
-    "src",
+const require_ = createRequire(import.meta.url);
+const innerOf = (pkg, file) =>
+  pathToFileURL(join(dirname(require_.resolve(pkg)), "src", file)).href;
+const innerModules = {
+  "@wasm-audio-decoders/flac/src/FLACDecoder.js": innerOf(
+    "@wasm-audio-decoders/flac",
     "FLACDecoder.js",
   ),
-).href;
+  "@wasm-audio-decoders/ogg-vorbis/src/OggVorbisDecoder.js": innerOf(
+    "@wasm-audio-decoders/ogg-vorbis",
+    "OggVorbisDecoder.js",
+  ),
+  "@wasm-audio-decoders/aac/src/AACDecoder.js": innerOf(
+    "@wasm-audio-decoders/aac",
+    "AACDecoder.js",
+  ),
+};
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
-    if (specifier === "@wasm-audio-decoders/flac/src/FLACDecoder.js") {
-      return { url: flacInner, shortCircuit: true };
+    if (innerModules[specifier]) {
+      return { url: innerModules[specifier], shortCircuit: true };
     }
     if (specifier.endsWith("?raw")) {
       const r = nextResolve(specifier.slice(0, -4), context);

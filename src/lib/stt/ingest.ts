@@ -19,7 +19,7 @@ import {
   type Container,
   type Pcm,
 } from "./audio";
-import { decodeFlac, decodeMp3, decodeOgg, decodeWebm } from "./decode";
+import { decodeAac, decodeFlac, decodeMp3, decodeOgg, decodeVorbis, decodeWebm } from "./decode";
 import type { AudioInput } from "./engine";
 
 export type Decoded = {
@@ -34,10 +34,13 @@ export type Decoded = {
 };
 
 /** Said plainly, because the format arrives by default from every iPhone and
- *  Safari recorder and the endpoint cannot transcribe it. */
+ *  Safari recorder and the endpoint cannot transcribe it. The audio inside is
+ *  AAC, which is decoded when it arrives as a bare ADTS stream; what is missing
+ *  is the MP4 demuxer that would lift it out of the wrapper. */
 export const MP4_REFUSAL =
-  "M4A/MP4/AAC is not supported. It is what iPhone and Safari recorders produce " +
-  "by default, so re-record as WebM (browsers) or MP3 (phones), or convert it first.";
+  "M4A/MP4 is not supported: the audio inside is AAC, but the MP4 wrapper is not " +
+  "unpacked. Send raw AAC (.aac) instead, or re-record as WebM (browsers) or MP3 " +
+  "(phones), or convert it first.";
 
 /** Decode any supported container to what the recogniser takes.
  *
@@ -63,6 +66,8 @@ export async function decodeContainer(
       return fromPcm(await decodeOgg(bytes), "ogg");
     case "mp3":
       return fromPcm(await decodeMp3(bytes), "mp3");
+    case "aac":
+      return fromPcm(await decodeAac(bytes), "aac");
     case "pcm":
       return fromPcm(rawPcm(bytes, declared), "pcm");
     case "mp4":

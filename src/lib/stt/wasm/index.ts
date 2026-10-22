@@ -18,12 +18,16 @@
  *  same import is resolved by `scripts/raw-import-loader.mjs` into an
  *  identically compiled module, so one code path serves both. */
 
+import aacWasm from "./aac.wasm";
 import flacWasm from "./flac.wasm";
 import mpg123Wasm from "./mpg123.wasm";
+import oggVorbisWasm from "./ogg-vorbis.wasm";
 import opusWasm from "./opus.wasm";
 
 /** An import of a `.wasm` file is a compiled module everywhere this app runs.
  *  The cast is for TypeScript, which has no type for that import. */
+export const aacModule = aacWasm as unknown as WebAssembly.Module;
 export const flacModule = flacWasm as unknown as WebAssembly.Module;
 export const mpg123Module = mpg123Wasm as unknown as WebAssembly.Module;
+export const oggVorbisModule = oggVorbisWasm as unknown as WebAssembly.Module;
 export const opusModule = opusWasm as unknown as WebAssembly.Module;

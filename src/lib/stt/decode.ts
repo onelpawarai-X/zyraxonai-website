@@ -19,29 +19,83 @@
  *  that. See `./wasm/index.ts`. */
 
 import type { Pcm } from "./audio";
-import { oggCodec, oggOpusPackets, webmOpusFrames } from "./audio";
-import { flacModule, mpg123Module, opusModule } from "./wasm";
+import { oggCodec, oggOpusPackets, webmCodec, webmOpusFrames } from "./audio";
+import { aacModule, flacModule, mpg123Module, oggVorbisModule, opusModule } from "./wasm";
 
 /** Decoded frames at the codec's own rate; the caller resamples. */
 type DecodeResult = { samples: Int16Array; sampleRate: number };
 
 /** Decode a WebM/Opus stream — what a browser's MediaRecorder emits. */
 export async function decodeWebm(bytes: Uint8Array): Promise<Pcm> {
+  // WebM carries Vorbis as readily as Opus, and a Vorbis packet fed to the Opus
+  // decoder crashes its wasm — a 502 that reads like an outage. Name the codec
+  // instead. Ogg/Vorbis is decoded, but a WebM demuxer for it is not bundled.
+  if (webmCodec(bytes) === "vorbis")
+    throw new Error("WebM Vorbis is not supported; use WebM Opus, or Ogg Vorbis");
   const frames = webmOpusFrames(bytes);
   if (!frames.length) throw new Error("no audio frames found in the WebM stream");
   return decodeOpusFrames(frames);
 }
 
-/** Decode an Ogg/Opus stream — what a desktop or Android recorder emits. */
+/** Decode an Ogg stream — Opus or Vorbis, whichever the pages carry.
+ *
+ *  Vorbis used to be refused by name, because the Opus decoder crashes on a
+ *  Vorbis packet and no Vorbis decoder was bundled. That made a whole class of
+ *  ordinary files unreadable: Wikimedia's audio, and anything a desktop encoder
+ *  produced, is Vorbis far more often than Opus. Both codecs now have a decoder,
+ *  so the stream is routed by the codec its first page declares. */
 export async function decodeOgg(bytes: Uint8Array): Promise<Pcm> {
-  // Ogg carries Vorbis as often as Opus, and Vorbis packets fed to the Opus
-  // decoder crash its wasm. Refuse by name instead of 502.
   const codec = oggCodec(bytes);
+  if (codec === "vorbis") return decodeVorbis(bytes);
   if (codec !== "opus" && codec !== "unknown")
-    throw new Error(`Ogg ${codec} is not supported; only Ogg Opus is`);
+    throw new Error(`Ogg ${codec} is not supported; only Ogg Opus and Ogg Vorbis are`);
   const packets = oggOpusPackets(bytes);
   if (!packets.length) throw new Error("no audio packets found in the Ogg stream");
   return decodeOpusFrames(packets);
+}
+
+/** Decode an Ogg/Vorbis stream — Wikimedia's audio, and most desktop encoders. */
+export async function decodeVorbis(bytes: Uint8Array): Promise<Pcm> {
+  // The inner class carries the `module` hook, and it has to come from the same
+  // module as the public class it is handed to. See `decodeFlac` for why.
+  const { default: OggVorbisDecoder, Decoder } = await import(
+    "@wasm-audio-decoders/ogg-vorbis/src/OggVorbisDecoder.js"
+  );
+  Decoder.module = oggVorbisModule;
+  const decoder = new OggVorbisDecoder();
+  await decoder.ready;
+  try {
+    const result = await decoder.decodeFile(bytes);
+    const channels: Float32Array[] = result.channelData;
+    const frames = result.samplesDecoded;
+    if (!frames) throw new Error("the Vorbis stream decoded to no samples");
+    return { samples: floatsToInt16(channels, frames), sampleRate: result.sampleRate };
+  } finally {
+    decoder.free();
+  }
+}
+
+/** Decode a raw AAC stream — ADTS, ADIF, or a bare frame sequence.
+ *
+ *  This is the audio inside an `.m4a` or `.mp4` once its wrapper is stripped,
+ *  and what a `.aac` file holds outright. The container itself is still refused
+ *  by name: unwrapping MP4 means demuxing its boxes, which is a separate job. */
+export async function decodeAac(bytes: Uint8Array): Promise<Pcm> {
+  const { default: AACDecoder, _AACDecoder } = await import(
+    "@wasm-audio-decoders/aac/src/AACDecoder.js"
+  );
+  _AACDecoder.module = aacModule;
+  const decoder = new AACDecoder();
+  await decoder.ready;
+  try {
+    const result = await decoder.decodeFile(bytes);
+    const channels: Float32Array[] = result.channelData;
+    const frames = result.samplesDecoded;
+    if (!frames) throw new Error("the AAC stream decoded to no samples");
+    return { samples: floatsToInt16(channels, frames), sampleRate: result.sampleRate };
+  } finally {
+    decoder.free();
+  }
 }
 
 async function decodeOpusFrames(frames: Uint8Array[]): Promise<Pcm> {
@@ -142,7 +196,7 @@ function floatsToInt16(channels: Float32Array[], frames: number): Int16Array {
 /** True when a decoder for this container is available. Used by the endpoint to
  *  explain an unsupported upload rather than fail with a decode error. */
 export function canDecode(container: string): boolean {
-  return container === "webm" || container === "ogg" || container === "mp3";
+  return container === "webm" || container === "ogg" || container === "mp3" || container === "aac";
 }
 
 export type { DecodeResult };

@@ -14,8 +14,11 @@ import { wasmModulePlugin } from "./src/lib/stt/wasm/vite-plugin";
 // map hides that file from a bare specifier. The alias re-exposes the one file,
 // resolved through the map so the layout stays the package manager's business.
 // See `src/lib/stt/decode.ts`.
-const flacEntry = createRequire(import.meta.url).resolve("@wasm-audio-decoders/flac");
-const flacInner = join(dirname(flacEntry), "src", "FLACDecoder.js");
+const require_ = createRequire(import.meta.url);
+const innerOf = (pkg: string, file: string) => join(dirname(require_.resolve(pkg)), "src", file);
+const flacInner = innerOf("@wasm-audio-decoders/flac", "FLACDecoder.js");
+const vorbisInner = innerOf("@wasm-audio-decoders/ogg-vorbis", "OggVorbisDecoder.js");
+const aacInner = innerOf("@wasm-audio-decoders/aac", "AACDecoder.js");
 
 export default defineConfig({
   // The speech decoders are wasm, and the Workers runtime forbids compiling wasm
@@ -23,7 +26,13 @@ export default defineConfig({
   // that bundles the speech route, so this one supplies the same behaviour there.
   vite: {
     plugins: [wasmModulePlugin()],
-    resolve: { alias: { "@wasm-audio-decoders/flac/src/FLACDecoder.js": flacInner } },
+    resolve: {
+      alias: {
+        "@wasm-audio-decoders/flac/src/FLACDecoder.js": flacInner,
+        "@wasm-audio-decoders/ogg-vorbis/src/OggVorbisDecoder.js": vorbisInner,
+        "@wasm-audio-decoders/aac/src/AACDecoder.js": aacInner,
+      },
+    },
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).

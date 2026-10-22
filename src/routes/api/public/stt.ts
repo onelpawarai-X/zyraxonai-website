@@ -33,9 +33,9 @@ import { liveTranscript, segmentPlan, type LiveEvent } from "@/lib/stt/stream";
  * A GET returns this same documentation as JSON, so the endpoint explains
  * itself to a human and to a coding assistant without a separate page.
  *
- * Accepted containers: wav, mp3, flac, ogg, webm, and raw PCM. The format is
- * read from the bytes, not from the Content-Type, so a mislabelled upload still
- * works.
+ * Accepted containers: wav, mp3, flac, ogg (Opus or Vorbis), webm, raw AAC
+ * (ADTS), and raw PCM. The format is read from the bytes, not from the
+ * Content-Type, so a mislabelled upload still works.
  *
  * No API key is needed. The recogniser is the speech service the Chromium
  * browser uses, reached with its published client key, the same arrangement the
@@ -65,6 +65,23 @@ const MAX_BYTES = 25 * 1024 * 1024;
  *  somewhere past a minute, so a longer recording is cut into windows and the
  *  transcripts joined — which is what the live path does too. */
 const MAX_WINDOW_SECONDS = 25;
+
+/** How many windows are transcribed at once. A long recording is a dozen or
+ *  more windows, and doing them one at a time multiplies the round trip by the
+ *  count: a six-minute clip spent fifty seconds that way, which is past the
+ *  request budget of the host this runs on and came back as a 500. Four at a
+ *  time keeps the whole clip inside the budget while staying under the burst
+ *  the recogniser tolerates. */
+const WINDOW_CONCURRENCY = 4;
+
+/** Wall-clock ceiling for transcribing one request's audio.
+ *
+ *  The recogniser is a network call we do not control, so a slow answer must
+ *  not turn into a dropped connection. When the budget runs out the transcript
+ *  gathered so far is returned, marked `truncated`, rather than a 500 with
+ *  nothing — a partial transcript the caller can see is worth more than an
+ *  error page, and the caller can ask again for the rest. */
+const TRANSCRIBE_BUDGET_MS = 20_000;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
@@ -221,33 +238,72 @@ async function transcribeLong(
   decoded: Decoded,
   locale: string,
   signal?: AbortSignal,
-): Promise<{ text: string; confidence: number; engine: string }> {
+): Promise<{ text: string; confidence: number; engine: string; truncated: boolean }> {
   const input = toInput(decoded);
-  if (input.pcm.samples.length <= MAX_WINDOW_SECONDS * input.pcm.sampleRate) {
+  const perWindow = MAX_WINDOW_SECONDS * input.pcm.sampleRate;
+  const total = input.pcm.samples.length;
+
+  if (total <= perWindow) {
     const one = await recognize(input, locale, signal);
-    return { text: one.text.trim(), confidence: one.confidence, engine: one.engine };
+    return { text: one.text.trim(), confidence: one.confidence, engine: one.engine, truncated: false };
   }
 
-  const perWindow = MAX_WINDOW_SECONDS * input.pcm.sampleRate;
+  // Every window up front, in order, so the pieces can be joined back into a
+  // transcript that reads continuously regardless of the order they finish in.
+  const windows: Array<{ kind: "pcm"; pcm: { samples: Int16Array; sampleRate: number } }> = [];
+  for (let at = 0; at < total; at += perWindow) {
+    const samples = input.pcm.samples.subarray(at, Math.min(total, at + perWindow));
+    // A tail shorter than half a second is not worth a round trip.
+    if (samples.length < input.pcm.sampleRate * 0.4) break;
+    windows.push({ kind: "pcm", pcm: { samples, sampleRate: input.pcm.sampleRate } });
+  }
+
+  const results: Array<{ text: string; confidence: number; engine: string } | null> = windows.map(
+    () => null,
+  );
+  const deadline = Date.now() + TRANSCRIBE_BUDGET_MS;
+  let truncated = false;
+  let cursor = 0;
+
+  const worker = async () => {
+    for (;;) {
+      const index = cursor++;
+      if (index >= windows.length) return;
+      if (Date.now() >= deadline) {
+        truncated = true;
+        return;
+      }
+      try {
+        const one = await recognize(windows[index], locale, signal);
+        results[index] = {
+          text: one.text.trim(),
+          confidence: one.confidence,
+          engine: one.engine,
+        };
+      } catch (error) {
+        // A caller who disconnected stops the whole fan-out.
+        if (error instanceof Error && error.name === "AbortError") throw error;
+        // One window failing must not discard the ones that worked; the gap is
+        // marked by `truncated` so the caller knows the transcript is partial.
+        truncated = true;
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(WINDOW_CONCURRENCY, windows.length) }, () => worker()),
+  );
+
   const parts: string[] = [];
   let confidence = 0;
   let engine = "";
-  for (let at = 0; at < input.pcm.samples.length; at += perWindow) {
-    const window = {
-      kind: "pcm" as const,
-      pcm: {
-        samples: input.pcm.samples.subarray(at, Math.min(input.pcm.samples.length, at + perWindow)),
-        sampleRate: input.pcm.sampleRate,
-      },
-    };
-    // A tail shorter than half a second is not worth a round trip.
-    if (window.pcm.samples.length < input.pcm.sampleRate * 0.4) break;
-    const one = await recognize(window, locale, signal);
-    if (one.text.trim()) parts.push(one.text.trim());
+  for (const one of results) {
+    if (!one) continue;
+    if (one.text) parts.push(one.text);
     if (one.confidence > confidence) confidence = one.confidence;
-    engine = one.engine;
+    if (one.engine) engine = one.engine;
   }
-  return { text: parts.join(" ").trim(), confidence, engine };
+  return { text: parts.join(" ").trim(), confidence, engine, truncated };
 }
 
 /** True when the caller wants live transcription rather than a batch answer. */
@@ -366,6 +422,7 @@ export const Route = createFileRoute("/api/public/stt")({
                 container: "what the bytes were read as",
                 duration: "seconds of audio",
                 elapsed: "seconds spent transcribing",
+                truncated: "present and true when the transcript is partial",
               },
             },
             live: {
@@ -390,16 +447,23 @@ export const Route = createFileRoute("/api/public/stt")({
               },
             },
           },
-          containers: ["wav", "mp3", "flac", "ogg", "webm", "pcm"],
+          containers: ["wav", "mp3", "flac", "ogg", "webm", "aac", "pcm"],
           notSupported: {
-            "m4a/mp4/aac":
-              "recognised and refused with 415; the recogniser rejects these and no AAC decoder is bundled",
+            "m4a/mp4":
+              "recognised and refused with 415; the audio inside is AAC but the MP4 wrapper is not unpacked",
           },
           languageRequired: true,
           languageNote:
             "The recogniser does not detect language. Name the language being spoken; the endpoint will not guess.",
           languages: LANGUAGES,
-          limits: { maxBytes: MAX_BYTES, maxWindowSeconds: MAX_WINDOW_SECONDS },
+          limits: {
+            maxBytes: MAX_BYTES,
+            maxWindowSeconds: MAX_WINDOW_SECONDS,
+            windowConcurrency: WINDOW_CONCURRENCY,
+            transcribeBudgetSeconds: TRANSCRIBE_BUDGET_MS / 1000,
+          },
+          longAudio:
+            "A recording longer than one window is transcribed in parallel windows and joined in order. If the time budget runs out the partial transcript is returned with `truncated: true` rather than an error.",
           plan: segmentPlan(16000),
           auth: "none required",
           cost: "free; the recogniser needs no key and bills nothing per call",
@@ -434,7 +498,7 @@ export const Route = createFileRoute("/api/public/stt")({
           const container = sniff(bytes);
           if (container === "unknown") {
             return fail(
-              "The upload does not look like audio. Send WAV, MP3, FLAC, Ogg, WebM, or raw PCM.",
+              "The upload does not look like audio. Send WAV, MP3, FLAC, Ogg, WebM, AAC, or raw PCM.",
             );
           }
 
@@ -469,6 +533,10 @@ export const Route = createFileRoute("/api/public/stt")({
             container,
             duration: Number(decoded.seconds.toFixed(2)),
             elapsed: Number(((Date.now() - started) / 1000).toFixed(2)),
+            // True when the transcript is not the whole recording — the time
+            // budget ran out or a window failed. The caller can see the text it
+            // did get and ask again for the rest, instead of a 500 with nothing.
+            ...(result.truncated ? { truncated: true } : {}),
           });
         } catch (error) {
           const message = error instanceof Error ? error.message : "Internal server error";
