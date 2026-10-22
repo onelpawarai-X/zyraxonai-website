@@ -157,6 +157,26 @@ resetCapabilities();
 recordOutcome("sees", "audio", false, 400, "SDK request failed");
 check("a 400 with no denial text records nothing", supports("sees", "audio") === undefined);
 
+// The refusals the pool actually produces are wordier than a flat "no audio
+// attached". Each of these is a 200 whose body denies the media, so if the
+// matcher misses one the refusal is handed to the caller as the answer.
+resetCapabilities();
+for (const refusal of [
+  "No audio came through with your message — the only thing I received was text.",
+  "I don't see an audio file attached to this message — just timestamped text.",
+  "nothing came through on my end, please attach the file",
+  "The only content I received was the text of your request.",
+]) {
+  recordOutcome("sees", "audio", false, 200, refusal);
+  check(`a real refusal is recorded as unable: "${refusal.slice(0, 34)}…"`, supports("sees", "audio") === false);
+  resetCapabilities();
+}
+
+// A genuine answer that happens to mention audio is not a refusal.
+resetCapabilities();
+recordOutcome("hears", "audio", true, 200, "Good morning and welcome to the show. The audio runs 1m 20s.");
+check("an answer about audio is not read as a refusal", supports("hears", "audio") === true);
+
 // ── 8. A pool change is picked up: only new ids are probed ──────────────────
 resetCapabilities();
 const probed: string[] = [];

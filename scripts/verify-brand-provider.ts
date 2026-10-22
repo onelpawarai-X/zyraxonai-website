@@ -215,6 +215,43 @@ check(
     notFoundCalls.length === 2,
     notFoundCalls.join(","),
   );
+
+  // A media refusal is not an answer. The retry hook exists for the case where
+  // the same model is the only one that can serve the modality: asking it again
+  // beats rotating to a model that cannot hear the file at all.
+  const retryCalls: string[] = [];
+  const out6 = await rotateThrough(
+    ["only-hearer", "deaf-sibling"],
+    async (u) => {
+      retryCalls.push(u);
+      if (u === "only-hearer" && retryCalls.filter((x) => x === u).length === 1) {
+        return { ok: false as const, status: 422, detail: "media not received" };
+      }
+      return { ok: true as const, value: `served:${u}` };
+    },
+    8,
+    (_u, failure, n) => failure.status === 422 && n < 2,
+  );
+  check("a refusal is retried on the same model", out6.ok && out6.value === "served:only-hearer");
+  check(
+    "the retry happens before rotating away",
+    retryCalls.join(",") === "only-hearer,only-hearer",
+    retryCalls.join(","),
+  );
+
+  // A non-refusal failure is never retried: the hook must not slow down the
+  // ordinary miss path.
+  const noRetry: string[] = [];
+  await rotateThrough(
+    ["a", "b"],
+    async (u) => {
+      noRetry.push(u);
+      return { ok: false as const, status: 404, detail: "model not found" };
+    },
+    8,
+    (_u, failure, n) => failure.status === 422 && n < 2,
+  );
+  check("an ordinary miss is not retried", noRetry.join(",") === "a,b", noRetry.join(","));
 }
 
 // ── speed must break ties, but never override capability ────────────────────

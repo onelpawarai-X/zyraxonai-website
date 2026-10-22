@@ -71,7 +71,24 @@ function gate(req, res, raw) {
     const m = parsed?.model;
     if (m === "beam-free") return json(res, 404, { error: { message: "model not found" } });
   }
+  if (scenario === "media-denial") {
+    // A model that never received the media still answers 200 with a refusal.
+    // The first upstream refuses; the second answers, so a caller must see the
+    // second's answer and never the refusal.
+    if (parsed?.model === "beam-free") return streamText(res, parsed, "No audio came through with your message — the only thing I received was text.");
+  }
   stream(res, parsed);
+}
+
+/** Stream a single fixed answer, in the same SSE shape as `stream`. */
+function streamText(res, parsed, text) {
+  const id = "chatcmpl-mock";
+  const model = parsed && parsed.model;
+  res.writeHead(200, { "Content-Type": "text/event-stream" });
+  const chunk = (delta, finish) => ({ id, object: "chat.completion.chunk", choices: [{ index: 0, delta, finish_reason: finish }], model });
+  res.write("data: " + JSON.stringify(chunk({ content: text }, null)) + "\n\n");
+  res.write("data: " + JSON.stringify(chunk({}, "stop")) + "\n\n");
+  res.end();
 }
 
 function sse(res, obj) {

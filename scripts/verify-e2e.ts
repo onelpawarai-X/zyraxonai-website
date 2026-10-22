@@ -85,6 +85,42 @@ try {
   }
 
   // -----------------------------------------------------------------
+  // E2E-2b: a 200 that refuses the media. The preferred model answers
+  // "no audio came through" instead of an answer. That refusal must not
+  // reach the caller: the turn has to move to a model that answered.
+  // -----------------------------------------------------------------
+  setScenario("media-denial");
+  {
+    requests.length = 0;
+    const audioPart = {
+      type: "input_audio",
+      input_audio: { data: "UklGRiQAAABXQVZF", format: "wav" },
+    };
+    const res = await brandChatStream(
+      "zyraxon-apex",
+      [{ role: "user", content: [{ type: "text", text: "transcribe" }, audioPart] }],
+      undefined,
+      {
+        stream: true,
+        resolve: served("zyraxon-apex", ["beam-free", "big-pickle"]),
+      },
+    );
+    const body = await drain(res);
+    const visited = requests
+      .filter((r) => r.url.endsWith("/chat/completions"))
+      .map((v) => JSON.parse(v.body).model);
+    check("E2E a media refusal does not end the turn", res.status === 200, res.status);
+    check("the refusing model was tried first", visited[0] === "beam-free", visited[0]);
+    check("the turn moved on to the next model", visited.includes("big-pickle"), visited.join(","));
+    check(
+      "the caller never sees the refusal",
+      !/no audio came through/i.test(body),
+      body.slice(0, 160),
+    );
+    check("the caller sees the answering model's reply", body.includes("Hello from the mock"));
+  }
+
+  // -----------------------------------------------------------------
   // E2E-3: credential gate. Everything answers 403; the turn must come
   // back 503 upstream_gate (not 502) and name the brand, not the pool.
   // -----------------------------------------------------------------
