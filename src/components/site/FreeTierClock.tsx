@@ -211,10 +211,8 @@ export function FreeTierClock({
               : unstated
                 ? "The upstream reported the pool spent but stated no reset time, so no countdown is shown rather than a guess. Try again shortly."
                 : expired
-                  ? "The upstream's window has passed — the pool is expected to open on its next turn. This is the reset the upstream itself stated."
-                  : status.windowSeconds
-                    ? `The upstream's own reset clock, not a guess — at most ${formatHms(status.windowSeconds)} per window.`
-                    : "The upstream's own reset clock, not a guess."}
+                  ? "The upstream's window has passed — the pool is expected to open on its next turn."
+                  : "The upstream's own reset clock, not a guess."}
           </p>
         </div>
       </div>
@@ -225,14 +223,6 @@ export function FreeTierClock({
 function split(seconds: number): { h: number; m: number; s: number } {
   const s = Math.max(0, Math.floor(seconds));
   return { h: Math.floor(s / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 };
-}
-
-/** The ceiling stated as a clock reads: "12h 00m 00s". A decimal like "4.3h"
- *  makes a reader do arithmetic to see how close that is to a whole window. */
-function formatHms(seconds: number): string {
-  const { h, m, s } = split(seconds);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${h}h ${pad(m)}m ${pad(s)}s`;
 }
 
 /** One unit of the countdown: a boxed pair of digits with its label beneath.

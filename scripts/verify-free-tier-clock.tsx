@@ -1,7 +1,7 @@
 /** The free-tier reset clock as a reader sees it.
  *
  *  The provider endpoint publishes the reset; this proves the panel drawn from
- *  that payload states the real number, states the ceiling, and flips to the
+ *  that payload states the real number and flips to the
  *  open state when the upstream says the window has passed — so the page cannot
  *  show a countdown for a pool that is already serving. */
 import React from "react";
@@ -55,7 +55,9 @@ check("each cell carries its own label", labels === 3, `found ${labels}`);
 check("the cells are separated by a blinking colon", /zx-clock-colon/.test(spent));
 check("the hours cell reads 01", />01<\/span>[\s\S]{0,200}?Hours<\/span>/.test(spent), "01 hours");
 check("and rolls each cell rather than swapping it", /zx-flip-in/.test(spent));
-check("and states the ceiling as a clock", /at most 12h 00m 00s per window/.test(spent), spent.match(/at most [^.]*/)?.[0]);
+// The countdown is the only time on the panel. A second duration in the copy
+// reads as a second clock, which is worse than saying nothing.
+check("and states no second time in its copy", !/at most|per window|\d+h \d+m/.test(spent.replace(/zx-flip-in">[^<]*<\/span>/g, "")), spent.match(/at most[^.]*/)?.[0]);
 check("and never names an env var at the reader", !/OPENCODE_ZEN_API_KEY/.test(spent));
 
 // Each cell renders exactly one pair of digits, never a longer run.
