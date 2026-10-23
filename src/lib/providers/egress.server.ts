@@ -158,12 +158,40 @@ export function egressStatus(): EgressStatus {
  *  module is imported lazily because `undici` is a Node built-in here but is not
  *  present in an edge runtime; a bundler that tree-shakes the direct path never
  *  pulls it in. */
+/** A gateway egress entry is a URL the request is *posted through* rather than
+ *  a socket proxy. Cloudflare Workers and similar edge functions are the common
+ *  case: they are free at low volume and leave from a large, rotating set of
+ *  addresses, but they cannot speak the CONNECT protocol `ProxyAgent` needs.
+ *  The entry is written `gw+https://<worker>/` to say which kind it is. */
+const GATEWAY_PREFIX = "gw+";
+
+export function isGatewayEgress(entry: string): boolean {
+  return entry.startsWith(GATEWAY_PREFIX);
+}
+
 export async function egressFetch(
   url: string,
   init: RequestInit,
   proxy?: string,
 ): Promise<Response> {
   if (!proxy) return fetch(url, init);
+
+  if (isGatewayEgress(proxy)) {
+    const endpoint = proxy.slice(GATEWAY_PREFIX.length);
+    const headers = new Headers(init.headers || {});
+    // The target travels in a header so the gateway can forward the method,
+    // the body and the streaming response unchanged. A gateway that has to
+    // parse the payload would break SSE the moment it buffered.
+    headers.set("x-zyraxon-target", url);
+    // Shared secret for the gateway, so a leaked worker URL is not an open
+    // relay. Optional: an empty value simply omits the header.
+    const token = (process.env.ZYRAXON_EGRESS_TOKEN || "").trim();
+    if (token) headers.set("x-zyraxon-token", token);
+    const res = (await fetch(endpoint, { ...init, headers })) as Response;
+    if (res.status === 429) noteEgressLimited(proxy);
+    return res;
+  }
+
   const { ProxyAgent } = (await import("undici")) as any;
   const dispatcher = new ProxyAgent(proxy);
   try {

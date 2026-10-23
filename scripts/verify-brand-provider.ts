@@ -499,10 +499,11 @@ check(
 // than handed the next turn.
 {
   const before = process.env.ZYRAXON_EGRESS_URLS;
-  process.env.ZYRAXON_EGRESS_URLS = "http://p1:1,http://p2:2";
+  process.env.ZYRAXON_EGRESS_URLS = "http://p1:1,http://p2:2,gw+https://w.dev/";
   const eg = await import("../src/lib/providers/egress.server");
   try {
     check("egress starts spread over the pool", eg.egressStatus().spread === true);
+    check("a gateway entry is recognised", eg.isGatewayEgress("gw+https://w.dev/"));
     const first = eg.egressFor("ses_a");
     check("a lane resolves an egress address", typeof first === "string", String(first));
     const a1 = eg.egressFor("ses_a");
