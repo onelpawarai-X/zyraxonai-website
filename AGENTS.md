@@ -403,6 +403,27 @@ buffer, cut into windows by `transcribeLong`. The decoder reports the rate it
 found, and `verify-stt.ts` asserts it against a 22 050 Hz fixture, so neither
 half of the bug can come back unnoticed.
 
+#### A very large recording is streamed, not decoded whole
+
+A whole-file decode holds the entire recording as PCM before the first window is
+sent — a hundred-megabyte MP3 is well over an hour, hundreds of megabytes of
+samples — and the Worker heap dies well before the response. So past
+`STREAM_THRESHOLD_BYTES` (8 MB) the batch path switches to `transcribeStream`,
+which pulls ~25-second windows lazily from `audioChunks()` in `ingest.ts`: the
+streaming decoders in `decode.ts` for compressed containers, and a header-only
+read of the WAV data chunk (or bare PCM) for the rest. Peak memory is then a
+function of the window length rather than the recording's.
+
+The windows run `WINDOW_CONCURRENCY` at a time and finish out of order, so each
+is written to its own slot by index and the transcript is joined in order —
+never in completion order. A window is sized in the *source* rate's samples and
+resampled after, because sizing it in target samples made a window a fraction of
+a second at 44.1 kHz. `TRANSCRIBE_BUDGET_MS` still applies: a recording too long
+to finish inside it returns the transcript so far with `truncated: true`, rather
+than holding the connection until the host drops it. `canStream()` reports
+whether a container has this path, and `verify-stt.ts` asserts that a 60 s clip
+comes out as several full 25 s windows carrying exactly the whole recording.
+
 #### M4A/AAC is refused, not silently emptied
 
 An `.m4a` from an iPhone or Safari is an MP4 container, and it used to fall
