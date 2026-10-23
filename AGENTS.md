@@ -618,6 +618,29 @@ stable ones are GET-only, localhost-only, or want an API key. Do not spend time
 here again; deploy the worker instead (`Deploy egress gateway` workflow, or
 `scripts/deploy-egress-worker.sh`).
 
+A Cloudflare Worker is deployed and reachable
+(`https://zyraxon-egress.nla85695.workers.dev/`, account
+`28d233950b95bb39504be4968a1bc6fd`), but it does **not** fix the quota: measured
+from one GitHub runner IP, direct was 4/4 PONG while the same calls through the
+worker were 0/4, all 429. The worker's egress is a shared Cloudflare address
+(`2a06:98c0:3600::103`) that the upstream has already exhausted — every user of
+every free Cloudflare Worker leaves from it, so it is burned. A Worker only
+helps when the upstream counts *per caller IP*; here it does not. Do not present
+the Worker as the fix.
+
+The fresh-IP result also settles what the 429 is: a brand-new runner IP got
+4/4, our long-lived workspace IP gets 429 on every model, and Cloudflare's
+address gets 429 on every model. The limit follows the address, and our address
+(plus Cloudflare's) is spent. A user's own address would work — but the browser
+cannot reach the upstream at all (see the CORS paragraph above), so that path is
+closed too.
+
+The API key is real but has no entitlement: `GET /zen/v1/models` with it returns
+200, a garbage key returns 401, but every chat call returns 429
+(`FreeUsageLimitError`, "Subscribe to OpenCode Go") and paid models return 402
+("Insufficient account funds"). Buying Go or adding credits is the one lever
+that clears the 429 without depending on any address.
+
 ## Testing
 
 `npm run test:provider` (1063 checks) covers the brand contract, rotation,
