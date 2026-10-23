@@ -91,6 +91,25 @@ const good = await turn();
 check("a later turn is served", good.status === 200, String(good.status));
 check("and clears the recorded reset by itself", quotaResetStatus().spent === false);
 
+// -- the probe must travel the same channel a real turn does. If it did not,
+//    the reset it observes would be about a different route than the one a
+//    caller is waiting on, and the whole check would be meaningless.
+const probeReq = requests[requests.length - 1];
+const turnReq = requests[0];
+check("the probe posts to the chat-completions path", /\/chat\/completions$/.test(probeReq.url), probeReq.url);
+check("the probe carries the session fingerprint the gate reads", !!probeReq.headers["x-opencode-session"], "x-opencode-session");
+check("and the second fingerprint header too", !!probeReq.headers["x-opencode-session-id"], "x-opencode-session-id");
+check("and the project header", probeReq.headers["x-opencode-project"] === "zyraxon", String(probeReq.headers["x-opencode-project"]));
+// Same channel, same headers, own fingerprint. The session id is deliberately
+// *not* shared: each lane carries its own so the upstream throttles them
+// separately, and a probe reusing a turn's fingerprint would spend that turn's
+// bucket. What must match is the shape the gate reads.
+for (const h of ["x-opencode-project", "x-opencode-client", "user-agent", "content-type"]) {
+  check(`the probe sends the same ${h} as a real turn`, probeReq.headers[h] === turnReq.headers[h], `${String(probeReq.headers[h])} vs ${String(turnReq.headers[h])}`);
+}
+check("the probe's fingerprint has the shape the gate accepts", /^ses_[0-9a-zA-Z]+$/.test(String(probeReq.headers["x-opencode-session-id"])), String(probeReq.headers["x-opencode-session-id"]));
+check("and is not a turn's fingerprint reused", probeReq.headers["x-opencode-session-id"] !== turnReq.headers["x-opencode-session-id"]);
+
 server.close();
 console.log(failures ? `\n${failures} CHECK(S) FAILED` : "\nALL QUOTA PROBE CHECKS PASSED");
 process.exit(failures ? 1 : 0);
