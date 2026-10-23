@@ -1,6 +1,7 @@
 import { PROVIDER_DOCS } from "./provider-docs";
 import { PROVIDER_INTEGRATION_DOCS } from "./provider-integration-docs";
 import { SPEECH_DOCS } from "./speech-docs";
+import { PROVIDER_SYSTEM_DOCS } from "./provider-system-docs";
 import { ENDPOINT_DOCS } from "./endpoint-docs";
 
 export type DocBlock =
@@ -35,6 +36,7 @@ export const DOCS: DocPage[] = [
   ...PROVIDER_DOCS,
   ...PROVIDER_INTEGRATION_DOCS,
   ...SPEECH_DOCS,
+  ...PROVIDER_SYSTEM_DOCS,
   // ─────────────────────────────── START ───────────────────────────────
   {
     slug: "getting-started",

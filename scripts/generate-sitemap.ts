@@ -17,6 +17,7 @@ import { writeFileSync } from "node:fs";
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { DOCS } from "../src/lib/docs/content";
+import { PROVIDER_FUNCTIONS } from "../src/lib/providers/functions";
 
 const ORIGIN = "https://zyraxonai.lovable.app";
 const ROOT = new URL("../", import.meta.url).pathname;
@@ -150,9 +151,18 @@ const docsEntries: Entry[] = DOCS.map((d) => ({
   priority: d.group === "ZYRAXON Provider" ? "0.8" : "0.7",
 }));
 
+// One page per provider function. They are generated from the same catalogue the
+// hub renders, so a function added to `functions.ts` is in the sitemap on the
+// next run rather than when someone remembers to add it.
+const functionEntries: Entry[] = PROVIDER_FUNCTIONS.map((f) => ({
+  path: `/providers/${f.slug}`,
+  changefreq: "weekly",
+  priority: "0.7",
+}));
+
 const seen = new Set<string>();
 const pages: Entry[] = [];
-for (const entry of [...PAGES, ...docsEntries]) {
+for (const entry of [...PAGES, ...docsEntries, ...functionEntries]) {
   if (seen.has(entry.path)) continue;
   seen.add(entry.path);
   pages.push(entry);

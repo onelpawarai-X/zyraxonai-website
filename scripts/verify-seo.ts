@@ -88,6 +88,22 @@ check(
   /OpenHands/.test(providers) && /Termux/.test(providers) && /Cursor/.test(providers),
 );
 
+// Each provider function has a page of its own, and a page a search engine
+// cannot find is not a page. The sitemap is generated from the same catalogue
+// the hub renders, so these two must agree.
+const providerFunctions = readFileSync(
+  join(ROOT, "src/lib/providers/functions.ts"),
+  "utf8",
+);
+const functionSlugs = Array.from(
+  providerFunctions.matchAll(/^\s*slug:\s*"([^"]+)"/gm),
+  (m) => m[1]!,
+);
+check(
+  "there is a provider function page per function",
+  functionSlugs.length >= 15,
+  `${functionSlugs.length}`,
+);
 // The sitemap must list every page route and every doc.
 const SITE_ORIGIN = "https://zyraxonai.lovable.app";
 const sitemap = readFileSync(join(ROOT, "public/sitemap.xml"), "utf8");
@@ -99,6 +115,9 @@ for (const doc of DOCS) {
 }
 check("the sitemap lists the home page", locs.has("/"));
 check("the sitemap lists the provider page", locs.has("/providers"));
+for (const slug of functionSlugs) {
+  check(`the sitemap lists /providers/${slug}`, locs.has(`/providers/${slug}`));
+}
 check("the sitemap lists the community page", locs.has("/community-art"));
 check("the sitemap lists the docs index", locs.has("/docs"));
 check("the sitemap lists the download page", locs.has("/download/zyraxon-agent"));

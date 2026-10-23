@@ -19,6 +19,7 @@
     "test:tts": "tsx --import ./scripts/raw-import-loader.mjs scripts/verify-tts.ts",
     "test:seo": "tsx scripts/verify-seo.ts",
     "sitemap": "tsx --import ./scripts/raw-import-loader.mjs scripts/generate-sitemap.ts",
+    "docs:markdown": "tsx --import ./scripts/raw-import-loader.mjs scripts/generate-docs-markdown.ts",
     "engine:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File engine/setup-engine.ps1"
   },
   "dependencies": {

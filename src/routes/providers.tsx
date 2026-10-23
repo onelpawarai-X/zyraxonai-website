@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { PageShell } from "@/components/site/PageShell";
 import { PageHeader } from "@/components/site/SiteChrome";
 import { ProviderIntegrations } from "@/components/site/ProviderIntegrations";
-import { ProviderRotator } from "@/components/site/ProviderRotator";
+import { ProviderEndpointCatalogue, ProviderFunctions } from "@/components/site/ProviderRotator";
+import { ProviderHighlights } from "@/components/site/ProviderHighlights";
 import { Button, ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
 import { ZYRAXON_BRANDS } from "@/lib/providers/zyraxon-brands";
 import { ENDPOINT_STATS } from "@/lib/providers/endpoints";
@@ -249,8 +250,8 @@ function ProvidersPage() {
         description={`ZYRAXON serves its own line of ten branded models over a single OpenAI-compatible API, and rotates the pool behind those names so your code never has to change when an upstream model does. Chat and streaming, the model catalogue, text to speech and speech to text — ${ENDPOINT_STATS.total} endpoints, no key to buy, and every one of them described in full on this page.`}
       >
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          <ButtonAnchor href="#endpoints" variant="primary" external={false}>
-            The endpoints
+          <ButtonAnchor href="#functions" variant="primary" external={false}>
+            The functions
           </ButtonAnchor>
           <ButtonAnchor href="#models" external={false}>
             The models
@@ -268,7 +269,9 @@ function ProvidersPage() {
         </div>
       </PageHeader>
 
-      <ProviderRotator />
+      <ProviderHighlights />
+
+      <ProviderFunctions />
 
       <Section
         id="models"
@@ -497,6 +500,7 @@ function ProvidersPage() {
         </div>
       </Section>
 
+      <ProviderEndpointCatalogue />
       <ProviderIntegrations />
       <Section id="why" label="Why a rooted provider" title="One name you control" description="">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

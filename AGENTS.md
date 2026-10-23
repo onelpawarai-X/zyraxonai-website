@@ -436,19 +436,52 @@ exactly like "nobody spoke". The recogniser rejects both MP4 and raw AAC with a
 that work. The endpoint returns 415 for it, not 502: it is the caller's format,
 not a server fault.
 
-### The provider page is a catalogue, and the catalogue is the source
+### The provider is a hub of functions, each with its own page
 
 Every endpoint the provider serves is described once, in
-`src/lib/providers/endpoints.ts`. `/providers` renders it through
-`ProviderRotator` (the four that do the work, then the rest) and
-`GET /api/public/zyraxon/v1/endpoints` serves the same list as JSON. Add an
-endpoint to the module and it appears in both; do not hand-write one into the page.
+`src/lib/providers/endpoints.ts`, and every *function* of the provider — chat,
+the model line, media, tools, errors, speech out, speech in, and each host
+application — is described once in `src/lib/providers/functions.ts`. A function
+entry does not repeat an endpoint: it points at endpoint ids from
+`endpoints.ts` and integration ids from `integrations.ts`, so a page can never
+drift from the catalogue it is built from.
 
-The page is written to be read by a search or fetch tool as well as a person, so
-its detail lives in `<details>` rather than behind `useState`. A collapsed
+`/providers` is the hub: it renders every function as a card linking to
+`/providers/<slug>` (`ProviderFunctionPage.tsx`), then the whole endpoint
+catalogue underneath (`ProviderEndpointCatalogue`). The hub is for a reader who
+does not yet know what they want; a function page is for one who does, and it
+shows that function alone. Add a function to the module and its card, its page
+and its sitemap entry all appear; do not hand-write one into a page.
+
+`GET /api/public/zyraxon/v1/endpoints` serves the endpoint list as JSON, and the
+sitemap generator (`scripts/generate-sitemap.ts`) walks both catalogues, so a
+new function is in the sitemap on the next run rather than when someone
+remembers it.
+
+The pages are written to be read by a search or fetch tool as well as a person,
+so their detail lives in `<details>` rather than behind `useState`. A collapsed
 `<details>` still keeps its contents in the HTML; a state toggle does not, which
 would put every integration field, step and snippet out of reach of exactly the
 reader the page is meant to serve. `public/llms.txt` is the plain-text map that
 points such a tool at the page and the JSON contracts, and `robots.txt` allows
 the four contract URLs (`/v1/endpoints`, `/v1/models`, `/v1/provider`,
 `/v1/integrations`) while still disallowing the rest of `/api/`.
+
+### One large reference per provider system
+
+The provider guide (`provider-docs.ts`) is a tour; the references are what it
+links out to. Each system has one, in `src/lib/docs/provider-system-docs.ts` —
+speech to text, text to speech, multimodal chat — written to stand alone so a
+reader who lands on one has the whole system in front of them. They are long on
+purpose: a reference that omits the container list, the error table or the
+reason behind a required field sends the reader somewhere else to finish.
+
+`npm run docs:markdown` (`scripts/generate-docs-markdown.ts`) renders the same
+blocks to `docs/*.md`, so the Markdown a repository reader opens cannot drift
+from the page a site visitor reads. Edit the blocks, not the Markdown.
+
+The provider page itself opens with `ProviderHighlights`, which says the three
+things a caller arrives asking about in one line each: put a microphone in your
+chat box and the speech-to-text endpoint sends real-time text back; send text
+and the text-to-speech endpoint sends audio; and every model takes video, audio,
+pictures and documents, inline or by URL.

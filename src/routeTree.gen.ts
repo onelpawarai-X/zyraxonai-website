@@ -35,6 +35,7 @@ import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as DownloadZyraxonAgentRouteImport } from './routes/download.zyraxon-agent'
 import { Route as EcosystemIndexRouteImport } from './routes/ecosystem/index'
 import { Route as ExtensionsIndexRouteImport } from './routes/extensions/index'
+import { Route as ProvidersSlugRouteImport } from './routes/providers.$slug'
 import { Route as ShareIdRouteImport } from './routes/share/$id'
 import { Route as UpdatesIndexRouteImport } from './routes/updates/index'
 import { Route as UpdatesSlugRouteImport } from './routes/updates/$slug'
@@ -222,6 +223,11 @@ const ExtensionsIndexRoute = ExtensionsIndexRouteImport.update({
   id: '/extensions/',
   path: '/extensions/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProvidersSlugRoute = ProvidersSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ProvidersRoute,
 } as any)
 const ShareIdRoute = ShareIdRouteImport.update({
   id: '/share/$id',
@@ -539,7 +545,7 @@ export interface FileRoutesByFullPath {
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
-  '/providers': typeof ProvidersRoute
+  '/providers': typeof ProvidersRouteWithChildren
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
   '/zsl': typeof ZslRoute
@@ -549,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
+  '/providers/$slug': typeof ProvidersSlugRoute
   '/share/$id': typeof ShareIdRoute
   '/updates/$slug': typeof UpdatesSlugRoute
   '/docs/': typeof DocsIndexRoute
@@ -624,7 +631,7 @@ export interface FileRoutesByTo {
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
-  '/providers': typeof ProvidersRoute
+  '/providers': typeof ProvidersRouteWithChildren
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
   '/zsl': typeof ZslRoute
@@ -634,6 +641,7 @@ export interface FileRoutesByTo {
   '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
+  '/providers/$slug': typeof ProvidersSlugRoute
   '/share/$id': typeof ShareIdRoute
   '/updates/$slug': typeof UpdatesSlugRoute
   '/docs': typeof DocsIndexRoute
@@ -710,7 +718,7 @@ export interface FileRoutesById {
   '/nebula-core': typeof NebulaCoreRoute
   '/packages': typeof PackagesRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
-  '/providers': typeof ProvidersRoute
+  '/providers': typeof ProvidersRouteWithChildren
   '/publish': typeof PublishRoute
   '/releases': typeof ReleasesRoute
   '/zsl': typeof ZslRoute
@@ -720,6 +728,7 @@ export interface FileRoutesById {
   '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
+  '/providers/$slug': typeof ProvidersSlugRoute
   '/share/$id': typeof ShareIdRoute
   '/updates/$slug': typeof UpdatesSlugRoute
   '/docs/': typeof DocsIndexRoute
@@ -807,6 +816,7 @@ export interface FileRouteTypes {
     | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
+    | '/providers/$slug'
     | '/share/$id'
     | '/updates/$slug'
     | '/docs/'
@@ -892,6 +902,7 @@ export interface FileRouteTypes {
     | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
+    | '/providers/$slug'
     | '/share/$id'
     | '/updates/$slug'
     | '/docs'
@@ -977,6 +988,7 @@ export interface FileRouteTypes {
     | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
+    | '/providers/$slug'
     | '/share/$id'
     | '/updates/$slug'
     | '/docs/'
@@ -1053,7 +1065,7 @@ export interface RootRouteChildren {
   NebulaCoreRoute: typeof NebulaCoreRoute
   PackagesRoute: typeof PackagesRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
-  ProvidersRoute: typeof ProvidersRoute
+  ProvidersRoute: typeof ProvidersRouteWithChildren
   PublishRoute: typeof PublishRoute
   ReleasesRoute: typeof ReleasesRoute
   ZslRoute: typeof ZslRoute
@@ -1300,6 +1312,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/extensions/'
       preLoaderRoute: typeof ExtensionsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/providers/$slug': {
+      id: '/providers/$slug'
+      path: '/$slug'
+      fullPath: '/providers/$slug'
+      preLoaderRoute: typeof ProvidersSlugRouteImport
+      parentRoute: typeof ProvidersRoute
     }
     '/share/$id': {
       id: '/share/$id'
@@ -1703,6 +1722,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ProvidersRouteChildren {
+  ProvidersSlugRoute: typeof ProvidersSlugRoute
+}
+
+const ProvidersRouteChildren: ProvidersRouteChildren = {
+  ProvidersSlugRoute: ProvidersSlugRoute,
+}
+
+const ProvidersRouteWithChildren = ProvidersRoute._addFileChildren(
+  ProvidersRouteChildren,
+)
+
 interface ApiGithubReposRouteChildren {
   ApiGithubReposOwnerRepoPublishRoute: typeof ApiGithubReposOwnerRepoPublishRoute
 }
@@ -1772,7 +1803,7 @@ const rootRouteChildren: RootRouteChildren = {
   NebulaCoreRoute: NebulaCoreRoute,
   PackagesRoute: PackagesRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
-  ProvidersRoute: ProvidersRoute,
+  ProvidersRoute: ProvidersRouteWithChildren,
   PublishRoute: PublishRoute,
   ReleasesRoute: ReleasesRoute,
   ZslRoute: ZslRoute,

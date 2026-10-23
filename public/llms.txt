@@ -8,8 +8,8 @@
 
 - [Provider overview](https://zyraxonai.lovable.app/providers): the whole API
   surface on one page — chat and streaming, the model catalogue, text to speech,
-  speech to text, and integration steps for every host application. This page is
-  the canonical description and is safe to read in full.
+  speech to text, and integration steps for every host application. The page is a
+  hub of *functions*, each of which has a page of its own.
 - [Endpoints as JSON](https://zyraxonai.lovable.app/api/public/zyraxon/v1/endpoints):
   the same catalogue in machine-readable form, for an agent that would rather
   parse than render.
@@ -18,6 +18,32 @@
 - [Integration catalogue](https://zyraxonai.lovable.app/api/public/zyraxon/v1/integrations):
   the exact values and snippets for OpenHands, Cursor, Cline, Aider, LiteLLM,
   LangChain, the Vercel AI SDK, Termux and others.
+
+## One page per function
+
+The provider is one base URL, but each thing it does has its own page. Fetch the
+one you need rather than the whole overview.
+
+- [Speech to text](https://zyraxonai.lovable.app/providers/speech-to-text) — if
+  you are putting a microphone in your chat box, use this endpoint: you send
+  real-time audio and it sends real-time text back.
+- [Text to speech](https://zyraxonai.lovable.app/providers/text-to-speech) — send
+  text, get audio back.
+- [Images, audio, video and PDF](https://zyraxonai.lovable.app/providers/media)
+  — every model takes every modality, inline or by URL.
+- [Chat completions](https://zyraxonai.lovable.app/providers/chat),
+  [The model line](https://zyraxonai.lovable.app/providers/models),
+  [Tool calling](https://zyraxonai.lovable.app/providers/tools),
+  [Capacity and errors](https://zyraxonai.lovable.app/providers/errors)
+- Host applications:
+  [Termux](https://zyraxonai.lovable.app/providers/termux),
+  [Kali](https://zyraxonai.lovable.app/providers/kali-linux),
+  [OpenHands](https://zyraxonai.lovable.app/providers/openhands),
+  [Editors](https://zyraxonai.lovable.app/providers/editors),
+  [Mobile apps](https://zyraxonai.lovable.app/providers/mobile),
+  [SDKs](https://zyraxonai.lovable.app/providers/sdks),
+  [Bots and automation](https://zyraxonai.lovable.app/providers/automation),
+  [Voice in and out](https://zyraxonai.lovable.app/providers/voice)
 
 ## Endpoints
 
@@ -28,8 +54,15 @@
 - Text to speech: `POST https://zyraxonai.lovable.app/api/public/tts` — 322 voices, 75 languages.
 - Voices: `GET https://zyraxonai.lovable.app/api/public/tts/voices`
 - Speech to text: `POST https://zyraxonai.lovable.app/api/public/stt` — one endpoint,
-  two modes: send a recording for the whole transcript, or stream audio and
-  receive text as it is recognised. `GET` on this URL returns its own contract.
+  two modes: send a recording for the whole transcript, or stream raw PCM and
+  receive server-sent events as it is recognised. Accepts WAV, MP3, FLAC, OGG,
+  WebM and raw PCM up to 100 MB; MP4/AAC is refused with a 400. `GET` on this URL
+  returns its own contract, including the limits.
+- Multimodal chat: the same `chat/completions` call takes an OpenAI content-parts
+  array, so one message can mix text with an image, a recording, a video or a
+  PDF — inline as base64 or as an `https://` URL the server fetches. A media turn
+  is routed to a model that supports it, and the response carries
+  `X-ZYRAXON-Input-Modalities`.
 
 ## Facts an agent should not guess at
 
@@ -45,3 +78,9 @@
 
 - [Documentation](https://zyraxonai.lovable.app/docs): longer guides, including
   speech, provider integrations and the endpoint reference.
+- [Speech to text reference](https://zyraxonai.lovable.app/docs/provider-speech-to-text):
+  every container, both modes, the 100 MB streaming path and the language rule.
+- [Text to speech reference](https://zyraxonai.lovable.app/docs/provider-text-to-speech):
+  the voice catalogue, sentence-by-sentence playback and the Markdown rules.
+- [Multimodal chat reference](https://zyraxonai.lovable.app/docs/provider-multimodal):
+  the content-parts array, routing by modality, and the rules for large media.

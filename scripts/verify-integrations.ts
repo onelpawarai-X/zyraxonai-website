@@ -368,27 +368,48 @@ check("the speech docs cover speech-to-text too", /\/api\/public\/stt/.test(spee
 check("the speech docs mention a non-English voice", /bn-/.test(speechText));
 
 // The speech endpoints used to live in a section of their own near the bottom of
-// the page, so these two checks looked for that section's id. They now live in
-// the endpoint rotator with the rest of the surface, so the checks follow them:
-// the speech endpoints must be in the catalogue, and the guide must be linked
-// from wherever the catalogue is rendered.
+// the page, and the page used to be one long rotator. They now live in the
+// endpoint catalogue, and the page is a hub of functions that each link to their
+// own page — so the checks follow the surface: the hub must render the functions
+// and the catalogue, the catalogue must carry the speech endpoints, and the
+// speech functions must point at the speech reference.
 const providerPage = readFileSync(`${ROOT}src/routes/providers.tsx`, "utf8");
-const rotator = readFileSync(`${ROOT}src/components/site/ProviderRotator.tsx`, "utf8");
+const hub = readFileSync(`${ROOT}src/components/site/ProviderRotator.tsx`, "utf8");
+const functionPage = readFileSync(`${ROOT}src/components/site/ProviderFunctionPage.tsx`, "utf8");
+const functions = readFileSync(`${ROOT}src/lib/providers/functions.ts`, "utf8");
 const catalogue = readFileSync(`${ROOT}src/lib/providers/endpoints.ts`, "utf8");
 check(
-  "the provider page renders the endpoint rotator",
-  /<ProviderRotator\s*\/>/.test(providerPage),
+  "the provider page renders the function hub",
+  /<ProviderFunctions\s*\/>/.test(providerPage),
+);
+check(
+  "the provider page renders the endpoint catalogue",
+  /<ProviderEndpointCatalogue\s*\/>/.test(providerPage),
+);
+check(
+  "the hub links each function to its own page",
+  /\/providers\/\$slug/.test(hub) && /\/providers\/\$slug/.test(functionPage),
 );
 check(
   "the catalogue has the speech endpoints",
   /"\/api\/public\/tts"/.test(catalogue) && /"\/api\/public\/stt"/.test(catalogue),
 );
 check(
-  "the speech endpoints are featured in the rotator",
+  "the speech endpoints are featured in the catalogue",
   /id: "tts",[\s\S]*?featured: true/.test(catalogue) &&
     /id: "stt",[\s\S]*?featured: true/.test(catalogue),
 );
-check("the rotator links to the speech guide", /\/docs\/speech/.test(rotator));
+check(
+  "the speech functions link to their own reference",
+  /slug: "speech-to-text",[\s\S]*?docSlug: "provider-speech-to-text"/.test(functions) &&
+    /slug: "text-to-speech",[\s\S]*?docSlug: "provider-text-to-speech"/.test(functions),
+);
+check(
+  "the speech-to-text reference exists",
+  readFileSync(`${ROOT}src/lib/docs/provider-system-docs.ts`, "utf8").includes(
+    'slug: "provider-speech-to-text"',
+  ),
+);
 
 const sitemap = readFileSync(`${ROOT}public/sitemap.xml`, "utf8");
 check("the sitemap lists the speech page", sitemap.includes("/docs/speech"));

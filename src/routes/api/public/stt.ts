@@ -82,12 +82,16 @@ const WINDOW_CONCURRENCY = 4;
 
 /** Wall-clock ceiling for transcribing one request's audio.
  *
- *  The recogniser is a network call we do not control, so a slow answer must
- *  not turn into a dropped connection. When the budget runs out the transcript
- *  gathered so far is returned, marked `truncated`, rather than a 500 with
- *  nothing — a partial transcript the caller can see is worth more than an
- *  error page, and the caller can ask again for the rest. */
-const TRANSCRIBE_BUDGET_MS = 20_000;
+ *  A Workers HTTP request has no hard wall-clock limit while the client stays
+ *  connected — the real ceiling is CPU time — so this is a self-imposed budget
+ *  and not the host's. It was twenty seconds, which cut a recording of a few
+ *  minutes; a long recording is worth waiting for, so the budget is now two
+ *  minutes. It still exists: the recogniser is a network call we do not
+ *  control, so when the budget runs out the transcript gathered so far is
+ *  returned, marked `truncated`, rather than a 500 with nothing. A partial
+ *  transcript the caller can see is worth more than an error page, and the
+ *  caller can ask again for the rest. */
+const TRANSCRIBE_BUDGET_MS = 120_000;
 
 /** Upload size past which the streaming path is used instead of a whole-file
  *  decode. Below it the whole-file path is cheaper; above it the recording is
