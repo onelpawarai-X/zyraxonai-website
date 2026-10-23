@@ -57,8 +57,13 @@ async function loadCatalog(): Promise<Record<string, CatalogEntry>> {
   if (cache && Date.now() - cache.at < CACHE_TTL) return cache.data;
   if (inflight) return inflight;
   inflight = (async () => {
+    // A catalogue that never answers must not become a turn that never answers.
+    // This fetch runs on the critical path of every turn (the pool and the live
+    // id set are both read before routing), and it sits *outside* the turn's own
+    // deadline, so an unbounded wait here is a hang no other bound can catch.
     const r = await fetch(MODELS_DEV_URL, {
       headers: { Accept: "application/json", "User-Agent": "zyraxon-ai" },
+      signal: AbortSignal.timeout(8_000),
     });
     if (!r.ok) throw new Error(`models.dev request failed (${r.status})`);
     const data = (await r.json()) as Record<string, CatalogEntry>;
