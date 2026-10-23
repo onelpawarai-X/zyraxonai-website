@@ -19,6 +19,9 @@ import {
   isQuotaFailure,
   noteKeyLimited,
   pickUpstreamKey,
+} from "@/lib/builder/zen.server";
+import { egressFor, noteEgressLimited } from "@/lib/providers/egress.server";
+import {
   streamRaw,
   streamWireRaw,
   zenFreeModels,
@@ -373,6 +376,14 @@ export async function brandChatStream(
             );
         if (!("failed" in out)) return { ok: true as const, value: out as Response };
         const detail = String(out.failed?.detail ?? "");
+        // The refusal may be the *address* being over its limit rather than the
+        // model or the account being unusable. Park this address so the rest of
+        // the turn — and the turns that follow — leave by another one, which is
+        // what keeps one limited address from failing everyone routed to it.
+        if (isQuotaFailure(detail) || /429|rate.?limit/i.test(detail)) {
+          const proxy = egressFor(lane.sessionId);
+          if (proxy) noteEgressLimited(proxy);
+        }
         // A spent quota is the one refusal the model rotation cannot route
         // around: the next model sits on the same account. Swapping to another
         // credential is the only move that can still serve the turn.

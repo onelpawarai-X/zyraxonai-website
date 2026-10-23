@@ -494,6 +494,26 @@ check(
   check("a network fault is not mistaken for a spent quota", !isQuotaFailure("fetch failed: ECONNRESET"));
 }
 
+// Egress health: the upstream's free limiter counts per address, so an
+// address that just refused a request must be taken out of rotation rather
+// than handed the next turn.
+{
+  const before = process.env.ZYRAXON_EGRESS_URLS;
+  process.env.ZYRAXON_EGRESS_URLS = "http://p1:1,http://p2:2";
+  const eg = await import("../src/lib/providers/egress.server");
+  try {
+    check("egress starts spread over the pool", eg.egressStatus().spread === true);
+    const first = eg.egressFor("ses_a");
+    check("a lane resolves an egress address", typeof first === "string", String(first));
+    eg.noteEgressLimited("http://p1:1");
+    eg.noteEgressLimited("http://p2:2");
+    check("a limited address is still used when it is the only pool", typeof eg.egressFor("ses_a") === "string");
+  } finally {
+    if (before === undefined) delete process.env.ZYRAXON_EGRESS_URLS;
+    else process.env.ZYRAXON_EGRESS_URLS = before;
+  }
+}
+
 // The credential pool: several accounts are what makes a free tier survivable,
 // and a key that reported a spent quota must be set aside rather than retried.
 {

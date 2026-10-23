@@ -43,24 +43,59 @@ const PROXIES: string[] = raw
 
 let cursor = 0;
 
-/** Next egress address, round-robin. Returns undefined for direct mode, which
- *  callers treat as "no override". */
+/** Addresses that recently reported a rate limit or spent quota.
+ *
+ *  The upstream's free limiter counts per address, so an address that has just
+ *  refused a request will refuse the next one too. Sending the next turn there
+ *  anyway is what turns one limited address into a failed turn for whoever
+ *  happens to hash to it. Keeping the address out of circulation for a while
+ *  moves the load onto addresses that can still serve, which is the whole
+ *  reason for holding more than one. */
+const egressCooldownUntil = new Map<string, number>();
+const EGRESS_COOLDOWN_MS = Number(process.env.ZYRAXON_EGRESS_COOLDOWN_MS || 600_000);
+
+export function noteEgressLimited(url: string, ms = EGRESS_COOLDOWN_MS): void {
+  if (url) egressCooldownUntil.set(url, Date.now() + ms);
+}
+
+export function egressLimited(url: string): boolean {
+  const until = egressCooldownUntil.get(url);
+  return typeof until === "number" && until > Date.now();
+}
+
+/** Addresses that can still serve, in round-robin order. When every address is
+ *  cooling the whole pool is returned: an address that might still answer beats
+ *  refusing the turn outright, and the caller's rotation can retry. */
+function healthyProxies(): string[] {
+  const ready = PROXIES.filter((p) => !egressLimited(p));
+  return ready.length ? ready : PROXIES;
+}
+
+/** Next egress address, round-robin over the healthy ones. Returns undefined
+ *  for direct mode, which callers treat as "no override". */
 export function nextEgress(): string | undefined {
   if (!PROXIES.length) return undefined;
-  const url = PROXIES[cursor % PROXIES.length];
+  const pool = healthyProxies();
+  const url = pool[cursor % pool.length];
   cursor = (cursor + 1) >>> 0;
   return url;
 }
 
 /** Assign an egress address to a lane, derived from the lane's session id so a
  *  lane keeps the same address for its whole turn (a mid-turn address change
- *  would look like two clients to the upstream). */
+ *  would look like two clients to the upstream).
+ *
+ *  The hash is taken over the *healthy* subset, so callers spread across the
+ *  addresses that can actually serve rather than being pinned to one that has
+ *  just been limited. A lane already in flight keeps the address it started on
+ *  because its own call resolves the pool once. */
 export function egressFor(sessionId: string): string | undefined {
   if (!PROXIES.length) return undefined;
+  const pool = healthyProxies();
   let h = 0x811c9dc5;
   for (let i = 0; i < sessionId.length; i++)
     h = Math.imul(h ^ sessionId.charCodeAt(i), 0x01000193) >>> 0;
-  return PROXIES[h % PROXIES.length];
+  return pool[h % pool.length];
 }
 
 export function egressStatus(): EgressStatus {
@@ -72,11 +107,14 @@ export function egressStatus(): EgressStatus {
       note: "One egress IP. Callers are isolated by session fingerprint, but the upstream still sees one address; set ZYRAXON_EGRESS_URLS to spread traffic across proxies.",
     };
   }
+  const cooling = PROXIES.filter((p) => egressLimited(p)).length;
   return {
     mode: "pool",
     proxies: PROXIES.length,
     spread: PROXIES.length > 1,
-    note: `Traffic is spread across ${PROXIES.length} egress address${PROXIES.length === 1 ? "" : "es"} in round-robin order.`,
+    note:
+      `Traffic is spread across ${PROXIES.length} egress address${PROXIES.length === 1 ? "" : "es"} in round-robin order` +
+      (cooling ? `; ${cooling} cooling down after a rate limit.` : "."),
   };
 }
 
@@ -97,7 +135,13 @@ export async function egressFetch(
   const { ProxyAgent } = (await import("undici")) as any;
   const dispatcher = new ProxyAgent(proxy);
   try {
-    return (await fetch(url, { ...init, dispatcher } as any)) as Response;
+    const res = (await fetch(url, { ...init, dispatcher } as any)) as Response;
+    // The upstream told us, on the wire, that this address is over its limit.
+    // Remember it here, at the one place every upstream response passes
+    // through, so the next turn leaves by a different address instead of
+    // rediscovering the same wall.
+    if (res.status === 429) noteEgressLimited(proxy);
+    return res;
   } finally {
     // Release the agent's sockets; a pooled agent per call would otherwise hold
     // connections open for every request the process ever served.
