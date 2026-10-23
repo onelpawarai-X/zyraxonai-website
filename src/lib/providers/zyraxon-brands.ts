@@ -605,6 +605,13 @@ export type RotationOutcome<T> =
  *  cannot hear either, so rotating turns a recoverable miss into a guaranteed
  *  wrong answer. Re-asking the only model that can do the job is the correct
  *  move. */
+/** How many times a rotation may walk the whole chain before giving up.
+ *
+ *  Enough to ride out the short upstream bursts that clear in a second or two,
+ *  and few enough that a chain of instantly-failing models does not spin for
+ *  the whole budget. The wall-clock budget below is the outer bound. */
+const ROTATION_MAX_PASSES = 4;
+
 export async function rotateThrough<T>(
   chain: string[],
   attempt: (
@@ -624,36 +631,59 @@ export async function rotateThrough<T>(
    *  caller gets an opaque 502 instead of the honest "every model was
    *  unavailable" this function exists to produce. This bound makes the
    *  rotation return its own answer before an intermediary invents one. */
-  opts?: { budgetMs?: number },
+  opts?: { budgetMs?: number; passes?: number },
 ): Promise<RotationOutcome<T>> {
   const tried: AttemptFailure[] = [];
   let gate = false;
-  const perUpstream = new Map<string, number>();
   const startedAt = Date.now();
   const budgetMs = opts?.budgetMs ?? 0;
   const budgetSpent = () => budgetMs > 0 && Date.now() - startedAt >= budgetMs;
-  for (const upstream of chain.slice(0, max)) {
-    for (;;) {
-      if (budgetSpent()) {
-        tried.push({
+  // One walk of the chain is not enough. A free upstream fails in bursts — a
+  // model that answers 502 now answers in a second when asked again — so
+  // stopping after the first full pass turns a momentary wobble into a caller
+  // -visible outage. When a budget is given, the chain is walked again until
+  // that budget runs out; each pass is cheap when the upstreams are failing
+  // fast, and the budget is what stops it, not the pass count.
+  const maxPasses = opts?.passes ?? (budgetMs > 0 ? ROTATION_MAX_PASSES : 1);
+  for (let pass = 0; pass < maxPasses; pass++) {
+    if (budgetSpent()) break;
+    if (pass > 0) {
+      // Brief pause between passes: a burst of upstream 5xx clears in about a
+      // second, and hammering with no gap tends to reproduce the same failure.
+      await new Promise((r) => setTimeout(r, Math.min(400 * pass, 2_000)));
+      if (budgetSpent()) break;
+    }
+    // Retry counters are per pass: a model that already spent its retries in an
+    // earlier pass deserves a fresh look now that time has passed.
+    const perUpstream = new Map<string, number>();
+    for (const upstream of chain.slice(0, max)) {
+      for (;;) {
+        if (budgetSpent()) {
+          tried.push({
+            upstream,
+            status: 504,
+            detail: `rotation budget of ${budgetMs}ms exhausted`,
+            gate: false,
+          });
+          return { ok: false, tried, gate };
+        }
+        const out = await attempt(upstream);
+        if (out.ok) return { ok: true, value: out.value, upstream };
+        const g = isUpstreamGate(out.detail);
+        if (g) gate = true;
+        const failure: AttemptFailure = {
           upstream,
-          status: 504,
-          detail: `rotation budget of ${budgetMs}ms exhausted`,
-          gate: false,
-        });
-        return { ok: false, tried, gate };
+          status: out.status,
+          detail: out.detail,
+          gate: g,
+        };
+        tried.push(failure);
+        if (out.status === 401 || g) return { ok: false, tried, gate };
+        const n = (perUpstream.get(upstream) ?? 0) + 1;
+        perUpstream.set(upstream, n);
+        if (await retry?.(upstream, failure, n)) continue;
+        break;
       }
-      const out = await attempt(upstream);
-      if (out.ok) return { ok: true, value: out.value, upstream };
-      const g = isUpstreamGate(out.detail);
-      if (g) gate = true;
-      const failure: AttemptFailure = { upstream, status: out.status, detail: out.detail, gate: g };
-      tried.push(failure);
-      if (out.status === 401 || g) return { ok: false, tried, gate };
-      const n = (perUpstream.get(upstream) ?? 0) + 1;
-      perUpstream.set(upstream, n);
-      if (await retry?.(upstream, failure, n)) continue;
-      break;
     }
   }
   return { ok: false, tried, gate };

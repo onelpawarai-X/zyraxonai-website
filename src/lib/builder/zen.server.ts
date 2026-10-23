@@ -460,7 +460,11 @@ function sse(first: string | undefined, iterator: AsyncIterator<string>, upstrea
       };
       arm();
       try {
-        if (first) c.enqueue(frame(enc, { content: first }, null, upstream));
+        let emitted = false;
+        if (first) {
+          c.enqueue(frame(enc, { content: first }, null, upstream));
+          emitted = true;
+        }
         while (true) {
           // Race the next token against the silence clock. The heartbeat keeps
           // the *connection* alive, but without this the stream would never
@@ -475,9 +479,17 @@ function sse(first: string | undefined, iterator: AsyncIterator<string>, upstrea
           const n = await Promise.race([iterator.next(), idle]);
           if (idleTimer) clearTimeout(idleTimer);
           if (n === "idle") {
+            // A stall after the first token is not a failure to report as an
+            // error: the caller has already received part of the answer. Closing
+            // the stream cleanly hands them a complete-looking, partial reply —
+            // far better than an error frame that discards the text they just
+            // read. Only a stall *before* any token is an error, and that case
+            // is caught by the probe, not here.
+            if (emitted) break;
             throw new Error(`upstream sent nothing within ${TURN_IDLE_MS}ms`);
           }
           if (n.done) break;
+          if (n.value) emitted = true;
           if (n.value) c.enqueue(frame(enc, { content: n.value }, null, upstream));
         }
         disarm();
@@ -794,6 +806,7 @@ function sseFromOpenAI(body: ReadableStream<Uint8Array>, label: string) {
   // upstream has sent nothing at all for a while, so a long answer that keeps
   // producing tokens is never cut.
   const carry: { pending: Promise<{ done: boolean; value?: Uint8Array }> | null } = { pending: null };
+  let forwarded = false;
   const rewrite = (chunk: string) =>
     chunk.replace(/"model"\s*:\s*"[^"]*"/g, `"model":${JSON.stringify(label)}`);
   return new ReadableStream<Uint8Array>({
@@ -833,6 +846,14 @@ function sseFromOpenAI(body: ReadableStream<Uint8Array>, label: string) {
         const next = await readWithIdle(reader, TURN_IDLE_MS, carry);
         if (next === "idle") {
           disarm();
+          // Bytes already reached the caller, so this is a stall mid-answer, not
+          // a failed turn: close cleanly so they keep what they received. A
+          // throw here would discard a partial reply that was already delivered.
+          if (forwarded) {
+            if (buffer) c.enqueue(enc.encode(rewrite(buffer)));
+            c.close();
+            return;
+          }
           throw new Error(`upstream sent nothing within ${TURN_IDLE_MS}ms`);
         }
         const { done, value } = next;
@@ -850,6 +871,7 @@ function sseFromOpenAI(body: ReadableStream<Uint8Array>, label: string) {
         const ready = buffer.slice(0, cut + 2);
         buffer = buffer.slice(cut + 2);
         disarm();
+        forwarded = true;
         c.enqueue(enc.encode(rewrite(ready)));
       } catch (e) {
         disarm();
@@ -1355,11 +1377,14 @@ export async function completeRaw(
       let finishReason = "stop";
       let usage: any = null;
       let sawActivity = false;
+      let aborted = false;
       // The deadline covers the wait for *activity*, not the whole answer: a
       // turn already producing tokens is reset below and allowed to finish.
-      let deadline: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      const trip = () => {
+        aborted = true;
         abort.abort(new Error(`no activity within ${COMPLETE_DEADLINE_MS}ms`));
-      }, COMPLETE_DEADLINE_MS);
+      };
+      let deadline: ReturnType<typeof setTimeout> | null = setTimeout(trip, COMPLETE_DEADLINE_MS);
       const clearDeadline = () => {
         if (deadline) clearTimeout(deadline);
         deadline = null;
@@ -1372,18 +1397,16 @@ export async function completeRaw(
           if (t) {
             text += t;
             sawActivity = true;
+            aborted = false;
             clearDeadline();
-            deadline = setTimeout(() => {
-              abort.abort(new Error(`no activity within ${COMPLETE_DEADLINE_MS}ms`));
-            }, COMPLETE_DEADLINE_MS);
+            deadline = setTimeout(trip, COMPLETE_DEADLINE_MS);
           }
         } else if (type === "reasoning" || type === "reasoning-delta") {
           reasoning += p.textDelta ?? p.text ?? "";
           sawActivity = true;
+          aborted = false;
           clearDeadline();
-          deadline = setTimeout(() => {
-            abort.abort(new Error(`no activity within ${COMPLETE_DEADLINE_MS}ms`));
-          }, COMPLETE_DEADLINE_MS);
+          deadline = setTimeout(trip, COMPLETE_DEADLINE_MS);
         } else if (type === "finish") {
           finishReason = p.finishReason || finishReason;
           usage = p.totalUsage ?? p.usage ?? usage;
@@ -1391,6 +1414,14 @@ export async function completeRaw(
           throw p.error ?? new Error("upstream stream error");
         }
       }
+      } catch (e) {
+        // The deadline fired. A turn that already produced part of an answer is
+        // not a failure: the caller asked a question and most of the reply is
+        // sitting in `text`. Returning it — marked as truncated by its finish
+        // reason — is strictly better than discarding it and reporting the model
+        // as unavailable, which is what the caller would otherwise see for a
+        // slow model that was working the whole time.
+        if (!(aborted && sawActivity)) throw e;
       } finally {
         clearDeadline();
       }
@@ -1401,6 +1432,9 @@ export async function completeRaw(
         }
         return { failed: { upstream, status: 502, detail: "OpenCode returned an empty stream" } };
       }
+      // A truncated answer must say so, or a caller cannot tell a complete reply
+      // from one the deadline cut short.
+      if (aborted) finishReason = "length";
       if (!text && reasoning) {
         // Reasoning-only turns are still a valid answer when there is no visible
         // text: surface the reasoning so the caller is not handed an empty body.

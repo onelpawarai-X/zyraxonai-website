@@ -117,7 +117,14 @@ const failUp = (upstream: string, status: number, detail: string) =>
   const body = await res.json();
   check("a non-gate failure answers 502", res.status === 502, res.status);
   check("and is not mislabelled as a gate", body.error.type === "provider_unavailable", body.error.type);
-  check("both models were tried", body.tried.length === 2, body.tried?.length);
+  // The rotation may walk the chain more than once to ride out an upstream
+  // burst, so the count is not fixed — what matters is that every model in the
+  // chain was actually attempted.
+  check(
+    "both models were tried",
+    new Set((body.tried ?? []).map((t: any) => t.upstream)).size === 2,
+    body.tried?.length,
+  );
 }
 
 // an unknown brand is a caller error, not a rotation

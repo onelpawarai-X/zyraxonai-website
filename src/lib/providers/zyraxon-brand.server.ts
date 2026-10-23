@@ -48,10 +48,12 @@ import {
   ZYRAXON_BRANDS,
   brandView,
   getBrand,
+  measuredTtftMs,
   rotateThrough,
   rotationFor,
   type Brand,
   type BrandView,
+  type PoolModel,
 } from "./zyraxon-brands";
 
 export {
@@ -62,6 +64,7 @@ export {
   canonicalBrandId,
   rotateThrough,
   isUpstreamGate,
+  measuredTtftMs,
 } from "./zyraxon-brands";
 export type { BrandView, BrandId } from "./zyraxon-brands";
 
@@ -126,7 +129,7 @@ export async function brandCatalogue(): Promise<BrandView[]> {
 export async function resolveBrandChain(
   modelId: string,
   need: Set<MediaKind> = new Set(),
-): Promise<{ brand: Brand; chain: string[] } | null> {
+): Promise<{ brand: Brand; chain: string[]; pool: PoolModel[] } | null> {
   const brand = getBrand(modelId);
   if (!brand) return null;
   const [pool, live] = await Promise.all([zenFreeModels(), zenLiveIds()]);
@@ -134,7 +137,9 @@ export async function resolveBrandChain(
   // measure and should not pay for a sweep.
   const oracle = need.size ? await measuredOracle(pool.map((m) => m.id)) : undefined;
   const chain = rotationFor(brand, pool, live, need, oracle);
-  return { brand, chain };
+  // A caller that only needs the order still gets it; the pool travels along so
+  // the fallback below can reach every model, not just the chain's head.
+  return { brand, chain, pool };
 }
 
 /** Run a chat turn for a brand, rotating through the upstream pool when a
@@ -156,7 +161,10 @@ export type BrandTurnOptions = {
   /** Upstream call to use for a non-streaming turn. Injectable for tests. */
   complete?: typeof completeRaw;
   /** Chain resolver. Injectable for tests. */
-  resolve?: typeof resolveBrandChain;
+  resolve?: (
+    modelId: string,
+    need: Set<MediaKind>,
+  ) => Promise<{ brand: Brand; chain: string[]; pool?: PoolModel[] } | null>;
   /** Optional stable seed so one end user keeps a memory window upstream while
    *  remaining isolated from every other end user. */
   seed?: string;
@@ -274,6 +282,7 @@ export async function brandChatStream(
     );
   }
   const { brand, chain } = resolved;
+  const pool = resolved.pool ?? [];
   const key = resolveApiKey(apiKey);
   const budget = Math.min(maxOutputTokens ?? 16000, 32768);
 
@@ -288,11 +297,24 @@ export async function brandChatStream(
     // answer began, handing the caller an empty body for a turn that had nearly
     // finished.
     const laneOpts = need.size > 0 ? { workMs: lanePool.mediaWorkMs } : undefined;
+    // One clock for the whole turn. The chain and the pool-wide sweep that
+    // follows it share it, so their budgets can never sum past the point where
+    // an intermediary gives up — which is what produced the opaque 502 this
+    // path exists to avoid. Text is bounded well under the edge's patience;
+    // media gets longer because the model must take in the bytes first.
+    const turnMs = need.size > 0 ? 100_000 : 48_000;
+    const turnDeadline = Date.now() + turnMs;
+    const remainingMs = () => Math.max(1_000, turnDeadline - Date.now());
+    // Attempts are shared by the chain and the pool-wide fallback that follows
+    // it, so the budget has to cover both: a chain that exhausts its own passes
+    // must still leave room to reach the rest of the pool. The wall-clock
+    // budgets, not this count, are what actually stop a turn.
+    const laneAttempts = 24;
     const runner = stream
       ? (work: (lane: any) => Promise<Response>, seed?: string) =>
-          lanePool.stream(work, seed, undefined, laneOpts)
+          lanePool.stream(work, seed, laneAttempts, laneOpts)
       : (work: (lane: any) => Promise<Response>, seed?: string) =>
-          lanePool.run(work, seed, undefined, laneOpts);
+          lanePool.run(work, seed, laneAttempts, laneOpts);
 
     return await runner(async (lane) => {
       // A media turn must not be answered by a model that never received the
@@ -367,7 +389,7 @@ export async function brandChatStream(
         // caller nothing; stopping short lets the caller receive the honest
         // "every model was unavailable" body instead. A media turn needs longer
         // because a model has to take in the bytes before it answers.
-        { budgetMs: mediaNeed ? 110_000 : 55_000 },
+        { budgetMs: Math.floor(remainingMs() * 0.6) },
       );
       if (outcome.ok) {
         const res = outcome.value as Response;
@@ -389,6 +411,86 @@ export async function brandChatStream(
         if (need.size) headers.set("X-ZYRAXON-Input-Modalities", Array.from(need).sort().join(","));
         headers.set("X-ZYRAXON-Capacity", lane.tier);
         return new Response(res.body, { status: res.status, headers });
+      }
+      // The chain is a preference order, not a limit. Every model in the live
+      // pool is reachable, so a turn is never refused while any model anywhere
+      // can serve it. The chain is walked again only when it produced nothing —
+      // the cheapest sweep first (fastest measured models lead), so a recovery
+      // costs about as little as the failing chain did.
+      const attempted = new Set(outcome.tried.map((t) => t.upstream));
+      // New models appear in the upstream catalogue without warning, and a
+      // model nobody has measured has no TTFT. Ranking it last would mean the
+      // newest model in the pool is the one we never try, which is backwards:
+      // it is exactly the model we want to discover. Unmeasured models get a
+      // neutral rank that places them after the proven-fast ones but ahead of
+      // the proven-slow, so a fresh arrival is exercised and earns its place.
+      const NEUTRAL_TTFT_MS = 3_000;
+      const rank = (id: string) => {
+        const ms = measuredTtftMs(id);
+        return Number.isFinite(ms) ? ms : NEUTRAL_TTFT_MS;
+      };
+      const sweep = pool
+        .map((m) => m.id)
+        .filter((id: string) => !attempted.has(id))
+        .sort((a: string, b: string) => rank(a) - rank(b));
+      if (sweep.length) {
+        const recovered = await rotateThrough(
+          sweep,
+          async (upstream) => {
+            if (lane.attemptsLeft <= 0) {
+              return { ok: false as const, status: 503, detail: "lane attempt budget exhausted" };
+            }
+            lane.attemptsLeft--;
+            const out = stream
+              ? await useSend(
+                  key,
+                  upstream,
+                  finalMessages,
+                  budget,
+                  brand.label,
+                  lane.sessionId,
+                  tools,
+                  mediaNeed ? { reject: rejectsDenial } : undefined,
+                )
+              : await useComplete(
+                  key,
+                  upstream,
+                  finalMessages,
+                  budget,
+                  brand.label,
+                  lane.sessionId,
+                  tools,
+                  mediaNeed ? { reject: rejectsDenial } : undefined,
+                );
+            if (!("failed" in out)) return { ok: true as const, value: out };
+            return {
+              ok: false as const,
+              status: out.failed?.status ?? 502,
+              detail: String(out.failed?.detail ?? ""),
+            };
+          },
+          lane.attemptsLeft,
+          undefined,
+          { budgetMs: remainingMs(), passes: 2 },
+        );
+        if (recovered.ok) {
+          const res = recovered.value as Response;
+          if (mediaNeed) {
+            for (const k of need) {
+              if (k === "image" || k === "audio" || k === "video")
+                recordOutcome(recovered.upstream, k, true);
+            }
+          }
+          const headers = new Headers(res.headers);
+          if (need.size)
+            headers.set("X-ZYRAXON-Input-Modalities", Array.from(need).sort().join(","));
+          headers.set("X-ZYRAXON-Capacity", lane.tier);
+          headers.set("X-ZYRAXON-Rotation", "pool-fallback");
+          return new Response(res.body, { status: res.status, headers });
+        }
+        // Fold the sweep's attempts into the report so the caller (and an
+        // operator) sees everything that was tried, not just the first chain.
+        outcome.tried.push(...recovered.tried);
       }
       return brandFailureResponse(brand, outcome.tried, outcome.gate);
     }, seed);
