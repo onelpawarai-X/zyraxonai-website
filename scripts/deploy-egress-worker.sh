@@ -44,7 +44,7 @@ RESULT="$(curl -s -X PUT "$API/accounts/$ACCOUNT/workers/scripts/$NAME" \
   -F "metadata={\"main_module\":\"egress-proxy.js\",\"compatibility_date\":\"2025-01-01\"};type=application/json" \
   -F "egress-proxy.js=@$FILE;type=application/javascript+module")"
 
-if ! echo "$RESULT" | grep -q '"success":true'; then
+if ! echo "$RESULT" | grep -qE '"success"\s*:\s*true'; then
   echo "Upload failed:" >&2
   echo "$RESULT" | head -c 600 >&2
   exit 1
@@ -55,9 +55,40 @@ curl -s -X POST "$API/accounts/$ACCOUNT/workers/scripts/$NAME/subdomain" \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   --data '{"enabled":true}' >/dev/null
 
+# Bind the shared secret the worker reads from its environment. Without it the
+# worker accepts any caller who learns its URL, which turns it into an open
+# relay that spends our upstream quota on strangers. The value is generated
+# here when the caller does not supply one, so the two sides can never drift.
+EGRESS_TOKEN="${EGRESS_TOKEN:-$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')}"
+echo "Binding EGRESS_TOKEN ..."
+SECRET="$(curl -s -X PUT "$API/accounts/$ACCOUNT/workers/scripts/$NAME/secrets" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  --data "{\"name\":\"EGRESS_TOKEN\",\"text\":\"$EGRESS_TOKEN\",\"type\":\"secret_text\"}")"
+if ! echo "$SECRET" | grep -qE '"success"\s*:\s*true'; then
+  echo "Could not bind EGRESS_TOKEN; the worker is reachable but unprotected." >&2
+  echo "$SECRET" | head -c 400 >&2
+  exit 1
+fi
+
+GW="https://$NAME.$SUBDOMAIN.workers.dev/"
 echo
-echo "Done. Put this in the app's secrets:"
+echo "Checking the gateway is live ..."
+if curl -s --max-time 20 "${GW}health" | grep -q '"ok"\s*:\s*true'; then
+  echo "Gateway answered its health check."
+else
+  echo "Gateway did not answer /health; it may still be propagating." >&2
+fi
+
 echo
-echo "  ZYRAXON_EGRESS_URLS = gw+https://$NAME.$SUBDOMAIN.workers.dev/"
+echo "=============================================================="
+echo " Put these two in the app's host secrets, then redeploy:"
+echo "=============================================================="
 echo
-echo "For several accounts, join the URLs with commas on that one line."
+echo "  ZYRAXON_EGRESS_URLS = gw+$GW"
+echo "  ZYRAXON_EGRESS_TOKEN = $EGRESS_TOKEN"
+echo
+echo "The token is also in this run's log. Rotate it by running this"
+echo "script again; both sides must carry the same value."
+echo
+echo "For several accounts, join the URLs with commas on the URLs line"
+echo "and use the same token on every worker."

@@ -21,20 +21,48 @@
  * an open relay.
  */
 
-const EGRESS_TOKEN = ""; // optional shared secret; keep empty to disable
+// The shared secret arrives as a worker *binding*, not a variable in this file:
+// a literal here would sit in the repository and in the deployed script, where
+// anyone holding the worker URL could read it. Set it with
+//   wrangler secret put EGRESS_TOKEN
+// or the dashboard's Settings -> Variables and Secrets. It is read per request
+// from `env`, which is how a Worker exposes bindings — reading it at module
+// scope would freeze the value at deploy time and miss a later rotation.
+// Empty means "no token required", so the worker still works before the secret
+// is configured.
 
 // Only these hosts may be reached through the gateway. An open relay is a
 // liability, so the allow-list is explicit rather than "anything the caller
-// asks for".
+// asks for". EGRESS_ALLOWED_HOSTS adds to it, which is how a test points the
+// worker at a local origin without loosening the deployed default.
 const ALLOWED_HOSTS = ["opencode.ai"];
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
+    const token = String(env?.EGRESS_TOKEN ?? "").trim();
+    const extra = String(env?.EGRESS_ALLOWED_HOSTS ?? "")
+      .split(",")
+      .map((h) => h.trim())
+      .filter(Boolean);
+    const allowed = ALLOWED_HOSTS.concat(extra);
+
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: cors() });
     }
 
-    if (EGRESS_TOKEN && request.headers.get("x-zyraxon-token") !== EGRESS_TOKEN) {
+    // A health check, so a deployment can prove the worker is reachable and
+    // whether it is protected, without spending an upstream request. It answers
+    // before the token check on purpose: a protected worker whose health check
+    // also demanded the secret could not be diagnosed without the secret, and
+    // the reply reveals nothing beyond whether protection is on.
+    if (request.method === "GET" && new URL(request.url).pathname === "/health") {
+      return Response.json(
+        { ok: true, gateway: "zyraxon-egress", protected: !!token },
+        { headers: cors() },
+      );
+    }
+
+    if (token && request.headers.get("x-zyraxon-token") !== token) {
       return new Response("forbidden", { status: 403, headers: cors() });
     }
 
@@ -49,7 +77,7 @@ export default {
     } catch {
       return new Response("bad target", { status: 400, headers: cors() });
     }
-    if (!ALLOWED_HOSTS.some((h) => url.hostname === h || url.hostname.endsWith("." + h))) {
+    if (!allowed.some((h) => url.hostname === h || url.hostname.endsWith("." + h))) {
       return new Response("host not allowed", { status: 403, headers: cors() });
     }
 
@@ -66,6 +94,10 @@ export default {
       headers,
       body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
       // Streaming must survive the hop: the app consumes SSE token by token.
+      // The body is a stream, so the request must declare a half-duplex
+      // transfer. Workers ignores the field; Node's fetch requires it, which is
+      // what lets this file be exercised outside Cloudflare.
+      duplex: "half",
       redirect: "follow",
     });
 

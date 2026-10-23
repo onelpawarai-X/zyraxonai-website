@@ -5,6 +5,23 @@ it from one address runs out and then refuses *every* caller, however isolated
 their sessions are. A Cloudflare Worker fixes that for free: the worker runs on
 Cloudflare's whole network, so requests leave from a rotating set of addresses.
 
+## Cloudflare is not required
+
+Nothing in the app knows about Cloudflare. The only contract is the two headers
+`x-zyraxon-target` and `x-zyraxon-token`, plus a streaming response — so any host
+that can run an HTTP function works:
+
+- **Cloudflare Workers** — the worked example here. Free plan, no card.
+- **Deno Deploy / Val Town / Vercel Edge** — same shape, port `egress-proxy.js`.
+- **A VPS you already own** — run the worker as a tiny server, or use a socket
+  proxy instead by listing it plainly (`http://user:pass@host:port`) with no
+  `gw+` prefix. `ProxyAgent` speaks CONNECT, so no gateway code is needed.
+
+What matters is that requests leave from *many* addresses. A single VPS is one
+address, so it is no better than calling upstream directly. The gateway is
+worth deploying when its egress addresses are shared and numerous, which is why
+an edge platform fits.
+
 ## Setup (about five minutes, no card)
 
 1. Create a free account at <https://dash.cloudflare.com/sign-up>.
@@ -24,6 +41,19 @@ Cloudflare's whole network, so requests leave from a rotating set of addresses.
 
 6. Optionally set `EGRESS_TOKEN` inside the worker and add the same value to
    the app as `x-zyraxon-token` support, so the URL is not an open relay.
+
+## What the app does with a gateway URL
+
+Put it in `ZYRAXON_EGRESS_URLS` and every turn is routed through it. Two
+behaviours are worth knowing, because both were learned from a live deployment:
+
+- **A 429 through a gateway is not the gateway failing.** It means one of the
+  gateway's addresses was spent. The URL stays in rotation so the next turn
+  leaves by a different address, and it is only parked after a sustained run of
+  refusals with no success in between.
+- **Add the token.** Without `ZYRAXON_EGRESS_TOKEN` the worker accepts anyone who
+  learns its URL, which spends your upstream quota on strangers. The deploy
+  script binds one automatically and prints both values.
 
 ## Limits, honestly
 

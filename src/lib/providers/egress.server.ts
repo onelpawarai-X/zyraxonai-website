@@ -58,6 +58,44 @@ export function noteEgressLimited(url: string, ms = EGRESS_COOLDOWN_MS): void {
   if (url) egressCooldownUntil.set(url, Date.now() + ms);
 }
 
+/** How many refusals in a row a gateway may report before it is parked.
+ *
+ *  A socket proxy entry *is* one address, so a single refusal means that
+ *  address is spent and parking it is right. A gateway is the opposite: it is a
+ *  pool of addresses behind one URL, and each request leaves from a different
+ *  one. Parking the URL on the first refusal therefore throws away the whole
+ *  rotation — the thing the gateway exists for. Observed in production: one
+ *  worker served roughly one turn in ten, because Cloudflare's shared egress
+ *  addresses are mostly spent, and a single-refusal park turned that into zero
+ *  in ten for the next ten minutes.
+ *
+ *  So a gateway is only parked after this many consecutive refusals, and for
+ *  much less time. The counter is reset by any answer that is not a refusal, so
+ *  a gateway that is serving is never parked at all. */
+const GATEWAY_STRIKES_BEFORE_PARK = Number(process.env.ZYRAXON_EGRESS_STRIKES || 20);
+const GATEWAY_COOLDOWN_MS = Number(process.env.ZYRAXON_EGRESS_GATEWAY_COOLDOWN_MS || 60_000);
+
+const gatewayStrikes = new Map<string, number>();
+
+/** Record the outcome of one gateway call.
+ *
+ *  A refusal is a strike, anything else clears the count. Only a run of
+ *  refusals — which means the gateway itself has stopped serving, not merely
+ *  that one of its addresses was spent — takes the URL out of rotation. */
+export function noteGatewayOutcome(url: string, refused: boolean): void {
+  if (!url) return;
+  if (!refused) {
+    gatewayStrikes.delete(url);
+    return;
+  }
+  const strikes = (gatewayStrikes.get(url) || 0) + 1;
+  gatewayStrikes.set(url, strikes);
+  if (strikes >= GATEWAY_STRIKES_BEFORE_PARK) {
+    noteEgressLimited(url, GATEWAY_COOLDOWN_MS);
+    gatewayStrikes.delete(url);
+  }
+}
+
 export function egressLimited(url: string): boolean {
   const until = egressCooldownUntil.get(url);
   return typeof until === "number" && until > Date.now();
@@ -188,7 +226,10 @@ export async function egressFetch(
     const token = (process.env.ZYRAXON_EGRESS_TOKEN || "").trim();
     if (token) headers.set("x-zyraxon-token", token);
     const res = (await fetch(endpoint, { ...init, headers })) as Response;
-    if (res.status === 429) noteEgressLimited(proxy);
+    // A gateway's 429 is one address out of its pool being spent, not the
+    // gateway being spent. Count it, but keep the URL in rotation so the next
+    // turn leaves by a different address.
+    noteGatewayOutcome(proxy, res.status === 429);
     return res;
   }
 

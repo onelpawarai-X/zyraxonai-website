@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "test:zen": "node scripts/verify-zen.mjs",
     "test:provider": "npm run test:provider:plain && npm run test:provider:loader && npm run test:integrations && npm run test:stt && npm run test:tts && npm run test:seo",
-    "test:provider:plain": "tsx scripts/verify-brand-provider.ts && tsx scripts/verify-lane-pool.ts && tsx scripts/verify-quota-clock.ts",
+    "test:provider:plain": "tsx scripts/verify-brand-provider.ts && tsx scripts/verify-lane-pool.ts && tsx scripts/verify-quota-clock.ts && tsx scripts/verify-egress.ts && tsx scripts/verify-egress-gateway-rotation.ts",
     "test:provider:loader": "tsx --import ./scripts/raw-import-loader.mjs scripts/verify-free-tier-clock.tsx && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-quota-probe.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-brand-turn.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-media.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-modalities.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-media-capability.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-e2e.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-heartbeat.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-isolation.ts",
     "test:integrations": "tsx scripts/verify-integrations.ts",
     "test:stt": "tsx --import ./scripts/raw-import-loader.mjs scripts/verify-stt.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-stt-stream.ts && tsx --import ./scripts/raw-import-loader.mjs scripts/verify-stt-wasm.ts",
@@ -20,7 +20,8 @@
     "test:seo": "tsx scripts/verify-seo.ts",
     "sitemap": "tsx --import ./scripts/raw-import-loader.mjs scripts/generate-sitemap.ts",
     "docs:markdown": "tsx --import ./scripts/raw-import-loader.mjs scripts/generate-docs-markdown.ts",
-    "engine:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File engine/setup-engine.ps1"
+    "engine:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File engine/setup-engine.ps1",
+    "test:egress-gateway": "node scripts/verify-egress-gateway.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.67",
