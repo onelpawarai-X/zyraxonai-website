@@ -20,7 +20,7 @@ import {
   noteKeyLimited,
   pickUpstreamKey,
 } from "@/lib/builder/zen.server";
-import { egressFor, noteEgressLimited } from "@/lib/providers/egress.server";
+import { egressFor, noteEgressLimited, releaseEgress } from "@/lib/providers/egress.server";
 import {
   streamRaw,
   streamWireRaw,
@@ -383,6 +383,9 @@ export async function brandChatStream(
         if (isQuotaFailure(detail) || /429|rate.?limit/i.test(detail)) {
           const proxy = egressFor(lane.sessionId);
           if (proxy) noteEgressLimited(proxy);
+          // Drop the held address too: the next attempt on this lane must be
+          // free to take a fresh one instead of reusing the limited address.
+          releaseEgress(lane.sessionId);
         }
         // A spent quota is the one refusal the model rotation cannot route
         // around: the next model sits on the same account. Swapping to another

@@ -505,6 +505,12 @@ check(
     check("egress starts spread over the pool", eg.egressStatus().spread === true);
     const first = eg.egressFor("ses_a");
     check("a lane resolves an egress address", typeof first === "string", String(first));
+    const a1 = eg.egressFor("ses_a");
+    const a2 = eg.egressFor("ses_b");
+    check("consecutive turns leave by different addresses", a1 !== a2, `${a1} vs ${a2}`);
+    check("a turn keeps one address for its whole life", eg.egressFor("ses_a") === a1, String(eg.egressFor("ses_a")));
+    eg.releaseEgress("ses_a");
+    check("releasing a turn frees its address", typeof eg.egressFor("ses_a") === "string");
     eg.noteEgressLimited("http://p1:1");
     eg.noteEgressLimited("http://p2:2");
     check("a limited address is still used when it is the only pool", typeof eg.egressFor("ses_a") === "string");

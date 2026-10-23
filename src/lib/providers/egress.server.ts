@@ -81,6 +81,12 @@ export function nextEgress(): string | undefined {
   return url;
 }
 
+/** Forget a session's address. Called when the address it holds is found to be
+ *  over its limit, so the next call for that turn is allocated a fresh one. */
+export function releaseEgress(sessionId: string): void {
+  sessionEgress.delete(sessionId);
+}
+
 /** Assign an egress address to a lane, derived from the lane's session id so a
  *  lane keeps the same address for its whole turn (a mid-turn address change
  *  would look like two clients to the upstream).
@@ -89,13 +95,39 @@ export function nextEgress(): string | undefined {
  *  addresses that can actually serve rather than being pinned to one that has
  *  just been limited. A lane already in flight keeps the address it started on
  *  because its own call resolves the pool once. */
+/** Address handed to a session, remembered for the life of that session.
+ *
+ *  Two calls for the same turn must leave by the same address — a mid-turn
+ *  change looks like two clients to the upstream and breaks a stream — but two
+ *  different turns should not: the whole point of a pool is that consecutive
+ *  requests do not share an address, so the upstream's per-address limiter
+ *  never sees the same client twice in a row. A short-lived memo gives both:
+ *  the first call for a turn takes the next address in rotation, later calls
+ *  for that same turn reuse it. */
+const sessionEgress = new Map<string, { url: string; at: number }>();
+const SESSION_EGRESS_TTL_MS = 15 * 60_000;
+
+function remember(sid: string, url: string): string {
+  sessionEgress.set(sid, { url, at: Date.now() });
+  // Keep the map from growing without bound over a long-lived process.
+  if (sessionEgress.size > 20_000) {
+    const cutoff = Date.now() - SESSION_EGRESS_TTL_MS;
+    for (const [k, v] of sessionEgress) if (v.at < cutoff) sessionEgress.delete(k);
+  }
+  return url;
+}
+
 export function egressFor(sessionId: string): string | undefined {
   if (!PROXIES.length) return undefined;
+  const held = sessionEgress.get(sessionId);
+  if (held && Date.now() - held.at < SESSION_EGRESS_TTL_MS && !egressLimited(held.url)) {
+    return held.url;
+  }
+  // Round-robin over the healthy addresses, so consecutive turns differ.
   const pool = healthyProxies();
-  let h = 0x811c9dc5;
-  for (let i = 0; i < sessionId.length; i++)
-    h = Math.imul(h ^ sessionId.charCodeAt(i), 0x01000193) >>> 0;
-  return pool[h % pool.length];
+  const url = pool[cursor % pool.length];
+  cursor = (cursor + 1) >>> 0;
+  return remember(sessionId, url);
 }
 
 export function egressStatus(): EgressStatus {
