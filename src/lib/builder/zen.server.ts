@@ -48,6 +48,35 @@ export const HEARTBEAT_MS = Number(process.env.ZYRAXON_HEARTBEAT_MS || 10_000);
  *  that a broken model is swapped before the caller gives up. */
 export const PROBE_MS = Number(process.env.ZYRAXON_PROBE_MS || 4_000);
 
+/** How long a whole turn may take before the upstream is treated as dead.
+ *
+ *  The probe above only bounds the *first* token, and only on the streaming SDK
+ *  path. Two other paths had no ceiling at all: the non-streaming SDK path
+ *  (`completeRaw`) awaits its stream to completion, and both wire paths
+ *  (`streamWireRaw`, `completeWireRaw`) drain the upstream body before they
+ *  return. On those, a model that accepts the connection and then goes silent
+ *  held the caller for the full 50–60s that Cloudflare allows before it answers
+ *  502 — and rotation, which is the whole point of the chain, never got a chance
+ *  to run, because the attempt never *failed*, it just never finished.
+ *
+ *  Measured across the live free pool, the slowest healthy model emits its first
+ *  token in under 8s and finishes a short answer well inside 30s. A ceiling of
+ *  30s is therefore several times the healthy worst case and short enough that a
+ *  dead model rotates to a live one while the caller is still waiting.
+ *
+ *  The ceiling is on *silence*, not on the whole turn: `sse` emits a heartbeat
+ *  comment every `HEARTBEAT_MS`, and an answer that is still producing tokens is
+ *  still working. Only a turn that produces nothing for this long is abandoned. */
+export const TURN_IDLE_MS = Number(process.env.ZYRAXON_TURN_IDLE_MS || 30_000);
+
+/** How long the non-streaming path may wait for *any* activity — a token, a
+ *  reasoning delta, a tool call — before it gives up. Deliberately the same
+ *  number as `TURN_IDLE_MS`: the two paths fail the same way and should fail at
+ *  the same time, so a caller sees one behaviour rather than two. */
+export const COMPLETE_DEADLINE_MS = Number(
+  process.env.ZYRAXON_COMPLETE_DEADLINE_MS || TURN_IDLE_MS,
+);
+
 export type ContentPart =
   | { type: "text"; text: string }
   | { type: "image_url"; image_url: { url: string } }
@@ -129,7 +158,14 @@ const ZEN_SESSION_FALLBACK = newSessionId("zyraxon|catalog");
 
 export function zenFetch(
   input: string | URL | Request,
-  init?: RequestInit & { sessionId?: string },
+  init?: RequestInit & {
+    sessionId?: string;
+    /** Abort if the upstream has not even sent its response headers by then.
+     *  Bounds the connect-and-first-byte wait, which is where a wedged upstream
+     *  shows up as "the request just hangs". It is cleared the moment headers
+     *  arrive, so a long but healthy stream body is never cut by it. */
+    firstByteMs?: number;
+  },
 ): Promise<Response> {
   const headers = new Headers(init?.headers || {});
   headers.set("User-Agent", ZEN_UA);
@@ -145,7 +181,24 @@ export function zenFetch(
   // mid-stream looks like two clients to the upstream.
   const proxy = egressFor(sid);
   const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-  return egressFetch(url, { ...init, headers }, proxy);
+
+  // Bound the wait for response headers. Without this, an upstream that accepts
+  // the connection and then never answers holds the attempt open until the
+  // gateway times out — the caller gets a 502 from the edge and the rotation
+  // never sees a failure it could act on. The clock is cleared as soon as the
+  // headers land, so only the *silent* part of the wait is bounded.
+  const firstByteMs = init?.firstByteMs ?? TURN_IDLE_MS;
+  if (!firstByteMs || firstByteMs <= 0) {
+    return egressFetch(url, { ...init, headers }, proxy);
+  }
+  const abort = new AbortController();
+  const timer = setTimeout(() => {
+    abort.abort(new Error(`upstream sent no response headers within ${firstByteMs}ms`));
+  }, firstByteMs);
+  if (typeof timer?.unref === "function") timer.unref();
+  return egressFetch(url, { ...init, headers, signal: abort.signal }, proxy).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 /** Free models VERIFIED (2026-08 live probe) to accept image_url parts without
@@ -409,7 +462,21 @@ function sse(first: string | undefined, iterator: AsyncIterator<string>, upstrea
       try {
         if (first) c.enqueue(frame(enc, { content: first }, null, upstream));
         while (true) {
-          const n = await iterator.next();
+          // Race the next token against the silence clock. The heartbeat keeps
+          // the *connection* alive, but without this the stream would never
+          // close if the upstream died mid-answer: the caller would hold an open
+          // response forever with no way to tell it was over. An idle timeout
+          // ends the turn with an error frame instead.
+          let idleTimer: ReturnType<typeof setTimeout> | null = null;
+          const idle = new Promise<"idle">((resolve) => {
+            idleTimer = setTimeout(() => resolve("idle"), TURN_IDLE_MS);
+            if (typeof idleTimer?.unref === "function") idleTimer.unref();
+          });
+          const n = await Promise.race([iterator.next(), idle]);
+          if (idleTimer) clearTimeout(idleTimer);
+          if (n === "idle") {
+            throw new Error(`upstream sent nothing within ${TURN_IDLE_MS}ms`);
+          }
           if (n.done) break;
           if (n.value) c.enqueue(frame(enc, { content: n.value }, null, upstream));
         }
@@ -684,14 +751,49 @@ export function needsWire(messages: Array<{ content: unknown }>): boolean {
   return false;
 }
 
-/** Re-frame an upstream OpenAI SSE stream so the caller-facing model name is the
- *  ZYRAXON brand, never the upstream id. The bytes are otherwise passed through
- *  untouched, which keeps `tool_calls`, `reasoning` and usage chunks intact. */
+/** Read one chunk, but give up if the upstream stays silent for `idleMs`.
+ *
+ *  A relay that simply awaits `reader.read()` waits forever on an upstream that
+ *  accepted the connection and then said nothing — the caller sees a request
+ *  that never returns, which is exactly the "it just hangs" report. Racing the
+ *  read against a clock turns that into a definite failure the caller can act
+ *  on. The read itself is not abandoned: its chunk, if it ever arrives, is still
+ *  delivered to the next call.
+ *
+ *  Returns `"idle"` when the clock wins, so the caller can close the stream with
+ *  an error frame rather than a truncated success. */
+async function readWithIdle(
+  reader: { read: () => Promise<{ done: boolean; value?: Uint8Array }> },
+  idleMs: number,
+  carry: { pending: Promise<{ done: boolean; value?: Uint8Array }> | null },
+): Promise<{ done: boolean; value?: Uint8Array } | "idle"> {
+  if (!idleMs || idleMs <= 0) return carry.pending ?? reader.read();
+  const read = carry.pending ?? reader.read();
+  carry.pending = read;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const expired = new Promise<"idle">((resolve) => {
+    timer = setTimeout(() => resolve("idle"), idleMs);
+    if (typeof timer?.unref === "function") timer.unref();
+  });
+  const next = await Promise.race([read, expired]);
+  if (timer) clearTimeout(timer);
+  if (next === "idle") return "idle";
+  carry.pending = null;
+  return next;
+}
+
 function sseFromOpenAI(body: ReadableStream<Uint8Array>, label: string) {
   const enc = new TextEncoder();
   const dec = new TextDecoder();
   const reader = body.getReader();
+  // Re-frame the upstream stream so the caller-facing model name is the ZYRAXON
+  // brand, never the upstream id. The bytes are otherwise passed through
+  // untouched, which keeps `tool_calls`, `reasoning` and usage chunks intact.
   let buffer = "";
+  // Bound the silence, not the answer: `readWithIdle` only fires when the
+  // upstream has sent nothing at all for a while, so a long answer that keeps
+  // producing tokens is never cut.
+  const carry: { pending: Promise<{ done: boolean; value?: Uint8Array }> | null } = { pending: null };
   const rewrite = (chunk: string) =>
     chunk.replace(/"model"\s*:\s*"[^"]*"/g, `"model":${JSON.stringify(label)}`);
   return new ReadableStream<Uint8Array>({
@@ -728,7 +830,12 @@ function sseFromOpenAI(body: ReadableStream<Uint8Array>, label: string) {
 
       arm();
       try {
-        const { done, value } = await reader.read();
+        const next = await readWithIdle(reader, TURN_IDLE_MS, carry);
+        if (next === "idle") {
+          disarm();
+          throw new Error(`upstream sent nothing within ${TURN_IDLE_MS}ms`);
+        }
+        const { done, value } = next;
         if (done) {
           disarm();
           if (buffer) c.enqueue(enc.encode(rewrite(buffer)));
@@ -971,6 +1078,9 @@ function replayThenPipe(
     chunk.replace(/"model"\s*:\s*"[^"]*"/g, `"model":${JSON.stringify(label)}`);
   let buffered = "";
   let replayed = false;
+  // Same silence bound as `sseFromOpenAI`: a wedged upstream must surface as an
+  // error the caller can see, not as a stream that never ends.
+  const carry: { pending: Promise<{ done: boolean; value?: Uint8Array }> | null } = { pending: null };
   return new ReadableStream<Uint8Array>({
     async pull(c) {
       if (!replayed) {
@@ -992,7 +1102,11 @@ function replayThenPipe(
         }
         return;
       }
-      const { done, value } = await reader.read();
+      const next = await readWithIdle(reader, TURN_IDLE_MS, carry);
+      if (next === "idle") {
+        throw new Error(`upstream sent nothing within ${TURN_IDLE_MS}ms`);
+      }
+      const { done, value } = next;
       if (done) {
         if (buffered) c.enqueue(enc.encode(rewrite(buffered)));
         c.close();
@@ -1069,15 +1183,45 @@ async function drainOpenAi(body: ReadableStream<Uint8Array>, upstream: string, l
     }
   };
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += dec.decode(value, { stream: true });
-    const chunks = buffer.split("\n\n");
-    buffer = chunks.pop() ?? "";
-    for (const c of chunks) handleEvent(c);
+  // A silent upstream must not hold the turn open. `drainOpenAi` reads the whole
+  // body before it returns, so without a ceiling a model that accepts the
+  // connection and then says nothing would keep the caller waiting until the
+  // gateway gave up — and the rotation, which exists to swap such a model out,
+  // would never run, because the attempt never failed. Each chunk that arrives
+  // resets the clock, so this bounds silence, not the length of a long answer.
+  let idleTimer: ReturnType<typeof setTimeout> | null = null;
+  let idleExpired = false;
+  const armIdle = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      idleExpired = true;
+      reader.cancel("upstream silent").catch(() => {});
+    }, TURN_IDLE_MS);
+  };
+  armIdle();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      armIdle();
+      buffer += dec.decode(value, { stream: true });
+      const chunks = buffer.split("\n\n");
+      buffer = chunks.pop() ?? "";
+      for (const c of chunks) handleEvent(c);
+    }
+    if (buffer.trim()) handleEvent(buffer);
+  } finally {
+    if (idleTimer) clearTimeout(idleTimer);
   }
-  if (buffer.trim()) handleEvent(buffer);
+  if (idleExpired && !sawActivity) {
+    return {
+      failed: {
+        upstream,
+        status: 502,
+        detail: `upstream sent nothing within ${TURN_IDLE_MS}ms`,
+      },
+    };
+  }
   try {
     reader.releaseLock();
   } catch {}
@@ -1192,18 +1336,35 @@ export async function completeRaw(
 ): Promise<Response | { failed: any }> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
+      // A silent upstream must not hold the caller for the whole gateway
+      // timeout. The controller is aborted by the deadline below, which makes
+      // the SDK throw, which `classify` turns into a failure the rotation can
+      // act on. Without it a hung model never fails — it simply never finishes,
+      // and the chain never rotates.
+      const abort = new AbortController();
       const result = streamText({
         model: provider(key, sessionId).chatModel(upstream),
         messages: finalMessages,
         maxOutputTokens,
         temperature: 0.2,
         tools: FREE_TIER_GATE_TOOLS as any,
+        abortSignal: abort.signal,
       });
       let text = "";
       let reasoning = "";
       let finishReason = "stop";
       let usage: any = null;
       let sawActivity = false;
+      // The deadline covers the wait for *activity*, not the whole answer: a
+      // turn already producing tokens is reset below and allowed to finish.
+      let deadline: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+        abort.abort(new Error(`no activity within ${COMPLETE_DEADLINE_MS}ms`));
+      }, COMPLETE_DEADLINE_MS);
+      const clearDeadline = () => {
+        if (deadline) clearTimeout(deadline);
+        deadline = null;
+      };
+      try {
       for await (const p of result.fullStream as any) {
         const type = p?.type;
         if (type === "text-delta") {
@@ -1211,16 +1372,27 @@ export async function completeRaw(
           if (t) {
             text += t;
             sawActivity = true;
+            clearDeadline();
+            deadline = setTimeout(() => {
+              abort.abort(new Error(`no activity within ${COMPLETE_DEADLINE_MS}ms`));
+            }, COMPLETE_DEADLINE_MS);
           }
         } else if (type === "reasoning" || type === "reasoning-delta") {
           reasoning += p.textDelta ?? p.text ?? "";
           sawActivity = true;
+          clearDeadline();
+          deadline = setTimeout(() => {
+            abort.abort(new Error(`no activity within ${COMPLETE_DEADLINE_MS}ms`));
+          }, COMPLETE_DEADLINE_MS);
         } else if (type === "finish") {
           finishReason = p.finishReason || finishReason;
           usage = p.totalUsage ?? p.usage ?? usage;
         } else if (type === "error") {
           throw p.error ?? new Error("upstream stream error");
         }
+      }
+      } finally {
+        clearDeadline();
       }
       if (!sawActivity) {
         if (attempt === 0) {

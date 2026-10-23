@@ -616,12 +616,33 @@ export async function rotateThrough<T>(
     failure: AttemptFailure,
     attemptNumber: number,
   ) => boolean | Promise<boolean>,
+  /** Wall-clock ceiling for the *whole* rotation.
+   *
+   *  Per-attempt deadlines are not enough on their own: a chain of eight slow
+   *  models, each taking its full allowance, adds up to far longer than the
+   *  gateway will hold a connection — and when the gateway gives up first, the
+   *  caller gets an opaque 502 instead of the honest "every model was
+   *  unavailable" this function exists to produce. This bound makes the
+   *  rotation return its own answer before an intermediary invents one. */
+  opts?: { budgetMs?: number },
 ): Promise<RotationOutcome<T>> {
   const tried: AttemptFailure[] = [];
   let gate = false;
   const perUpstream = new Map<string, number>();
+  const startedAt = Date.now();
+  const budgetMs = opts?.budgetMs ?? 0;
+  const budgetSpent = () => budgetMs > 0 && Date.now() - startedAt >= budgetMs;
   for (const upstream of chain.slice(0, max)) {
     for (;;) {
+      if (budgetSpent()) {
+        tried.push({
+          upstream,
+          status: 504,
+          detail: `rotation budget of ${budgetMs}ms exhausted`,
+          gate: false,
+        });
+        return { ok: false, tried, gate };
+      }
       const out = await attempt(upstream);
       if (out.ok) return { ok: true, value: out.value, upstream };
       const g = isUpstreamGate(out.detail);

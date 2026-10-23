@@ -362,6 +362,12 @@ export async function brandChatStream(
           await new Promise((r) => setTimeout(r, 250 * n));
           return true;
         },
+        // Leave room for the edge. A rotation that runs longer than the gateway
+        // will wait gets replaced by the gateway's own 502, which tells the
+        // caller nothing; stopping short lets the caller receive the honest
+        // "every model was unavailable" body instead. A media turn needs longer
+        // because a model has to take in the bytes before it answers.
+        { budgetMs: mediaNeed ? 110_000 : 55_000 },
       );
       if (outcome.ok) {
         const res = outcome.value as Response;
