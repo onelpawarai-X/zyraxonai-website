@@ -644,6 +644,10 @@ export async function raceFor<T>(
     max?: number;
     /** Release a losing success (cancel its body) so nothing is left open. */
     discard?: (value: T, upstream: string) => void;
+    /** Abort a request still in flight when the race ends without a winner.
+     *  Without this a loser keeps its upstream conversation open, and the
+     *  caller's fallback has no way to know the model was already asked. */
+    cancel?: (upstream: string) => void;
   } = {},
 ): Promise<RotationOutcome<T>> {
   const hedgeMs = opts.hedgeMs ?? 1_500;
@@ -658,8 +662,10 @@ export async function raceFor<T>(
 
   type Slot = { u: string; res?: { ok: true; value: T } | { ok: false; status: number; detail: string } };
   const pending = new Set<Promise<Slot>>();
+  const launched: string[] = [];
 
   const launch = (u: string): Promise<Slot> => {
+    launched.push(u);
     const p = attempt(u).then(
       (r): Slot => ({ u, res: r }),
       (e): Slot => ({
@@ -728,7 +734,22 @@ export async function raceFor<T>(
     if (next < queue.length && !spent()) launch(queue[next++]);
   }
 
-  if (spent() && lastFailure) {
+  // The race is over without a winner. Whatever is still in flight is now
+  // wasted work: stop it, and record it as attempted so the caller's fallback
+  // moves on to models nobody has asked instead of repeating these.
+  const settled = new Set(tried.map((t) => t.upstream));
+  for (const u of launched) {
+    if (!settled.has(u)) {
+      opts.cancel?.(u);
+      tried.push({
+        upstream: u,
+        status: 504,
+        detail: "race ended before this model answered",
+        gate: false,
+      });
+    }
+  }
+  if (spent()) {
     tried.push({
       upstream: queue[Math.min(next, queue.length - 1)] ?? "",
       status: 504,

@@ -403,9 +403,14 @@ export async function brandChatStream(
             budgetMs: Math.floor(remainingMs() * 0.6),
           })
         : await raceFor(chain, tryUpstream, {
-            hedgeMs: 1_200,
+            // Width is a cost, not just a latency knob: every racer is another
+            // concurrent conversation with the same free upstream, and asking
+            // too many at once is itself what makes a free tier start refusing.
+            // Three is enough to survive one dead and one slow candidate while
+            // staying a light load; the fallback below covers the rest.
+            hedgeMs: 1_500,
             budgetMs: Math.floor(remainingMs() * 0.7),
-            max: 6,
+            max: 3,
             discard,
           });
 
@@ -447,11 +452,13 @@ export async function brandChatStream(
               budgetMs: remainingMs(),
               passes: 2,
             })
-          : await raceFor(sweep, tryUpstream, {
-              hedgeMs: 1_200,
+          : await rotateThrough(sweep, tryUpstream, lane.attemptsLeft, undefined, {
+              // The fallback runs in order rather than in parallel: it exists
+              // for the case where the raced head all refused, and racing the
+              // whole pool there would multiply the very load that produced the
+              // refusal. Each candidate is dropped fast when silent, so walking
+              // it is still quick.
               budgetMs: remainingMs(),
-              max: 8,
-              discard,
             });
         if (recovered.ok) {
           const res = recovered.value as Response;
