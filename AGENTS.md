@@ -608,6 +608,16 @@ A browser cannot be the egress: the upstream answers the CORS preflight with
 header in the browser, so a direct call from the page can never satisfy the
 gate. Spreading across addresses must happen server-side.
 
+Public CORS relays are not an egress either, and this is measured, not assumed.
+Twelve no-signup services were called with a real POST carrying the gate
+request (thingproxy, allorigins `/raw`, cors.eu.org, cors-anywhere on Heroku,
+`test.cors.workers.dev`, corsfix, cors.lol, corsproxy.io, crossorigin.me,
+yacdn, codetabs, cors.sh): every one answered fetch-failed, 520/522, an HTML
+landing page, or its own rate-limit text — not one forwarded the POST. The
+stable ones are GET-only, localhost-only, or want an API key. Do not spend time
+here again; deploy the worker instead (`Deploy egress gateway` workflow, or
+`scripts/deploy-egress-worker.sh`).
+
 ## Testing
 
 `npm run test:provider` (1063 checks) covers the brand contract, rotation,
