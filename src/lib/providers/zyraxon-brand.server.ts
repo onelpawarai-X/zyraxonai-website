@@ -16,7 +16,9 @@ import {
   completeRaw,
   completeWireRaw,
   needsWire,
-  resolveApiKey,
+  isQuotaFailure,
+  noteKeyLimited,
+  pickUpstreamKey,
   streamRaw,
   streamWireRaw,
   zenFreeModels,
@@ -94,7 +96,7 @@ async function measuredOracle(
  *  browser bundle pulls in. */
 registerProbeTransport(async (upstream, messages, maxTokens) => {
   const out = await completeWireRaw(
-    resolveApiKey(undefined),
+    pickUpstreamKey(undefined),
     upstream,
     messages,
     maxTokens,
@@ -284,7 +286,21 @@ export async function brandChatStream(
   }
   const { brand, chain } = resolved;
   const pool = resolved.pool ?? [];
-  const key = resolveApiKey(apiKey);
+  // The credential is chosen per turn, not per deployment: a caller's own key
+  // wins, otherwise the pool is scanned for one that is not cooling down. The
+  // holder below lets the attempt loop swap it when a key reports a spent
+  // quota, which is the one failure that following the model rotation cannot
+  // fix — the next model is on the same account.
+  let key = pickUpstreamKey(apiKey);
+  const swapKey = (detail: unknown): boolean => {
+    if (apiKey?.trim()) return false; // the caller's own key is not ours to swap
+    if (!isQuotaFailure(detail)) return false;
+    if (key) noteKeyLimited(key);
+    const next = pickUpstreamKey(undefined);
+    if (!next || next === key) return false;
+    key = next;
+    return true;
+  };
   const budget = Math.min(maxOutputTokens ?? 16000, 32768);
 
   try {
@@ -356,10 +372,21 @@ export async function brandChatStream(
               mediaNeed ? { reject: rejectsDenial } : undefined,
             );
         if (!("failed" in out)) return { ok: true as const, value: out as Response };
+        const detail = String(out.failed?.detail ?? "");
+        // A spent quota is the one refusal the model rotation cannot route
+        // around: the next model sits on the same account. Swapping to another
+        // credential is the only move that can still serve the turn.
+        if (swapKey(detail)) {
+          return {
+            ok: false as const,
+            status: out.failed?.status ?? 502,
+            detail: `${detail} (key rotated)`,
+          };
+        }
         return {
           ok: false as const,
           status: out.failed?.status ?? 502,
-          detail: String(out.failed?.detail ?? ""),
+          detail,
         };
       };
 

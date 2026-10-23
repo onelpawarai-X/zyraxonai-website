@@ -481,5 +481,38 @@ check(
   check("a gate stops the race immediately", !out.ok && out.gate === true && calls.length === 1, calls.join(","));
 }
 
+// Quota detection: the one refusal that model rotation cannot route around.
+{
+  const { isQuotaFailure } = await import("../src/lib/builder/upstream-keys.server");
+  check(
+    "a spent free quota is recognised",
+    isQuotaFailure(
+      "Failed after 3 attempts. Last error: Free usage limit reached. Subscribe to OpenCode Go to keep going: https://opencode.ai/go",
+    ),
+  );
+  check("a retired model is not mistaken for a spent quota", !isQuotaFailure("model not found"));
+  check("a network fault is not mistaken for a spent quota", !isQuotaFailure("fetch failed: ECONNRESET"));
+}
+
+// The credential pool: several accounts are what makes a free tier survivable,
+// and a key that reported a spent quota must be set aside rather than retried.
+{
+  const zen = await import("../src/lib/builder/upstream-keys.server");
+  const before = process.env.OPENCODE_ZEN_API_KEYS;
+  process.env.OPENCODE_ZEN_API_KEYS = "key-a,key-b,key-a";
+  try {
+    check("the credential pool is de-duplicated", zen.upstreamKeys().length === 2, zen.upstreamKeys().length);
+    check("a ready key is preferred", zen.pickUpstreamKey() === "key-a", String(zen.pickUpstreamKey()));
+    zen.noteKeyLimited("key-a");
+    check("a limited key is skipped for a ready one", zen.pickUpstreamKey() === "key-b", String(zen.pickUpstreamKey()));
+    zen.noteKeyLimited("key-b");
+    const fallback = zen.pickUpstreamKey();
+    check("when every key is limited one is still used", fallback === "key-a" || fallback === "key-b", String(fallback));
+  } finally {
+    if (before === undefined) delete process.env.OPENCODE_ZEN_API_KEYS;
+    else process.env.OPENCODE_ZEN_API_KEYS = before;
+  }
+}
+
 console.log(`\n${failures === 0 ? "ALL BRAND CHECKS PASSED" : failures + " CHECK(S) FAILED"}`);
 process.exit(failures === 0 ? 0 : 1);

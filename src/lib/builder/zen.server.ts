@@ -153,6 +153,14 @@ export function resolveApiKey(userKey?: string): string | undefined {
   return userKey?.trim() || configuredServerKey();
 }
 
+export {
+  upstreamKeys,
+  isQuotaFailure,
+  noteKeyLimited,
+  keyLimited,
+  pickUpstreamKey,
+} from "./upstream-keys.server";
+
 /** Zen throttles anonymous requests by User-Agent AND egress IP reputation.
  *  Generic SDK UAs (undici / ai-sdk) get soft-blocked with 200-but-empty streams,
  *  so we FORCE the genuine client UA on every outbound call — never inherit one.
