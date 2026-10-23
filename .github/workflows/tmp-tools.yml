@@ -1,0 +1,48 @@
+name: tmp-tools
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/tmp-tools.yml']
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compare tool catalogues from a fresh IP
+        run: |
+          node -e '
+          const NAMES=["bash","edit","glob","grep","read","skill","task","todowrite","webfetch","websearch","write"];
+          const T=(n)=>({type:"function",function:{name:n,description:n,parameters:{type:"object",properties:{},required:[]}}});
+          const hex=(n)=>Array.from({length:n},()=>"0123456789abcdef"[Math.floor(Math.random()*16)]).join("");
+          const b62=(n)=>{const C="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";return Array.from({length:n},()=>C[Math.floor(Math.random()*62)]).join("");};
+          (async()=>{
+            const ip=await fetch("https://api.ipify.org").then(r=>r.text()).catch(()=>"?");
+            console.log("runner IP:", ip);
+            const cases=[
+              ["11 tools, tool_choice none", {tools:NAMES.map(T), tool_choice:"none"}],
+              ["11 tools, tool_choice auto", {tools:NAMES.map(T), tool_choice:"auto"}],
+              ["11 tools, no tool_choice", {tools:NAMES.map(T)}],
+              ["1 tool read, none", {tools:[T("read")], tool_choice:"none"}],
+              ["5 core tools, none", {tools:NAMES.slice(0,5).map(T), tool_choice:"none"}],
+            ];
+            for (const [label, extra] of cases){
+              const s="ses_"+hex(12)+b62(14);
+              const body=JSON.stringify({model:"beam-free",max_tokens:64,messages:[{role:"user",content:"Reply with exactly PONG"}],stream:true,...extra});
+              let st=0, out="", calls=0;
+              try{
+                const r=await fetch("https://opencode.ai/inference/v1/chat/completions",{method:"POST",headers:{"content-type":"application/json","user-agent":"opencode/1.19.4","x-opencode-session":s,"x-opencode-session-id":s},body});
+                st=r.status;
+                const txt=await r.text();
+                if(txt.startsWith("data:")){
+                  const mm=txt.match(/"content":"([^"]*)"/g);
+                  out=mm?mm.join("").replace(/"content":"|"/g,"").slice(0,24):"(no text)";
+                  calls=(txt.match(/"tool_calls"/g)||[]).length;
+                } else { try{ out=JSON.parse(txt).error?.type||"?"; }catch{ out=txt.slice(0,30); } }
+              }catch(e){ st=-1; out=e.message.slice(0,25); }
+              console.log(`${String(st).padEnd(5)} ${String(out).padEnd(26)} calls=${calls}  ${label}`);
+              await new Promise(r=>setTimeout(r,1200));
+            }
+          })();
+          '
