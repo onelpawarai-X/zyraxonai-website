@@ -485,3 +485,37 @@ things a caller arrives asking about in one line each: put a microphone in your
 chat box and the speech-to-text endpoint sends real-time text back; send text
 and the text-to-speech endpoint sends audio; and every model takes video, audio,
 pictures and documents, inline or by URL.
+
+## The provider's free-tier ceiling, and what actually fixes it
+
+The upstream free tier refuses with `Free usage limit reached. Subscribe to
+OpenCode Go`. Its limiter is **per IP address** (`ipRateLimiter.ts` upstream),
+not per session: a session fingerprint isolates callers from each other's
+counters, but every lane in one process still leaves through one IP and shares
+that IP's ceiling. No amount of model rotation clears it, because the next
+model is behind the same address.
+
+So the fix is at the network layer, in `src/lib/providers/egress.server.ts`:
+
+- `ZYRAXON_EGRESS_URLS` lists proxy endpoints (`http://user:pass@host:port`,
+  comma or whitespace separated). One entry is a pool of one.
+- Every turn takes the next address in round-robin and holds it for its whole
+  life, so consecutive requests leave by different IPs and a stream is never
+  split across two clients.
+- An address that answers 429, or whose failure text matches
+  `isQuotaFailure()`, is parked for `ZYRAXON_EGRESS_COOLDOWN_MS` (default 10
+  min) and taken out of rotation. A turn that hits a limit releases its address
+  so its next attempt takes a fresh one.
+- `/api/public/zyraxon/v1/provider` reports `egress.mode`; `direct` means the
+  deployment has one IP and the upstream may throttle it. That is a deployment
+  gap, not something the rotation loop can fix.
+
+Credentials are a second, independent ceiling: `OPENCODE_ZEN_API_KEYS` takes a
+comma-separated list, and a key that reports a spent quota is set aside for
+`ZYRAXON_KEY_COOLDOWN_MS` (default 90s) in
+`src/lib/builder/upstream-keys.server.ts`.
+
+Neither mechanism can conjure capacity. A hundred thousand callers on a free
+tier needs a real pool of addresses and accounts — the code now uses whatever
+pool it is given, spreads every request across it, and stops spending a
+limited address. It cannot invent addresses that were never configured.
