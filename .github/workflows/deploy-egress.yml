@@ -1,0 +1,87 @@
+name: Deploy egress gateway
+
+# Publishes workers/egress-proxy.js to Cloudflare, so the free pool is called
+# from Cloudflare's rotating addresses instead of the deployment's single one.
+#
+# Needs two repository secrets (Settings -> Secrets and variables -> Actions):
+#   CLOUDFLARE_API_TOKEN   a token from the "Edit Cloudflare Workers" template
+#   CLOUDFLARE_ACCOUNT_ID  the account id on the Workers overview page
+#
+# The job prints the workers.dev URL. Put it in the app's secrets as
+#   ZYRAXON_EGRESS_URLS = gw+https://<name>.<subdomain>.workers.dev/
+# and every turn is spread across Cloudflare's addresses.
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: Worker name
+        required: false
+        default: zyraxon-egress
+  push:
+    branches: [main]
+    paths:
+      - 'workers/egress-proxy.js'
+      - 'scripts/deploy-egress-worker.sh'
+      - '.github/workflows/deploy-egress.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the credentials are configured
+        id: creds
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] || [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are not set; skipping." 
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy the worker
+        if: steps.creds.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          chmod +x scripts/deploy-egress-worker.sh
+          ./scripts/deploy-egress-worker.sh "${{ github.event.inputs.name || 'zyraxon-egress' }}"
+
+      - name: Smoke-test the gateway through Cloudflare
+        if: steps.creds.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WORKER_NAME: ${{ github.event.inputs.name || 'zyraxon-egress' }}
+        run: |
+          SUB="$(curl -s "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin).get("result",{}).get("subdomain",""))')"
+          echo "GW=https://$WORKER_NAME.$SUB.workers.dev/" >> "$GITHUB_ENV"
+          echo "gateway: https://$WORKER_NAME.$SUB.workers.dev/"
+          echo "Put this in the app secrets:  ZYRAXON_EGRESS_URLS = gw+https://$WORKER_NAME.$SUB.workers.dev/"
+          node -e '
+          const T=(n)=>({type:"function",function:{name:n,description:n,parameters:{type:"object",properties:{},required:[]}}});
+          const hex=(n)=>Array.from({length:n},()=>"0123456789abcdef"[Math.floor(Math.random()*16)]).join("");
+          const b62=(n)=>{const C="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";return Array.from({length:n},()=>C[Math.floor(Math.random()*62)]).join("");};
+          const gw=process.env.GW;
+          (async()=>{
+            let ok=0;
+            for(let i=0;i<3;i++){
+              const s="ses_"+hex(12)+b62(14);
+              const body=JSON.stringify({model:"beam-free",max_tokens:32,messages:[{role:"user",content:"Reply with exactly PONG"}],stream:true,tools:[T("read")]});
+              try{
+                const r=await fetch(gw,{method:"POST",headers:{"content-type":"application/json","user-agent":"opencode/1.19.4","x-opencode-session":s,"x-opencode-session-id":s},body,signal:AbortSignal.timeout(30000)});
+                const txt=await r.text();
+                const good=txt.includes("PONG")||txt.startsWith("data:");
+                if(good) ok++;
+                console.log(`via gateway #${i+1}: http=${r.status} ${good?"OK":"no answer"}`);
+              }catch(e){ console.log(`via gateway #${i+1}: ${e.message.slice(0,40)}`); }
+            }
+            console.log(`gateway served ${ok}/3`);
+            if(!ok) process.exit(1);
+          })();
+          '
