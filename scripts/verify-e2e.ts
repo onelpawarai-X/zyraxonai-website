@@ -57,6 +57,18 @@ try {
     const json = JSON.parse(visit.body);
     check("the request body names the upstream model", json.model === "beam-free", json.model);
     check("the gate-satisfying read tool is advertised", Array.isArray(json.tools) && json.tools.some((t: any) => t?.function?.name === "read"));
+    const coreNames = ["bash", "edit", "glob", "grep", "read"];
+    const sentNames = new Set((json.tools || []).map((t: any) => t?.function?.name));
+    check(
+      "the whole gate catalogue is advertised, not just read",
+      coreNames.every((n) => sentNames.has(n)),
+      [...sentNames].join(","),
+    );
+    check(
+      "tool_choice forbids a call when the caller defined no tools",
+      json.tool_choice === "none",
+      json.tool_choice,
+    );
     check("the payload carries the user message", JSON.stringify(json).includes("hello"));
   }
 

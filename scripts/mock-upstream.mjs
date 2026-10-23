@@ -54,8 +54,15 @@ function gate(req, res, raw) {
   let parsed = null;
   try { parsed = JSON.parse(raw); } catch { problems.push("json"); }
   if (parsed && !Array.isArray(parsed.tools)) problems.push("tools-array");
-  if (parsed && Array.isArray(parsed.tools) && !parsed.tools.some((t) => t?.function?.name === "read")) {
-    problems.push("read-tool");
+  // The gate reads tool *names* and requires enough of OpenCode's core set. The
+  // published floor is two of bash/edit/glob/grep/read; the mock holds the app
+  // to that floor, so a catalogue that shrank back to a single name fails here
+  // the same way it would fail against the real upstream.
+  const CORE = ["bash", "edit", "glob", "grep", "read"];
+  if (parsed && Array.isArray(parsed.tools)) {
+    const names = new Set(parsed.tools.map((t) => t?.function?.name));
+    const corePresent = CORE.filter((n) => names.has(n));
+    if (corePresent.length < 2) problems.push("core-tools:" + corePresent.join("|"));
   }
   if (problems.length) {
     return json(res, 403, {
