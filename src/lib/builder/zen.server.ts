@@ -77,6 +77,17 @@ export const COMPLETE_DEADLINE_MS = Number(
   process.env.ZYRAXON_COMPLETE_DEADLINE_MS || TURN_IDLE_MS,
 );
 
+/** How long the non-streaming path may wait for the *first* activity.
+ *
+ *  Much shorter than the mid-answer silence bound, because the two waits are
+ *  not the same risk. A model that has said nothing at all is dead or refusing,
+ *  and the racer behind it should have the lane now; waiting the full silence
+ *  bound on each dead candidate spends the whole turn budget on models that
+ *  were never going to answer. Measured on the live pool, a healthy model
+ *  emits its first token in under 8s, so 6s costs nothing real and hands a dead
+ *  candidate's turn to a live one several times faster. */
+export const FIRST_ACTIVITY_MS = Number(process.env.ZYRAXON_FIRST_ACTIVITY_MS || 10_000);
+
 export type ContentPart =
   | { type: "text"; text: string }
   | { type: "image_url"; image_url: { url: string } }
@@ -1356,7 +1367,7 @@ export async function completeRaw(
   label?: string,
   sessionId?: string,
 ): Promise<Response | { failed: any }> {
-  for (let attempt = 0; attempt < 2; attempt++) {
+  {
     try {
       // A silent upstream must not hold the caller for the whole gateway
       // timeout. The controller is aborted by the deadline below, which makes
@@ -1384,7 +1395,7 @@ export async function completeRaw(
         aborted = true;
         abort.abort(new Error(`no activity within ${COMPLETE_DEADLINE_MS}ms`));
       };
-      let deadline: ReturnType<typeof setTimeout> | null = setTimeout(trip, COMPLETE_DEADLINE_MS);
+      let deadline: ReturnType<typeof setTimeout> | null = setTimeout(trip, FIRST_ACTIVITY_MS);
       const clearDeadline = () => {
         if (deadline) clearTimeout(deadline);
         deadline = null;
@@ -1426,10 +1437,11 @@ export async function completeRaw(
         clearDeadline();
       }
       if (!sawActivity) {
-        if (attempt === 0) {
-          await new Promise((r) => setTimeout(r, 900));
-          continue;
-        }
+        // No same-model retry here. The caller is now a racer with other models
+        // already in flight, so repeating this one only spends the shared turn
+        // budget on a candidate that has just proved silent — and delays the
+        // hand-off to one that is answering. A second look at the same model is
+        // the racer's job, and it does it across models rather than within one.
         return { failed: { upstream, status: 502, detail: "OpenCode returned an empty stream" } };
       }
       // A truncated answer must say so, or a caller cannot tell a complete reply
