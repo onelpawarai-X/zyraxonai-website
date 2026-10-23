@@ -37,6 +37,19 @@
 // worker at a local origin without loosening the deployed default.
 const ALLOWED_HOSTS = ["opencode.ai"];
 
+// The IP echo used by the diagnostic endpoint below. It answers "what address
+// did this request leave from", which is the one fact that decides whether a
+// second gateway on the same account is worth deploying: if every worker on an
+// account shares the same egress addresses, adding workers buys nothing.
+const IP_ECHO_HOSTS = {
+  // Deliberately not Cloudflare-hosted: an echo behind Cloudflare would be
+  // reached over Cloudflare's own backbone, which is not the path a real
+  // upstream request takes and would report a misleadingly stable address.
+  ifconfig: "https://ifconfig.me/ip",
+  myip: "https://api.myip.com/",
+  ipify: "https://api.ipify.org/?format=json",
+};
+
 export default {
   async fetch(request, env) {
     const token = String(env?.EGRESS_TOKEN ?? "").trim();
@@ -64,6 +77,29 @@ export default {
 
     if (token && request.headers.get("x-zyraxon-token") !== token) {
       return new Response("forbidden", { status: 403, headers: cors() });
+    }
+
+    // A diagnostic that reports the address this worker left from. Token-gated
+    // because it spends a subrequest, and separate from the host allow-list so
+    // the forwarding path can never be pointed at the echo.
+    if (request.method === "GET" && new URL(request.url).pathname === "/ip") {
+      const read = async (url) => {
+        try {
+          const res = await fetch(url);
+          return (await res.text()).trim().slice(0, 120) || null;
+        } catch {
+          return null;
+        }
+      };
+      const [ifconfig, myip, ipify] = await Promise.all([
+        read(IP_ECHO_HOSTS.ifconfig),
+        read(IP_ECHO_HOSTS.myip),
+        read(IP_ECHO_HOSTS.ipify),
+      ]);
+      return Response.json(
+        { ok: true, ifconfig, myip, ipify, colo: request.cf?.colo ?? null },
+        { headers: cors() },
+      );
     }
 
     const target = request.headers.get("x-zyraxon-target");

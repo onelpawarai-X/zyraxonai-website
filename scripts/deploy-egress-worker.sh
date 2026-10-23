@@ -73,10 +73,41 @@ fi
 GW="https://$NAME.$SUBDOMAIN.workers.dev/"
 echo
 echo "Checking the gateway is live ..."
-if curl -s --max-time 20 "${GW}health" | grep -q '"ok"\s*:\s*true'; then
-  echo "Gateway answered its health check."
-else
-  echo "Gateway did not answer /health; it may still be propagating." >&2
+
+# Propagation is not instant, so a first miss is not a failure. A worker that
+# never answers, though, is useless — and silently reporting success for one is
+# how a deployment behind Cloudflare Access was previously announced as ready
+# while every request through it returned a 302 to a login page. So this
+# retries, then fails.
+health=""
+for attempt in 1 2 3 4 5; do
+  health="$(curl -s --max-time 20 "${GW}health" || true)"
+  echo "$health" | grep -qE '"ok"\s*:\s*true' && break
+  sleep 4
+done
+if ! echo "$health" | grep -qE '"ok"\s*:\s*true'; then
+  echo "Gateway did not answer /health after five attempts:" >&2
+  echo "  $health" >&2
+  echo "A 302 to a login page means Cloudflare Access is guarding this hostname;" >&2
+  echo "remove the Access policy for it, or the worker is unreachable to the app." >&2
+  exit 1
+fi
+echo "Gateway answered its health check."
+
+# Binding a secret and enforcing it are different things: the bind can succeed
+# while the worker reads the wrong variable name, in which case it is an open
+# relay. Prove the token is actually required before calling this done.
+if [ -n "$EGRESS_TOKEN" ]; then
+  echo "Checking the token is enforced ..."
+  bare="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST "$GW" \
+    -H "Content-Type: application/json" \
+    -H "x-zyraxon-target: https://opencode.ai/inference/v1/models" || true)"
+  if [ "$bare" != "403" ]; then
+    echo "The worker answered $bare without a token; it should refuse with 403." >&2
+    echo "It is reachable as an open relay — do not publish this URL." >&2
+    exit 1
+  fi
+  echo "A request with no token is refused, as it should be."
 fi
 
 echo

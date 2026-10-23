@@ -5,6 +5,38 @@ it from one address runs out and then refuses *every* caller, however isolated
 their sessions are. A Cloudflare Worker fixes that for free: the worker runs on
 Cloudflare's whole network, so requests leave from a rotating set of addresses.
 
+## Measured: extra workers do not buy extra quota
+
+This was tested rather than assumed, because the obvious reading of "the free
+tier counts per IP" is that N workers give N times the allowance. They do not.
+
+The worker reports the address each request actually leaves from (`GET /ip`,
+token-gated), and the upstream reports its own reset clock in `retry-after`.
+Sampled together:
+
+| source | egress IPv4 | retry-after |
+| --- | --- | --- |
+| worker A | rotates (172.70.50.90, 104.22.62.156, …) | 10711 |
+| worker B | rotates (104.22.24.73, 172.68.70.42, …) | 10710 |
+| worker C | rotates (172.71.255.65, …) | 10710 |
+| a Google Cloud container | 34.136.162.246 | 10709 |
+
+Three separate workers do leave from *different, rotating* IPv4 addresses — the
+address spread is real — and yet every one of them, plus an unrelated network,
+is refused with the same countdown to the same instant. A per-address limit
+cannot produce that. The window is shared, so the ceiling is the window, not
+the number of gateways pointed at it.
+
+IPv6 is a red herring: Workers always leave over `2a06:98c0:3600::103`, the same
+address for every worker, but `opencode.ai` publishes no AAAA record, so it is
+never the address the upstream sees.
+
+What actually raises the ceiling is a keyed quota — the upstream's own refusal
+says so ("Subscribe to OpenCode Go"). Setting `OPENCODE_ZEN_API_KEY` in the app
+moves traffic off the shared free window entirely. A gateway is still worth
+having for the address spread it does provide, but it is not a way to multiply
+a shared allowance.
+
 ## Cloudflare is not required
 
 Nothing in the app knows about Cloudflare. The only contract is the two headers
