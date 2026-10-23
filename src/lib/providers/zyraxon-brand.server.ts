@@ -477,6 +477,11 @@ export async function brandChatStream(
       // any reachable model can serve it. This sweep runs the same way — raced,
       // fastest measured first — so a recovery costs about as little as the
       // attempt that failed.
+      //
+      // A spent quota is the exception: it is an account decision, so the sweep
+      // would walk every remaining model only to collect the same 429 from each
+      // and make the caller wait through all of it. Report it now.
+      const quota = outcome.quota === true || outcome.tried.every((t) => isQuotaFailure(t.detail));
       const attempted = new Set(outcome.tried.map((t: { upstream: string }) => t.upstream));
       const NEUTRAL_TTFT_MS = 3_000;
       const rank = (id: string) => {
@@ -487,7 +492,7 @@ export async function brandChatStream(
         .map((m) => m.id)
         .filter((id: string) => !attempted.has(id))
         .sort((a: string, b: string) => rank(a) - rank(b));
-      if (sweep.length) {
+      if (sweep.length && !quota) {
         const recovered = mediaNeed
           ? await rotateThrough(sweep, tryUpstream, lane.attemptsLeft, retryHook, {
               budgetMs: remainingMs(),
@@ -518,7 +523,7 @@ export async function brandChatStream(
         }
         outcome.tried.push(...recovered.tried);
       }
-      return brandFailureResponse(brand, outcome.tried, outcome.gate);
+      return brandFailureResponse(brand, outcome.tried, outcome.gate, quota);
     }, seed);
   } catch (e) {
     if (e instanceof LaneShedError) {
@@ -544,14 +549,26 @@ function brandFailureResponse(
   brand: Brand,
   tried: Array<{ upstream: string; status: number; gate: boolean; detail?: string }>,
   gate: boolean,
+  quotaHint = false,
 ): Response {
+  // A spent free-tier quota is not an outage. Every model in the rotation sits
+  // on the same account, so a 429 here means the account is out of free turns
+  // for now — telling the caller "every model was unavailable" hides the one
+  // fact that explains it and the one thing that helps: wait, or add a key.
+  const quota = !gate && tried.length > 0 && (quotaHint || tried.every((t) => isQuotaFailure(t.detail)));
   const message = gate
     ? `${brand.label} could not be served: the upstream free tier refused this caller (FreeTierError). Set OPENCODE_ZEN_API_KEY, or call from a network the upstream free tier serves.`
-    : `${brand.label} could not be served right now — every model in its rotation was unavailable. Retrying in a moment usually works.`;
+    : quota
+      ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window. Retry in a few minutes, or set OPENCODE_ZEN_API_KEY for a keyed quota.`
+      : `${brand.label} could not be served right now — every model in its rotation was unavailable. Retrying in a moment usually works.`;
 
   return Response.json(
     {
-      error: { message, type: gate ? "upstream_gate" : "provider_unavailable", model: brand.id },
+      error: {
+        message,
+        type: gate ? "upstream_gate" : quota ? "free_tier_quota" : "provider_unavailable",
+        model: brand.id,
+      },
       tried: tried.map(({ upstream, status, gate: g, detail }) => ({
         upstream,
         status,
@@ -562,6 +579,12 @@ function brandFailureResponse(
         ...(g ? { gate: true } : {}),
       })),
     },
-    { status: gate ? 503 : 502, headers: { "Access-Control-Allow-Origin": "*" } },
+    {
+      status: gate ? 503 : quota ? 429 : 502,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        ...(quota ? { "Retry-After": "60" } : {}),
+      },
+    },
   );
 }

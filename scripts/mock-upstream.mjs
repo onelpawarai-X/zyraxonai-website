@@ -71,6 +71,18 @@ function gate(req, res, raw) {
     const m = parsed?.model;
     if (m === "beam-free") return json(res, 404, { error: { message: "model not found" } });
   }
+  if (scenario === "quota-all") {
+    // Every model is valid but the account's free window is spent: the upstream
+    // answers 429 with its own words. This is not an outage and must not be
+    // reported as one — the caller needs to know the pool is intact and the
+    // quota is what ran out.
+    return json(res, 429, {
+      error: {
+        message: "Free usage limit reached. Subscribe to OpenCode Go to keep going: https://opencode.ai/go",
+        type: "FreeUsageLimitError",
+      },
+    });
+  }
   if (scenario === "media-denial") {
     // A model that never received the media still answers 200 with a refusal.
     // The first upstream refuses; the second answers, so a caller must see the

@@ -9,8 +9,8 @@ type Model = { id: string; name: string; note: string };
 type Files = Record<string, string>;
 
 const MODELS: Model[] = [
-  { id: "mimo-v2.5-free", name: "ZYRAXON TITAN", note: "Balanced builder" },
-  { id: "nemotron-3-super-free", name: "ZYRAXON NEXUS", note: "Deep reasoning" },
+  { id: "mimo-v2.6-flash-free", name: "ZYRAXON TITAN", note: "Balanced builder" },
+  { id: "nemotron-3-ultra-free", name: "ZYRAXON NEXUS", note: "Deep reasoning" },
   { id: "big-pickle", name: "ZYRAXON OMEGA", note: "Fast generation" },
 ];
 const STARTER: Files = {

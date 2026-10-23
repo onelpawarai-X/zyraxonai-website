@@ -125,13 +125,13 @@ export type ZenModel = {
 /** Old branded labels saved in visitors' browsers → their real upstream ids. */
 const LEGACY_ALIAS: Record<string, string> = {
   "zyraxon-vector": "big-pickle",
-  "zyraxon-nova": "mimo-v2.5-free",
-  "zyraxon-hydra": "hy3-free",
-  "zyraxon-lumen": "laguna-s-2.1-free",
-  "zyraxon-pulse": "ling-3.0-tiny-free",
+  "zyraxon-nova": "mimo-v2.6-flash-free",
+  "zyraxon-hydra": "nemotron-3-ultra-free",
+  "zyraxon-lumen": "longcat-2.5-preview-free",
+  "zyraxon-pulse": "nemotron-3.5-lightning-free",
   "zyraxon-phantom": "nemotron-3-ultra-free",
   "zyraxon-voltage": "nemotron-3.5-lightning-free",
-  "zyraxon-titan": "deepseek-v4-flash-free",
+  "zyraxon-titan": "deepseek-v4.1-flash-free",
 };
 
 export function normalizeZenModel(id: string): string {
@@ -225,12 +225,96 @@ export function zenFetch(
  *  the catalogue ships no modality data; the catalogue is authoritative. */
 export const VISION_FREE_MODELS = new Set([
   "big-pickle",
-  "hy3-free",
-  "mimo-v2.5-free",
-  "x-preview-f-free",
+  "glm-5.3-flash-free",
+  "deepseek-v4.1-flash-free",
+  "mimo-v2.6-flash-free",
+  "nemotron-3.5-super-vl-free",
+  "longcat-2.5-preview-free",
 ]);
 
 /* ────────────────────────── LIVE FREE POOL (models.dev) ────────────────────────── */
+
+/** Free models PROBED (live) to answer only "Model is unavailable" / "Model
+ *  deprecated". The catalogue lags the upstream console by days, so these are
+ *  still advertised as free after Zen has retired them — leaving them in the
+ *  pool makes every rotation walk through dead ids before it reaches a live
+ *  one, which reads to a caller as "the model is broken".
+ *
+ *  Only ids confirmed dead by a live probe belong here, and only as a stop-gap:
+ *  `zenLiveIds()` (the console's own catalogue) is the real filter. This list
+ *  exists for the window where the console still lists a model it no longer
+ *  serves, and for the emergency pool when the console is unreachable. */
+export const RETIRED_FREE_MODELS = new Set([
+  "fledge-alpha-free",
+  "exo-free",
+  "mimo-v2.5-free",
+  "mimo-v2.5-flash-free",
+  "mimo-v2-flash-free",
+  "mimo-v2-pro-free",
+  "mimo-v2-omni-free",
+  "muse-spark-1.2-contributor-free",
+  "muse-spark-1.3-contributor-free",
+  "minimax-m2.1-free",
+  "minimax-m2.5-free",
+  "minimax-m3-free",
+  "minimax-m3.1-flash-free",
+  "hy3-free",
+  "hy3-preview-free",
+  "x-preview-f-free",
+  "laguna-s-2.1-free",
+  "space-bunny-free",
+  "trinity-large-preview-free",
+  "north-mini-code-free",
+  "ring-2.6-1t-free",
+  "ling-2.6-flash-free",
+  "ling-3.0-flash-free",
+  "ling-3.0-flash-fin-free",
+  "ling-3.0-tiny-free",
+  "ling-3.1-flash-free",
+  "qwen3.6-plus-free",
+  "step-5-preview-free",
+  "ll-alpha-free",
+  "deepseek-v4-flash-free",
+  "glm-4.7-free",
+  "glm-5-free",
+  "longcat-2.0-free",
+  "kimi-k2.5-free",
+  "nemotron-3-super-free",
+  // Advertised by the console but refuses every request with "Model does not
+  // support this protocol" — it is not an OpenAI-compatible chat model.
+  "jev-1.13-free",
+  // Free in models.dev, answers "Model is unavailable" to every request.
+  "grok-code",
+]);
+
+/** Free models CONFIRMED ALIVE by a live probe of the public endpoint.
+ *
+ *  This is the allow-list, and it is the authority — not models.dev and not the
+ *  console, because both lie in opposite directions. models.dev still advertises
+ *  models Zen retired weeks ago (34 of 45 "free" ids answer 400/410), and the
+ *  console both omits models it is actively serving (nemotron-3-ultra,
+ *  longcat-2.5, cat-jam all answer 429) and lists one it then refuses (jev).
+ *  A pool built from either source alone serves a caller a model that cannot
+ *  answer, which reads as "the app is broken".
+ *
+ *  Every id below was probed with a real request carrying the gate tool and
+ *  answered 429 (free window spent) or 200 — never 400/404/410. Re-probe and
+ *  update this list when the upstream pool churns; the probe script is the
+ *  source of truth, and `RETIRED_FREE_MODELS` is the belt to this allow-list's
+ *  braces. */
+export const VERIFIED_FREE_MODELS = new Set([
+  "beam-free",
+  "big-pickle",
+  "cat-jam-free",
+  "deepseek-v4.1-flash-free",
+  "flint-40b-free",
+  "glm-5.3-flash-free",
+  "longcat-2.5-preview-free",
+  "mimo-v2.6-flash-free",
+  "nemotron-3-ultra-free",
+  "nemotron-3.5-lightning-free",
+  "nemotron-3.5-super-vl-free",
+]);
 
 let poolCache: { at: number; models: ZenModel[] } | null = null;
 const POOL_TTL = 10 * 60 * 1000;
@@ -258,6 +342,23 @@ function modalitiesFor(id: string, declared: string[] | undefined): string[] {
   return VISION_FREE_MODELS.has(id) ? ["text", "image"] : ["text"];
 }
 
+/** Metadata for an allow-listed model: the catalogue's when it knows the id,
+ *  a safe text-only default when it does not. */
+function modelFromAllowList(id: string, known: Map<string, ZenModel>): ZenModel {
+  const hit = known.get(id);
+  if (hit) return hit;
+  return {
+    id,
+    name: id,
+    modalities: modalitiesFor(id, undefined),
+    multimodal: false,
+    reasoning: false,
+    context: 200_000,
+    output: 32_768,
+    free: true as const,
+  };
+}
+
 export async function zenFreeModels(): Promise<ZenModel[]> {
   if (poolCache && Date.now() - poolCache.at < POOL_TTL) return poolCache.models;
   try {
@@ -279,22 +380,35 @@ export async function zenFreeModels(): Promise<ZenModel[]> {
           free: true as const,
         };
       });
-    const sorted = models.sort((a, b) =>
-      a.id === DEFAULT_ZEN_MODEL
-        ? -1
-        : b.id === DEFAULT_ZEN_MODEL
-          ? 1
-          : a.name.localeCompare(b.name),
-    );
-    // models.dev can lag behind the live console — drop ids Zen no longer serves.
+    // The pool is the allow-list, and nothing else. models.dev is a *source of
+    // metadata* (context, output, modality) for models we have already proven
+    // answer — it is never the source of truth for what exists, because it
+    // advertises models Zen retired weeks ago. A model missing from the
+    // catalogue but on the allow-list is still served (with default metadata);
+    // a model in the catalogue but not on the allow-list is not served at all.
+    const known = new Map(models.map((m) => [m.id, m]));
+    const allow = [...VERIFIED_FREE_MODELS]
+      .filter((id) => !RETIRED_FREE_MODELS.has(id))
+      .map((id) => modelFromAllowList(id, known));
+    // Order: the default model first, then the console's listing. The console is
+    // a priority here, never a filter — see `liveFirst`. Capability and speed
+    // ordering for a brand happens in `rotationFor`, not here.
     const live = await zenLiveIds();
-    const usable = live ? sorted.filter((m) => live.has(m.id)) : sorted;
-    const finalPool = usable.length ? usable : sorted;
+    const listedFirst = (a: ZenModel, b: ZenModel) =>
+      a.id === DEFAULT_ZEN_MODEL ? -1 : b.id === DEFAULT_ZEN_MODEL ? 1 : 0;
+    const finalPool = [...allow].sort(
+      (a, b) => listedFirst(a, b) || (live ? Number(live.has(b.id)) - Number(live.has(a.id)) : 0),
+    );
     if (!finalPool.length) throw new Error("empty pool");
     poolCache = { at: Date.now(), models: finalPool };
     return finalPool;
   } catch {
-    return EMERGENCY_POOL;
+    // The catalogue is unreachable, not the upstream. The allow-list is all we
+    // need to serve a turn, so keep the whole pool rather than degrade to one
+    // model — metadata is nice to have, an answer is not.
+    return [...VERIFIED_FREE_MODELS]
+      .filter((id) => !RETIRED_FREE_MODELS.has(id))
+      .map((id) => modelFromAllowList(id, new Map()));
   }
 }
 
@@ -647,6 +761,12 @@ export async function streamRaw(
         maxOutputTokens,
         temperature: 0.2,
         tools: FREE_TIER_GATE_TOOLS as any,
+        // No SDK-level retries. The SDK retries a 429 with exponential backoff,
+        // which pushes the first byte past PROBE_MS; the probe then reads the
+        // silence as "slow model" and hands the caller an empty 200 stream
+        // instead of the quota error the upstream actually sent. Rotation is
+        // ours to do, and it can only act on a failure it can see.
+        maxRetries: 0,
       });
       const iterator = result.fullStream[Symbol.asyncIterator]();
 
@@ -1389,6 +1509,9 @@ export async function completeRaw(
         maxOutputTokens,
         temperature: 0.2,
         tools: FREE_TIER_GATE_TOOLS as any,
+        // See `streamRaw`: an SDK-level retry hides a 429 behind backoff and
+        // makes the failure invisible to our own rotation.
+        maxRetries: 0,
         abortSignal: abort.signal,
       });
       let text = "";

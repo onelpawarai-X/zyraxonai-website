@@ -174,6 +174,34 @@ try {
     check("the brand is named, not the upstream", body.error.model === "zyraxon-apex");
     check("the message says what is actually wrong", /OPENCODE_ZEN_API_KEY/.test(body.error.message));
   }
+
+  // -----------------------------------------------------------------
+  // E2E-3b: a spent free-tier quota. Every model answers 429 with the
+  // upstream's own quota words. The pool is healthy and the models are
+  // valid, so this must NOT be reported as "every model unavailable" —
+  // it is a 429 free_tier_quota with a Retry-After, naming the brand.
+  // -----------------------------------------------------------------
+  setScenario("quota-all");
+  {
+    requests.length = 0;
+    const res = await brandChatStream(
+      "zyraxon-apex",
+      [{ role: "user", content: "hi" }],
+      undefined,
+      { resolve: served("zyraxon-apex", ["beam-free", "big-pickle"]) },
+    );
+    const body = await res.json();
+    check("E2E spent quota answers 429, not 502", res.status === 429, res.status);
+    check(
+      "the error type names the quota, not unavailability",
+      body.error.type === "free_tier_quota",
+      body.error.type,
+    );
+    check("the brand is named", body.error.model === "zyraxon-apex");
+    check("the message points at the quota and a way forward", /quota/i.test(body.error.message) && /OPENCODE_ZEN_API_KEY/.test(body.error.message));
+    check("a Retry-After is offered", res.headers.get("retry-after") === "60", String(res.headers.get("retry-after")));
+    check("the upstream's own words are kept", /Free usage limit reached/.test(String(body.tried?.[0]?.detail ?? "")));
+  }
   // -----------------------------------------------------------------
   // E2E-4: an audio turn has no AI-SDK part, so it must go out on the raw
   // wire path. The upstream must receive `input_audio`, and the reply must

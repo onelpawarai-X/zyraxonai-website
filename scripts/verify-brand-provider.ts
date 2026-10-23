@@ -106,21 +106,35 @@ check(
   );
 }
 
-// 4. When the console serves only a subset, the chain is filtered to what is
-//    actually being served — but never becomes empty.
+// 4. The console's catalogue is a priority, never a filter. It omits models it
+//    is actively serving (nemotron-3-ultra, longcat-2.5 and cat-jam all answer
+//    429 while absent from it), so a brand whose preference the console leaves
+//    out must still lead with it rather than be deleted from its own chain.
 {
   const brand = getBrand("zyraxon-codex")!;
   const pool = [mk("deepseek-v4.1-flash-free"), mk("big-pickle"), mk("beam-free")];
   const live = new Set(["beam-free"]);
   const view = brandView(brand, pool, live);
   check(
-    "the active model is one the console serves",
-    live.has(view.active),
+    "a preference the console omits still leads its own chain",
+    view.active === brand.preferred,
     `active=${view.active}`,
   );
   check(
-    "the brand is marked rotated when its preference is not served",
-    view.preferredAvailable === false,
+    "the brand is not falsely reported as rotated",
+    view.preferredAvailable === true,
+    String(view.preferredAvailable),
+  );
+  const { chain } = activeFor(brand, pool, live);
+  check(
+    "no pool model is dropped for being absent from the console",
+    chain.length === pool.length,
+    chain.join(" → "),
+  );
+  check(
+    "the console-listed model is still in the chain",
+    chain.includes("beam-free"),
+    chain.join(" → "),
   );
 }
 
@@ -274,7 +288,7 @@ check(
     context: 200_000,
     reasoning: true,
   };
-  check("measured latency is read for a known model", measuredTtftMs("minimax-m3.1-flash-free") === 1560);
+  check("measured latency is read for a known model", measuredTtftMs("nemotron-3.5-lightning-free") === 2520);
   check("an unmeasured model sorts last (Infinity)", measuredTtftMs("brand-new-free") === Infinity);
 
   // Both fit equally (same score), so the tiebreak decides. `zyraxon-neural`
@@ -300,7 +314,7 @@ check(
     { id: "deepseek-v4.1-flash-free", modalities: ["text", "image"], context: 200_000 },
     { id: "glm-5.3-flash-free", modalities: ["text", "image", "video", "pdf"], context: 200_000 },
     { id: "longcat-2.5-preview-free", modalities: ["text", "image"], context: 1_000_000 },
-    { id: "minimax-m3.1-flash-free", modalities: ["text", "image", "video"], context: 1_000_000 },
+    { id: "mimo-v2.6-flash-free", modalities: ["text", "image", "audio", "video"], context: 200_000 },
     { id: "big-pickle", modalities: ["text"], context: 200_000 },
   ];
   const matrix = getBrand("zyraxon-matrix")!;
@@ -317,8 +331,9 @@ check(
     m === "image" ? id !== "big-pickle" : undefined;
   const matrixImageChain = rotationFor(matrix, livePool, null, new Set(["image"] as const), visionOracle);
   check(
-    "an image turn leads with the fastest vision model, not the text model",
-    matrixImageChain[0] === "minimax-m3.1-flash-free",
+    "an image turn leads with a vision model, not the text model",
+    matrixImageChain[0] !== "big-pickle" &&
+      livePool.find((m) => m.id === matrixImageChain[0])!.modalities!.includes("image"),
     matrixImageChain.join(" → "),
   );
 
@@ -539,6 +554,48 @@ check(
     if (before === undefined) delete process.env.OPENCODE_ZEN_API_KEYS;
     else process.env.OPENCODE_ZEN_API_KEYS = before;
   }
+}
+
+// ── a spent quota stops the rotation instead of walking the whole pool ───────
+// The bug this guards: quota is an account decision, so every model in the pool
+// answers the same 429. Rotating anyway spent the lane's entire attempt budget
+// rediscovering the wall, and the caller waited through all of it only to be
+// told "every model was unavailable" (502) — hiding the one fact that explains
+// it. The rotation must stop at the first 429 and report it as quota.
+{
+  let attempts = 0;
+  const outcome = await rotateThrough(
+    ["beam-free", "big-pickle", "flint-40b-free", "glm-5.3-flash-free"],
+    async () => {
+      attempts++;
+      return {
+        ok: false as const,
+        status: 429,
+        detail: "Free usage limit reached. Subscribe to OpenCode Go to keep going",
+      };
+    },
+    8,
+  );
+  check("a quota refusal stops the rotation after one attempt", attempts === 1, `attempts=${attempts}`);
+  check("the outcome is flagged as quota", outcome.ok === false && outcome.quota === true);
+  check(
+    "only the first model is reported as tried",
+    outcome.ok === false && outcome.tried.length === 1,
+    outcome.ok === false ? outcome.tried.map((t) => t.upstream).join(",") : "",
+  );
+
+  // A non-quota failure must still walk the chain — the short-circuit is for the
+  // account-wide case only.
+  let retried = 0;
+  await rotateThrough(
+    ["beam-free", "big-pickle"],
+    async () => {
+      retried++;
+      return { ok: false as const, status: 502, detail: "upstream hiccup" };
+    },
+    8,
+  );
+  check("a transient failure still walks the whole chain", retried === 2, `attempts=${retried}`);
 }
 
 console.log(`\n${failures === 0 ? "ALL BRAND CHECKS PASSED" : failures + " CHECK(S) FAILED"}`);

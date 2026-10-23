@@ -327,5 +327,31 @@ const POOL: PoolModel[] = [
   }
 }
 
+// ── the served pool is the verified allow-list, and nothing else ────────────
+// The bug this guards: the pool was built from models.dev's `free` flag, which
+// advertises models Zen retired weeks ago (34 of 45 "free" ids answer 400/410),
+// and the console lies in the other direction (it omits live models and lists
+// one it refuses). A rotation that leads with a retired model answers the caller
+// with a 400/410 instead of an answer, which reads as "the app is broken". The
+// pool must be exactly the probed-alive allow-list, minus anything a later probe
+// retired, and every brand's preference must sit inside it.
+{
+  const { VERIFIED_FREE_MODELS, RETIRED_FREE_MODELS } = await import("../src/lib/builder/zen.server");
+  check("the allow-list is not empty", VERIFIED_FREE_MODELS.size > 0, VERIFIED_FREE_MODELS.size);
+  const overlap = [...VERIFIED_FREE_MODELS].filter((id) => RETIRED_FREE_MODELS.has(id));
+  check("no model is both allow-listed and retired", overlap.length === 0, overlap.join(","));
+  check(
+    "every allow-listed id is a free-tier model",
+    [...VERIFIED_FREE_MODELS].every((id) => id.includes("free") || id === "big-pickle"),
+    [...VERIFIED_FREE_MODELS].filter((id) => !id.includes("free") && id !== "big-pickle").join(","),
+  );
+  const stranded = ZYRAXON_BRANDS.filter((b) => !VERIFIED_FREE_MODELS.has(b.preferred));
+  check(
+    "every brand leads with an allow-listed (probed-alive) model",
+    stranded.length === 0,
+    stranded.map((b) => `${b.id}=${b.preferred}`).join(", "),
+  );
+}
+
 console.log(`\n${failures === 0 ? "ALL MODALITY CHECKS PASSED" : failures + " CHECK(S) FAILED"}`);
 process.exit(failures === 0 ? 0 : 1);

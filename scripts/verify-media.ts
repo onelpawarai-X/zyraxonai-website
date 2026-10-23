@@ -329,12 +329,12 @@ const PDF = "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MK";
   // every-modality brand landed on the slowest model in the pool.
   const genesis = getBrand("zyraxon-genesis")!; // profile includes pdf; preference absent here
   const rarePool: PoolModel[] = [
-    { id: "minimax-m3.1-flash-free", modalities: ["text"], context: 200_000, output: 32_000, reasoning: true },
+    { id: "nemotron-3.5-super-vl-free", modalities: ["text"], context: 200_000, output: 32_000, reasoning: true },
     { id: "glm-5.3-flash-free", modalities: ["text", "pdf"], context: 200_000, output: 32_000, reasoning: true },
   ];
   check(
     "a text turn does not chase a brand's rare-modality model",
-    bindPreferred(genesis, rarePool, null) === "minimax-m3.1-flash-free",
+    bindPreferred(genesis, rarePool, null) === "nemotron-3.5-super-vl-free",
     String(bindPreferred(genesis, rarePool, null)),
   );
   // The same pool on a turn that *does* carry a document: now the pdf-capable

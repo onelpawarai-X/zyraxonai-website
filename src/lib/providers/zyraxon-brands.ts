@@ -90,9 +90,9 @@ export const ZYRAXON_BRANDS: Brand[] = [
     id: "zyraxon-titan",
     label: "ZYRAXON Titan",
     tagline: "The long-output workhorse",
-    preferred: "minimax-m3.1-flash-free",
-    capability: "1M context · 512K output · image + video",
-    profile: { longOutput: true, vision: true, video: true },
+    preferred: "nemotron-3-ultra-free",
+    capability: "1M context · 128K output · deep reasoning",
+    profile: { longOutput: true, reasoning: true },
     minContext: 200_000,
   },
   {
@@ -125,9 +125,9 @@ export const ZYRAXON_BRANDS: Brand[] = [
     tagline: "Every input modality, one model",
     // Audio is the fragile modality: the catalogue declares it for several
     // models that then silently drop the audio and answer "no audio attached".
-    // These two were probed with a real spoken clip and transcribed it, so an
-    // audio turn is routed to a model that genuinely hears it.
-    preferred: "mimo-v2.5-free",
+    // mimo-v2.6-flash-free was probed with a real spoken clip and transcribed
+    // it, so an audio turn is routed to a model that genuinely hears it.
+    preferred: "mimo-v2.6-flash-free",
     capability: "Text + image + audio + video · 200K context",
     profile: { vision: true, video: true, audio: true },
   },
@@ -146,7 +146,7 @@ export const ZYRAXON_BRANDS: Brand[] = [
     tagline: "Fresh from the lab",
     // Probed with a real spoken clip and transcribed it — the audio-capable
     // model the rotation reaches for first.
-    preferred: "muse-spark-1.3-contributor-free",
+    preferred: "mimo-v2.6-flash-free",
     capability: "Latest experimental reasoning · every modality",
     profile: { vision: true, video: true, audio: true, pdf: true, reasoning: true },
   },
@@ -243,7 +243,7 @@ export const AUDIO_VERIFIED_SEED = new Set(["mimo-v2.6-flash-free"]);
  *  — let the probe decide. */
 export const VIDEO_VERIFIED_SEED = new Set([
   "mimo-v2.6-flash-free",
-  "minimax-m3.1-flash-free",
+  "glm-5.3-flash-free",
   "big-pickle",
 ]);
 
@@ -315,7 +315,6 @@ function modalityScore(accepts: boolean | undefined, yes: number, no: number): n
  *  timed model, so a newly-added upstream never displaces a known-fast one
  *  before it has been timed. Measured again when the pool churns. */
 export const MEASURED_TTFT_MS: Record<string, number> = {
-  "minimax-m3.1-flash-free": 1560,
   "beam-free": 1620,
   "nemotron-3.5-lightning-free": 2520,
   "big-pickle": 5120,
@@ -396,6 +395,22 @@ export function capabilityScore(
   return score;
 }
 
+/** The pool ordered for a brand, with the models the console currently lists
+ *  pulled to the front.
+ *
+ *  `live` is a *priority*, not a filter. The console omits models it is
+ *  actively serving (it left out nemotron-3-ultra, longcat-2.5 and cat-jam while
+ *  all three answered), so intersecting with it deletes working models and
+ *  hands a caller a chain that is shorter than the real pool. Ordering by it
+ *  keeps the console's opinion useful — a listed model is tried first — without
+ *  letting a stale catalogue decide what exists. */
+function liveFirst(models: PoolModel[], live: Set<string> | null): PoolModel[] {
+  if (!live || !live.size) return models;
+  const listed = models.filter((m) => live.has(m.id));
+  const rest = models.filter((m) => !live.has(m.id));
+  return listed.length ? [...listed, ...rest] : models;
+}
+
 /** Order the pool for a brand: capability first, measured speed as the
  *  tiebreak. Two models that fit the brand equally well are not equally good
  *  answers — the faster one is strictly better — so speed only ever separates
@@ -427,8 +442,7 @@ export function bindPreferred(
   oracle?: CapabilityOracle,
 ): string | null {
   if (!pool.length) return null;
-  const served = live ? pool.filter((m) => live.has(m.id)) : pool;
-  const candidates = served.length ? served : pool;
+  const candidates = liveFirst(pool, live);
   const preferred = candidates.find((m) => m.id === brand.preferred);
   if (preferred && (!need.size || fitsNeed(preferred, need, oracle))) return brand.preferred;
   return orderForBrand(brand, candidates, need, oracle)[0]!.id;
@@ -496,8 +510,7 @@ export function rotationFor(
   need: Set<MediaKind> = new Set(),
   oracle?: CapabilityOracle,
 ): string[] {
-  const served = live ? pool.filter((m) => live.has(m.id)) : pool;
-  const candidates = served.length ? served : pool;
+  const candidates = liveFirst(pool, live);
   const preferred = candidates.find((m) => m.id === brand.preferred);
   const others = orderForBrand(
     brand,
@@ -588,7 +601,19 @@ export function isUpstreamGate(detail: string): boolean {
 
 export type AttemptFailure = { upstream: string; status: number; detail: string; gate: boolean };
 export type RotationOutcome<T> =
-  { ok: true; value: T; upstream: string } | { ok: false; tried: AttemptFailure[]; gate: boolean };
+  | { ok: true; value: T; upstream: string }
+  | { ok: false; tried: AttemptFailure[]; gate: boolean; quota?: boolean };
+
+/** True when a failure is the upstream's free-tier quota being spent.
+ *
+ *  Quota is an account decision, exactly like the credential gate: every model
+ *  in the pool draws on the same window, so a 429 from one model is a 429 from
+ *  all of them. Rotating after it spends the lane's whole attempt budget
+ *  rediscovering the same wall, and the caller waits for all of it before being
+ *  told the truth. Stop at the first one. */
+function isQuotaFailureDetail(detail: string): boolean {
+  return /usage limit|quota|subscribe to opencode|insufficient|billing/i.test(detail);
+}
 
 /** The rotation policy, independent of any transport.
  *
@@ -730,6 +755,10 @@ export async function raceFor<T>(
     tried.push(failure);
     lastFailure = failure;
     if (res.status === 401 || g) return { ok: false, tried, gate };
+    // Quota is account-wide, so the models still queued behind this one would
+    // answer the same 429. Stop the race and let the caller report the truth
+    // instead of spending the budget collecting identical refusals.
+    if (isQuotaFailureDetail(res.detail)) return { ok: false, tried, gate, quota: true };
     // A fast failure means the next model is worth asking right away.
     if (next < queue.length && !spent()) launch(queue[next++]);
   }
@@ -783,6 +812,7 @@ export async function rotateThrough<T>(
 ): Promise<RotationOutcome<T>> {
   const tried: AttemptFailure[] = [];
   let gate = false;
+  let quota = false;
   const startedAt = Date.now();
   const budgetMs = opts?.budgetMs ?? 0;
   const budgetSpent = () => budgetMs > 0 && Date.now() - startedAt >= budgetMs;
@@ -827,6 +857,10 @@ export async function rotateThrough<T>(
         };
         tried.push(failure);
         if (out.status === 401 || g) return { ok: false, tried, gate };
+        // Quota is account-wide: the next model answers the same 429. Stop here
+        // instead of walking the pool and making the caller wait for the same
+        // answer from every model.
+        if (isQuotaFailureDetail(out.detail)) return { ok: false, tried, gate, quota: true };
         const n = (perUpstream.get(upstream) ?? 0) + 1;
         perUpstream.set(upstream, n);
         if (await retry?.(upstream, failure, n)) continue;

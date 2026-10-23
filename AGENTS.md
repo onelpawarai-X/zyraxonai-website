@@ -519,3 +519,56 @@ Neither mechanism can conjure capacity. A hundred thousand callers on a free
 tier needs a real pool of addresses and accounts — the code now uses whatever
 pool it is given, spreads every request across it, and stops spending a
 limited address. It cannot invent addresses that were never configured.
+
+## The served pool is a probed allow-list, not a catalogue
+
+`models.dev` and the Zen console both describe the free pool, and both are
+wrong — in opposite directions, which is worse than either alone:
+
+- **models.dev is stale.** It still advertises models Zen retired weeks ago
+  (34 of 45 "free" ids answer 400/410). A pool built from its `free` flag leads
+  a brand with a model that cannot answer, which the caller reads as "the app
+  is broken".
+- **The console omits live models.** It left out `nemotron-3-ultra-free`,
+  `longcat-2.5-preview-free` and `cat-jam-free` while all three answered 429,
+  and listed `jev-1.13-free`, which refuses every request with "Model does not
+  support this protocol". Filtering by it deletes working models.
+
+So neither source decides what is served. `VERIFIED_FREE_MODELS` in
+`src/lib/builder/zen.server.ts` does — an allow-list of ids a live probe has
+confirmed answering (429 or 200, never 400/404/410). The catalogue supplies
+*metadata* (context, output, modality) for allow-listed ids and nothing else;
+an id the catalogue has never heard of is still served with safe defaults.
+`RETIRED_FREE_MODELS` is the belt to that allow-list's braces.
+
+The console's listing is a **priority, never a filter** (`liveFirst` in
+`zyraxon-brands.ts`): a listed model is tried first, but a model absent from the
+listing is not deleted from its brand's chain. Every brand's `preferred` must
+sit inside `VERIFIED_FREE_MODELS`; `verify-modalities.ts` asserts it.
+
+Re-probe and update the allow-list when the upstream pool churns. The probe is
+a real request carrying the gate `read` tool, so a model that is alive but
+gate-broken still fails the check the way the app would.
+
+## A spent quota stops the rotation
+
+Free-tier quota is an **account** decision: every model in the pool draws on the
+same window, so a 429 from one is a 429 from all. Rotating after it spent the
+lane's whole attempt budget rediscovering the same wall and then reported
+`provider_unavailable` (502) — hiding the one fact that explains the failure.
+`rotateThrough` and `raceFor` now stop at the first quota refusal
+(`isQuotaFailureDetail`) and set `quota: true`, which `brandFailureResponse`
+turns into a 429 `free_tier_quota` with `Retry-After`. A measured live turn went
+from 502 after walking 11 models to 429 after 1, in 148ms.
+
+This is the same rule as the credential gate and the per-IP limiter: an
+account-wide or address-wide refusal is not something model rotation can route
+around, so the code stops and tells the truth instead of retrying.
+
+## Testing
+
+`npm run test:provider` (1063 checks) covers the brand contract, rotation,
+quota short-circuit, pool integrity and the media/STT/TTS surfaces.
+`npx tsc --noEmit -p tsconfig.json` must stay clean. Scripts that import
+`zen.server.ts` need the `?raw` loader: `npx tsx --import
+./scripts/raw-import-loader.mjs <script>`.
