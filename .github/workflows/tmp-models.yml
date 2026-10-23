@@ -21,20 +21,26 @@ jobs:
             const ip=await fetch("https://api.ipify.org").then(r=>r.text()).catch(()=>"?");
             console.log("runner IP:", ip);
             for (const m of ids){
-              const s="ses_"+hex(12)+b62(14);
-              const body=JSON.stringify({model:m,max_tokens:64,messages:[{role:"user",content:"Reply with exactly PONG"}],stream:true,tools:[T("read")]});
-              let st=0, out="";
-              try{
-                const r=await fetch("https://opencode.ai/inference/v1/chat/completions",{method:"POST",headers:{"content-type":"application/json","user-agent":"opencode/1.19.4","x-opencode-session":s,"x-opencode-session-id":s},body});
-                st=r.status;
-                const txt=await r.text();
-                if(txt.startsWith("data:")){
-                  const mm=txt.match(/"content":"([^"]*)"/g);
-                  out=mm?mm.join("").replace(/"content":"|"/g,"").slice(0,30):"(empty)";
-                } else { try{ out=JSON.parse(txt).error?.type||"?"; }catch{ out=txt.slice(0,30); } }
-              }catch(e){ st=-1; out=e.message.slice(0,25); }
-              console.log(`${String(st).padEnd(5)} ${JSON.stringify(out).padEnd(34)} ${m}`);
-              await new Promise(r=>setTimeout(r,800));
+              const marks=[];
+              let last="";
+              for (let k=0;k<3;k++){
+                const s="ses_"+hex(12)+b62(14);
+                const body=JSON.stringify({model:m,max_tokens:64,messages:[{role:"user",content:"Reply with exactly PONG"}],stream:true,tools:[T("read")]});
+                let st=0, out="";
+                try{
+                  const r=await fetch("https://opencode.ai/inference/v1/chat/completions",{method:"POST",headers:{"content-type":"application/json","user-agent":"opencode/1.19.4","x-opencode-session":s,"x-opencode-session-id":s},body});
+                  st=r.status;
+                  const txt=await r.text();
+                  if(txt.startsWith("data:")){
+                    const mm=txt.match(/"content":"([^"]*)"/g);
+                    out=mm?mm.join("").replace(/"content":"|"/g,"").slice(0,30):"(empty)";
+                  } else { try{ out=JSON.parse(txt).error?.type||"?"; }catch{ out=txt.slice(0,30); } }
+                }catch(e){ st=-1; out=e.message.slice(0,25); }
+                marks.push(`${st}${out.includes("PONG")?"✓":""}`);
+                last=out;
+                await new Promise(r=>setTimeout(r,700));
+              }
+              console.log(`${marks.join(",").padEnd(18)} ${JSON.stringify(last).padEnd(30)} ${m}`);
             }
           })();
           '
