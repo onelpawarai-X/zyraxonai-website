@@ -612,6 +612,133 @@ export type RotationOutcome<T> =
  *  the whole budget. The wall-clock budget below is the outer bound. */
 const ROTATION_MAX_PASSES = 4;
 
+/** Ask several models at once and take the first answer.
+ *
+ *  Walking a chain one model at a time makes the caller pay for every slow or
+ *  dead model in turn: eight models that each think for six seconds is a
+ *  minute of waiting, and the caller sees only the last failure. Free upstreams
+ *  fail in bursts and think unevenly, so the sequential walk is the wrong shape
+ *  for them.
+ *
+ *  This starts the best candidate immediately and, if it has not answered after
+ *  `hedgeMs`, starts the next one alongside it — and so on, until one answers or
+ *  the budget runs out. The caller waits for the fastest model that works, not
+ *  for the sum of the ones that do not. Losing attempts are cancelled so their
+ *  work does not hold a lane or an upstream stream open.
+ *
+ *  A gate or a rejected credential still stops everything: those fail for every
+ *  model identically, so racing would only multiply the same refusal. */
+export async function raceFor<T>(
+  candidates: string[],
+  attempt: (
+    upstream: string,
+  ) => Promise<
+    { ok: true; value: T } | { ok: false; status: number; detail: string }
+  >,
+  opts: {
+    /** How long to wait on the current best before adding another. */
+    hedgeMs?: number;
+    /** Wall-clock ceiling for the whole race. */
+    budgetMs?: number;
+    /** How many candidates may be asked at once. */
+    max?: number;
+    /** Release a losing success (cancel its body) so nothing is left open. */
+    discard?: (value: T, upstream: string) => void;
+  } = {},
+): Promise<RotationOutcome<T>> {
+  const hedgeMs = opts.hedgeMs ?? 1_500;
+  const budgetMs = opts.budgetMs ?? 0;
+  const startedAt = Date.now();
+  const spent = () => budgetMs > 0 && Date.now() - startedAt >= budgetMs;
+  const queue = opts.max ? candidates.slice(0, opts.max) : candidates.slice();
+  const tried: AttemptFailure[] = [];
+  let gate = false;
+  let next = 0;
+  let lastFailure: AttemptFailure | null = null;
+
+  type Slot = { u: string; res?: { ok: true; value: T } | { ok: false; status: number; detail: string } };
+  const pending = new Set<Promise<Slot>>();
+
+  const launch = (u: string): Promise<Slot> => {
+    const p = attempt(u).then(
+      (r): Slot => ({ u, res: r }),
+      (e): Slot => ({
+        u,
+        res: { ok: false, status: 502, detail: e instanceof Error ? e.message : String(e) },
+      }),
+    );
+    const tracked = p.finally(() => {
+      pending.delete(tracked);
+    });
+    pending.add(tracked);
+    return tracked;
+  };
+
+  if (!queue.length) return { ok: false, tried, gate };
+  launch(queue[next++]);
+
+  while (true) {
+    if (!pending.size) {
+      if (next < queue.length && !spent()) {
+        launch(queue[next++]);
+        continue;
+      }
+      break;
+    }
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const hedge = new Promise<"hedge">((resolve) => {
+      timer = setTimeout(() => resolve("hedge"), hedgeMs);
+      if (typeof timer?.unref === "function") timer.unref();
+    });
+    const winner = await Promise.race<Slot | "hedge">([...pending, hedge]);
+    if (timer) clearTimeout(timer);
+
+    if (winner === "hedge") {
+      // Nothing has answered yet. Widen the race if there is anyone left and
+      // budget to spend; otherwise keep waiting on what is already running.
+      if (next < queue.length && !spent()) launch(queue[next++]);
+      else if (spent()) break;
+      continue;
+    }
+
+    const res = winner.res!;
+    if (res.ok) {
+      // Everyone still running lost. Release their work so a losing stream does
+      // not stay open, holding an upstream conversation nobody will read.
+      for (const p of pending) {
+        p.then((s) => {
+          if (s.res?.ok && opts.discard) opts.discard(s.res.value, s.u);
+        }).catch(() => {});
+      }
+      return { ok: true, value: res.value, upstream: winner.u };
+    }
+
+    const g = isUpstreamGate(res.detail);
+    if (g) gate = true;
+    const failure: AttemptFailure = {
+      upstream: winner.u,
+      status: res.status,
+      detail: res.detail,
+      gate: g,
+    };
+    tried.push(failure);
+    lastFailure = failure;
+    if (res.status === 401 || g) return { ok: false, tried, gate };
+    // A fast failure means the next model is worth asking right away.
+    if (next < queue.length && !spent()) launch(queue[next++]);
+  }
+
+  if (spent() && lastFailure) {
+    tried.push({
+      upstream: queue[Math.min(next, queue.length - 1)] ?? "",
+      status: 504,
+      detail: `race budget of ${budgetMs}ms exhausted`,
+      gate: false,
+    });
+  }
+  return { ok: false, tried, gate };
+}
+
 export async function rotateThrough<T>(
   chain: string[],
   attempt: (

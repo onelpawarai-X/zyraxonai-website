@@ -427,5 +427,59 @@ check(
   }
 }
 
+// The racer: the shape that makes a turn hard to fail. A slow first model must
+// not hold the caller while a faster one behind it is ready to answer.
+{
+  const { raceFor } = await import("../src/lib/providers/zyraxon-brands");
+  const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const started: string[] = [];
+  const out = await raceFor(
+    ["slow", "fast", "never"],
+    async (u) => {
+      started.push(u);
+      if (u === "slow") {
+        await delay(5_000);
+        return { ok: true as const, value: `served:${u}` };
+      }
+      if (u === "fast") {
+        await delay(50);
+        return { ok: true as const, value: `served:${u}` };
+      }
+      await delay(10_000);
+      return { ok: false as const, status: 502, detail: "too late" };
+    },
+    { hedgeMs: 150, budgetMs: 3_000 },
+  );
+  check("the racer returns the fastest answer", out.ok && out.value === "served:fast", out.ok ? out.value : "failed");
+  check("it hedges to a second model instead of waiting", started.includes("fast"), started.join(","));
+}
+
+// Every candidate refusing is still reported honestly, not hung.
+{
+  const { raceFor } = await import("../src/lib/providers/zyraxon-brands");
+  const out = await raceFor(
+    ["a", "b"],
+    async (u) => ({ ok: false as const, status: 502, detail: `${u} empty stream` }),
+    { hedgeMs: 100, budgetMs: 2_000 },
+  );
+  check("a racer with no winner reports every attempt", !out.ok && out.tried.length === 2, out.ok ? "ok" : String(out.tried.length));
+}
+
+// A gate stops the race at once: it fails for every model identically.
+{
+  const { raceFor } = await import("../src/lib/providers/zyraxon-brands");
+  const calls: string[] = [];
+  const out = await raceFor(
+    ["a", "b", "c"],
+    async (u) => {
+      calls.push(u);
+      return { ok: false as const, status: 403, detail: "FreeTierError: free tier can only be used" };
+    },
+    { hedgeMs: 100, budgetMs: 2_000 },
+  );
+  check("a gate stops the race immediately", !out.ok && out.gate === true && calls.length === 1, calls.join(","));
+}
+
 console.log(`\n${failures === 0 ? "ALL BRAND CHECKS PASSED" : failures + " CHECK(S) FAILED"}`);
 process.exit(failures === 0 ? 0 : 1);

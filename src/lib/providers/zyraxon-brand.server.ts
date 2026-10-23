@@ -49,6 +49,7 @@ import {
   brandView,
   getBrand,
   measuredTtftMs,
+  raceFor,
   rotateThrough,
   rotationFor,
   type Brand,
@@ -323,74 +324,91 @@ export async function brandChatStream(
       // passed to the caller as an answer.
       const mediaNeed = need.size > 0;
       const rejectsDenial = (text: string) => mediaNeed && MEDIA_DENIAL.test(text);
-      const outcome = await rotateThrough(
-        chain,
-        async (upstream) => {
-          if (lane.attemptsLeft <= 0) {
-            return { ok: false as const, status: 503, detail: "lane attempt budget exhausted" };
-          }
-          lane.attemptsLeft--;
-          const out = stream
-            ? await useSend(
-                key,
-                upstream,
-                finalMessages,
-                budget,
-                brand.label,
-                lane.sessionId,
-                tools,
-                mediaNeed ? { reject: rejectsDenial } : undefined,
-              )
-            : await useComplete(
-                key,
-                upstream,
-                finalMessages,
-                budget,
-                brand.label,
-                lane.sessionId,
-                tools,
-                mediaNeed ? { reject: rejectsDenial } : undefined,
-              );
-          if (!("failed" in out)) return { ok: true as const, value: out };
-          return {
-            ok: false as const,
-            status: out.failed?.status ?? 502,
-            detail: String(out.failed?.detail ?? ""),
-          };
-        },
-        lane.attemptsLeft,
-        // A denial from a model that can hear is worth asking again: the refusal
-        // is intermittent, and every other model in the chain is deaf to the
-        // modality, so rotating would turn a recoverable miss into a wrong
-        // answer. The model the probe verified gets the most retries, because it
-        // is the only one that can do the job at all. A model already measured
-        // unable is not re-asked — nothing is expected to change, and the chain
-        // should move on.
-        async (upstream, failure, n) => {
-          if (failure.status !== 422) return false;
-          const seeded = need.has("audio")
-            ? AUDIO_VERIFIED_SEED.has(upstream)
-            : need.has("video")
-              ? VIDEO_VERIFIED_SEED.has(upstream)
-              : false;
-          const able = ["image", "audio", "video"].some(
-            (k) => need.has(k as MediaKind) && supports(upstream, k as never) === true,
-          );
-          if (!seeded && !able) return false;
-          const limit = seeded ? 3 : 2;
-          if (n >= limit) return false;
-          // Space the retries: a back-to-back repeat tends to reproduce the same
-          // miss, and a short pause lets the upstream's own load rebalance.
-          await new Promise((r) => setTimeout(r, 250 * n));
-          return true;
-        },
-        // Leave room for the edge. A rotation that runs longer than the gateway
-        // will wait gets replaced by the gateway's own 502, which tells the
-        // caller nothing; stopping short lets the caller receive the honest
-        // "every model was unavailable" body instead. A media turn needs longer
-        // because a model has to take in the bytes before it answers.
-        { budgetMs: Math.floor(remainingMs() * 0.6) },
-      );
+      // One attempt, shared by every strategy below.
+      const tryUpstream = async (
+        upstream: string,
+      ): Promise<
+        { ok: true; value: Response } | { ok: false; status: number; detail: string }
+      > => {
+        if (lane.attemptsLeft <= 0) {
+          return { ok: false as const, status: 503, detail: "lane attempt budget exhausted" };
+        }
+        lane.attemptsLeft--;
+        const out = stream
+          ? await useSend(
+              key,
+              upstream,
+              finalMessages,
+              budget,
+              brand.label,
+              lane.sessionId,
+              tools,
+              mediaNeed ? { reject: rejectsDenial } : undefined,
+            )
+          : await useComplete(
+              key,
+              upstream,
+              finalMessages,
+              budget,
+              brand.label,
+              lane.sessionId,
+              tools,
+              mediaNeed ? { reject: rejectsDenial } : undefined,
+            );
+        if (!("failed" in out)) return { ok: true as const, value: out as Response };
+        return {
+          ok: false as const,
+          status: out.failed?.status ?? 502,
+          detail: String(out.failed?.detail ?? ""),
+        };
+      };
+
+      // A losing racer must not stay open: cancel its body so the upstream
+      // conversation and the lane it holds are both released.
+      const discard = (value: Response) => {
+        value.body?.cancel().catch(() => {});
+      };
+
+      const retryHook = async (
+        upstream: string,
+        failure: { status: number },
+        n: number,
+      ): Promise<boolean> => {
+        if (failure.status !== 422) return false;
+        const seeded = need.has("audio")
+          ? AUDIO_VERIFIED_SEED.has(upstream)
+          : need.has("video")
+            ? VIDEO_VERIFIED_SEED.has(upstream)
+            : false;
+        const able = ["image", "audio", "video"].some(
+          (k) => need.has(k as MediaKind) && supports(upstream, k as never) === true,
+        );
+        if (!seeded && !able) return false;
+        const limit = seeded ? 3 : 2;
+        if (n >= limit) return false;
+        // Space the retries: a back-to-back repeat tends to reproduce the same
+        // miss, and a short pause lets the upstream's own load rebalance.
+        await new Promise((r) => setTimeout(r, 250 * n));
+        return true;
+      };
+
+      // A media turn has to go in order. Only one or two models in the pool can
+      // actually hear or see the bytes, the rest answer "no audio attached", and
+      // racing them in parallel would spend the budget collecting refusals
+      // instead of asking the one model that can do the job. A text turn has no
+      // such constraint, so it races: the fastest model that answers wins, which
+      // is both faster and far harder to fail than walking the chain one by one.
+      const outcome = mediaNeed
+        ? await rotateThrough(chain, tryUpstream, lane.attemptsLeft, retryHook, {
+            budgetMs: Math.floor(remainingMs() * 0.6),
+          })
+        : await raceFor(chain, tryUpstream, {
+            hedgeMs: 1_200,
+            budgetMs: Math.floor(remainingMs() * 0.7),
+            max: 6,
+            discard,
+          });
+
       if (outcome.ok) {
         const res = outcome.value as Response;
         // A real answer from a model that received the media is the strongest
@@ -401,29 +419,19 @@ export async function brandChatStream(
               recordOutcome(outcome.upstream, k, true);
           }
         }
-        // Advertise two things the caller (and an operator) can act on: the
-        // modalities the turn actually used, so a real media answer is
-        // distinguishable from a degraded text-only one, and the capacity tier
-        // that served it. `spill` means the primary lane budget was full and the
-        // turn was handed to the OpenCode Zen free pool instead of being shed —
-        // a successful answer, just served from the overflow.
         const headers = new Headers(res.headers);
         if (need.size) headers.set("X-ZYRAXON-Input-Modalities", Array.from(need).sort().join(","));
         headers.set("X-ZYRAXON-Capacity", lane.tier);
+        if (!mediaNeed) headers.set("X-ZYRAXON-Rotation", "race");
         return new Response(res.body, { status: res.status, headers });
       }
-      // The chain is a preference order, not a limit. Every model in the live
-      // pool is reachable, so a turn is never refused while any model anywhere
-      // can serve it. The chain is walked again only when it produced nothing —
-      // the cheapest sweep first (fastest measured models lead), so a recovery
-      // costs about as little as the failing chain did.
-      const attempted = new Set(outcome.tried.map((t) => t.upstream));
-      // New models appear in the upstream catalogue without warning, and a
-      // model nobody has measured has no TTFT. Ranking it last would mean the
-      // newest model in the pool is the one we never try, which is backwards:
-      // it is exactly the model we want to discover. Unmeasured models get a
-      // neutral rank that places them after the proven-fast ones but ahead of
-      // the proven-slow, so a fresh arrival is exercised and earns its place.
+
+      // Nothing answered yet. The race only covered the head of the chain; the
+      // rest of the live pool is still there, and a turn is never refused while
+      // any reachable model can serve it. This sweep runs the same way — raced,
+      // fastest measured first — so a recovery costs about as little as the
+      // attempt that failed.
+      const attempted = new Set(outcome.tried.map((t: { upstream: string }) => t.upstream));
       const NEUTRAL_TTFT_MS = 3_000;
       const rank = (id: string) => {
         const ms = measuredTtftMs(id);
@@ -434,45 +442,17 @@ export async function brandChatStream(
         .filter((id: string) => !attempted.has(id))
         .sort((a: string, b: string) => rank(a) - rank(b));
       if (sweep.length) {
-        const recovered = await rotateThrough(
-          sweep,
-          async (upstream) => {
-            if (lane.attemptsLeft <= 0) {
-              return { ok: false as const, status: 503, detail: "lane attempt budget exhausted" };
-            }
-            lane.attemptsLeft--;
-            const out = stream
-              ? await useSend(
-                  key,
-                  upstream,
-                  finalMessages,
-                  budget,
-                  brand.label,
-                  lane.sessionId,
-                  tools,
-                  mediaNeed ? { reject: rejectsDenial } : undefined,
-                )
-              : await useComplete(
-                  key,
-                  upstream,
-                  finalMessages,
-                  budget,
-                  brand.label,
-                  lane.sessionId,
-                  tools,
-                  mediaNeed ? { reject: rejectsDenial } : undefined,
-                );
-            if (!("failed" in out)) return { ok: true as const, value: out };
-            return {
-              ok: false as const,
-              status: out.failed?.status ?? 502,
-              detail: String(out.failed?.detail ?? ""),
-            };
-          },
-          lane.attemptsLeft,
-          undefined,
-          { budgetMs: remainingMs(), passes: 2 },
-        );
+        const recovered = mediaNeed
+          ? await rotateThrough(sweep, tryUpstream, lane.attemptsLeft, retryHook, {
+              budgetMs: remainingMs(),
+              passes: 2,
+            })
+          : await raceFor(sweep, tryUpstream, {
+              hedgeMs: 1_200,
+              budgetMs: remainingMs(),
+              max: 8,
+              discard,
+            });
         if (recovered.ok) {
           const res = recovered.value as Response;
           if (mediaNeed) {
@@ -488,8 +468,6 @@ export async function brandChatStream(
           headers.set("X-ZYRAXON-Rotation", "pool-fallback");
           return new Response(res.body, { status: res.status, headers });
         }
-        // Fold the sweep's attempts into the report so the caller (and an
-        // operator) sees everything that was tried, not just the first chain.
         outcome.tried.push(...recovered.tried);
       }
       return brandFailureResponse(brand, outcome.tried, outcome.gate);
