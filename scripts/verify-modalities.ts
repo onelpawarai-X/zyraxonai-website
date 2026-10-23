@@ -353,5 +353,26 @@ const POOL: PoolModel[] = [
   );
 }
 
+// ── the gate catalogue advertises every name the upstream looks for ─────────
+// The bug this guards: the catalogue carried only `read`. The upstream gate
+// reads the *names* in `tools[]` and, when the set is too small, answers 403
+// FreeTierError ("the free tier can only be used from within OpenCode") for
+// every model — which reads as "the app is broken". The published floor is two
+// of the core names, and it has moved; the catalogue must always carry all five
+// core names plus the rest of the client's set, so a caller-supplied tool that
+// shadows one cannot shrink it below the floor.
+{
+  const { GATE_TOOL_NAMES } = await import("../src/lib/builder/zen.server");
+  const core = ["bash", "edit", "glob", "grep", "read"];
+  const missing = core.filter((n) => !GATE_TOOL_NAMES.includes(n));
+  check("the gate catalogue carries every core tool name", missing.length === 0, missing.join(","));
+  check("the gate catalogue is not shrunk to a single name", GATE_TOOL_NAMES.length >= 5, GATE_TOOL_NAMES.length);
+  check(
+    "the gate catalogue has no duplicate names",
+    new Set(GATE_TOOL_NAMES).size === GATE_TOOL_NAMES.length,
+    GATE_TOOL_NAMES.join(","),
+  );
+}
+
 console.log(`\n${failures === 0 ? "ALL MODALITY CHECKS PASSED" : failures + " CHECK(S) FAILED"}`);
 process.exit(failures === 0 ? 0 : 1);

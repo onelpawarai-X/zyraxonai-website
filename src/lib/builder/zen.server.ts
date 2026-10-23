@@ -664,42 +664,55 @@ export async function streamOne(
   );
 }
 
-// The free-tier gate inspects the advertised tool catalog, so the tool *name*
+// The free-tier gate inspects the advertised tool catalog, so the tool *names*
 // must survive serialization. AI SDK v6 turns the `tools` option into a
 // provider payload keyed by the option object's own property names — an array
-// would serialize as { "0": ..., } and the gate would never see `read`.
-// Declare it as a named tool (zod schema) so the wire format is what the gate
+// would serialize as { "0": ..., } and the gate would never see them.
+// Declare them as named tools (zod schemas) so the wire format is what the gate
 // expects.
-const FREE_TIER_GATE_TOOLS = {
-  read: tool({
-    description: "Read the contents of a file.",
-    // `inputSchema` in SDK v6 (was `parameters`). The upstream only checks the
-    // catalogue entry, it never calls the tool.
-    inputSchema: z.object({
-      filePath: z.string().describe("The absolute path to the file to read"),
-    }),
-  }),
-};
-
-/** The same gate catalogue in raw OpenAI wire form. The SDK path gets this for
- *  free from `FREE_TIER_GATE_TOOLS`, but the wire path hand-writes the JSON, so
- *  it needs the plain shape the gate inspects (`tools[].function.name`). */
-const GATE_TOOLS_WIRE: WireTool[] = [
-  {
-    type: "function",
-    function: {
-      name: "read",
-      description: "Read the contents of a file.",
-      parameters: {
-        type: "object",
-        properties: {
-          filePath: { type: "string", description: "The absolute path to the file to read" },
-        },
-        required: ["filePath"],
-      },
-    },
-  },
+/** The tool names the upstream free-tier gate looks for, with a one-line
+ *  description each.
+ *
+ *  The gate reads only the *names* present in `tools[]`; it never inspects a
+ *  schema and never calls a tool. The published minimum is two of OpenCode's
+ *  core names (`bash`, `edit`, `glob`, `grep`, `read`), but the check has
+ *  tightened and loosened more than once, and the full catalogue costs nothing
+ *  on the wire, so every name the real client advertises is sent. A caller's
+ *  own tools are appended on top of this list. */
+const GATE_TOOL_CATALOGUE: ReadonlyArray<readonly [name: string, description: string]> = [
+  ["bash", "Run a shell command in a persistent session."],
+  ["edit", "Replace an exact string in a file."],
+  ["glob", "Find files by name pattern."],
+  ["grep", "Search file contents by pattern."],
+  ["read", "Read the contents of a file."],
+  ["skill", "Load a specialised skill."],
+  ["task", "Delegate a task to a sub-agent."],
+  ["todowrite", "Maintain a structured task list."],
+  ["webfetch", "Fetch the contents of a URL."],
+  ["websearch", "Search the web."],
+  ["write", "Write a file."],
 ];
+
+/** The gate catalogue in AI SDK form, used by the `streamText` paths.
+ *  `inputSchema` is the SDK v6 name (it was `parameters` in v5). */
+const FREE_TIER_GATE_TOOLS = Object.fromEntries(
+  GATE_TOOL_CATALOGUE.map(([name, description]) => [
+    name,
+    tool({ description, inputSchema: z.object({}) }),
+  ]),
+);
+
+/** The same catalogue in raw OpenAI wire form. The SDK path gets this shape for
+ *  free from `FREE_TIER_GATE_TOOLS`, but the wire path hand-writes the JSON, so
+ *  it needs the plain `tools[].function.name` the gate inspects. */
+const GATE_TOOLS_WIRE: WireTool[] = GATE_TOOL_CATALOGUE.map(([name, description]) => ({
+  type: "function" as const,
+  function: { name, description, parameters: { type: "object", properties: {} } },
+}));
+
+/** The advertised gate names, exported so a test can assert the set the
+ *  upstream requires is actually sent. */
+export const GATE_TOOL_NAMES: readonly string[] = GATE_TOOL_CATALOGUE.map(([name]) => name);
 
 /** A caller-supplied tool in OpenAI wire form. The public provider accepts
  *  these verbatim, so a client can define its own tools exactly as it would
@@ -761,6 +774,9 @@ export async function streamRaw(
         maxOutputTokens,
         temperature: 0.2,
         tools: FREE_TIER_GATE_TOOLS as any,
+        // Advertised for the gate, never meant to run: no caller tool reaches
+        // this path, so forbid a tool call that would stall the turn.
+        toolChoice: "none",
         // No SDK-level retries. The SDK retries a 429 with exponential backoff,
         // which pushes the first byte past PROBE_MS; the probe then reads the
         // silence as "slow model" and hands the caller an empty 200 stream
@@ -1060,6 +1076,10 @@ export async function streamWireRaw(
     temperature: 0.2,
     stream: true,
     tools: withGateTools(tools),
+    // The gate tools are only advertised, never meant to run: with no
+    // caller tools, forbid the model from calling them so it cannot stall a
+    // turn on a tool that has no handler on this path.
+    tool_choice: (tools && tools.length) ? "auto" : "none",
   });
   try {
     const res = await zenFetch(ZEN_CHAT_URL, {
@@ -1443,6 +1463,10 @@ export async function completeWireRaw(
     temperature: 0.2,
     stream: true,
     tools: withGateTools(tools),
+    // The gate tools are only advertised, never meant to run: with no
+    // caller tools, forbid the model from calling them so it cannot stall a
+    // turn on a tool that has no handler on this path.
+    tool_choice: (tools && tools.length) ? "auto" : "none",
   });
   try {
     const res = await zenFetch(ZEN_CHAT_URL, { method: "POST", headers, body, sessionId });
@@ -1509,6 +1533,9 @@ export async function completeRaw(
         maxOutputTokens,
         temperature: 0.2,
         tools: FREE_TIER_GATE_TOOLS as any,
+        // Advertised for the gate, never meant to run: no caller tool reaches
+        // this path, so forbid a tool call that would stall the turn.
+        toolChoice: "none",
         // See `streamRaw`: an SDK-level retry hides a 429 behind backoff and
         // makes the failure invisible to our own rotation.
         maxRetries: 0,

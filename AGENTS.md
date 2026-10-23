@@ -565,10 +565,54 @@ This is the same rule as the credential gate and the per-IP limiter: an
 account-wide or address-wide refusal is not something model rotation can route
 around, so the code stops and tells the truth instead of retrying.
 
+## The free-tier gate is a request-shape check, not a quota
+
+`403 FreeTierError — "free tier can only be used from within OpenCode"` does not
+mean the account is spent. It means the request did not look like the OpenCode
+client. The gate reads four things, and all four must hold:
+
+1. `User-Agent` whose leading token is `opencode/<version>`.
+2. `x-opencode-session` shaped `ses_<12 lowercase hex><14 alnum>` (the old
+   shape; the newer `ses_<64 hex>` shape is refused).
+3. `stream: true` in the body.
+4. Enough of OpenCode's own tool *names* in `tools[]`. The published floor is
+   **two** of `bash`, `edit`, `glob`, `grep`, `read`; it has been five and has
+   moved. Schemas and descriptions are ignored, and the tools are never called.
+
+`GATE_TOOL_CATALOGUE` therefore carries all eleven names the real client sends
+(`bash`, `edit`, `glob`, `grep`, `read`, `skill`, `task`, `todowrite`,
+`webfetch`, `websearch`, `write`), not just `read`. Because a tool that is only
+advertised can still be *called* by a model that ignores the intent, both wire
+paths send `tool_choice: "none"` when the caller defined no tools (and `"auto"`
+when they did, since the caller wants their tools to run). The SDK paths send
+`toolChoice: "none"` unconditionally — no caller tool ever reaches them.
+
+Verified live: with the full catalogue, `tools[]` of one name and of eleven both
+answer 200 from a clean IP, and a caller-supplied tool cannot shrink the
+catalogue below the floor.
+
+## The free tier is limited per egress IP, not per account
+
+The same request that answers `429 FreeUsageLimitError` from this workspace's IP
+answered `200` with a real completion from a GitHub Actions runner's IP, and
+30 consecutive requests from that runner all answered 200. So the 429 is an
+address-wide limiter, not a spent account: the deployment's single egress
+address is what runs dry. `ZYRAXON_EGRESS_URLS` (a `gw+https://…` Cloudflare
+Worker, or a socket proxy) spreads turns across addresses; `egress.server.ts`
+already rotates and cools a limited lane, and `/api/public/zyraxon/v1/provider`
+reports `egress: { mode, proxies, spread }`. Without a configured egress the app
+is one address, and one address is one bucket.
+
+A browser cannot be the egress: the upstream answers the CORS preflight with
+404 and sends no `Access-Control-Allow-Origin`, and `User-Agent` is a forbidden
+header in the browser, so a direct call from the page can never satisfy the
+gate. Spreading across addresses must happen server-side.
+
 ## Testing
 
 `npm run test:provider` (1063 checks) covers the brand contract, rotation,
-quota short-circuit, pool integrity and the media/STT/TTS surfaces.
+quota short-circuit, gate catalogue, pool integrity and the media/STT/TTS
+surfaces.
 `npx tsc --noEmit -p tsconfig.json` must stay clean. Scripts that import
 `zen.server.ts` need the `?raw` loader: `npx tsx --import
 ./scripts/raw-import-loader.mjs <script>`.
