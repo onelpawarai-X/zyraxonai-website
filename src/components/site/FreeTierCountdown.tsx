@@ -14,7 +14,26 @@ export type FreeTierStatus = {
   resetAt?: string;
   /** The largest window the upstream has stated, for drawing progress. */
   windowSeconds?: number;
+  /** The server's clock when it answered. `resetAt` is an absolute instant, so
+   *  a reader whose own clock is wrong would otherwise read a deadline with
+   *  hours left as already passed. */
+  serverNow?: string;
 };
+
+/** How far this reader's clock is ahead of the server's, in milliseconds.
+ *
+ *  A deadline is only meaningful against the clock that produced it. `resetAt`
+ *  is an instant on the *server's* clock, so it must be shifted into the
+ *  reader's frame before it is compared to the reader's `Date.now()`: a reader
+ *  running four hours fast is four hours ahead of the deadline's frame too.
+ *  Adding this difference is what turns "00:00:00, resetting now" into the hours
+ *  actually left. It also absorbs the response's flight time, which is a few
+ *  hundred milliseconds in the safe direction. */
+export function clockSkewMs(status?: FreeTierStatus): number {
+  const serverNow = status?.serverNow ? Date.parse(status.serverNow) : NaN;
+  if (Number.isNaN(serverNow)) return 0;
+  return Date.now() - serverNow;
+}
 
 function split(seconds: number): { h: number; m: number; s: number } {
   const s = Math.max(0, Math.floor(seconds));
@@ -38,7 +57,7 @@ export function FreeTierCountdown({ status }: { status?: FreeTierStatus }) {
   const target = (() => {
     if (!status || status.available) return undefined;
     const at = status.resetAt ? Date.parse(status.resetAt) : NaN;
-    if (!Number.isNaN(at)) return at;
+    if (!Number.isNaN(at)) return at + clockSkewMs(status);
     if (typeof status.retryAfterSeconds === "number") {
       return Date.now() + status.retryAfterSeconds * 1000;
     }

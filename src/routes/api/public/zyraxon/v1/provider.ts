@@ -27,6 +27,11 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       GET: async () => {
         const brands = await brandCatalogue();
+        // Read once, before the model list, because both the per-model
+        // `servable` flag and the `freeTier` block below must agree about the
+        // same instant — two calls could straddle a reset and contradict
+        // each other inside one payload.
+        const reset = quotaResetStatus();
         return Response.json(
           {
             object: "provider",
@@ -49,6 +54,13 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               // preferred upstream is unavailable and a sibling is covering,
               // which is a normal, healthy state — not an outage.
               status: b.preferredAvailable ? "ready" : "rotated",
+              // Whether a turn on this model would be served *now*. The binding
+              // status above says nothing about the account's quota, so a
+              // catalogue read during a spent window reported every model as
+              // "ready" while every call was refused with a 429 — the badge and
+              // the refusal contradicted each other. This is the field that
+              // tells a caller the truth without spending a request to find it.
+              servable: !reset.spent,
             })),
             // Which input modalities the line can serve right now, so a client
             // can tell at a glance whether video or audio is available today.
@@ -91,7 +103,6 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
             // having to send a request just to be told "429" first — and so the
             // number a caller sees is the upstream's own, not a guess.
             freeTier: (() => {
-              const reset = quotaResetStatus();
               // The recorded reset is the upstream's *promise*; a probe is
               // evidence. While a quota is spent, this asks the upstream
               // whether it will serve again, so the panel can flip to open the
@@ -108,6 +119,9 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
                       // The ceiling, so a client can draw how much of the wait
                       // is behind it rather than a bare number with no scale.
                       windowSeconds: reset.windowSeconds,
+                      // Our clock, so a reader whose own is wrong can correct
+                      // the deadline rather than misread it as already passed.
+                      serverNow: reset.serverNow,
                     }
                   : {}),
               };

@@ -69,6 +69,15 @@ export function quotaResetStatus(now = Date.now()): {
   resetAt?: string;
   /** The largest window ever stated, so a client can draw progress. */
   windowSeconds?: number;
+  /** This server's clock at the moment it answered.
+   *
+   *  `resetAt` is an absolute instant, so it only means anything against the
+   *  clock that produced it. A reader whose own clock runs fast compares the
+   *  deadline to `now`, finds it in the past, and draws 00:00:00 for a pool
+   *  with hours left — while this endpoint still reports it spent. Publishing
+   *  our clock lets the reader correct for the difference instead of showing
+   *  the opposite of the truth. */
+  serverNow?: string;
 } {
   if (!lastReset) return { spent: false };
   const remainingMs = lastReset.until - now;
@@ -78,6 +87,7 @@ export function quotaResetStatus(now = Date.now()): {
     retryAfterSeconds: Math.max(1, Math.ceil(remainingMs / 1000)),
     resetAt: new Date(lastReset.until).toISOString(),
     ...(longestSeconds > 0 ? { windowSeconds: longestSeconds } : {}),
+    serverNow: new Date(now).toISOString(),
   };
 }
 

@@ -188,6 +188,11 @@ const CHAT_URL = `${API_ORIGIN}/api/public/zyraxon/v1/chat/completions`;
 type Live = {
   id: string;
   status: "ready" | "rotated";
+  /** Whether a turn would be served right now. `status` only describes the
+   *  binding, so during a spent free-tier window it reads "ready" for every
+   *  model while every call is refused — the badge and the 429 contradicting
+   *  each other. This is the field that agrees with reality. */
+  servable?: boolean;
   context: number;
   output: number;
   modalities?: string[];
@@ -289,6 +294,10 @@ function ProvidersPage() {
           {ZYRAXON_BRANDS.map((b) => {
             const state = live[b.id];
             const rotated = state?.status === "rotated";
+            // A model that cannot be served is not "Ready" in any sense a
+            // caller cares about, so the badge says so rather than showing a
+            // green light next to a 429.
+            const waiting = state?.servable === false;
             const ctx = state?.context;
             return (
               <Card key={b.id} hover className="flex flex-col p-5">
@@ -300,7 +309,9 @@ function ProvidersPage() {
                     <p className="mt-0.5 text-[12.5px] text-muted-foreground">{b.tagline}</p>
                   </div>
                   {state && (
-                    <Tag tone={rotated ? "warn" : "success"}>{rotated ? "Rotated" : "Ready"}</Tag>
+                    <Tag tone={waiting ? "warn" : rotated ? "warn" : "success"}>
+                      {waiting ? "At capacity" : rotated ? "Rotated" : "Ready"}
+                    </Tag>
                   )}
                 </div>
 

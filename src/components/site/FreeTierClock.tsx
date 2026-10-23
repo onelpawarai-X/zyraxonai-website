@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/site/Icon";
-import type { FreeTierStatus } from "@/components/site/FreeTierCountdown";
+import { clockSkewMs, type FreeTierStatus } from "@/components/site/FreeTierCountdown";
 
 /** The shared free-tier reset clock, drawn rather than written.
  *
@@ -29,7 +29,11 @@ export function FreeTierClock({
   const target = useMemo(() => {
     if (!status) return undefined;
     const at = status.resetAt ? Date.parse(status.resetAt) : NaN;
-    if (!Number.isNaN(at)) return at;
+    // Shifted into this reader's clock frame. Without it a machine running even
+    // slightly fast draws a deadline that has not passed as 00:00:00 — the
+    // panel would say "resetting now" for a pool with hours left, which is
+    // exactly the contradiction a reader cannot reconcile.
+    if (!Number.isNaN(at)) return at + clockSkewMs(status);
     if (typeof status.retryAfterSeconds === "number") {
       return Date.now() + status.retryAfterSeconds * 1000;
     }
