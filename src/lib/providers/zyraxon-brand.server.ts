@@ -21,7 +21,7 @@ import {
   pickUpstreamKey,
 } from "@/lib/builder/zen.server";
 import { egressFor, noteEgressLimited, releaseEgress } from "@/lib/providers/egress.server";
-import { quotaResetStatus } from "@/lib/providers/quota.server";
+import { clearQuotaReset, quotaResetStatus } from "@/lib/providers/quota.server";
 import {
   streamRaw,
   streamWireRaw,
@@ -392,7 +392,15 @@ export async function brandChatStream(
                 tools,
                 mediaNeed ? { reject: rejectsDenial } : undefined,
               );
-          if (!("failed" in out)) return { ok: true as const, value: out as Response };
+          if (!("failed" in out)) {
+            // A served turn is proof the pool is open again, whatever the
+            // recorded reset still claims. Clearing it here is what turns a
+            // countdown into the truth: the next reader is told the pool is
+            // serving because a real turn just was, not because a timer
+            // happened to run out.
+            clearQuotaReset();
+            return { ok: true as const, value: out as Response };
+          }
           const why = String(out.failed?.detail ?? "");
           // A credential gate is an account decision, not a momentary one: the
           // same request will be refused every time, so re-asking it would only
@@ -590,30 +598,31 @@ function brandFailureResponse(
   // for now — telling the caller "every model was unavailable" hides the one
   // fact that explains it and the one thing that helps: wait, or add a key.
   const quota = !gate && tried.length > 0 && (quotaHint || tried.every((t) => isQuotaFailure(t.detail)));
-  // The upstream's own reset clock, when it told us one. A quota refusal is not
-  // a guess: the `retry-after` it carried says exactly when the window rolls
-  // over, and publishing that is what lets a caller show a real countdown
-  // instead of a fixed "try again later". Only when no header was ever seen
-  // does the fallback apply.
+  // The upstream's own reset clock. A quota refusal is not a guess: the
+  // `retry-after` the official server sent says exactly when its window rolls
+  // over, and only that number is published. When the server stated no clock
+  // there is no honest number to show, so none is invented — the refusal says
+  // so plainly and points at the one path that does not wait (a key).
   const reset = quota ? quotaResetStatus() : { spent: false as const };
-  const retryAfterSeconds = reset.retryAfterSeconds ?? 60;
-  // State the reset in the units a person reads, not just seconds. "in 3h 20m"
-  // is an answer; "in 12000 seconds" is arithmetic the caller has to do. When
-  // the upstream never stated a clock, the fallback is still phrased as a
-  // duration so the message keeps the same shape either way.
-  const humanWait = (() => {
-    const total = Math.max(0, Math.ceil(retryAfterSeconds));
+  const retryAfterSeconds = reset.retryAfterSeconds;
+  const resetAt = reset.resetAt;
+  // State the reset in the units a person reads: "in 3h 20m" is an answer,
+  // "in 12000 seconds" is arithmetic the caller has to do.
+  const humanWait = (seconds: number) => {
+    const total = Math.max(0, Math.ceil(seconds));
     const hours = Math.floor(total / 3600);
     const minutes = Math.ceil((total % 3600) / 60);
     if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
     if (minutes > 0) return `${minutes}m`;
     return `${total}s`;
-  })();
+  };
   const message = gate
     ? `${brand.label} could not be served: the upstream free tier refused this caller (FreeTierError). Set OPENCODE_ZEN_API_KEY, or call from a network the upstream free tier serves.`
-    : quota
-      ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window. It opens again in about ${humanWait} (around ${new Date(reset.resetAt ?? Date.now() + retryAfterSeconds * 1000).toUTCString()}). Set OPENCODE_ZEN_API_KEY for a keyed quota that does not wait.`
-      : `${brand.label} could not be served right now — every model in its rotation was unavailable. Retrying in a moment usually works.`;
+    : quota && retryAfterSeconds && resetAt
+      ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window. It opens again in about ${humanWait(retryAfterSeconds)} (around ${new Date(resetAt).toUTCString()}), as stated by the upstream server. Set OPENCODE_ZEN_API_KEY for a keyed quota that does not wait.`
+      : quota
+        ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window, and the upstream did not state a reset time, so none is shown rather than a guess. Set OPENCODE_ZEN_API_KEY for a keyed quota that does not wait, or retry shortly.`
+        : `${brand.label} could not be served right now — every model in its rotation was unavailable. Retrying in a moment usually works.`;
 
   return Response.json(
     {
@@ -624,8 +633,11 @@ function brandFailureResponse(
         // When the free tier opens again, in the same shape the upstream states
         // it: a countdown a client can tick down, and the absolute moment it
         // lands on. Both are published because a countdown needs the seconds
-        // and a page that loads late needs the timestamp.
-        ...(quota ? { retryAfterSeconds, resetAt: reset.resetAt ?? new Date(Date.now() + retryAfterSeconds * 1000).toISOString() } : {}),
+        // and a page that loads late needs the timestamp. Neither is sent when
+        // the upstream stated no clock — a client shows a real countdown or
+        // nothing, never a fabricated one.
+        ...(quota && retryAfterSeconds ? { retryAfterSeconds } : {}),
+        ...(quota && resetAt ? { resetAt } : {}),
       },
       tried: tried.map(({ upstream, status, gate: g, detail }) => ({
         upstream,
@@ -641,7 +653,8 @@ function brandFailureResponse(
       status: gate ? 503 : quota ? 429 : 502,
       headers: {
         "Access-Control-Allow-Origin": "*",
-        ...(quota ? { "Retry-After": String(retryAfterSeconds) } : {}),
+        // Relay the upstream's own clock, never a substitute for it.
+        ...(quota && retryAfterSeconds ? { "Retry-After": String(retryAfterSeconds) } : {}),
       },
     },
   );

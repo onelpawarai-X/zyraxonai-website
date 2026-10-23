@@ -81,7 +81,18 @@ export function quotaResetStatus(now = Date.now()): {
   };
 }
 
-/** Test seam: forget the recorded reset. */
+/** Drop the recorded reset because the pool was proven to be serving again.
+ *
+ *  Called only on positive evidence — a real turn that the upstream answered —
+ *  never on a timer running out. Clearing it on the clock alone would show an
+ *  open pool that is still refusing, which is the one thing the countdown
+ *  exists to avoid. The window ceiling is kept: it is a fact about the upstream
+ *  that does not expire with one window. */
+export function clearQuotaReset(): void {
+  lastReset = undefined;
+}
+
+/** Test seam: forget the recorded reset and everything learned about it. */
 export function resetQuotaClock(): void {
   lastReset = undefined;
   longestSeconds = 0;

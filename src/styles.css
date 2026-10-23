@@ -363,12 +363,32 @@
   /* The drained arc eases rather than snapping, so a one-second tick
      reads as a sweep instead of a flicker. */
   .zx-clock-arc {
-    transition: stroke-dashoffset 1s linear, stroke 0.6s ease;
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.6s ease;
   }
 
+  /* The orbit is the one motion that never stops, so it is kept brisk: at a
+     twelve-hour countdown the digits barely move, and a slow dot would read as
+     a frozen panel. The dot also pulses, so its own spin is visible. */
   .zx-clock-orbit {
-    animation: zx-clock-orbit 9s linear infinite;
+    animation: zx-clock-orbit 4s linear infinite;
     transform-origin: center;
+  }
+
+  .zx-clock-orbit circle {
+    animation: zx-clock-orbit-pulse 1.6s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  @keyframes zx-clock-orbit-pulse {
+    0%,
+    100% {
+      r: 3.4;
+      opacity: 0.75;
+    }
+    50% {
+      r: 5;
+      opacity: 1;
+    }
   }
 
   @keyframes zx-clock-orbit {
@@ -386,12 +406,12 @@
   @keyframes zx-clock-halo {
     0%,
     100% {
-      opacity: 0.35;
-      transform: scale(1);
+      opacity: 0.3;
+      transform: scale(0.98);
     }
     50% {
-      opacity: 0.7;
-      transform: scale(1.06);
+      opacity: 0.85;
+      transform: scale(1.1);
     }
   }
 
@@ -409,6 +429,86 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  /* -- The countdown cells ------------------------------------------
+     Hours, minutes and seconds each sit in their own cell, and each cell
+     rolls to its next value rather than swapping it. That roll is the whole
+     point: a clock that turns reads as a clock, while a string that is
+     replaced reads as a page that reloaded. */
+  .zx-clock-cell {
+    position: relative;
+    overflow: hidden;
+    perspective: 320px;
+    box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 -10px 18px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Both the leaving and the arriving pair share one grid cell, so the cell
+     keeps the size of its digits while they cross over each other. */
+  .zx-flip {
+    display: grid;
+    place-items: center;
+    line-height: 1;
+  }
+
+  .zx-flip-out,
+  .zx-flip-in {
+    grid-area: 1 / 1;
+    display: grid;
+    place-items: center;
+    line-height: 1;
+    backface-visibility: hidden;
+  }
+
+  /* The outgoing pair tips away downward, as if the flap fell. */
+  .zx-flip-out {
+    animation: zx-flip-out 0.6s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+    transform-origin: 50% 100%;
+  }
+
+  @keyframes zx-flip-out {
+    from {
+      opacity: 1;
+      transform: rotateX(0deg);
+    }
+    to {
+      opacity: 0;
+      transform: rotateX(-92deg) translateY(6px);
+    }
+  }
+
+  /* The incoming pair rolls in from above and settles upright. */
+  .zx-flip-in {
+    animation: zx-flip-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transform-origin: 50% 0%;
+  }
+
+  @keyframes zx-flip-in {
+    from {
+      opacity: 0;
+      transform: rotateX(92deg) translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: rotateX(0deg);
+    }
+  }
+
+  /* The separators blink in step with the seconds, which ties the three cells
+     into one face. */
+  .zx-clock-colon {
+    animation: zx-clock-colon 1s steps(1, end) infinite;
+  }
+
+  @keyframes zx-clock-colon {
+    0%,
+    49% {
+      opacity: 1;
+    }
+    50%,
+    100% {
+      opacity: 0.25;
     }
   }
 
@@ -453,14 +553,23 @@
 
   @media (prefers-reduced-motion: reduce) {
     .zx-clock-orbit,
+    .zx-clock-orbit circle,
     .zx-clock-halo,
     .zx-clock-digit,
     .zx-clock-open,
-    .zx-clock-sheen::after {
+    .zx-clock-sheen::after,
+    .zx-flip-out,
+    .zx-flip-in,
+    .zx-clock-colon {
       animation: none;
     }
     .zx-clock-arc {
       transition: none;
+    }
+    /* With the roll disabled the two pairs would sit on top of each other, so
+       the outgoing one is simply not drawn. */
+    .zx-flip-out {
+      display: none;
     }
   }
 }

@@ -6,6 +6,7 @@ import { MAX_MEDIA_BODY_BYTES, MAX_MEDIA_PARTS } from "@/lib/providers/media";
 import { PROVIDER_SYSTEM_PROMPT } from "@/lib/providers/provider-contract";
 import { brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
 import { quotaResetStatus } from "@/lib/providers/quota.server";
+import { probeQuotaReset } from "@/lib/providers/quota-probe.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -91,6 +92,13 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
             // number a caller sees is the upstream's own, not a guess.
             freeTier: (() => {
               const reset = quotaResetStatus();
+              // The recorded reset is the upstream's *promise*; a probe is
+              // evidence. While a quota is spent, this asks the upstream
+              // whether it will serve again, so the panel can flip to open the
+              // moment that is true rather than waiting for the clock. It is
+              // paced and deduplicated, and a refused probe leaves the clock
+              // untouched, so it can only ever make the answer more accurate.
+              void probeQuotaReset();
               return {
                 available: !reset.spent,
                 ...(reset.spent
