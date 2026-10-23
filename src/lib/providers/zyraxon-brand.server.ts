@@ -501,7 +501,7 @@ export async function brandChatStream(
  *  gate sends them to debug the wrong system. */
 function brandFailureResponse(
   brand: Brand,
-  tried: Array<{ upstream: string; status: number; gate: boolean }>,
+  tried: Array<{ upstream: string; status: number; gate: boolean; detail?: string }>,
   gate: boolean,
 ): Response {
   const message = gate
@@ -511,9 +511,13 @@ function brandFailureResponse(
   return Response.json(
     {
       error: { message, type: gate ? "upstream_gate" : "provider_unavailable", model: brand.id },
-      tried: tried.map(({ upstream, status, gate: g }) => ({
+      tried: tried.map(({ upstream, status, gate: g, detail }) => ({
         upstream,
         status,
+        // The upstream's own words, trimmed. An operator cannot tell a rate
+        // limit from a retired model from a network fault without them, and a
+        // caller reading the failure deserves the same answer an operator gets.
+        ...(detail ? { detail: String(detail).slice(0, 200) } : {}),
         ...(g ? { gate: true } : {}),
       })),
     },
