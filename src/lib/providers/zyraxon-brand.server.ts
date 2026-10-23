@@ -21,6 +21,7 @@ import {
   pickUpstreamKey,
 } from "@/lib/builder/zen.server";
 import { egressFor, noteEgressLimited, releaseEgress } from "@/lib/providers/egress.server";
+import { quotaResetStatus } from "@/lib/providers/quota.server";
 import {
   streamRaw,
   streamWireRaw,
@@ -53,6 +54,7 @@ import {
   ZYRAXON_BRANDS,
   brandView,
   getBrand,
+  isUpstreamGate,
   measuredTtftMs,
   raceFor,
   rotateThrough,
@@ -344,38 +346,70 @@ export async function brandChatStream(
       const mediaNeed = need.size > 0;
       const rejectsDenial = (text: string) => mediaNeed && MEDIA_DENIAL.test(text);
       // One attempt, shared by every strategy below.
+      //
+      // A spent free tier is often momentary: the window rolls over, or the
+      // address that reported the limit is dropped and the next attempt leaves
+      // by another one. So a quota refusal is re-asked on the *same* model with
+      // the *same* session fingerprint several times before it is reported —
+      // the session is kept alive and only the request is stopped and sent
+      // again, which is what the upstream's own client does, and it is what
+      // turns a transient 429 into an answer instead of an error.
+      //
+      // Eight attempts, made back to back: a rolling window opens in seconds,
+      // so the re-ask must be fast enough to catch it. A turn that succeeds on
+      // any of them is served and the caller never learns a limit was hit.
+      // Only when every re-ask is refused does the turn surface the reset clock.
+      const quotaAttempts = Math.max(1, Number(process.env.ZYRAXON_QUOTA_ATTEMPTS || 8));
       const tryUpstream = async (
         upstream: string,
       ): Promise<
         { ok: true; value: Response } | { ok: false; status: number; detail: string }
       > => {
-        if (lane.attemptsLeft <= 0) {
-          return { ok: false as const, status: 503, detail: "lane attempt budget exhausted" };
+        let out: Response | { failed: any } = { failed: { detail: "not attempted" } };
+        for (let quotaTry = 1; quotaTry <= quotaAttempts; quotaTry++) {
+          if (lane.attemptsLeft <= 0) {
+            return { ok: false as const, status: 503, detail: "lane attempt budget exhausted" };
+          }
+          lane.attemptsLeft--;
+          out = stream
+            ? await useSend(
+                key,
+                upstream,
+                finalMessages,
+                budget,
+                brand.label,
+                lane.sessionId,
+                tools,
+                mediaNeed ? { reject: rejectsDenial } : undefined,
+              )
+            : await useComplete(
+                key,
+                upstream,
+                finalMessages,
+                budget,
+                brand.label,
+                lane.sessionId,
+                tools,
+                mediaNeed ? { reject: rejectsDenial } : undefined,
+              );
+          if (!("failed" in out)) return { ok: true as const, value: out as Response };
+          const why = String(out.failed?.detail ?? "");
+          // A credential gate is an account decision, not a momentary one: the
+          // same request will be refused every time, so re-asking it would only
+          // add latency before the same answer.
+          if (isUpstreamGate(why)) break;
+          if (!isQuotaFailure(why) || quotaTry >= quotaAttempts) break;
+          // The address that reported the limit is released here, so the re-ask
+          // below is free to leave by a different one when the deployment holds
+          // a pool. The pause is deliberately short: a rolling window opens in
+          // seconds, so the whole eight-attempt sequence must fit inside the
+          // caller's patience rather than backing off into a long wait. This is
+          // *not* the address cooldown — that is measured in minutes and would
+          // stop the very re-ask that recovers the turn.
+          releaseEgress(lane.sessionId);
+          await new Promise((r) => setTimeout(r, 150));
         }
-        lane.attemptsLeft--;
-        const out = stream
-          ? await useSend(
-              key,
-              upstream,
-              finalMessages,
-              budget,
-              brand.label,
-              lane.sessionId,
-              tools,
-              mediaNeed ? { reject: rejectsDenial } : undefined,
-            )
-          : await useComplete(
-              key,
-              upstream,
-              finalMessages,
-              budget,
-              brand.label,
-              lane.sessionId,
-              tools,
-              mediaNeed ? { reject: rejectsDenial } : undefined,
-            );
-        if (!("failed" in out)) return { ok: true as const, value: out as Response };
-        const detail = String(out.failed?.detail ?? "");
+        const detail = String((out as { failed?: any }).failed?.detail ?? "");
         // The refusal may be the *address* being over its limit rather than the
         // model or the account being unusable. Park this address so the rest of
         // the turn — and the turns that follow — leave by another one, which is
@@ -393,13 +427,13 @@ export async function brandChatStream(
         if (swapKey(detail)) {
           return {
             ok: false as const,
-            status: out.failed?.status ?? 502,
+            status: (out as { failed?: any }).failed?.status ?? 502,
             detail: `${detail} (key rotated)`,
           };
         }
         return {
           ok: false as const,
-          status: out.failed?.status ?? 502,
+          status: (out as { failed?: any }).failed?.status ?? 502,
           detail,
         };
       };
@@ -556,10 +590,29 @@ function brandFailureResponse(
   // for now — telling the caller "every model was unavailable" hides the one
   // fact that explains it and the one thing that helps: wait, or add a key.
   const quota = !gate && tried.length > 0 && (quotaHint || tried.every((t) => isQuotaFailure(t.detail)));
+  // The upstream's own reset clock, when it told us one. A quota refusal is not
+  // a guess: the `retry-after` it carried says exactly when the window rolls
+  // over, and publishing that is what lets a caller show a real countdown
+  // instead of a fixed "try again later". Only when no header was ever seen
+  // does the fallback apply.
+  const reset = quota ? quotaResetStatus() : { spent: false as const };
+  const retryAfterSeconds = reset.retryAfterSeconds ?? 60;
+  // State the reset in the units a person reads, not just seconds. "in 3h 20m"
+  // is an answer; "in 12000 seconds" is arithmetic the caller has to do. When
+  // the upstream never stated a clock, the fallback is still phrased as a
+  // duration so the message keeps the same shape either way.
+  const humanWait = (() => {
+    const total = Math.max(0, Math.ceil(retryAfterSeconds));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.ceil((total % 3600) / 60);
+    if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${total}s`;
+  })();
   const message = gate
     ? `${brand.label} could not be served: the upstream free tier refused this caller (FreeTierError). Set OPENCODE_ZEN_API_KEY, or call from a network the upstream free tier serves.`
     : quota
-      ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window. Retry in a few minutes, or set OPENCODE_ZEN_API_KEY for a keyed quota.`
+      ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window. It opens again in about ${humanWait} (around ${new Date(reset.resetAt ?? Date.now() + retryAfterSeconds * 1000).toUTCString()}). Set OPENCODE_ZEN_API_KEY for a keyed quota that does not wait.`
       : `${brand.label} could not be served right now — every model in its rotation was unavailable. Retrying in a moment usually works.`;
 
   return Response.json(
@@ -568,6 +621,11 @@ function brandFailureResponse(
         message,
         type: gate ? "upstream_gate" : quota ? "free_tier_quota" : "provider_unavailable",
         model: brand.id,
+        // When the free tier opens again, in the same shape the upstream states
+        // it: a countdown a client can tick down, and the absolute moment it
+        // lands on. Both are published because a countdown needs the seconds
+        // and a page that loads late needs the timestamp.
+        ...(quota ? { retryAfterSeconds, resetAt: reset.resetAt ?? new Date(Date.now() + retryAfterSeconds * 1000).toISOString() } : {}),
       },
       tried: tried.map(({ upstream, status, gate: g, detail }) => ({
         upstream,
@@ -583,7 +641,7 @@ function brandFailureResponse(
       status: gate ? 503 : quota ? 429 : 502,
       headers: {
         "Access-Control-Allow-Origin": "*",
-        ...(quota ? { "Retry-After": "60" } : {}),
+        ...(quota ? { "Retry-After": String(retryAfterSeconds) } : {}),
       },
     },
   );

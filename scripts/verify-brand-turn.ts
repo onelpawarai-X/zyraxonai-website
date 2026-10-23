@@ -63,6 +63,46 @@ const failUp = (upstream: string, status: number, detail: string) =>
   check("the response body carries no upstream name", !body.includes("big-pickle"), body);
 }
 
+// a quota refusal is re-asked on the same session, not a new one, and the
+// next user turn gets a fresh session of its own
+{
+  const seen: string[] = [];
+  const send = (async (_k: any, upstream: string, _m: any, _t: any, label: string, sid: string) => {
+    seen.push(sid);
+    // Refuse the first seven calls, serve the eighth: the re-ask must reach it
+    // without ever opening a second session.
+    if (seen.length <= 7) return failUp(upstream, 429, "FreeUsageLimitError: quota");
+    return new Response("ok:" + upstream, { headers: { "X-ZYRAXON-Model": label } });
+  }) as any;
+
+  const first = await brandChatStream(
+    "zyraxon-apex",
+    [{ role: "user", content: "hi" }],
+    undefined,
+    { send, resolve: resolveTo("zyraxon-apex", ["beam-free", "big-pickle"]) },
+  );
+  check("a quota re-ask is served on the eighth try", first.status === 200, first.status);
+  check("every re-ask used one session", new Set(seen).size === 1, Array.from(new Set(seen)).join(","));
+  const firstSession = seen[0];
+  await first.text();
+
+  // A second, separate user turn must not inherit that session: the retries are
+  // scoped to the turn that triggered them.
+  seen.length = 0;
+  const second = await brandChatStream(
+    "zyraxon-apex",
+    [{ role: "user", content: "again" }],
+    undefined,
+    { send, resolve: resolveTo("zyraxon-apex", ["beam-free", "big-pickle"]) },
+  );
+  await second.text();
+  check(
+    "a later turn opens a different session",
+    seen.length > 0 && seen.every((s) => s !== firstSession),
+    `${firstSession} then ${seen.join(",")}`,
+  );
+}
+
 // a credential gate stops the rotation instead of retrying every sibling
 {
   let calls = 0;

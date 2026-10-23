@@ -5,6 +5,7 @@ import { lanePool } from "@/lib/providers/lane-pool.server";
 import { MAX_MEDIA_BODY_BYTES, MAX_MEDIA_PARTS } from "@/lib/providers/media";
 import { PROVIDER_SYSTEM_PROMPT } from "@/lib/providers/provider-contract";
 import { brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
+import { quotaResetStatus } from "@/lib/providers/quota.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -84,6 +85,19 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               note: "Limits for the chat-completions endpoint. See the provider guide for media shapes and sizes.",
             },
             egress: egressStatus(),
+            // Whether the shared free tier is currently spent, and when it opens
+            // again. Published here so a page can show a real countdown without
+            // having to send a request just to be told "429" first — and so the
+            // number a caller sees is the upstream's own, not a guess.
+            freeTier: (() => {
+              const reset = quotaResetStatus();
+              return {
+                available: !reset.spent,
+                ...(reset.spent
+                  ? { retryAfterSeconds: reset.retryAfterSeconds, resetAt: reset.resetAt }
+                  : {}),
+              };
+            })(),
           },
           { headers: { ...CORS, "Cache-Control": "public, max-age=60" } },
         );

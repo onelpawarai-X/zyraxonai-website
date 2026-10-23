@@ -8,6 +8,7 @@ import { getProviderDetail } from "@/lib/providers/modelsdev.server";
 import { egressFetch, egressFor } from "@/lib/providers/egress.server";
 import { fitsModalities, type MediaKind } from "@/lib/providers/media";
 import { newSessionId } from "@/lib/providers/session-identity.server";
+import { noteQuotaReset, parseRetryAfter } from "@/lib/providers/quota.server";
 import ZYRAXON_SYSTEM_PROMPT from "./system-prompt.txt?raw";
 
 /** Upstream base. Overridable so a deployment can route the free pool through
@@ -513,6 +514,27 @@ export function sdkMessages(
   ] as any;
 }
 
+/** Read the upstream's own reset clock off a refusal and remember it.
+ *
+ *  The `retry-after` header on a 429 is the only honest answer to "when will
+ *  the free tier open again?", so it is captured here — once, at the one place
+ *  every upstream response passes through — rather than re-derived per caller.
+ *  A response that carries no such header changes nothing. */
+function noteRetryAfter(res: Response): void {
+  noteQuotaReset(parseRetryAfter(res.headers.get("retry-after")));
+}
+
+/** The same, for a failure the SDK threw rather than returned: it attaches the
+ *  upstream's response headers to the error, which is where a 429's
+ *  `retry-after` survives on the SDK paths. */
+function noteRetryAfterFromError(error: any): void {
+  const headers = error?.responseHeaders ?? error?.response?.headers;
+  if (!headers) return;
+  const value =
+    typeof headers.get === "function" ? headers.get("retry-after") : (headers["retry-after"] ?? headers["Retry-After"]);
+  noteQuotaReset(parseRetryAfter(value));
+}
+
 export function classify(error: any) {
   // The SDK attaches the upstream status to the thrown error; reading it beats
   // pattern-matching the message, which turned a definite 403 into a vague 502
@@ -879,6 +901,7 @@ export async function streamRaw(
         },
       });
     } catch (e) {
+      noteRetryAfterFromError(e);
       const c = classify(e);
       return { failed: { upstream, status: c.status, detail: c.detail } };
     }
@@ -1089,6 +1112,7 @@ export async function streamWireRaw(
       sessionId,
     });
     if (!res.ok || !res.body) {
+      noteRetryAfter(res);
       const detail = await res.text().catch(() => "");
       const c = classify(detail || `HTTP ${res.status}`);
       return { failed: { upstream, status: res.status || c.status, detail: c.detail } };
@@ -1471,6 +1495,7 @@ export async function completeWireRaw(
   try {
     const res = await zenFetch(ZEN_CHAT_URL, { method: "POST", headers, body, sessionId });
     if (!res.ok || !res.body) {
+      noteRetryAfter(res);
       const detail = await res.text().catch(() => "");
       const c = classify(detail || `HTTP ${res.status}`);
       return { failed: { upstream, status: res.status || c.status, detail: c.detail } };
@@ -1646,6 +1671,7 @@ export async function completeRaw(
         },
       });
     } catch (e) {
+      noteRetryAfterFromError(e);
       const c = classify(e);
       return { failed: { upstream, status: c.status, detail: c.detail } };
     }

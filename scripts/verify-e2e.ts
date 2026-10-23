@@ -211,8 +211,99 @@ try {
     );
     check("the brand is named", body.error.model === "zyraxon-apex");
     check("the message points at the quota and a way forward", /quota/i.test(body.error.message) && /OPENCODE_ZEN_API_KEY/.test(body.error.message));
-    check("a Retry-After is offered", res.headers.get("retry-after") === "60", String(res.headers.get("retry-after")));
+    // The upstream stated 300s in `retry-after`; that number — not a hardcoded
+    // placeholder — must be what the caller is told, in both the header a client
+    // reads and the body a page renders.
+    check("the upstream's own Retry-After is relayed", res.headers.get("retry-after") === "300", String(res.headers.get("retry-after")));
+    check("the body carries the same countdown", body.error.retryAfterSeconds === 300, body.error.retryAfterSeconds);
+    check("and an absolute moment to count down to", !Number.isNaN(Date.parse(String(body.error.resetAt))), body.error.resetAt);
     check("the upstream's own words are kept", /Free usage limit reached/.test(String(body.tried?.[0]?.detail ?? "")));
+    // A spent window is often momentary, so the same turn is re-asked a few
+    // times before it is refused — the caller should get an answer, not an
+    // error, when a re-ask would have worked.
+    const chatCalls = requests.filter((r) => r.url.endsWith("/chat/completions")).length;
+    check("the turn is re-asked before it is refused", chatCalls > 1, chatCalls);
+  }
+
+  // -----------------------------------------------------------------
+  // E2E-3c: a quota refusal that clears on the next call. The re-ask must
+  // turn it into an answer: the caller must never see the 429, because the
+  // window was open again by the time the same turn was sent a second time.
+  // -----------------------------------------------------------------
+  setScenario("quota-once");
+  {
+    requests.length = 0;
+    const res = await brandChatStream(
+      "zyraxon-apex",
+      [{ role: "user", content: "hi" }],
+      undefined,
+      { resolve: served("zyraxon-apex", ["beam-free", "big-pickle"]) },
+    );
+    const body = await drain(res);
+    check("E2E a transient quota still answers 200", res.status === 200, res.status);
+    check("the answer is the served one, not an error", body.includes("Served after the quota cleared."), body.slice(0, 160));
+    check("the caller never sees the 429", !/Free usage limit reached/.test(body), body.slice(0, 200));
+    // What matters is that the refusal was *re-asked*, not merely rotated past:
+    // rotating hides the quota by moving to a model on the same spent account,
+    // while a re-ask is what actually recovers a window that has rolled over.
+    const asked = requests
+      .filter((r) => r.url.endsWith("/chat/completions"))
+      .map((r) => JSON.parse(r.body).model);
+    check("the refused model was asked again", asked.filter((m) => m === "beam-free").length >= 2, asked.join(","));
+    check("and that re-ask is what answered", body.includes("Served after the quota cleared."));
+  }
+
+  // -----------------------------------------------------------------
+  // E2E-3d: the boundary of the re-ask. The upstream refuses seven calls and
+  // serves the eighth, so the turn must still come back as an answer — the
+  // session is kept and only the request is re-sent, and the eighth is the
+  // last one available. A ninth refusal is what would surface the clock.
+  // -----------------------------------------------------------------
+  setScenario("quota-eight");
+  {
+    requests.length = 0;
+    const res = await brandChatStream(
+      "zyraxon-apex",
+      [{ role: "user", content: "hi" }],
+      undefined,
+      { resolve: served("zyraxon-apex", ["beam-free", "big-pickle"]) },
+    );
+    const body = await drain(res);
+    check("E2E the eighth attempt is served", res.status === 200, res.status);
+    check("the boundary answer is the served one", body.includes("Served on the eighth attempt."), body.slice(0, 160));
+    check("no refusal reaches the caller", !/Free usage limit reached/.test(body), body.slice(0, 200));
+    const asked = requests
+      .filter((r) => r.url.endsWith("/chat/completions"))
+      .map((r) => JSON.parse(r.body).model);
+    check("the same model was re-asked, not rotated away", asked.filter((m) => m === "beam-free").length >= 8, asked.join(","));
+  }
+
+  // -----------------------------------------------------------------
+  // E2E-3e: every re-ask refused. The turn has now spent its eight attempts,
+  // so the caller gets the reset clock — stated in the units a person reads,
+  // as an absolute moment, and as a header — and never a bare "unavailable".
+  // -----------------------------------------------------------------
+  setScenario("quota-all");
+  {
+    requests.length = 0;
+    const res = await brandChatStream(
+      "zyraxon-apex",
+      [{ role: "user", content: "hi" }],
+      undefined,
+      { resolve: served("zyraxon-apex", ["beam-free", "big-pickle"]) },
+    );
+    const body = await res.json();
+    const asked = requests
+      .filter((r) => r.url.endsWith("/chat/completions"))
+      .map((r) => JSON.parse(r.body).model);
+    check("E2E a fully refused turn still answers 429", res.status === 429, res.status);
+    check("the re-ask stopped at eight", asked.filter((m) => m === "beam-free").length <= 8, asked.join(","));
+    check("the reset clock is the upstream's own 300s", body.error.retryAfterSeconds === 300, body.error.retryAfterSeconds);
+    check("the header states the same clock", res.headers.get("retry-after") === "300", String(res.headers.get("retry-after")));
+    check("the message says when it opens in human units", /opens again in about 5m/.test(body.error.message), body.error.message);
+    check("the message names the absolute moment", /GMT/.test(body.error.message), body.error.message);
+    check("the message offers a way that does not wait", /OPENCODE_ZEN_API_KEY/.test(body.error.message));
+    check("and it is not reported as an outage", body.error.type === "free_tier_quota", body.error.type);
   }
   // -----------------------------------------------------------------
   // E2E-4: an audio turn has no AI-SDK part, so it must go out on the raw

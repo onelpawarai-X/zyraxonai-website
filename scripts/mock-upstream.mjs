@@ -9,8 +9,13 @@ export const requests = [];
 // A single mock instance serves every scenario by switching mutable state, so
 // the transport can be pointed at one fixed base URL for the whole run.
 let scenario = "ok";
+// Counts calls per model for the "quota-once" scenario, so the mock can refuse
+// a model's first call and serve its next. Reset when a scenario is chosen, so
+// each test starts from a clean slate.
+const quotaOnceSeen = {};
 export function setScenario(s) {
   scenario = s;
+  for (const k of Object.keys(quotaOnceSeen)) delete quotaOnceSeen[k];
 }
 
 export function startMock({ port = 0 } = {}) {
@@ -82,13 +87,50 @@ function gate(req, res, raw) {
     // Every model is valid but the account's free window is spent: the upstream
     // answers 429 with its own words. This is not an outage and must not be
     // reported as one — the caller needs to know the pool is intact and the
-    // quota is what ran out.
+    // quota is what ran out. The real upstream states its reset clock in
+    // `retry-after`; the mock does too, so the test can prove that number
+    // reaches the caller instead of a hardcoded placeholder.
+    res.setHeader("Retry-After", "300");
     return json(res, 429, {
       error: {
         message: "Free usage limit reached. Subscribe to OpenCode Go to keep going: https://opencode.ai/go",
         type: "FreeUsageLimitError",
       },
     });
+  }
+  if (scenario === "quota-eight") {
+    // Refuses a model's first seven calls and serves the eighth, which is the
+    // boundary the eight-attempt re-ask must reach. The session is never
+    // dropped; only the request is stopped and sent again.
+    const m = parsed?.model;
+    quotaOnceSeen[m] = (quotaOnceSeen[m] || 0) + 1;
+    if (quotaOnceSeen[m] <= 7) {
+      res.setHeader("Retry-After", "900");
+      return json(res, 429, {
+        error: {
+          message: "Free usage limit reached. Subscribe to OpenCode Go to keep going: https://opencode.ai/go",
+          type: "FreeUsageLimitError",
+        },
+      });
+    }
+    return streamText(res, parsed, "Served on the eighth attempt.");
+  }
+  if (scenario === "quota-once") {
+    // A transient refusal: the first call for a model is refused, the next is
+    // served. This is the case the re-ask exists for — the caller must end up
+    // with an answer and never see the 429.
+    const m = parsed?.model;
+    quotaOnceSeen[m] = (quotaOnceSeen[m] || 0) + 1;
+    if (quotaOnceSeen[m] === 1) {
+      res.setHeader("Retry-After", "2");
+      return json(res, 429, {
+        error: {
+          message: "Free usage limit reached. Subscribe to OpenCode Go to keep going: https://opencode.ai/go",
+          type: "FreeUsageLimitError",
+        },
+      });
+    }
+    return streamText(res, parsed, "Served after the quota cleared.");
   }
   if (scenario === "media-denial") {
     // A model that never received the media still answers 200 with a refusal.
