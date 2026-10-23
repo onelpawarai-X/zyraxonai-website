@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 import { AppMarquee } from "@/components/site/AppMarquee";
 import { Icon } from "@/components/site/Icon";
+import { FreeTierClock } from "@/components/site/FreeTierClock";
+import { useFreeTier } from "@/hooks/use-free-tier";
 import { ButtonAnchor, ButtonLink, Card, Divider, Section, Tag } from "@/components/site/ui";
 import {
   COMPARE_COLS,
@@ -126,6 +128,9 @@ function HomePage() {
 }
 
 function Hero() {
+  // One shared source for the reset clock, so the homepage and the provider
+  // page can never disagree about when the pool opens.
+  const { freeTier } = useFreeTier();
   return (
     <section className="relative overflow-hidden px-6 pb-10 pt-12 sm:px-10 sm:pt-16">
       <div className="pointer-events-none absolute inset-0 zx-grid-lines opacity-[0.35]" />
@@ -182,8 +187,16 @@ function Hero() {
           </div>
         </div>
 
-        <div className="zx-float">
+        <div className="zx-float space-y-4">
           <Terminal />
+          {/* The free-tier reset clock sits in the hero's right column, beside
+              the copy that promises the models are free. "When will this work
+              again?" is the first question a free-tier visitor has, and the
+              answer belongs next to the claim it qualifies — not buried on a
+              second page. It is shown in both states: an open pool says so in
+              green, which is the proof that the free tier is live, and a spent
+              one counts down to the moment it opens. */}
+          {freeTier && <FreeTierClock status={freeTier} compact />}
         </div>
       </div>
     </section>

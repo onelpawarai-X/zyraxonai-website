@@ -36,12 +36,28 @@ type QuotaReset = { until: number; seconds: number; at: number };
 
 let lastReset: QuotaReset | undefined;
 
+/** The longest window the upstream has ever stated.
+ *
+ *  A countdown needs a ceiling to be meaningful: "4m 12s left" says nothing
+ *  about whether that is most of the wait or the last moments of it. The
+ *  upstream states the window per refusal, and the largest it has ever stated
+ *  is the best available bound on a full window — so the page can draw how much
+ *  of the wait has already passed instead of a bare number. */
+let longestSeconds = 0;
+
 /** Record the reset clock carried by a quota refusal. A later reset replaces an
  *  earlier one — the upstream's window is the same for every caller, so the
  *  freshest reading is the most accurate. */
 export function noteQuotaReset(retryAfterSeconds: number | undefined, now = Date.now()): void {
   if (!retryAfterSeconds || retryAfterSeconds <= 0) return;
-  lastReset = { until: now + retryAfterSeconds * 1000, seconds: Math.ceil(retryAfterSeconds), at: now };
+  const seconds = Math.ceil(retryAfterSeconds);
+  if (seconds > longestSeconds) longestSeconds = seconds;
+  lastReset = { until: now + seconds * 1000, seconds, at: now };
+}
+
+/** The largest window seen, or undefined when none has been recorded. */
+export function quotaWindowCeiling(): number | undefined {
+  return longestSeconds > 0 ? longestSeconds : undefined;
 }
 
 /** How long the free tier has left, or undefined when it is not known to be
@@ -51,6 +67,8 @@ export function quotaResetStatus(now = Date.now()): {
   spent: boolean;
   retryAfterSeconds?: number;
   resetAt?: string;
+  /** The largest window ever stated, so a client can draw progress. */
+  windowSeconds?: number;
 } {
   if (!lastReset) return { spent: false };
   const remainingMs = lastReset.until - now;
@@ -59,10 +77,12 @@ export function quotaResetStatus(now = Date.now()): {
     spent: true,
     retryAfterSeconds: Math.max(1, Math.ceil(remainingMs / 1000)),
     resetAt: new Date(lastReset.until).toISOString(),
+    ...(longestSeconds > 0 ? { windowSeconds: longestSeconds } : {}),
   };
 }
 
 /** Test seam: forget the recorded reset. */
 export function resetQuotaClock(): void {
   lastReset = undefined;
+  longestSeconds = 0;
 }

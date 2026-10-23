@@ -349,6 +349,120 @@
       linear-gradient(to bottom, var(--glass-stroke) 1px, transparent 1px);
     background-size: 56px 56px;
   }
+
+  /* -- The free-tier reset clock ------------------------------------
+     A ring that drains as the window closes, a dot that orbits it, and
+     digits that change without a jump. The motion carries the meaning:
+     a counter that visibly moves is read as a live clock rather than a
+     static "try again later". */
+  .zx-clock-ring {
+    transform: rotate(-90deg);
+    transform-origin: center;
+  }
+
+  /* The drained arc eases rather than snapping, so a one-second tick
+     reads as a sweep instead of a flicker. */
+  .zx-clock-arc {
+    transition: stroke-dashoffset 1s linear, stroke 0.6s ease;
+  }
+
+  .zx-clock-orbit {
+    animation: zx-clock-orbit 9s linear infinite;
+    transform-origin: center;
+  }
+
+  @keyframes zx-clock-orbit {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* A slow breathing halo behind the ring, so the panel reads as alive
+     even when the digits are not visibly changing. */
+  .zx-clock-halo {
+    animation: zx-clock-halo 4.5s ease-in-out infinite;
+  }
+
+  @keyframes zx-clock-halo {
+    0%,
+    100% {
+      opacity: 0.35;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.06);
+    }
+  }
+
+  /* Each digit lifts into place on change, which is what makes the
+     countdown feel like it is ticking rather than being re-rendered. */
+  .zx-clock-digit {
+    animation: zx-clock-digit 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes zx-clock-digit {
+    from {
+      opacity: 0.35;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* The open state: a soft emerald bloom, no countdown to show. */
+  .zx-clock-open {
+    animation: zx-clock-open 3.2s ease-in-out infinite;
+  }
+
+  @keyframes zx-clock-open {
+    0%,
+    100% {
+      box-shadow: inset 0 1px 0 var(--glass-edge), 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+    50% {
+      box-shadow: inset 0 1px 0 var(--glass-edge), 0 0 26px -4px rgba(16, 185, 129, 0.45);
+    }
+  }
+
+  /* A sheen that sweeps the panel on a loop, marking it as live data. */
+  .zx-clock-sheen::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+    transform: skewX(-18deg);
+    animation: zx-clock-sheen 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes zx-clock-sheen {
+    0%,
+    60% {
+      left: -40%;
+    }
+    100% {
+      left: 140%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .zx-clock-orbit,
+    .zx-clock-halo,
+    .zx-clock-digit,
+    .zx-clock-open,
+    .zx-clock-sheen::after {
+      animation: none;
+    }
+    .zx-clock-arc {
+      transition: none;
+    }
+  }
 }
 
 /* Scrollbars follow the theme instead of the OS default. */

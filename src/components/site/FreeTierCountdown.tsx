@@ -12,6 +12,8 @@ export type FreeTierStatus = {
   available: boolean;
   retryAfterSeconds?: number;
   resetAt?: string;
+  /** The largest window the upstream has stated, for drawing progress. */
+  windowSeconds?: number;
 };
 
 function split(seconds: number): { h: number; m: number; s: number } {

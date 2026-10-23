@@ -325,24 +325,41 @@ export function PageHeader({
   label,
   title,
   description,
+  aside,
   children,
 }: {
   label?: string;
   title: string;
   description?: string;
+  /** Live state that belongs beside the title rather than under it — a
+   *  countdown, a status. It sits in its own column on wide screens and drops
+   *  below the copy on narrow ones, so the prose is never squeezed to make
+   *  room for it. */
+  aside?: ReactNode;
   children?: ReactNode;
 }) {
   return (
     <div className="mb-8">
-      {label && <SectionLabel>{label}</SectionLabel>}
-      <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-        {title}
-      </h1>
-      {description && (
-        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-          {description}
-        </p>
-      )}
+      <div
+        className={
+          aside
+            ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
+            : undefined
+        }
+      >
+        <div>
+          {label && <SectionLabel>{label}</SectionLabel>}
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            {title}
+          </h1>
+          {description && (
+            <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          )}
+        </div>
+        {aside && <div className="w-full lg:w-[340px] lg:pt-1">{aside}</div>}
+      </div>
       {children}
     </div>
   );

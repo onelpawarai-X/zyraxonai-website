@@ -94,7 +94,13 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               return {
                 available: !reset.spent,
                 ...(reset.spent
-                  ? { retryAfterSeconds: reset.retryAfterSeconds, resetAt: reset.resetAt }
+                  ? {
+                      retryAfterSeconds: reset.retryAfterSeconds,
+                      resetAt: reset.resetAt,
+                      // The ceiling, so a client can draw how much of the wait
+                      // is behind it rather than a bare number with no scale.
+                      windowSeconds: reset.windowSeconds,
+                    }
                   : {}),
               };
             })(),

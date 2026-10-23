@@ -6,7 +6,8 @@ import { ProviderIntegrations } from "@/components/site/ProviderIntegrations";
 import { ProviderEndpointCatalogue, ProviderFunctions } from "@/components/site/ProviderRotator";
 import { ProviderHighlights } from "@/components/site/ProviderHighlights";
 import { Button, ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
-import { FreeTierCountdown, type FreeTierStatus } from "@/components/site/FreeTierCountdown";
+import { FreeTierClock } from "@/components/site/FreeTierClock";
+import { useFreeTier } from "@/hooks/use-free-tier";
 import { ZYRAXON_BRANDS } from "@/lib/providers/zyraxon-brands";
 import { ENDPOINT_STATS } from "@/lib/providers/endpoints";
 
@@ -225,7 +226,9 @@ const stream = await client.chat.completions.create({
 function ProvidersPage() {
   const [live, setLive] = useState<Record<string, Live>>({});
   const [checked, setChecked] = useState(false);
-  const [freeTier, setFreeTier] = useState<FreeTierStatus | undefined>(undefined);
+  // The reset clock is shared with the homepage through one hook, so the two
+  // surfaces can never disagree about when the pool opens.
+  const { freeTier } = useFreeTier();
 
   useEffect(() => {
     let alive = true;
@@ -236,7 +239,6 @@ function ProvidersPage() {
         const map: Record<string, Live> = {};
         for (const m of d.models as Live[]) map[m.id] = m;
         setLive(map);
-        if (d.freeTier) setFreeTier(d.freeTier as FreeTierStatus);
       })
       .catch(() => {})
       .finally(() => alive && setChecked(true));
@@ -251,6 +253,7 @@ function ProvidersPage() {
         label="Provider"
         title="Ten models. One endpoint. Yours."
         description={`ZYRAXON serves its own line of ten branded models over a single OpenAI-compatible API, and rotates the pool behind those names so your code never has to change when an upstream model does. Chat and streaming, the model catalogue, text to speech and speech to text — ${ENDPOINT_STATS.total} endpoints, no key to buy, and every one of them described in full on this page.`}
+        aside={freeTier ? <FreeTierClock status={freeTier} /> : undefined}
       >
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <ButtonAnchor href="#functions" variant="primary" external={false}>
@@ -342,12 +345,6 @@ function ProvidersPage() {
             Live status is momentarily unavailable. The models above are still callable — status is
             informational only.
           </p>
-        )}
-
-        {freeTier && !freeTier.available && (
-          <div className="mt-5">
-            <FreeTierCountdown status={freeTier} />
-          </div>
         )}
 
         <Card className="mt-5 p-5">
