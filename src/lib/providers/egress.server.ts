@@ -96,6 +96,22 @@ export function noteGatewayOutcome(url: string, refused: boolean): void {
   }
 }
 
+/** Record a refusal reported by a caller, applying the rule for whichever kind
+ *  of egress the address is.
+ *
+ *  Callers must report through this rather than `noteEgressLimited` directly.
+ *  A socket proxy entry *is* one address, so parking it on a refusal is right.
+ *  A gateway is a pool behind one URL, so the same call parks the whole
+ *  rotation on a single spent address — which is what happened in production,
+ *  where the turn loop parked the worker for ten minutes after one 429 and the
+ *  next twelve turns all left by that same parked URL. Routing the decision
+ *  through here keeps the two behaviours from drifting apart again. */
+export function noteRefusal(url: string): void {
+  if (!url) return;
+  if (isGatewayEgress(url)) noteGatewayOutcome(url, true);
+  else noteEgressLimited(url);
+}
+
 export function egressLimited(url: string): boolean {
   const until = egressCooldownUntil.get(url);
   return typeof until === "number" && until > Date.now();

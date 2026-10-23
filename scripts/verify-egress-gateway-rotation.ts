@@ -9,7 +9,7 @@
  *  Run: npx tsx scripts/verify-egress-gateway-rotation.ts
  */
 process.env.ZYRAXON_EGRESS_URLS = "gw+https://gw.example/";
-const { egressFor, egressLimited, noteGatewayOutcome } = await import(
+const { egressFor, egressLimited, noteGatewayOutcome, noteRefusal } = await import(
   "../src/lib/providers/egress.server"
 );
 
@@ -45,6 +45,19 @@ const GW = "gw+https://gw.example/";
   const gw3 = "gw+https://gw3.example/";
   for (let i = 0; i < 25; i++) noteGatewayOutcome(gw3, true);
   check("a sustained run of refusals does park the gateway", egressLimited(gw3));
+}
+
+// ── the turn loop must report through noteRefusal, not park a gateway ───────
+// This is the production bug: the turn loop called the socket-proxy parking
+// function directly, so one 429 through the gateway parked it for ten minutes
+// and every following turn left by the parked URL.
+{
+  const gw4 = "gw+https://gw4.example/";
+  for (let i = 0; i < 5; i++) noteRefusal(gw4);
+  check("a turn-loop refusal does not park a gateway", !egressLimited(gw4));
+  const socket = "http://sock:8080";
+  noteRefusal(socket);
+  check("but a socket proxy is still parked on its first refusal", egressLimited(socket));
 }
 
 console.log(failures ? `\n${failures} CHECK(S) FAILED` : "\nALL GATEWAY ROTATION CHECKS PASSED");

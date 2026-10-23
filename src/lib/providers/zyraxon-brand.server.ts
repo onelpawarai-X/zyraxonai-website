@@ -20,7 +20,7 @@ import {
   noteKeyLimited,
   pickUpstreamKey,
 } from "@/lib/builder/zen.server";
-import { egressFor, noteEgressLimited, releaseEgress } from "@/lib/providers/egress.server";
+import { egressFor, noteRefusal, releaseEgress } from "@/lib/providers/egress.server";
 import { clearQuotaReset, quotaResetStatus } from "@/lib/providers/quota.server";
 import {
   streamRaw,
@@ -424,7 +424,9 @@ export async function brandChatStream(
         // what keeps one limited address from failing everyone routed to it.
         if (isQuotaFailure(detail) || /429|rate.?limit/i.test(detail)) {
           const proxy = egressFor(lane.sessionId);
-          if (proxy) noteEgressLimited(proxy);
+          // A socket proxy is one address and is parked; a gateway is a pool and
+          // only collects a strike, so its rotation survives this refusal.
+          if (proxy) noteRefusal(proxy);
           // Drop the held address too: the next attempt on this lane must be
           // free to take a fresh one instead of reusing the limited address.
           releaseEgress(lane.sessionId);
