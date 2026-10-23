@@ -32,7 +32,7 @@ import {
   type Pcm,
 } from "../src/lib/stt/audio";
 import { decodeFlac, decodeMp3, decodeOgg, decodeWebm } from "../src/lib/stt/decode";
-import { MP4_REFUSAL, decodeContainer } from "../src/lib/stt/ingest";
+import { MP4_REFUSAL, audioChunks, canStream, decodeContainer, toInput } from "../src/lib/stt/ingest";
 import { pcmInput, recognize, recognizeMany } from "../src/lib/stt/engine";
 
 let failures = 0;
@@ -488,6 +488,75 @@ if (realPcm && sampleIsSpeech) {
   }
 } else if (realPcm) {
   console.log("SKIP  engine transcription checks (no spoken sample; espeak-ng is not installed)");
+}
+
+// ── streaming windows for very large recordings ──────────────────────────────
+// A hundred-megabyte upload is decoded window by window rather than into one
+// buffer, so the peak memory is a function of the window length, not the file.
+// What has to hold is that the windows carry the same audio, in order, as the
+// whole-file decode would — otherwise a long recording transcribes shuffled or
+// short.
+if (existsSync(mp3Path)) {
+  const bytes = new Uint8Array(readFileSync(mp3Path));
+  check("an MP3 can be streamed", canStream("mp3"));
+  check("WAV can be streamed", canStream("wav"));
+  check("bare PCM can be streamed", canStream("pcm"));
+  check("M4A cannot be streamed, and is refused instead", !canStream("mp4"));
+
+  const whole = toInput(await decodeContainer(bytes, "mp3")).pcm;
+  const windows: number[] = [];
+  let streamed = 0;
+  for await (const w of audioChunks(bytes, "mp3")) {
+    windows.push(w.samples.length);
+    streamed += w.samples.length;
+    check("a streamed window is at 16 kHz", w.sampleRate === 16000);
+  }
+  check("streaming an MP3 yields at least one window", windows.length > 0, `${windows.length} windows`);
+  check(
+    "the streamed windows carry the whole recording",
+    Math.abs(streamed - whole.samples.length) <= 64,
+    `${streamed} vs ${whole.samples.length} samples`,
+  );
+  check(
+    "only the final window is short",
+    windows.slice(0, -1).every((n) => n > 16000 * 20),
+    windows.join(","),
+  );
+
+  // A clip long enough to need more than one window, so the packing across
+  // decoder slice boundaries is exercised rather than a single lucky window.
+  if (haveFfmpeg) {
+    const dir = mkdtempSync(join(tmpdir(), "zyraxon-stt-long-"));
+    const longPath = join(dir, "long.mp3");
+    execFileSync("ffmpeg", [
+      "-y", "-loglevel", "error",
+      "-f", "lavfi", "-i", "sine=frequency=440:duration=60",
+      "-ac", "2", "-ar", "44100", "-b:a", "128k", longPath,
+    ]);
+    const longBytes = new Uint8Array(readFileSync(longPath));
+    const longWhole = toInput(await decodeContainer(longBytes, "mp3")).pcm;
+    const longWindows: number[] = [];
+    let longStreamed = 0;
+    for await (const w of audioChunks(longBytes, "mp3")) {
+      longWindows.push(w.samples.length);
+      longStreamed += w.samples.length;
+    }
+    check(
+      "a 60 s MP3 streams as several windows",
+      longWindows.length >= 2,
+      `${longWindows.length} windows`,
+    );
+    check(
+      "the streamed windows carry the whole 60 s recording",
+      Math.abs(longStreamed - longWhole.samples.length) <= 64,
+      `${longStreamed} vs ${longWhole.samples.length} samples`,
+    );
+    check(
+      "every window but the last is a full 25 s",
+      longWindows.slice(0, -1).every((n) => n === 16000 * 25),
+      longWindows.join(","),
+    );
+  }
 }
 
 console.log(

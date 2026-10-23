@@ -13,13 +13,24 @@
 import {
   isSilent,
   parseWav,
+  readWavHeader,
   resampleTo16k,
   sniff,
   secondsOf,
+  wavChunkToMono,
+  TARGET_RATE,
   type Container,
   type Pcm,
 } from "./audio";
-import { decodeAac, decodeFlac, decodeMp3, decodeOgg, decodeVorbis, decodeWebm } from "./decode";
+import {
+  decodeAac,
+  decodeFlac,
+  decodeMp3,
+  decodeOgg,
+  decodeVorbis,
+  decodeWebm,
+  streamDecoderFor,
+} from "./decode";
 import type { AudioInput } from "./engine";
 
 export type Decoded = {
@@ -100,6 +111,162 @@ function fromPcm(pcm: Pcm, container: Container): Decoded {
     seconds: secondsOf(pcm),
     silent: pcm.samples.length === 0 ? true : isSilent(pcm),
   };
+}
+
+/** Seconds of audio in a window the recogniser is sent. The service truncates
+ *  somewhere past a minute, so a longer recording is cut here. */
+const WINDOW_SECONDS = 25;
+
+/** The audio of one window, already mono and resampled to the rate the
+ *  recogniser is fed. */
+export type Window = { samples: Int16Array; sampleRate: number };
+
+/** Where the audio starts and how big each sample is, for a container whose
+ *  data can be walked without decoding it — a WAV, or bare PCM. Null for every
+ *  format that needs a codec. */
+type PcmLayout = { dataOffset: number; dataSize: number; channels: number; sampleRate: number };
+
+function pcmLayout(bytes: Uint8Array, container: Container, declared: string): PcmLayout | null {
+  if (container === "wav") {
+    const header = readWavHeader(bytes);
+    // 16-bit is the only depth the streaming reader handles; anything else goes
+    // through the whole-file parser, which is fine for the small files those
+    // depths come in.
+    if (!header || header.bits !== 16 || header.format === 3) return null;
+    return {
+      dataOffset: header.dataOffset,
+      dataSize: Math.min(header.dataSize, bytes.length - header.dataOffset),
+      channels: header.channels,
+      sampleRate: header.sampleRate,
+    };
+  }
+  if (container === "pcm") {
+    const match = /rate\s*=\s*(\d+)/i.exec(declared);
+    return {
+      dataOffset: 0,
+      dataSize: bytes.length,
+      channels: 1,
+      sampleRate: match ? Number(match[1]) : 16000,
+    };
+  }
+  return null;
+}
+
+/** The audio of `bytes` as a series of ~`WINDOW_SECONDS` windows.
+ *
+ *  This is what makes a very large recording work. Decoding the whole file and
+ *  then slicing it holds the entire recording as PCM — a hundred-megabyte MP3 is
+ *  well over an hour, which is hundreds of megabytes of samples — and the Worker
+ *  heap is gone long before the first window is sent. Producing windows lazily
+ *  means one window is live at a time, so the peak is a function of the window
+ *  length rather than the recording's.
+ *
+ *  WAV and raw PCM need no codec, so their data is read in slices directly;
+ *  everything else is decoded by the streaming decoder for its container. */
+export async function* audioChunks(
+  bytes: Uint8Array,
+  container: Container,
+  declared = "",
+): AsyncGenerator<Window> {
+  const layout = pcmLayout(bytes, container, declared);
+  if (layout) {
+    yield* pcmWindows(bytes, layout);
+    return;
+  }
+
+  const decode = streamDecoderFor(container);
+  if (!decode) {
+    // FLAC has a streaming decoder, so this only covers a container the sniffer
+    // named but no decoder knows — refused rather than decoded wrongly.
+    throw new Error(`${container} cannot be streamed`);
+  }
+
+  // A decoder hands back slices whose size it chooses, not ours, so slices are
+  // packed into windows until a window is full and only then resampled and
+  // yielded. Resampling per window rather than per slice keeps the sample count
+  // exact at the boundaries.
+  // The decoder's own rate, not the recogniser's: the slices are packed while
+  // still at the source rate, so a window is `WINDOW_SECONDS` of source audio
+  // and only then resampled. Sizing the window in target samples here would
+  // make it a fraction of a window for any rate above 16 kHz.
+  let rate = 0;
+  let perWindow = 0;
+  let carried: Int16Array[] = [];
+  let held = 0;
+  let tail: Int16Array = new Int16Array(0);
+
+  const pack = (mono: Int16Array): void => {
+    if (tail.length) {
+      const joined = new Int16Array(tail.length + mono.length);
+      joined.set(tail, 0);
+      joined.set(mono, tail.length);
+      mono = joined;
+      tail = new Int16Array(0);
+    }
+    let at = 0;
+    while (at + perWindow <= mono.length) {
+      carried.push(mono.subarray(at, at + perWindow));
+      held += perWindow;
+      at += perWindow;
+    }
+    if (at < mono.length) tail = mono.subarray(at);
+  };
+
+  for await (const chunk of decode(bytes)) {
+    if (!rate) {
+      rate = chunk.sampleRate;
+      perWindow = WINDOW_SECONDS * rate;
+    }
+    pack(chunk.samples);
+    if (held >= perWindow) {
+      yield { samples: resampleTo16k({ samples: joinParts(carried, held), sampleRate: rate }).samples, sampleRate: TARGET_RATE };
+      carried = [];
+      held = 0;
+    }
+  }
+  // Whatever is left: the carried windows and the sub-window tail.
+  if (tail.length) {
+    carried.push(tail);
+    held += tail.length;
+  }
+  if (held) {
+    yield { samples: resampleTo16k({ samples: joinParts(carried, held), sampleRate: rate }).samples, sampleRate: TARGET_RATE };
+  }
+}
+
+/** Windows straight out of a headerless or WAV buffer, with no codec involved. */
+function* pcmWindows(bytes: Uint8Array, layout: PcmLayout): Generator<Window> {
+  const bytesPerFrame = layout.channels * 2;
+  const perWindow = WINDOW_SECONDS * layout.sampleRate;
+  const windowBytes = perWindow * bytesPerFrame;
+  const end = Math.min(bytes.length, layout.dataOffset + layout.dataSize);
+  // A stride that is a whole number of frames, so a window never splits one.
+  const stride = Math.floor(windowBytes / bytesPerFrame) * bytesPerFrame || bytesPerFrame;
+
+  for (let at = layout.dataOffset; at < end; at += stride) {
+    const slice = bytes.subarray(at, Math.min(end, at + stride));
+    const mono = wavChunkToMono(slice, layout.channels);
+    yield { samples: resampleTo16k({ samples: mono, sampleRate: layout.sampleRate }).samples, sampleRate: TARGET_RATE };
+  }
+}
+
+function joinParts(parts: Int16Array[], total: number): Int16Array {
+  if (parts.length === 1) return parts[0]!;
+  const out = new Int16Array(total);
+  let at = 0;
+  for (const part of parts) {
+    out.set(part, at);
+    at += part.length;
+  }
+  return out;
+}
+
+/** True when this container's audio can be produced window by window without
+ *  holding the whole recording. WAV and bare PCM need no codec, and every other
+ *  decodable container has a streaming decoder. */
+export function canStream(container: Container): boolean {
+  if (container === "wav" || container === "pcm") return true;
+  return streamDecoderFor(container) !== null;
 }
 
 /** Resample a decoded PCM buffer to the rate the recogniser is fed. */

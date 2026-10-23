@@ -146,8 +146,10 @@ export async function decodeAac(bytes: Uint8Array): Promise<Pcm> {
  *  Every library here exposes this shape; `decodeFile` is just this loop with a
  *  single, whole-stream iteration, which is what runs the heap out. */
 type SliceDecoder = {
-  decode(data: Uint8Array): Promise<DecodedSlice>;
-  flush(): Promise<DecodedSlice>;
+  /** mpg123 decodes synchronously; the others return a promise. */
+  decode(data: Uint8Array): Promise<DecodedSlice> | DecodedSlice;
+  /** Absent on mpg123, which emits nothing for a partial trailing frame. */
+  flush?(): Promise<DecodedSlice>;
 };
 
 /** Decode a whole buffer through a decoder's incremental API, one slice at a
@@ -161,8 +163,8 @@ async function decodeInSlices(
   for (let at = 0; at < bytes.length; at += SLICE_BYTES) {
     builder.push(await decoder.decode(bytes.subarray(at, at + SLICE_BYTES)));
   }
-  // Whatever the last slice left mid-frame.
-  builder.push(await decoder.flush());
+  // Whatever the last slice left mid-frame, when the decoder holds any.
+  if (decoder.flush) builder.push(await decoder.flush());
   return builder.finish(emptyMessage);
 }
 
@@ -262,6 +264,155 @@ function floatsToInt16(channels: Float32Array[], frames: number): Int16Array {
  *  explain an unsupported upload rather than fail with a decode error. */
 export function canDecode(container: string): boolean {
   return container === "webm" || container === "ogg" || container === "mp3" || container === "aac";
+}
+
+/** One piece of decoded audio, at the codec's own rate. A streaming caller
+ *  resamples each piece and can drop it once transcribed, so nothing the size of
+ *  the recording is ever held. */
+export type PcmChunk = { samples: Int16Array; sampleRate: number };
+
+/** Decode a buffer in slices, yielding each slice's mono 16-bit audio as it
+ *  lands. The batch decoders above join these into one buffer; a caller that
+ *  cannot hold the whole recording consumes them one at a time instead. */
+async function* sliceChunks(
+  bytes: Uint8Array,
+  decoder: SliceDecoder,
+  flush: boolean,
+): AsyncGenerator<PcmChunk> {
+  for (let at = 0; at < bytes.length; at += SLICE_BYTES) {
+    const slice = await decoder.decode(bytes.subarray(at, at + SLICE_BYTES));
+    if (slice.samplesDecoded)
+      yield { samples: floatsToInt16(slice.channelData, slice.samplesDecoded), sampleRate: slice.sampleRate };
+  }
+  if (!flush || !decoder.flush) return;
+  const last = await decoder.flush();
+  if (last.samplesDecoded)
+    yield { samples: floatsToInt16(last.channelData, last.samplesDecoded), sampleRate: last.sampleRate };
+}
+
+/** Stream a WebM/Opus recording, one batch of frames at a time. WebM is what a
+ *  browser records, so it is usually small; the frames are still batched rather
+ *  than decoded at once, for the same heap reason as everywhere else. */
+export async function* decodeWebmStream(bytes: Uint8Array): AsyncGenerator<PcmChunk> {
+  if (webmCodec(bytes) === "vorbis")
+    throw new Error("WebM Vorbis is not supported; use WebM Opus, or Ogg Vorbis");
+  const frames = webmOpusFrames(bytes);
+  if (!frames.length) throw new Error("no audio frames found in the WebM stream");
+  yield* opusFrameChunks(frames);
+}
+
+/** Stream an Ogg recording — Opus or Vorbis. */
+export async function* decodeOggStream(bytes: Uint8Array): AsyncGenerator<PcmChunk> {
+  const codec = oggCodec(bytes);
+  if (codec === "vorbis") {
+    yield* decodeVorbisStream(bytes);
+    return;
+  }
+  if (codec !== "opus" && codec !== "unknown")
+    throw new Error(`Ogg ${codec} is not supported; only Ogg Opus and Ogg Vorbis are`);
+  const packets = oggOpusPackets(bytes);
+  if (!packets.length) throw new Error("no audio packets found in the Ogg stream");
+  yield* opusFrameChunks(packets);
+}
+
+/** Stream an Ogg/Vorbis recording. */
+export async function* decodeVorbisStream(bytes: Uint8Array): AsyncGenerator<PcmChunk> {
+  const { default: OggVorbisDecoder, Decoder } = await import(
+    "@wasm-audio-decoders/ogg-vorbis/src/OggVorbisDecoder.js"
+  );
+  Decoder.module = oggVorbisModule;
+  const decoder = new OggVorbisDecoder();
+  await decoder.ready;
+  try {
+    yield* sliceChunks(bytes, decoder, true);
+  } finally {
+    decoder.free();
+  }
+}
+
+/** Stream a raw AAC recording. */
+export async function* decodeAacStream(bytes: Uint8Array): AsyncGenerator<PcmChunk> {
+  const { default: AACDecoder, _AACDecoder } = await import(
+    "@wasm-audio-decoders/aac/src/AACDecoder.js"
+  );
+  _AACDecoder.module = aacModule;
+  const decoder = new AACDecoder();
+  await decoder.ready;
+  try {
+    yield* sliceChunks(bytes, decoder, true);
+  } finally {
+    decoder.free();
+  }
+}
+
+/** Stream a FLAC recording. */
+export async function* decodeFlacStream(bytes: Uint8Array): AsyncGenerator<PcmChunk> {
+  const { default: FLACDecoder, _FLACDecoder } =
+    await import("@wasm-audio-decoders/flac/src/FLACDecoder.js");
+  _FLACDecoder.module = flacModule;
+  const decoder = new FLACDecoder();
+  await decoder.ready;
+  try {
+    yield* sliceChunks(bytes, decoder, true);
+  } finally {
+    decoder.free();
+  }
+}
+
+/** Stream an MP3 recording — the format a phone or desktop recorder writes, and
+ *  the one most likely to be a very large file. */
+export async function* decodeMp3Stream(bytes: Uint8Array): AsyncGenerator<PcmChunk> {
+  const { MPEGDecoder } = await import("mpg123-decoder");
+  MPEGDecoder.module = mpg123Module;
+  const decoder = new MPEGDecoder();
+  await decoder.ready;
+  try {
+    // mpg123 has no flush: a partial trailing frame is simply not emitted, which
+    // is what the whole-file path does too.
+    yield* sliceChunks(bytes, decoder, false);
+  } finally {
+    decoder.free();
+  }
+}
+
+async function* opusFrameChunks(frames: Uint8Array[]): AsyncGenerator<PcmChunk> {
+  const { OpusDecoder } = await import("opus-decoder");
+  OpusDecoder.module = opusModule;
+  const decoder = new OpusDecoder();
+  await decoder.ready;
+  try {
+    for (let at = 0; at < frames.length; at += FRAME_BATCH) {
+      const slice = decoder.decodeFrames(frames.slice(at, at + FRAME_BATCH));
+      if (slice.samplesDecoded)
+        yield {
+          samples: floatsToInt16(slice.channelData, slice.samplesDecoded),
+          sampleRate: slice.sampleRate,
+        };
+    }
+  } finally {
+    decoder.free();
+  }
+}
+
+/** The streaming decoder for a container, or null when the container is read
+ *  some other way (WAV and raw PCM never need a codec). */
+export function streamDecoderFor(
+  container: string,
+): ((bytes: Uint8Array) => AsyncGenerator<PcmChunk>) | null {
+  switch (container) {
+    case "mp3":
+      return decodeMp3Stream;
+    case "ogg":
+      return decodeOggStream;
+    case "webm":
+      return decodeWebmStream;
+    case "flac":
+      return decodeFlacStream;
+    case "aac":
+      return decodeAacStream;
+    default:
+      return null;
+  }
 }
 
 export type { DecodeResult };

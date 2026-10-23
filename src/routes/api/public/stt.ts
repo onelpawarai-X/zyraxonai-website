@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { fetchRemoteBytes } from "@/lib/providers/remote-media.server";
 import { sniff } from "@/lib/stt/audio";
-import { recognize } from "@/lib/stt/engine";
-import { decodeContainer, toInput, type Decoded } from "@/lib/stt/ingest";
+import { recognize, type AudioInput } from "@/lib/stt/engine";
+import { audioChunks, canStream, decodeContainer, toInput, type Decoded, type Window } from "@/lib/stt/ingest";
 
 import { liveTranscript, segmentPlan, type LiveEvent } from "@/lib/stt/stream";
 
@@ -57,9 +57,15 @@ const JSON_HEADERS = {
   ...CORS_HEADERS,
 } as const;
 
-/** Largest upload accepted in batch mode. A clip longer than this is a
- *  recording, not a question, and belongs on the live mode. */
-const MAX_BYTES = 25 * 1024 * 1024;
+/** Largest upload accepted in batch mode.
+ *
+ *  A hundred megabytes is a recording of well over an hour in MP3 or Opus and
+ *  around half an hour in WAV, which is the largest a caller has asked for. The
+ *  ceiling is about the bytes a request may carry, not about the audio: the
+ *  recording is decoded window by window, so the memory the endpoint uses is a
+ *  function of the window length, not of the upload. A URL body has no upload
+ *  cost at all, and is capped at the same size. */
+const MAX_BYTES = 100 * 1024 * 1024;
 
 /** Longest audio sent to the recogniser in one call. The service truncates
  *  somewhere past a minute, so a longer recording is cut into windows and the
@@ -82,6 +88,11 @@ const WINDOW_CONCURRENCY = 4;
  *  nothing — a partial transcript the caller can see is worth more than an
  *  error page, and the caller can ask again for the rest. */
 const TRANSCRIBE_BUDGET_MS = 20_000;
+
+/** Upload size past which the streaming path is used instead of a whole-file
+ *  decode. Below it the whole-file path is cheaper; above it the recording is
+ *  far too big to hold as PCM, so it must be streamed. */
+const STREAM_THRESHOLD_BYTES = 8 * 1024 * 1024;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
@@ -250,7 +261,7 @@ async function transcribeLong(
 
   // Every window up front, in order, so the pieces can be joined back into a
   // transcript that reads continuously regardless of the order they finish in.
-  const windows: Array<{ kind: "pcm"; pcm: { samples: Int16Array; sampleRate: number } }> = [];
+  const windows: AudioInput[] = [];
   for (let at = 0; at < total; at += perWindow) {
     const samples = input.pcm.samples.subarray(at, Math.min(total, at + perWindow));
     // A tail shorter than half a second is not worth a round trip.
@@ -258,6 +269,78 @@ async function transcribeLong(
     windows.push({ kind: "pcm", pcm: { samples, sampleRate: input.pcm.sampleRate } });
   }
 
+  return transcribeWindows(windows, locale, signal);
+}
+
+/** Transcribe a recording too large to decode into memory all at once.
+ *
+ *  The windows arrive lazily from the streaming decoder, so only the handful
+ *  in flight are ever held. They are numbered as they arrive, so the transcript
+ *  still reads in order even though the calls finish out of order. */
+async function transcribeStream(
+  bytes: Uint8Array,
+  container: Decoded["container"],
+  declared: string,
+  locale: string,
+  signal?: AbortSignal,
+): Promise<{ text: string; confidence: number; engine: string; truncated: boolean; seconds: number }> {
+  // Indexed by window, because the windows run concurrently and finish out of
+  // order; the transcript has to read in the order they were spoken.
+  const results: string[] = [];
+  let confidence = 0;
+  let engine = "";
+  let truncated = false;
+  let seconds = 0;
+  let pending: Array<Promise<void>> = [];
+  let inFlight = 0;
+
+  const run = async (index: number, window: Window): Promise<void> => {
+    const one = await recognize({ kind: "pcm", pcm: window }, locale, signal);
+    results[index] = one.text.trim();
+    if (one.confidence > confidence) confidence = one.confidence;
+    if (one.engine) engine = one.engine;
+  };
+
+  const deadline = Date.now() + TRANSCRIBE_BUDGET_MS;
+  let index = 0;
+  for await (const window of audioChunks(bytes, container, declared)) {
+    seconds += window.samples.length / window.sampleRate;
+    // The recogniser is a network call we do not control, and a very long
+    // recording has far more windows than the request can wait for. When the
+    // budget runs out the transcript so far is returned, marked `truncated`,
+    // rather than holding the connection until the host drops it.
+    if (Date.now() >= deadline) {
+      truncated = true;
+      break;
+    }
+    // A tail shorter than half a second is not worth a round trip.
+    if (window.samples.length < window.sampleRate * 0.4) continue;
+    const task = run(index++, window).catch((error) => {
+      // A caller who disconnected stops the whole run.
+      if (error instanceof Error && error.name === "AbortError") throw error;
+      // One window failing must not discard the ones that worked; the gap is
+      // marked by `truncated` so the caller knows the transcript is partial.
+      truncated = true;
+    });
+    pending.push(task);
+    inFlight++;
+    if (inFlight >= WINDOW_CONCURRENCY) {
+      await Promise.all(pending);
+      pending = [];
+      inFlight = 0;
+    }
+  }
+  await Promise.all(pending);
+
+  const parts = results.filter((text) => text);
+  return { text: parts.join(" ").trim(), confidence, engine, truncated, seconds };
+}
+
+async function transcribeWindows(
+  windows: AudioInput[],
+  locale: string,
+  signal?: AbortSignal,
+): Promise<{ text: string; confidence: number; engine: string; truncated: boolean }> {
   const results: Array<{ text: string; confidence: number; engine: string } | null> = windows.map(
     () => null,
   );
@@ -500,6 +583,36 @@ export const Route = createFileRoute("/api/public/stt")({
             return fail(
               "The upload does not look like audio. Send WAV, MP3, FLAC, Ogg, WebM, AAC, or raw PCM.",
             );
+          }
+
+          // A recording past the size one decode can hold is transcribed from
+          // its streaming decoder, window by window, so the heap never sees the
+          // whole thing. Everything smaller takes the ordinary path, which is
+          // cheaper to set up and reports the same fields.
+          if (bytes.length > STREAM_THRESHOLD_BYTES && canStream(container)) {
+            const started = Date.now();
+            try {
+              const result = await transcribeStream(bytes, container, declared, language, request.signal);
+              return json({
+                success: true,
+                text: result.text,
+                language: language.split("-")[0],
+                locale: language,
+                confidence: Number(result.confidence.toFixed(4)),
+                engine: result.engine,
+                container,
+                duration: Number(result.seconds.toFixed(2)),
+                elapsed: Number(((Date.now() - started) / 1000).toFixed(2)),
+                ...(result.truncated ? { truncated: true } : {}),
+              });
+            } catch (error) {
+              const message = error instanceof Error ? error.message : "unsupported audio format";
+              const unsupported =
+                /not supported|unsupported audio format|could not be read|no audio (frames|packets) found/i.test(
+                  message,
+                );
+              return fail(message, unsupported ? 415 : 502);
+            }
           }
 
           let decoded: Decoded;

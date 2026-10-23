@@ -138,6 +138,63 @@ export function parseWav(bytes: Uint8Array): Pcm | null {
   return { samples: downmix(s, channels), sampleRate };
 }
 
+/** The header facts of a WAV, without its audio.
+ *
+ *  `parseWav` reads a whole file into one buffer, which is exactly what a very
+ *  large upload cannot afford. This reads only the header, so the data chunk can
+ *  then be streamed: `dataOffset`/`dataSize` say where the audio is and how much
+ *  of it there is, and the caller walks it in pieces. Returns null when the
+ *  header is incomplete, which tells a streaming caller to read more bytes. */
+export type WavHeader = {
+  format: number;
+  channels: number;
+  sampleRate: number;
+  bits: number;
+  dataOffset: number;
+  dataSize: number;
+};
+
+export function readWavHeader(bytes: Uint8Array): WavHeader | null {
+  if (!isWav(bytes)) return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let format = 1;
+  let channels = 1;
+  let sampleRate = TARGET_RATE;
+  let bits = 16;
+  let pos = 12;
+  while (pos + 8 <= bytes.length) {
+    const id = String.fromCharCode(bytes[pos]!, bytes[pos + 1]!, bytes[pos + 2]!, bytes[pos + 3]!);
+    const size = view.getUint32(pos + 4, true);
+    const body = pos + 8;
+    if (id === "fmt ") {
+      if (body + 16 > bytes.length) return null;
+      format = view.getUint16(body, true);
+      channels = view.getUint16(body + 2, true) || 1;
+      sampleRate = view.getUint32(body + 4, true) || TARGET_RATE;
+      bits = view.getUint16(body + 14, true) || 16;
+    } else if (id === "data") {
+      // The declared size may exceed what has arrived; the caller clamps it to
+      // the bytes it actually holds.
+      return { format, channels, sampleRate, bits, dataOffset: body, dataSize: size };
+    }
+    // Chunks are word-aligned: an odd size carries a pad byte.
+    pos = body + size + (size % 2);
+  }
+  return null;
+}
+
+/** Decode one piece of a WAV data chunk to mono 16-bit, for a streaming reader
+ *  that never holds the whole file. Only the interleaved 16-bit case is handled
+ *  here; the other bit depths are rare enough that the whole-file parser is
+ *  still the right tool, and a caller falls back to it. */
+export function wavChunkToMono(data: Uint8Array, channels: number): Int16Array {
+  const usable = data.length - (data.length % 2);
+  const interleaved = new Int16Array(
+    data.buffer.slice(data.byteOffset, data.byteOffset + usable),
+  );
+  return channels <= 1 ? interleaved : downmix(interleaved, channels);
+}
+
 /** Average interleaved channels down to one. Speech recognition gains nothing
  *  from stereo. */
 export function downmix(interleaved: Int16Array, channels: number): Int16Array {
