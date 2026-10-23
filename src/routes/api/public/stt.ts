@@ -546,7 +546,7 @@ export const Route = createFileRoute("/api/public/stt")({
             transcribeBudgetSeconds: TRANSCRIBE_BUDGET_MS / 1000,
           },
           longAudio:
-            "A recording longer than one window is transcribed in parallel windows and joined in order. If the time budget runs out the partial transcript is returned with `truncated: true` rather than an error.",
+            "A recording longer than one window is transcribed in parallel windows and joined in order. Past 8 MB the recording is decoded window by window rather than held whole, so uploads up to maxBytes are accepted; memory use tracks the window length, not the recording's. If the time budget runs out the partial transcript is returned with `truncated: true` rather than an error.",
           plan: segmentPlan(16000),
           auth: "none required",
           cost: "free; the recogniser needs no key and bills nothing per call",
