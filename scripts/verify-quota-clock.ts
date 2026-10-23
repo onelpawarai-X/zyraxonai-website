@@ -2,7 +2,9 @@
  *  reported back with a countdown that shrinks. Proves the number a caller sees
  *  is the upstream's own, not a placeholder. */
 import {
+  clearQuotaReset,
   parseRetryAfter,
+  noteQuotaRefusal,
   noteQuotaReset,
   quotaResetStatus,
   resetQuotaClock,
@@ -44,9 +46,42 @@ check("the reset lands about 300s out", Math.abs(Date.parse(String(st.resetAt)) 
 const later = quotaResetStatus(Date.now() + 60_000);
 check("the countdown shrinks with time", later.retryAfterSeconds! < 300 && later.retryAfterSeconds! > 230, later.retryAfterSeconds);
 
-// state: a passed reset is not reported as spent — a turn is worth trying again
-check("a passed reset is no longer spent", quotaResetStatus(Date.now() + 400_000).spent === false);
-check("and it publishes no countdown", quotaResetStatus(Date.now() + 400_000).retryAfterSeconds === undefined);
+// state: a passed reset stays spent until something is actually served.
+//
+// This is the bug that made two browsers disagree: an isolate whose recorded
+// deadline had passed announced an open pool while every request was still
+// refused, so one profile read "Free tier open, 00:00:00" and another, on a
+// fresh isolate that had never seen a refusal, read the real countdown. A
+// timer running out is a reason to ask again, never a reason to claim
+// capacity — thirty direct attempts during that window all came back 429.
+const passed = quotaResetStatus(Date.now() + 400_000);
+check("a passed reset is still reported spent", passed.spent === true, passed.spent);
+check("but with no countdown left to show", passed.retryAfterSeconds === undefined);
+check("so a surface cannot draw a zero that means 'open'", passed.resetAt === undefined);
+
+// state: only a served turn or a probe may reopen the pool
+resetQuotaClock();
+noteQuotaReset(300);
+clearQuotaReset();
+check("a served turn reopens the pool", quotaResetStatus().spent === false);
+
+// state: a cold isolate admits it does not know, rather than guessing "open".
+//
+// This is the other half of the two-browser disagreement: an isolate that had
+// never seen a refusal answered "the pool is open" because it had no record,
+// not because anything had been served.
+resetQuotaClock();
+const cold = quotaResetStatus();
+check("a cold isolate is not spent", cold.spent === false);
+check("but it says so as unknown, not as open", cold.unknown === true);
+
+// state: a refusal with no deadline still marks the pool shut for a while
+resetQuotaClock();
+noteQuotaRefusal();
+const refused = quotaResetStatus();
+check("a refusal with no deadline marks the pool spent", refused.spent === true, refused.spent);
+check("and it carries no countdown to draw", refused.retryAfterSeconds === undefined);
+check("the pool reopens on its own once the memory ages out", quotaResetStatus(Date.now() + 400_000).spent === false);
 
 // state: an unusable header changes nothing
 resetQuotaClock();

@@ -10,6 +10,8 @@ import { Card, Tag } from "@/components/site/ui";
  *  locally, without polling the API for every second. */
 export type FreeTierStatus = {
   available: boolean;
+  /** The server has no evidence either way, so "open" would be a guess. */
+  unknown?: boolean;
   retryAfterSeconds?: number;
   resetAt?: string;
   /** The largest window the upstream has stated, for drawing progress. */
@@ -80,6 +82,20 @@ export function FreeTierCountdown({ status }: { status?: FreeTierStatus }) {
   }, [target]);
 
   if (!status) return null;
+
+  if (status.available && status.unknown) {
+    return (
+      <Card className="p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <Tag tone="warn">Checking the free tier</Tag>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            Asking the upstream whether the pool is serving. Call a model to find out
+            immediately, or set OPENCODE_ZEN_API_KEY for a keyed quota.
+          </p>
+        </div>
+      </Card>
+    );
+  }
 
   if (status.available) {
     return (

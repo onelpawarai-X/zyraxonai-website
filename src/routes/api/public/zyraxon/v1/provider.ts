@@ -31,6 +31,18 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
         // `servable` flag and the `freeTier` block below must agree about the
         // same instant — two calls could straddle a reset and contradict
         // each other inside one payload.
+        // When the recorded deadline has passed but nothing has been served
+        // since, the local clock is the only thing we have and it is not
+        // evidence. Ask the upstream and answer from that, so two isolates that
+        // were told different things converge on the same truth instead of
+        // disagreeing until each one's timer happens to expire.
+        const before = quotaResetStatus();
+        if (before.unknown || (before.spent && !before.retryAfterSeconds)) {
+          await Promise.race([
+            probeQuotaReset(Date.now(), true),
+            new Promise((r) => setTimeout(r, 4_000)),
+          ]);
+        }
         const reset = quotaResetStatus();
         return Response.json(
           {
@@ -112,6 +124,10 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               void probeQuotaReset();
               return {
                 available: !reset.spent,
+                // An isolate that has no evidence says so, so a surface shows
+                // "checking" rather than a green "Free tier open" it cannot
+                // vouch for — the exact claim two profiles used to disagree on.
+                ...(reset.unknown ? { unknown: true } : {}),
                 ...(reset.spent
                   ? {
                       retryAfterSeconds: reset.retryAfterSeconds,

@@ -53,6 +53,8 @@ export function noteQuotaReset(retryAfterSeconds: number | undefined, now = Date
   const seconds = Math.ceil(retryAfterSeconds);
   if (seconds > longestSeconds) longestSeconds = seconds;
   lastReset = { until: now + seconds * 1000, seconds, at: now };
+  awaitingProof = true;
+  everObserved = true;
 }
 
 /** The largest window seen, or undefined when none has been recorded. */
@@ -60,9 +62,53 @@ export function quotaWindowCeiling(): number | undefined {
   return longestSeconds > 0 ? longestSeconds : undefined;
 }
 
+/** Whether the recorded reset is the last word on the pool being spent.
+ *
+ *  The clock is an upstream *promise*, and it can be wrong in both directions:
+ *  a window may roll over early, or the upstream may keep refusing past the
+ *  moment it named. So a passed deadline is not proof the pool is open — only a
+ *  served turn or a successful probe is. This flag lets a caller say "the clock
+ *  ran out but nobody has confirmed the pool is back" instead of reporting an
+ *  open pool that still refuses every request. */
+let awaitingProof = false;
+
+/** When a probe last came back refused, and whether this isolate has ever
+ *  heard from the upstream at all.
+ *
+ *  Quota state lives in the isolate's own memory, and a deployment runs many
+ *  isolates. A fresh one has no record, so it used to answer "the pool is
+ *  open" purely because it had never seen a refusal — which is how two browser
+ *  profiles read the same instant as "Free tier open" and "2h 32m left". A
+ *  recent refusal is evidence worth keeping even when the upstream named no
+ *  deadline, and `everObserved` is what lets a surface say "I do not know yet"
+ *  and go ask, instead of guessing in the caller's favour. */
+let lastRefusedAt = 0;
+let everObserved = false;
+
+/** How long a refusal with no stated deadline keeps the pool marked spent.
+ *
+ *  Short enough that a window opening is noticed promptly, long enough that a
+ *  cold isolate does not flip back to "open" between probes. */
+function refusalMemoryMs(): number {
+  const configured = Number(process.env.ZYRAXON_REFUSAL_MEMORY_MS);
+  return Number.isFinite(configured) && configured > 0 ? configured : 300_000;
+}
+
+/** Record a refusal that carried no usable deadline. */
+export function noteQuotaRefusal(now = Date.now()): void {
+  lastRefusedAt = now;
+  everObserved = true;
+}
+
+/** Note that a probe or a real turn is the only thing that may reopen the pool. */
+export function expectProofBeforeOpen(): void {
+  awaitingProof = true;
+}
+
 /** How long the free tier has left, or undefined when it is not known to be
- *  spent. `spent` is false once the recorded reset has passed, which is the
- *  signal that a turn should be attempted rather than refused up front. */
+ *  spent. `spent` is false once the recorded reset has passed *and* something
+ *  has actually been served, which is the signal that a turn should be
+ *  attempted rather than refused up front. */
 export function quotaResetStatus(now = Date.now()): {
   spent: boolean;
   retryAfterSeconds?: number;
@@ -78,10 +124,29 @@ export function quotaResetStatus(now = Date.now()): {
    *  our clock lets the reader correct for the difference instead of showing
    *  the opposite of the truth. */
   serverNow?: string;
+  /** True when this isolate has no evidence either way, so a caller should ask
+   *  rather than report an open pool it cannot vouch for. */
+  unknown?: boolean;
 } {
-  if (!lastReset) return { spent: false };
+  if (!lastReset) {
+    // A refusal we saw moments ago is still evidence the pool is shut, even if
+    // the upstream declined to say for how long.
+    if (lastRefusedAt && now - lastRefusedAt < refusalMemoryMs()) {
+      return { spent: true, serverNow: new Date(now).toISOString() };
+    }
+    if (!everObserved) return { spent: false, unknown: true, serverNow: new Date(now).toISOString() };
+    return { spent: false };
+  }
   const remainingMs = lastReset.until - now;
-  if (remainingMs <= 0) return { spent: false };
+  // The deadline has passed. That is a reason to *ask* again, not a reason to
+  // announce the pool is open: every one of thirty direct attempts during a
+  // spent window was refused, so a timer running out proves nothing. Report it
+  // still spent but no longer scheduled, which lets the probe re-check without
+  // any surface claiming a capacity that does not exist.
+  if (remainingMs <= 0) {
+    if (!awaitingProof) return { spent: false };
+    return { spent: true, serverNow: new Date(now).toISOString() };
+  }
   return {
     spent: true,
     retryAfterSeconds: Math.max(1, Math.ceil(remainingMs / 1000)),
@@ -100,10 +165,17 @@ export function quotaResetStatus(now = Date.now()): {
  *  that does not expire with one window. */
 export function clearQuotaReset(): void {
   lastReset = undefined;
+  awaitingProof = false;
+  // A served turn is proof the pool is open, so the refusal memory is spent.
+  lastRefusedAt = 0;
+  everObserved = true;
 }
 
 /** Test seam: forget the recorded reset and everything learned about it. */
 export function resetQuotaClock(): void {
   lastReset = undefined;
   longestSeconds = 0;
+  awaitingProof = false;
+  lastRefusedAt = 0;
+  everObserved = false;
 }

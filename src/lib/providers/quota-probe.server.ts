@@ -18,7 +18,7 @@
  *  competes with a real turn for a lane — it borrows a session fingerprint of
  *  its own — and it stops the instant the pool is proven open. */
 import { completeRaw, DEFAULT_ZEN_MODEL } from "@/lib/builder/zen.server";
-import { clearQuotaReset, quotaResetStatus } from "./quota.server";
+import { clearQuotaReset, noteQuotaRefusal, quotaResetStatus } from "./quota.server";
 
 /** How often to re-ask while a quota is spent.
  *
@@ -51,12 +51,16 @@ let nextAt = 0;
  *  Returns true only on positive evidence — a token the upstream served. A
  *  refusal, a gate, a network fault, or a probe that is not yet due all return
  *  false and leave the recorded reset exactly as it was. */
-export async function probeQuotaReset(now = Date.now()): Promise<boolean> {
+export async function probeQuotaReset(now = Date.now(), force = false): Promise<boolean> {
   const status = quotaResetStatus(now);
   // Nothing is spent, so there is nothing to re-check. This is also the common
   // case: most calls find an open pool and cost no upstream request at all.
-  if (!status.spent) return false;
-  if (now < nextAt) return false;
+  if (!status.spent && !status.unknown) return false;
+  // `force` skips the pacing, and only the case where the stated deadline has
+  // already passed uses it: at that point the clock has nothing left to say, so
+  // waiting out the interval would just delay an answer we can get now. A
+  // concurrent probe is still shared rather than duplicated.
+  if (!force && now < nextAt) return false;
   if (inFlight) return inFlight;
 
   nextAt = now + probeIntervalMs();
@@ -69,7 +73,13 @@ export async function probeQuotaReset(now = Date.now()): Promise<boolean> {
         1,
         "quota-probe",
       );
-      if ("failed" in out) return false;
+      if ("failed" in out) {
+        // The upstream refused us, which is itself the answer to "is the pool
+        // open?" — worth keeping even when it named no deadline, so the next
+        // reader on this isolate is not told the pool is open.
+        noteQuotaRefusal();
+        return false;
+      }
       // The upstream served a token, so its window has genuinely rolled over.
       // Drain and discard the body: the probe only needed the answer, not the
       // content, and leaving it unread would hold the connection open.
