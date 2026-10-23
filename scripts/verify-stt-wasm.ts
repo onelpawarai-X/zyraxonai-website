@@ -270,6 +270,29 @@ for (const [name, pkg, inner] of [
   );
 }
 
+// A long recording is where the whole-file decoders die. `decodeFile` returns
+// planar Float32 for the entire stream — a five-minute stereo file is over
+// 100 MB live at once — and the Worker heap is 128 MB, so the request is killed
+// as a bare 502 with no message. That is the bug this guards: the decode must go
+// through the incremental API in slices, and a slice must not grow with the
+// recording. Node has no such heap ceiling, so this cannot be seen by decoding
+// here; the shape of the source is what the bundler and the runtime act on.
+for (const method of ["decodeFile", "parseAll"]) {
+  check(
+    `decode.ts never calls ${method}, which decodes a whole stream at once`,
+    !decodeSource.includes(`.${method}(`),
+  );
+}
+check(
+  "decode.ts feeds the byte decoders in slices",
+  /for \(let at = 0; at < bytes\.length; at \+= SLICE_BYTES\)/.test(decodeSource) &&
+    decodeSource.includes("SLICE_BYTES"),
+);
+check(
+  "decode.ts batches Opus frames rather than decoding them all at once",
+  decodeSource.includes("FRAME_BATCH") && /at \+= FRAME_BATCH/.test(decodeSource),
+);
+
 // The dev server must not see the virtual asset specifier. In a build the
 // plugin rewrites that specifier in `generateBundle`; dev never bundles, so the
 // rewrite never runs and the specifier reaches Vite's loader as if it were a

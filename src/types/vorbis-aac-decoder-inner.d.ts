@@ -16,7 +16,12 @@ declare module "@wasm-audio-decoders/ogg-vorbis/src/OggVorbisDecoder.js" {
   export default class OggVorbisDecoder {
     constructor();
     ready: Promise<void>;
-    decodeFile(data: Uint8Array): Promise<{
+    decode(data: Uint8Array): Promise<{
+      channelData: Float32Array[];
+      samplesDecoded: number;
+      sampleRate: number;
+    }>;
+    flush(): Promise<{
       channelData: Float32Array[];
       samplesDecoded: number;
       sampleRate: number;
@@ -35,7 +40,12 @@ declare module "@wasm-audio-decoders/aac/src/AACDecoder.js" {
   export default class AACDecoder {
     constructor(options?: unknown);
     ready: Promise<void>;
-    decodeFile(data: Uint8Array): Promise<{
+    decode(data: Uint8Array): Promise<{
+      channelData: Float32Array[];
+      samplesDecoded: number;
+      sampleRate: number;
+    }>;
+    flush(): Promise<{
       channelData: Float32Array[];
       samplesDecoded: number;
       sampleRate: number;

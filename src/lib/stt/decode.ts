@@ -5,18 +5,28 @@
  *  into samples needs a real decoder, and writing an Opus or MP3 decoder from
  *  scratch would be a decade of work. So exactly one small, MIT-licensed,
  *  self-contained WebAssembly decoder is used, and it is loaded lazily: a client
- *  that sends WAV or FLAC — which is what a careful client does, and what our
- *  own browser recorder produces when configured for it — never pays for it.
+ *  that sends WAV — which is what a careful client does, and what our own
+ *  browser recorder produces when configured for it — never pays for it.
  *
- *  Both packages are single-purpose and vendor-neutral:
- *    - `mpg123-decoder` — MP3, the format phone and desktop recorders produce.
- *    - `opus-decoder`   — Opus, the format browsers produce.
- *  Neither talks to a network, neither needs a key, and both are wasm blobs
- *  bundled with the app, so there is no CDN to disappear.
+ *  The packages are single-purpose and vendor-neutral:
+ *    - `mpg123-decoder`          — MP3, the format phone and desktop recorders produce.
+ *    - `opus-decoder`            — Opus, the format browsers produce.
+ *    - `@wasm-audio-decoders/flac`, `/ogg-vorbis`, `/aac`
+ *  None talks to a network, none needs a key, and all are wasm blobs bundled
+ *  with the app, so there is no CDN to disappear.
  *
  *  Each decoder is handed an already-compiled wasm module from `./wasm`, because
  *  their own loader compiles wasm at runtime and the Workers runtime forbids
- *  that. See `./wasm/index.ts`. */
+ *  that. See `./wasm/index.ts`.
+ *
+ *  Every decode here is done in slices, never in one call. The libraries' own
+ *  `decodeFile` decodes a whole stream at once and returns planar Float32 — four
+ *  bytes per sample per channel — so a five-minute stereo recording is over
+ *  100 MB held live at once, past a Worker's heap, and the request dies as a 502
+ *  with no message. Feeding the same decoder its own incremental `decode` and
+ *  narrowing each slice to 16-bit mono immediately keeps one slice of float
+ *  audio alive at a time, and assembles the result at a quarter of the bytes.
+ *  That is what makes a long recording decode at all. */
 
 import type { Pcm } from "./audio";
 import { oggCodec, oggOpusPackets, webmCodec, webmOpusFrames } from "./audio";
@@ -24,6 +34,48 @@ import { aacModule, flacModule, mpg123Module, oggVorbisModule, opusModule } from
 
 /** Decoded frames at the codec's own rate; the caller resamples. */
 type DecodeResult = { samples: Int16Array; sampleRate: number };
+
+/** One slice of a compressed stream handed to a decoder at a time. Sized so a
+ *  slice decodes to a few hundred milliseconds of float audio at most, which is
+ *  what keeps the live heap flat regardless of how long the recording is. */
+const SLICE_BYTES = 65536;
+
+/** How many Opus frames are decoded per call. Frames are already separate, so
+ *  this is the same idea as `SLICE_BYTES` for the frame-based path. */
+const FRAME_BATCH = 256;
+
+/** One decoded slice, as every decoder here reports it. */
+type DecodedSlice = { channelData: Float32Array[]; samplesDecoded: number; sampleRate: number };
+
+/** Collects slices into one mono 16-bit track.
+ *
+ *  Each slice is downmixed and narrowed as soon as it arrives, so only one slice
+ *  of float audio is ever live. The output is built once at the end, from Int16
+ *  parts, which is the smallest the whole recording ever needs to be. */
+class PcmBuilder {
+  private readonly parts: Int16Array[] = [];
+  private rate = 0;
+  private count = 0;
+
+  push(slice: DecodedSlice): void {
+    const frames = slice.samplesDecoded;
+    if (!frames) return;
+    if (!this.rate) this.rate = slice.sampleRate;
+    this.parts.push(floatsToInt16(slice.channelData, frames));
+    this.count += frames;
+  }
+
+  finish(emptyMessage: string): Pcm {
+    if (!this.count) throw new Error(emptyMessage);
+    const samples = new Int16Array(this.count);
+    let at = 0;
+    for (const part of this.parts) {
+      samples.set(part, at);
+      at += part.length;
+    }
+    return { samples, sampleRate: this.rate };
+  }
+}
 
 /** Decode a WebM/Opus stream — what a browser's MediaRecorder emits. */
 export async function decodeWebm(bytes: Uint8Array): Promise<Pcm> {
@@ -65,11 +117,7 @@ export async function decodeVorbis(bytes: Uint8Array): Promise<Pcm> {
   const decoder = new OggVorbisDecoder();
   await decoder.ready;
   try {
-    const result = await decoder.decodeFile(bytes);
-    const channels: Float32Array[] = result.channelData;
-    const frames = result.samplesDecoded;
-    if (!frames) throw new Error("the Vorbis stream decoded to no samples");
-    return { samples: floatsToInt16(channels, frames), sampleRate: result.sampleRate };
+    return await decodeInSlices(bytes, decoder, "the Vorbis stream decoded to no samples");
   } finally {
     decoder.free();
   }
@@ -88,14 +136,34 @@ export async function decodeAac(bytes: Uint8Array): Promise<Pcm> {
   const decoder = new AACDecoder();
   await decoder.ready;
   try {
-    const result = await decoder.decodeFile(bytes);
-    const channels: Float32Array[] = result.channelData;
-    const frames = result.samplesDecoded;
-    if (!frames) throw new Error("the AAC stream decoded to no samples");
-    return { samples: floatsToInt16(channels, frames), sampleRate: result.sampleRate };
+    return await decodeInSlices(bytes, decoder, "the AAC stream decoded to no samples");
   } finally {
     decoder.free();
   }
+}
+
+/** A decoder that takes the stream in pieces and reports each piece's audio.
+ *  Every library here exposes this shape; `decodeFile` is just this loop with a
+ *  single, whole-stream iteration, which is what runs the heap out. */
+type SliceDecoder = {
+  decode(data: Uint8Array): Promise<DecodedSlice>;
+  flush(): Promise<DecodedSlice>;
+};
+
+/** Decode a whole buffer through a decoder's incremental API, one slice at a
+ *  time, narrowing each slice as it lands. */
+async function decodeInSlices(
+  bytes: Uint8Array,
+  decoder: SliceDecoder,
+  emptyMessage: string,
+): Promise<Pcm> {
+  const builder = new PcmBuilder();
+  for (let at = 0; at < bytes.length; at += SLICE_BYTES) {
+    builder.push(await decoder.decode(bytes.subarray(at, at + SLICE_BYTES)));
+  }
+  // Whatever the last slice left mid-frame.
+  builder.push(await decoder.flush());
+  return builder.finish(emptyMessage);
 }
 
 async function decodeOpusFrames(frames: Uint8Array[]): Promise<Pcm> {
@@ -106,12 +174,13 @@ async function decodeOpusFrames(frames: Uint8Array[]): Promise<Pcm> {
   const decoder = new OpusDecoder();
   await decoder.ready;
   try {
-    const result = decoder.decodeFrames(frames);
-    const channels: Float32Array[] = result.channelData;
-    const rate = result.sampleRate;
-    const frames2 = result.samplesDecoded;
-    if (!frames2) throw new Error("the Opus stream decoded to no samples");
-    return { samples: floatsToInt16(channels, frames2), sampleRate: rate };
+    const builder = new PcmBuilder();
+    // Batched for the same reason the byte decoders are sliced: `decodeFrames`
+    // over every frame at once holds the whole recording as float audio.
+    for (let at = 0; at < frames.length; at += FRAME_BATCH) {
+      builder.push(decoder.decodeFrames(frames.slice(at, at + FRAME_BATCH)));
+    }
+    return builder.finish("the Opus stream decoded to no samples");
   } finally {
     // The wasm heap is large; release it rather than wait for the collector.
     decoder.free();
@@ -142,11 +211,7 @@ export async function decodeFlac(bytes: Uint8Array): Promise<Pcm> {
   const decoder = new FLACDecoder();
   await decoder.ready;
   try {
-    const result = await decoder.decodeFile(bytes);
-    const channels: Float32Array[] = result.channelData;
-    const frames = result.samplesDecoded;
-    if (!frames) throw new Error("the FLAC stream decoded to no samples");
-    return { samples: floatsToInt16(channels, frames), sampleRate: result.sampleRate };
+    return await decodeInSlices(bytes, decoder, "the FLAC stream decoded to no samples");
   } finally {
     decoder.free();
   }
@@ -160,11 +225,11 @@ export async function decodeMp3(bytes: Uint8Array): Promise<Pcm> {
   const decoder = new MPEGDecoder();
   await decoder.ready;
   try {
-    const result = decoder.decode(bytes);
-    const channels: Float32Array[] = result.channelData;
-    const frames = result.samplesDecoded;
-    if (!frames) throw new Error("the MP3 stream decoded to no samples");
-    return { samples: floatsToInt16(channels, frames), sampleRate: result.sampleRate };
+    const builder = new PcmBuilder();
+    for (let at = 0; at < bytes.length; at += SLICE_BYTES) {
+      builder.push(decoder.decode(bytes.subarray(at, at + SLICE_BYTES)));
+    }
+    return builder.finish("the MP3 stream decoded to no samples");
   } finally {
     decoder.free();
   }
