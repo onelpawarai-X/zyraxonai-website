@@ -168,14 +168,61 @@ export {
   pickUpstreamKey,
 } from "./upstream-keys.server";
 
-/** Zen throttles anonymous requests by User-Agent AND egress IP reputation.
- *  Generic SDK UAs (undici / ai-sdk) get soft-blocked with 200-but-empty streams,
- *  so we FORCE the genuine client UA on every outbound call — never inherit one.
+/** The release the wire shape is modelled on, and the version reported by
+ *  default. The free-tier gate matches `opencode/<release>` and rejects a
+ *  generic SDK agent (undici / ai-sdk) with a 200-but-empty stream, so this is
+ *  forced on every outbound call and never inherited from the caller. */
+const ZEN_PINNED_VERSION = "1.19.0";
+
+/** The oldest OpenCode release the free tier still accepts.
  *
- *  The version is pinned, not read from the build: the free-tier gate matches
- *  `opencode/<release>` and rejects anything it does not recognise, so a dev
- *  build reporting "local" (or any other bump) fails every free model. */
-const ZEN_UA = "opencode/1.19.0";
+ *  Measured against the live upstream, not read from the documentation:
+ *  `opencode/1.17.9` and below are refused with `426 UpgradeRequired` —
+ *  "OpenCode 1.18.0 or newer is required to use the free tier" — before any
+ *  model is considered, while 1.18.0 and above reach the quota check. A pin
+ *  below this floor fails every free model identically, which looks exactly
+ *  like an outage unless the version is named. */
+export const MIN_FREE_TIER_VERSION = "1.18.0";
+
+/** Zen throttles anonymous requests by User-Agent AND egress IP reputation, and
+ *  the release named here decides whether the request is served at all. So the
+ *  version is validated, not trusted: an override below the measured floor is
+ *  refused at load time, because honouring it would turn every free model into
+ *  a `426` that the rotation would report as "every model unavailable".
+ *
+ *  Overridable through `ZYRAXON_OPENCODE_UA` so the pin can move without a
+ *  rebuild, which is the one thing a version floor demands. */
+function resolveZenUserAgent(): string {
+  const pinned = `opencode/${ZEN_PINNED_VERSION}`;
+  const configured = (process.env.ZYRAXON_OPENCODE_UA || "").trim();
+  if (!configured) return pinned;
+  const m = /^opencode\/(\d+)\.(\d+)\.(\d+)(?:[.\-+].*)?$/.exec(configured);
+  if (!m) {
+    console.warn(
+      `[zyraxon] ZYRAXON_OPENCODE_UA="${configured}" is not an opencode/<semver> user agent; using ${pinned}`,
+    );
+    return pinned;
+  }
+  const [major, minor, patch] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const [floorMajor, floorMinor, floorPatch] = MIN_FREE_TIER_VERSION.split(".").map(Number);
+  const belowFloor =
+    major < floorMajor ||
+    (major === floorMajor && (minor < floorMinor || (minor === floorMinor && patch < floorPatch)));
+  if (belowFloor) {
+    console.warn(
+      `[zyraxon] ZYRAXON_OPENCODE_UA="${configured}" is below the free-tier floor ` +
+        `${MIN_FREE_TIER_VERSION} (the upstream answers 426 UpgradeRequired); using ${pinned}`,
+    );
+    return pinned;
+  }
+  return configured;
+}
+
+const ZEN_UA = resolveZenUserAgent();
+
+/** The release actually reported to the upstream, so a surface can say which
+ *  value is in force instead of describing the pin in the abstract. */
+export const ZEN_UA_VERSION = ZEN_UA.slice("opencode/".length);
 
 /** Fallback fingerprint for calls made outside a lane (catalogue reads, health
  *  probes). Chat traffic always carries a per-request id from the lane pool, so
@@ -274,7 +321,19 @@ function traceThrough(
   return egressFetch(url, { ...init, headers, signal }, proxy)
     .then((res) => {
       entry.status = res.status;
-      entry.outcome = res.ok ? "served" : res.status === 429 ? "refused" : res.status === 403 ? "gated" : "fault";
+      // The upstream's status is what separates the refusals, and each one
+      // needs a different response: 403 is "you are not an OpenCode client",
+      // 426 is "your client is too old", 429 is "the window is spent". Folding
+      // 426 into "gated" would hide the one refusal the version pin fixes.
+      entry.outcome = res.ok
+        ? "served"
+        : res.status === 429
+          ? "refused"
+          : res.status === 403
+            ? "gated"
+            : res.status === 426
+              ? "upgrade"
+              : "fault";
       // A refusal is the one case where the address matters, and it is resolved
       // off the response path so it never delays the caller's answer.
       if (!res.ok) traceEgressAddress(entry, proxy);

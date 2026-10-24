@@ -24,7 +24,7 @@
  *  header is visible without any value being exposed. */
 import { egressStatus, resolveEgressIp } from "./egress.server";
 
-export type TraceOutcome = "served" | "refused" | "gated" | "fault";
+export type TraceOutcome = "served" | "refused" | "gated" | "upgrade" | "fault";
 
 export type TraceEntry = {
   /** Monotonic, so a reader can order entries without trusting clocks. */
@@ -155,6 +155,10 @@ export function refusalSummary(): {
   gated: number;
   limited: number;
   served: number;
+  /** Turns the upstream refused because the reported client release is below
+   *  its floor. Its own bucket, because the fix is the version pin and not a
+   *  key, a retry, or another model. */
+  upgrade: number;
   lastErrorType?: string;
   lastMessage?: string;
   lastAt?: string;
@@ -162,9 +166,11 @@ export function refusalSummary(): {
   let gated = 0;
   let limited = 0;
   let served = 0;
+  let upgrade = 0;
   for (const e of ring) {
     if (e.outcome === "served") served++;
     else if (e.outcome === "gated") gated++;
+    else if (e.outcome === "upgrade") upgrade++;
     else if (e.outcome === "refused") limited++;
   }
   const lastRefusal = [...ring].reverse().find((e) => e.outcome !== "served");
@@ -173,6 +179,7 @@ export function refusalSummary(): {
     gated,
     limited,
     served,
+    upgrade,
     lastErrorType: lastRefusal?.errorType,
     lastMessage: lastRefusal?.message,
     lastAt: lastRefusal?.at,
