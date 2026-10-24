@@ -25,7 +25,8 @@ export const SITE_ORIGIN = "https://zyraxonai.lovable.app";
 /** The npm package name for the SDK, which is separate from the CLI binary. */
 export const SDK_PACKAGE = "@zyraxon-ai/sdk";
 
-export type CliCommand = { label: string; code: string };
+/** `label` is the full name; `short` is what fits on a switcher button. */
+export type CliCommand = { label: string; short?: string; code: string };
 
 /**
  * The asset name is discovered at download time, never written into a command.
@@ -42,26 +43,32 @@ export type CliCommand = { label: string; code: string };
 export const CLI_COMMANDS: CliCommand[] = [
   {
     label: "macOS · Apple Silicon",
+    short: "macOS · ARM",
     code: `curl -fL ${SITE_ORIGIN}/api/download/cli-mac-arm -o zyraxon.zip && unzip -o zyraxon.zip && chmod +x zyraxon && xattr -d com.apple.quarantine zyraxon 2>/dev/null; ./zyraxon --version`,
   },
   {
     label: "macOS · Intel",
+    short: "macOS · Intel",
     code: `curl -fL ${SITE_ORIGIN}/api/download/cli-mac-intel -o zyraxon.zip && unzip -o zyraxon.zip && chmod +x zyraxon && xattr -d com.apple.quarantine zyraxon 2>/dev/null; ./zyraxon --version`,
   },
   {
     label: "Linux · x64",
+    short: "Linux · x64",
     code: `curl -fL ${SITE_ORIGIN}/api/download/cli-linux | tar xz && chmod +x zyraxon && ./zyraxon --version`,
   },
   {
     label: "Linux · x64 (musl)",
+    short: "Linux · musl",
     code: `curl -fL ${SITE_ORIGIN}/api/download/cli-linux-musl | tar xz && chmod +x zyraxon && ./zyraxon --version`,
   },
   {
     label: "Linux · ARM64",
+    short: "Linux · ARM64",
     code: `curl -fL ${SITE_ORIGIN}/api/download/cli-linux-arm64 | tar xz && chmod +x zyraxon && ./zyraxon --version`,
   },
   {
     label: "Windows · PowerShell",
+    short: "Windows",
     // The archive holds the binary as `zyraxon` with no extension even though it
     // is a PE file, and Windows will not run it by that name. The command
     // renames it rather than pretending `zyraxon.exe` already exists.
@@ -102,23 +109,17 @@ export const HOME_DOWNLOADS = [
     detail: "Windows 10/11 (x64)",
     ext: ".exe",
     key: "windows",
-    cliKey: "cli-windows",
-    cliExt: ".zip",
   },
   {
     os: "macOS",
     detail: "macOS 12+ (Apple Silicon)",
     ext: ".dmg",
     key: "mac-arm",
-    cliKey: "cli-mac-arm",
-    cliExt: ".zip",
   },
   {
     os: "Linux",
     detail: "Ubuntu / Debian / Fedora (x64)",
     ext: ".AppImage",
     key: "linux-appimage",
-    cliKey: "cli-linux",
-    cliExt: ".tar.gz",
   },
 ];

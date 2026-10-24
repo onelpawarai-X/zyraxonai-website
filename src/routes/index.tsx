@@ -6,7 +6,7 @@ import { Icon } from "@/components/site/Icon";
 import { FreeTierClock } from "@/components/site/FreeTierClock";
 import { useFreeTier } from "@/hooks/use-free-tier";
 import { ButtonAnchor, ButtonLink, Card, Divider, Section, Tag } from "@/components/site/ui";
-import { CopyButton } from "@/components/site/provider-parts";
+import { CommandBox } from "@/components/site/provider-parts";
 import { CLI_COMMANDS, GITHUB_URL, HOME_DOWNLOADS, RELEASES_URL } from "@/lib/downloads";
 import {
   COMPARE_COLS,
@@ -220,43 +220,35 @@ function CliPanel() {
   const current = tabs[active];
 
   return (
-    <div className="mx-auto mt-10 max-w-4xl">
-      <Card className="p-5 sm:p-6">
+    <div className="mx-auto mt-8 max-w-3xl">
+      <Card className="p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="zx-glass grid h-9 w-9 place-items-center rounded-lg text-primary">
-            <Icon name="code" size={17} />
+          <span className="zx-glass grid h-8 w-8 place-items-center rounded-lg text-primary">
+            <Icon name="code" size={15} />
           </span>
-          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
+          <h2 className="text-[14px] font-semibold tracking-tight text-foreground">
             Install the CLI
           </h2>
-          <span className="text-[12.5px] text-muted-foreground">one line, newest release</span>
-          <div className="ml-auto flex flex-wrap gap-1.5">
+          <div className="ml-auto flex flex-wrap gap-1">
             {tabs.map((t, i) => (
               <button
                 key={t.label}
                 type="button"
                 onClick={() => setActive(i)}
-                className={`rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${
+                className={`rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors ${
                   i === active
                     ? "bg-primary/12 text-primary"
                     : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
                 }`}
               >
-                {t.label}
+                {t.short ?? t.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="mt-3 flex items-start gap-2">
-          <pre className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-[12px] leading-relaxed text-foreground">
-            <code>{current.code}</code>
-          </pre>
-          <span className="shrink-0 pt-2">
-            <CopyButton text={current.code} label="copy" />
-          </span>
-        </div>
-        <p className="mt-2.5 text-[12.5px] text-muted-foreground">
-          ARM64, musl and Windows-on-ARM builds, plus the desktop installers, are on the{" "}
+        <CommandBox code={current.code} className="mt-3" />
+        <p className="mt-2.5 text-[12px] text-muted-foreground">
+          Every platform, the desktop installers and the source are on the{" "}
           <ButtonLink to="/download/zyraxon-agent" className="px-0 underline">
             download page
           </ButtonLink>
@@ -535,30 +527,30 @@ function Download() {
       title="Get ZYRAXON Agent"
       description="Free and source-available. Every button saves the newest build straight from the release — no page in between."
     >
+      {/* One action per platform. These cards used to carry two buttons each —
+          a desktop build and a CLI archive — so the row read as six competing
+          choices with no way to tell which one a visitor wanted. The desktop
+          build is the answer for someone on the download page; the command
+          line gets its own single line below. */}
       <div className="grid gap-4 sm:grid-cols-3">
         {HOME_DOWNLOADS.map((d) => (
-          <Card key={d.os} hover className="flex flex-col p-6 text-center">
-            <span className="zx-glass mx-auto grid h-12 w-12 place-items-center rounded-xl text-primary">
-              <Icon name="monitor" size={22} />
+          <Card key={d.os} hover className="flex flex-col p-6">
+            <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
+              <Icon name="monitor" size={20} />
             </span>
-            <h3 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{d.os}</h3>
+            <h3 className="mt-4 text-[17px] font-semibold tracking-tight text-foreground">
+              {d.os}
+            </h3>
             <p className="mt-1 text-[13px] text-muted-foreground">{d.detail}</p>
-            <div className="mt-auto grid gap-2 pt-5">
+            <div className="mt-auto pt-5">
               <ButtonAnchor
                 href={`/api/download/${d.key}`}
                 external={false}
                 variant="glass"
                 size="sm"
+                className="w-full"
               >
-                Desktop app {d.ext}
-              </ButtonAnchor>
-              <ButtonAnchor
-                href={`/api/download/${d.cliKey}`}
-                external={false}
-                variant="outline"
-                size="sm"
-              >
-                CLI {d.cliExt}
+                Download {d.ext}
               </ButtonAnchor>
             </div>
           </Card>
@@ -568,32 +560,22 @@ function Download() {
       {/* The one-liner belongs beside the buttons: anyone who would rather paste
           a command than run an installer should not have to open another page to
           find it. */}
-      <Card className="mt-4 p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="zx-glass grid h-9 w-9 place-items-center rounded-lg text-primary">
-            <Icon name="code" size={17} />
+      <Card className="mt-4 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="zx-glass grid h-8 w-8 place-items-center rounded-lg text-primary">
+            <Icon name="code" size={15} />
           </span>
-          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">
+          <h3 className="text-[14px] font-semibold tracking-tight text-foreground">
             Or install the CLI in one line
           </h3>
-          <CopyButton text={CLI_COMMANDS[0].code} label="copy" />
-        </div>
-        <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-[12px] leading-relaxed text-foreground">
-          <code>{CLI_COMMANDS[0].code}</code>
-        </pre>
-        <p className="mt-2.5 text-[12.5px] text-muted-foreground">
-          macOS, Linux, Windows PowerShell and ARM builds — all on the{" "}
-          <ButtonLink to="/download/zyraxon-agent" className="px-0 underline">
-            download page
+          <ButtonLink to="/download/zyraxon-agent" variant="outline" size="sm" className="ml-auto">
+            All builds
           </ButtonLink>
-          .
-        </p>
+        </div>
+        <CommandBox code={CLI_COMMANDS[0].code} className="mt-3" />
       </Card>
 
       <div className="mt-4 flex flex-wrap gap-3">
-        <ButtonLink to="/download/zyraxon-agent" size="sm">
-          All downloads
-        </ButtonLink>
         <ButtonAnchor href={RELEASES_URL} variant="glass" size="sm">
           Release notes
         </ButtonAnchor>
