@@ -759,3 +759,27 @@ keep it warm does not help either — an 8s poll made it *worse* (41s). Treat th
 32s as the price of a cold turn and keep the conversation warm by opening the
 panel, not by polling: `GET /api/public/zyraxon/helper` calls `warmConversation()`
 and `HelpAgent.tsx` reads that route when the panel opens.
+
+### The helper is behind the same gate as the API
+
+`providerGateOpen` in `star-gate.ts` is the single switch for the brand line, and
+it is `false` until the repository reaches 100,000 stars. **The helper must
+honour it.** The helper is not a private back door: it is the most-called surface
+on the site, so a brand pass here reaches the shared free pool far more often
+than any public API caller does.
+
+This was missed once, and the cost was the whole line. `v1/chat/completions.ts`
+correctly returns `gateReply()` before anything else, but the helper's POST
+handler ran `raceBrands()` with no gate check at all. Every visitor question
+spent seven brand attempts against a pool the provider was deliberately waiting
+on, which is what left the pool refusing every request. When the gate is shut the
+helper now goes **straight to the fallback and the conversation**, and it also
+skips the `brandCatalogue()` read in GET, which is a request to the same line.
+
+**Rule:** any new path that can reach `brandChatStream` or `brandCatalogue` must
+check `providerGateOpen` first. One flag opens the whole product; nothing should
+reach around it.
+
+The fallback and the conversation are *not* the brand line and are not gated —
+they are the backends that let the assistant keep answering while the provider is
+off, which is the entire reason they exist.
