@@ -373,9 +373,13 @@ export async function brandChatStream(
       // recoverable turn into a platform timeout — strictly worse than the
       // refusal it was trying to avoid. Whatever the count, the sequence stops
       // here and reports the reset clock it has.
-      const quotaBudgetMs = Math.max(
-        1_000,
-        Number(process.env.ZYRAXON_QUOTA_RETRY_BUDGET_MS || 25_000),
+      // Bounded by the turn's own clock as well as by a fixed ceiling: if the
+      // first model spent the whole turn re-asking, the rotation that exists to
+      // find a model which *will* answer would never get a turn. Re-asking one
+      // model is allowed to take a fraction of what is left, never all of it.
+      const quotaBudgetMs = Math.min(
+        Math.max(1_000, Number(process.env.ZYRAXON_QUOTA_RETRY_BUDGET_MS || 25_000)),
+        Math.max(1_000, Math.round(remainingMs() * 0.4)),
       );
       const quotaStartedAt = Date.now();
       const tryUpstream = async (
