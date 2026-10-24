@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { brandChatStream, brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
-import { DOCS } from "@/lib/docs/content";
-import { PROVIDER_INTEGRATION_DOCS } from "@/lib/docs/provider-integration-docs";
+import { fallbackComplete, fallbackConfigured } from "@/lib/providers/helper-fallback.server";
+import { askConversation, conversationConfigured } from "@/lib/providers/helper-conversation.server";
+import { helperWirePrompt } from "@/lib/providers/helper-prompt.server";
+import { STAR_GOAL, STAR_REPO, STAR_REPO_URL } from "@/lib/providers/star-gate";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -25,114 +27,10 @@ const HELPER_MODELS = [
   "zyraxon-genesis",
 ];
 
-/** Everything the site knows about itself, as text for the model.
- *
- *  Built from the same `DOCS` registry the /docs pages render from, plus the
- *  route list, so the helper cannot describe a page the site does not have —
- *  and a doc added later is known to the helper with no second edit. */
-function siteKnowledge(): string {
-  const lines: string[] = [];
-  lines.push("## Documentation pages (these are the real /docs/<slug> routes)");
-  for (const doc of DOCS) {
-    const body = doc.blocks
-      .map((b) => ("text" in b ? b.text : ""))
-      .filter(Boolean)
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .slice(0, 900);
-    lines.push(`- /docs/${doc.slug} — ${doc.title} (${doc.group}): ${doc.desc} ${body}`);
-  }
-  lines.push("");
-  lines.push("## Provider integration guide (the /providers page and its docs)");
-  for (const page of PROVIDER_INTEGRATION_DOCS) {
-    const body = page.blocks
-      .map((b) => ("text" in b ? b.text : ""))
-      .filter(Boolean)
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .slice(0, 700);
-    lines.push(`- /docs/${page.slug} — ${page.title}: ${page.desc} ${body}`);
-  }
-  return lines.join("\n");
-}
-
-/** The routes a visitor can reach, so the helper points at real pages. */
-const ROUTES = [
-  "/ — home",
-  "/apps — the MCP app directory (108 verified integrations)",
-  "/ecosystem — the ZYRAXON ecosystem",
-  "/docs — documentation index; every page is /docs/<slug>",
-  "/packages — the 12 published npm packages",
-  "/extensions — the Open VSX extensions directory",
-  "/releases — release feed and downloads",
-  "/demo — video walkthroughs",
-  "/community-art — the community roster",
-  "/faq — frequently asked questions",
-  "/providers — the ZYRAXON provider, ten models, one OpenAI-compatible endpoint",
-  "/builder — the AI web builder",
-  "/bludar — Bludar Studio",
-  "/nebula — Nebula Core",
-  "/publish — publish a site",
-  "/updates — product updates",
-  "/download/zyraxon-agent — the download page",
-  "/zsl — the Zyraxon Sovereign License",
-  "/desktop-feedback — send feedback or open an issue",
-  "/privacy-policy — privacy policy",
-];
-
+/** The prompt for our own provider. Built from the shared module so the brand
+ *  path and the OpenHands conversation cannot describe the product differently. */
 function systemPrompt(): string {
-  return `You are the ZYRAXON AI helper, the assistant built into the ZYRAXON website.
-You answer questions about ZYRAXON and this site, and you can look things up.
-
-Facts you can rely on:
-- ZYRAXON is a free, source-available desktop AI coding agent (Electron + SolidJS + Bun), a fork of OpenCode made far more capable.
-- GitHub: https://github.com/onelpawarai-X/ZYRAXON-AI
-- License: ZSL-X v2.0.0 (Zyraxon Sovereign License).
-- The provider serves ten branded models over one OpenAI-compatible endpoint at
-  https://zyraxonai.lovable.app/api/public/zyraxon/v1 — see /providers.
-- The helper itself runs on that provider, rotating through its models.
-
-Pages on this site:
-${ROUTES.join("\n")}
-
-${siteKnowledge()}
-
-Tools you have:
-- search_web: real-time web search. Use it for anything current, or when the
-  site's own pages do not answer the question. Do not guess at news or versions.
-- fetch_page: read a URL's text, including pages on this site.
-
-How to answer:
-- Write in the language the visitor used. Bengali question, Bengali answer.
-- Be concise and concrete. Point at the exact page or command.
-- When you use a tool, do not narrate the mechanics; just answer from what you found.
-- Never invent a download link, a version number or a feature. If the site pages
-  do not say, search, and if that fails, say plainly that you do not know.
-- Never mention the upstream model or vendor behind the provider. You are a
-  ZYRAXON assistant.
-
-Writing code — this is a first-class job, not an afterthought:
-- You are a coding assistant as much as a site guide. When the visitor asks for
-  code, write the complete, runnable thing. No "rest of the code here", no
-  placeholders, no omissions.
-- Always put code in a fenced block with a language tag, e.g. \`\`\`python,
-  \`\`\`bash, \`\`\`typescript, \`\`\`json, \`\`\`html. The panel renders these as
-  real code blocks with a copy button, so an untagged block looks broken.
-- When the code is a file, name the file in the fence info line after the
-  language, e.g. \`\`\`python file:app.py. The panel shows that label.
-- Write code that actually runs. Include the import, the client setup and the
-  call. Prefer the standard library where it is enough.
-- To call the ZYRAXON provider, use base URL
-  https://zyraxonai.lovable.app/api/public/zyraxon/v1 and any model id from
-  /api/public/zyraxon/v1/models. The endpoint is OpenAI-compatible.
-- Do not wrap an explanation inside a code fence. Prose stays prose, code stays
-  in its own fence.
-
-Links:
-- Write every link as Markdown: [label](url). They render as clickable links.
-- A bare https:// URL and a site path like /docs/getting-started are also made
-  clickable, but an explicit [label](url) is clearer.
-- Prefer a link to the exact page over a description of where to look.`;
+  return helperWirePrompt();
 }
 
 /** The tools the helper may call. Both run on the server, so the browser never
@@ -209,16 +107,38 @@ async function runTool(name: string, args: any): Promise<string> {
   return `Unknown tool: ${name}`;
 }
 
-/** One non-streaming turn, used inside the tool loop. */
+/** One non-streaming turn, used inside the tool loop.
+ *
+ *  `via` is the upstream to use: a brand id, which goes through our own line, or
+ *  "fallback", which goes straight to the configured second upstream. Both paths
+ *  return the same shape, so the loop below does not care which one answered —
+ *  and, more importantly, the system prompt is the same either way, so the reply
+ *  reads as ZYRAXON Apex regardless of what served it. */
 async function completeTurn(
-  model: string,
+  via: string,
   messages: any[],
   withTools: boolean,
   onDelta?: (text: string) => void,
 ): Promise<{ content: string; toolCalls: any[] } | null> {
-  const res = await brandChatStream(model, messages as any, undefined, {
+  const tools = withTools ? (TOOLS as any) : undefined;
+
+  if (via === FALLBACK_LABEL) {
+    const turn = await fallbackComplete(messages, withTools ? TOOLS : undefined);
+    if (!turn) return null;
+    // Replay a finished answer in pieces for the same reason the brand path
+    // does: the panel should fill in as it is read, not land all at once.
+    if (onDelta && turn.content && !turn.toolCalls.length) {
+      for (const piece of chunkForDisplay(turn.content)) {
+        onDelta(piece);
+        await new Promise((r) => setTimeout(r, 12));
+      }
+    }
+    return turn;
+  }
+
+  const res = await brandChatStream(via, messages as any, undefined, {
     stream: false,
-    tools: withTools ? (TOOLS as any) : undefined,
+    tools,
   });
   if (!res.ok) return null;
   const data: any = await res.json().catch(() => null);
@@ -236,6 +156,62 @@ async function completeTurn(
     }
   }
   return { content, toolCalls };
+}
+
+/** The label the loop uses for the second upstream, so it is never confused
+ *  with a brand id from the catalogue. */
+const FALLBACK_LABEL = "fallback";
+
+/** The label reported for the OpenHands conversation backend.
+ *
+ *  Deliberately the flagship brand name rather than a backend name: this value
+ *  reaches the panel, and the visitor is owed the same answer the brand path
+ *  gives — "ZYRAXON Apex" — not a note about which system served them. */
+const CONVERSATION_LABEL = "zyraxon-apex";
+
+/** Run the tool loop against one upstream.
+ *
+ *  Shared by the brand pass and the fallback pass so the two cannot drift: the
+ *  same bounded rounds, the same tools, the same "answer or rotate" decision.
+ *  Returns true when an answer was sent. */
+async function runToolLoop(
+  via: string,
+  messages: any[],
+  send: (obj: unknown) => void,
+): Promise<boolean> {
+  const working = messages.slice();
+  for (let round = 0; round < 3; round++) {
+    send({ type: "thinking", model: via, round });
+    const turn = await completeTurn(via, working, round < 2, (delta) =>
+      send({ type: "delta", text: delta }),
+    );
+    if (!turn) return false;
+
+    if (!turn.toolCalls.length) {
+      send({ type: "answer", text: turn.content, model: via });
+      return true;
+    }
+
+    working.push({
+      role: "assistant",
+      content: turn.content || null,
+      tool_calls: turn.toolCalls,
+    });
+    for (const call of turn.toolCalls) {
+      send({ type: "tool", name: call.function.name });
+      let args: any = {};
+      try {
+        args = JSON.parse(call.function.arguments || "{}");
+      } catch {
+        /* leave empty */
+      }
+      const result = await runTool(call.function.name, args);
+      working.push({ role: "tool", tool_call_id: call.id, content: result });
+    }
+  }
+  // Rounds exhausted without a plain answer: the upstream is reachable but not
+  // converging, which is a failure for this purpose.
+  return false;
 }
 
 /** Split a finished reply into small pieces, for a live-typing effect.
@@ -279,6 +255,13 @@ export const Route = createFileRoute("/api/public/zyraxon/helper")({
             models,
             fastest: models[0],
             search: Boolean((process.env.GOOGLE_CSE_API_KEY || "").trim()),
+            // Whether a second upstream is configured. A visitor-facing status
+            // read, not a secret: it says the assistant has somewhere to go
+            // when our own line is down, without naming where that is.
+            fallback: fallbackConfigured(),
+            // Whether the shared OpenHands conversation backend is available.
+            // Reported the same way: a capability, not an address.
+            conversation: conversationConfigured(),
           },
           { headers: { ...CORS, "Cache-Control": "public, max-age=120" } },
         );
@@ -328,54 +311,54 @@ export const Route = createFileRoute("/api/public/zyraxon/helper")({
             }, 10_000);
 
             try {
+              // First pass: our own line, rotating through the brands as before.
               let answered = false;
               for (const model of HELPER_MODELS) {
-                // A small tool loop: at most two rounds, so a confused model
-                // cannot spin, and each round is one bounded request.
-                let working = messages.slice();
-                let ok = false;
-                for (let round = 0; round < 3; round++) {
-                  send({ type: "thinking", model, round });
-                  // Stream the answer out in pieces as it is produced, so the
-                  // panel fills in live rather than showing nothing and then
-                  // everything at once.
-                  const turn = await completeTurn(model, working, round < 2, (delta) =>
-                    send({ type: "delta", text: delta }),
-                  );
-                  if (!turn) break;
-                  ok = true;
-
-                  if (!turn.toolCalls.length) {
-                    send({ type: "answer", text: turn.content, model });
-                    answered = true;
-                    break;
-                  }
-
-                  working.push({
-                    role: "assistant",
-                    content: turn.content || null,
-                    tool_calls: turn.toolCalls,
-                  });
-                  for (const call of turn.toolCalls) {
-                    send({ type: "tool", name: call.function.name });
-                    let args: any = {};
-                    try {
-                      args = JSON.parse(call.function.arguments || "{}");
-                    } catch {
-                      /* leave empty */
-                    }
-                    const result = await runTool(call.function.name, args);
-                    working.push({ role: "tool", tool_call_id: call.id, content: result });
-                  }
+                if (await runToolLoop(model, messages, send)) {
+                  answered = true;
+                  break;
                 }
-                if (answered || ok) break;
                 send({ type: "rotating", model });
               }
 
+              // Second pass: the configured OpenAI-compatible fallback.
+              if (!answered && fallbackConfigured()) {
+                send({ type: "rotating", model: FALLBACK_LABEL });
+                answered = await runToolLoop(FALLBACK_LABEL, messages, send);
+              }
+
+              // Third pass: the shared OpenHands conversation. This is the
+              // backend that survives our own line being spent, and it is the
+              // last thing tried before the visitor is told we are down. The
+              // reply is written by the same prompt the brand path uses, so the
+              // assistant still answers as ZYRAXON Apex and still names no
+              // upstream — a visitor cannot tell which backend served them.
+              if (!answered && conversationConfigured()) {
+                send({ type: "rotating", model: CONVERSATION_LABEL });
+                const reply = await askConversation(message);
+                if (reply) {
+                  for (const piece of chunkForDisplay(reply)) {
+                    send({ type: "delta", text: piece });
+                    await new Promise((r) => setTimeout(r, 12));
+                  }
+                  send({ type: "answer", text: reply, model: CONVERSATION_LABEL });
+                  answered = true;
+                }
+              }
+
               if (!answered) {
+                // Both upstreams are down. The visitor still gets something
+                // useful: the goal the whole provider is waiting on, and the
+                // one action that moves it.
                 send({
                   type: "answer",
-                  text: "I could not reach a model just now. Please try again, or read the docs at /docs.",
+                  text:
+                    `I could not reach a model just now, so I cannot answer this one. ` +
+                    `That is on our side, not yours — please try again in a few minutes, or read the docs at /docs.\n\n` +
+                    `While I am down: our provider opens when this repository reaches ` +
+                    `${STAR_GOAL.toLocaleString("en-US")} stars on GitHub, and it is at ` +
+                    `${STAR_REPO} right now. A star moves that closer.\n\n` +
+                    `${STAR_REPO_URL}`,
                 });
               }
               send({ type: "done" });

@@ -1,0 +1,300 @@
+/** The site helper's second backend: one long-lived OpenHands conversation.
+ *
+ *  Our own provider is tried first. When every brand has failed — which is what
+ *  happens when the shared free pool is spent, and is exactly the outage that
+ *  took the assistant down before — the helper falls back to an OpenHands
+ *  conversation instead of giving up.
+ *
+ *  One conversation serves the whole site, deliberately:
+ *
+ *  - Starting a conversation provisions a sandbox, which takes tens of seconds.
+ *    Doing that per message would make the assistant unusably slow and would
+ *    leave a sandbox behind for every question asked.
+ *  - So the first visitor's message creates it and every later message is sent
+ *    into the same conversation, which is also what gives the assistant a
+ *    continuous memory of what has been asked.
+ *
+ *  Turns are serialised. One conversation can only work on one message at a time,
+ *  so two visitors asking at once would otherwise be answered out of order. The
+ *  second waits for the first, which is a queue, not a failure.
+ *
+ *  A conversation that breaks — sandbox gone, errored, or gone quiet — is deleted
+ *  and replaced, so the assistant heals itself rather than staying dead. */
+
+import { helperConversationPrompt } from "./helper-prompt.server";
+
+const BASE = (process.env.OPENHANDS_API_BASE || "https://app.all-hands.dev").replace(/\/+$/, "");
+
+/** How long to wait for a new conversation to become ready, and for an answer. */
+const READY_TIMEOUT_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_READY_MS || 120_000);
+const ANSWER_TIMEOUT_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_ANSWER_MS || 120_000);
+const POLL_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_POLL_MS || 2_500);
+
+function apiKey(): string {
+  return (process.env.OPENHANDS_API_KEY || "").trim();
+}
+
+/** Whether the OpenHands backend is configured at all. */
+export function conversationConfigured(): boolean {
+  return apiKey().length > 0;
+}
+
+type Conversation = {
+  id: string;
+  /** The id of the last chat message seen in this conversation.
+   *
+   *  A reply is any agent message that appears after this one. Tracking the id
+   *  rather than a count is what keeps a turn matched to its question once the
+   *  conversation is longer than the 100 events the API will return: an id can
+   *  still be found or missed explicitly, while a count silently means something
+   *  different as older events fall out of the window. */
+  lastMessageId: string | null;
+};
+
+/** The conversation every visitor shares, or null before the first message. */
+let current: Conversation | null = null;
+
+/** The tail of the turn queue, so turns run one at a time. */
+let queue: Promise<unknown> = Promise.resolve();
+
+async function oh(path: string, init: RequestInit = {}): Promise<Response> {
+  const key = apiKey();
+  return fetch(`${BASE}/api/v1${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${key}`,
+      Accept: "application/json",
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...(init.headers || {}),
+    },
+  });
+}
+
+/** Read the chat messages in a conversation, oldest first.
+ *
+ *  Only `MessageEvent`s with text are returned: state updates, system prompts and
+ *  tool events share the same feed and are not part of the conversation.
+ *
+ *  The API caps `limit` at 100 and answers 422 above it — not a smaller page, a
+ *  refusal — so asking for more returns nothing at all and the helper would see
+ *  an empty conversation forever. 100 is the documented maximum and is used
+ *  verbatim. */
+async function messages(
+  id: string,
+): Promise<Array<{ id: string; source: string; text: string }>> {
+  const res = await oh(`/conversation/${id}/events/search?limit=100`);
+  if (!res.ok) return [];
+  const data: any = await res.json().catch(() => null);
+  const items: any[] = Array.isArray(data) ? data : data?.items || [];
+  const out: Array<{ id: string; source: string; text: string }> = [];
+  for (const e of items) {
+    if (e?.kind !== "MessageEvent") continue;
+    const content = e?.llm_message?.content;
+    const text = Array.isArray(content)
+      ? content
+          .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
+          .join("")
+          .trim()
+      : typeof content === "string"
+        ? content.trim()
+        : "";
+    if (!text) continue;
+    out.push({ id: String(e?.id || ""), source: String(e?.source || ""), text });
+  }
+  return out;
+}
+
+/** Delete a conversation, ignoring the outcome.
+ *
+ *  Cleanup runs on the failure path, where the useful thing is to get to a fresh
+ *  conversation. A delete that itself fails must not stop that. */
+async function discard(id: string): Promise<void> {
+  try {
+    await oh(`/app-conversations/${id}`, { method: "DELETE" });
+  } catch {
+    /* the conversation is being abandoned either way */
+  }
+}
+
+/** Start a conversation and wait until it can accept a message.
+ *
+ *  Returns null when it never becomes ready, which the caller treats as "this
+ *  backend is unavailable" rather than an error to show. */
+async function start(): Promise<Conversation | null> {
+  let res: Response;
+  try {
+    res = await oh("/app-conversations", {
+      method: "POST",
+      body: JSON.stringify({
+        // The identity and answer rules are fixed at creation: this backend has
+        // no per-turn system message, so the prompt has to be installed once and
+        // stand alone. It is the same prompt the brand path uses.
+        system_prompt: helperConversationPrompt(),
+        initial_message: {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Introduce yourself in one sentence, then wait for questions.",
+            },
+          ],
+          run: true,
+        },
+        ...(process.env.ZYRAXON_HELPER_CONVERSATION_MODEL
+          ? { llm_model: process.env.ZYRAXON_HELPER_CONVERSATION_MODEL.trim() }
+          : {}),
+        title: "ZYRAXON site helper",
+      }),
+    });
+  } catch {
+    return null;
+  }
+  if (!res.ok) return null;
+
+  const task: any = await res.json().catch(() => null);
+  const taskId = task?.id;
+  if (!taskId) return null;
+
+  const deadline = Date.now() + READY_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await sleep(POLL_MS);
+    const t = await oh(`/app-conversations/start-tasks?ids=${taskId}`);
+    if (!t.ok) continue;
+    const data: any = await t.json().catch(() => null);
+    const item = Array.isArray(data) ? data[0] : data?.items?.[0];
+    const id = item?.app_conversation_id;
+    if (id) {
+      // Baseline the last message, so the greeting the conversation writes on
+      // creation is not mistaken for the answer to the first visitor's question.
+      const existing = await messages(id);
+      return { id, lastMessageId: existing.at(-1)?.id ?? null };
+    }
+    if (item?.status === "ERROR" || item?.status === "FAILED") return null;
+  }
+  return null;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Whether the shared conversation is still usable.
+ *
+ *  A paused sandbox is fine — OpenHands resumes it when the next message arrives.
+ *  A missing one, or a conversation that errored, is not, and is replaced. */
+async function alive(conv: Conversation): Promise<boolean> {
+  const res = await oh(`/app-conversations?ids=${conv.id}`);
+  if (!res.ok) return false;
+  const data: any = await res.json().catch(() => null);
+  const item = Array.isArray(data) ? data[0] : data?.items?.[0];
+  if (!item) return false;
+  const sandbox = String(item.sandbox_status || "").toUpperCase();
+  const exec = String(item.execution_status || "").toLowerCase();
+  if (sandbox === "MISSING" || sandbox === "ERROR") return false;
+  if (exec === "error" || exec === "failed") return false;
+  return true;
+}
+
+/** The shared conversation, started if needed and replaced if broken. */
+async function ensure(): Promise<Conversation | null> {
+  if (current && (await alive(current))) return current;
+  if (current) {
+    const dead = current.id;
+    current = null;
+    await discard(dead);
+  }
+  current = await start();
+  return current;
+}
+
+/** Send one message and wait for the assistant's reply.
+ *
+ *  Returns null when the backend could not answer, including when the
+ *  conversation had to be abandoned. The caller treats null as "no answer from
+ *  this backend" and moves on, so a failure here never throws inside the
+ *  helper's stream. */
+export async function askConversation(message: string): Promise<string | null> {
+  if (!conversationConfigured()) return null;
+
+  const run = async (): Promise<string | null> => {
+    const conv = await ensure();
+    if (!conv) return null;
+
+    let sent: Response;
+    try {
+      sent = await oh(`/app-conversations/${conv.id}/send-message`, {
+        method: "POST",
+        body: JSON.stringify({
+          role: "user",
+          content: [{ type: "text", text: message }],
+          run: true,
+        }),
+      });
+    } catch {
+      sent = new Response(null, { status: 0 });
+    }
+
+    // A refused send means the conversation is gone. Replace it and try once
+    // more, so a sandbox that expired between turns costs one extra attempt
+    // rather than the visitor's answer.
+    if (!sent.ok) {
+      const dead = conv.id;
+      current = null;
+      await discard(dead);
+      const fresh = await ensure();
+      if (!fresh) return null;
+      try {
+        const retry = await oh(`/app-conversations/${fresh.id}/send-message`, {
+          method: "POST",
+          body: JSON.stringify({
+            role: "user",
+            content: [{ type: "text", text: message }],
+            run: true,
+          }),
+        });
+        if (!retry.ok) return null;
+        return await awaitReply(fresh);
+      } catch {
+        return null;
+      }
+    }
+
+    return await awaitReply(conv);
+  };
+
+  // Serialise: the shared conversation works on one message at a time, and a
+  // reply must be matched to the message that caused it.
+  const result = queue.then(run, run);
+  queue = result.catch(() => undefined);
+  return result;
+}
+
+/** Wait for an agent message that appears after the conversation's last known one.
+ *
+ *  Position is found by id, not by count, so a conversation long enough to push
+ *  older messages out of the 100-event window still resolves correctly: the
+ *  baseline either appears in the window (and everything after it is new) or it
+ *  does not (and the newest agent message is the reply). */
+async function awaitReply(conv: Conversation): Promise<string | null> {
+  const deadline = Date.now() + ANSWER_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await sleep(POLL_MS);
+    const all = await messages(conv.id);
+    if (!all.length) continue;
+
+    const mark = conv.lastMessageId ? all.findIndex((m) => m.id === conv.lastMessageId) : -1;
+    const fresh = mark >= 0 ? all.slice(mark + 1) : all;
+    const answer = [...fresh].reverse().find((m) => m.source === "agent" && m.text);
+    if (answer) {
+      conv.lastMessageId = all.at(-1)?.id ?? conv.lastMessageId;
+      return answer.text;
+    }
+    // Only the visitor's own message so far: keep waiting.
+  }
+  // No answer in time. Treat the conversation as unreliable rather than leaving
+  // the next visitor to inherit the same silence.
+  const stalled = conv.id;
+  current = null;
+  void discard(stalled);
+  return null;
+}
