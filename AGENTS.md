@@ -575,9 +575,14 @@ client. The gate reads four things, and all four must hold:
 2. `x-opencode-session` shaped `ses_<12 lowercase hex><14 alnum>` (the old
    shape; the newer `ses_<64 hex>` shape is refused).
 3. `stream: true` in the body.
-4. Enough of OpenCode's own tool *names* in `tools[]`. The published floor is
-   **two** of `bash`, `edit`, `glob`, `grep`, `read`; it has been five and has
-   moved. Schemas and descriptions are ignored, and the tools are never called.
+4. **All five** of OpenCode's core tool names in `tools[]`: `bash`, `edit`,
+   `glob`, `grep`, `read`. Schemas and descriptions are ignored, the tools are
+   never called, and the names are matched **case-sensitively**. The
+   documentation's floor of *two* is stale and the mock enforced it for a while,
+   which is exactly how a catalogue that satisfied every test was refused by the
+   real upstream. Measured directly: four of the five is refused, all five is
+   accepted, and non-core names (`write`, `skill`, …) do not substitute for a
+   missing core one.
 
 `GATE_TOOL_CATALOGUE` therefore carries all eleven names the real client sends
 (`bash`, `edit`, `glob`, `grep`, `read`, `skill`, `task`, `todowrite`,
@@ -590,6 +595,18 @@ when they did, since the caller wants their tools to run). The SDK paths send
 Verified live: with the full catalogue, `tools[]` of one name and of eleven both
 answer 200 from a clean IP, and a caller-supplied tool cannot shrink the
 catalogue below the floor.
+
+**Every** request that reaches the upstream must satisfy this, not just a chat
+turn. `testZenModel` used `generateText` with no tools and no streaming, so the
+health check was refused with `403 FreeTierError` on a model that serves fine —
+it reported the identity refusal as if it were the model's fault. It now goes
+through `completeRaw`, the same path a turn takes. When adding any new upstream
+call, send the catalogue and stream, or the gate will read the probe as a
+rejected client.
+
+`scripts/verify-gate-contract.ts` asserts the shape the real turn puts on the
+wire, through the real code path, and `scripts/mock-upstream.mjs` enforces the
+measured contract — so the test and the upstream cannot drift apart again.
 
 ## The free tier is limited per egress IP, not per account
 
