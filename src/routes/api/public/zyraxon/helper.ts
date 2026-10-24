@@ -8,7 +8,7 @@ import {
 } from "@/lib/providers/helper-conversation.server";
 import { helperWirePrompt } from "@/lib/providers/helper-prompt.server";
 import { quotaResetStatus } from "@/lib/providers/quota.server";
-import { STAR_GOAL, STAR_REPO, STAR_REPO_URL } from "@/lib/providers/star-gate";
+import { STAR_GOAL, STAR_REPO, STAR_REPO_URL, providerGateOpen } from "@/lib/providers/star-gate";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -308,13 +308,19 @@ export const Route = createFileRoute("/api/public/zyraxon/helper")({
         // question — the first turn then costs nothing extra.
         warmConversation();
         let models: string[] = HELPER_MODELS;
-        try {
-          const catalogue = await brandCatalogue();
-          const live = new Set<string>(catalogue.map((b) => b.id as string));
-          const preferred = HELPER_MODELS.filter((m) => live.has(m));
-          models = preferred.length ? preferred : HELPER_MODELS;
-        } catch {
-          /* keep the static list */
+        // The catalogue comes from the brand line, so it is only read when that
+        // line is actually in use. While the gate is shut the static list is the
+        // honest answer, and asking anyway would be a request to a provider we
+        // have said we are not calling.
+        if (providerGateOpen) {
+          try {
+            const catalogue = await brandCatalogue();
+            const live = new Set<string>(catalogue.map((b) => b.id as string));
+            const preferred = HELPER_MODELS.filter((m) => live.has(m));
+            models = preferred.length ? preferred : HELPER_MODELS;
+          } catch {
+            /* keep the static list */
+          }
         }
         return Response.json(
           {
@@ -384,13 +390,17 @@ export const Route = createFileRoute("/api/public/zyraxon/helper")({
               warmConversation();
 
               // First pass: our own line. All seven brands race inside one short
-              // budget, so this pass costs one wait rather than seven. Skipped
-              // outright when the free pool is known to be spent: every brand
-              // shares that pool, so the pass can only collect the same refusal,
-              // and the three seconds it costs are three seconds of a visitor
-              // waiting for an answer the fallback is about to give anyway.
+              // budget, so this pass costs one wait rather than seven.
+              //
+              // This is the one place the helper talks to the brand line, and it
+              // is behind the same gate as the public API. That is deliberate:
+              // the provider is off by decision, and the helper must not be a
+              // back door around it. It also stops the assistant from burning the
+              // free pool — the pool the provider is waiting on — one visitor
+              // question at a time, which is what left the whole line refusing
+              // every request.
               let answered = false;
-              if (!quotaResetStatus().spent) {
+              if (providerGateOpen && !quotaResetStatus().spent) {
                 send({ type: "thinking", model: HELPER_MODELS[0], round: 0 });
                 answered = await raceBrands(messages, send, BRAND_BUDGET_MS);
                 if (!answered) send({ type: "rotating", model: HELPER_MODELS.at(-1)! });
