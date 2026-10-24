@@ -666,3 +666,52 @@ surfaces.
 `npx tsc --noEmit -p tsconfig.json` must stay clean. Scripts that import
 `zen.server.ts` need the `?raw` loader: `npx tsx --import
 ./scripts/raw-import-loader.mjs <script>`.
+
+## The AI helper's OpenHands conversation backend
+
+`src/lib/providers/helper-conversation.server.ts` is the helper's last line of
+defence. When every brand model fails, the helper sends the visitor's message
+into **one long-lived OpenHands conversation** instead of giving up.
+
+Facts worth knowing before touching it, each learned the hard way:
+
+- **`events/search` caps `limit` at 100.** A larger value returns `422`, not a
+  smaller page — so asking for 200 yields *no* messages and the helper would see
+  an empty conversation forever. Use `limit=100`.
+- **Match a reply by message id, not by counting messages.** The window holds the
+  most recent 100 events, so a count means something different once a conversation
+  is long. `Conversation.lastMessageId` is the baseline.
+- **A reply is an agent `MessageEvent` with text.** `llm_message.content[].text`.
+  State updates, the system prompt and tool events share the same feed and are not
+  part of the conversation.
+- **Turns are serialised** through a promise queue: one conversation works on one
+  message at a time, so concurrent visitors would otherwise be answered out of
+  order.
+- **One conversation is intentional.** Starting one provisions a sandbox and takes
+  ~25s, so a conversation per message would be unusably slow and would leak a
+  sandbox per question.
+- **The conversation is deleted and replaced** when its sandbox is `MISSING` or
+  `ERROR`, when `execution_status` is `error`/`failed`, or when a turn times out.
+  A `PAUSED` sandbox is fine — OpenHands resumes it.
+- **Endpoints that matter:** `POST /api/v1/app-conversations` (create, returns a
+  start-task id), `GET /api/v1/app-conversations/start-tasks?ids=<id>` (poll until
+  `app_conversation_id` appears), `POST /api/v1/app-conversations/<id>/send-message`,
+  `GET /api/v1/conversation/<id>/events/search?limit=100`, and
+  `DELETE /api/v1/app-conversations/<id>`. Note `send-message` is on
+  `app-conversations`, not `conversation`, and the two prefixes are not
+  interchangeable.
+
+### One prompt, two backends
+
+`src/lib/providers/helper-prompt.server.ts` holds the facts, the page list, the
+endpoint catalogue (read from the `ENDPOINTS` registry) and the identity rules
+once. `helperWirePrompt()` and `helperConversationPrompt()` compose them and
+differ only where the environment differs — the brand path has `search_web` and
+`fetch_page`; the conversation has its own tools and must not be told about tools
+it lacks.
+
+Both are capped at 28,000 chars (`capPrompt`) because OpenHands truncates a
+system prompt past its own limit, and a silently truncated prompt keeps the facts
+while losing whichever section fell off the end. **Order matters:** identity and
+answer rules come first, reference material last, so a trim never drops the rule
+that stops the assistant naming an upstream vendor.
