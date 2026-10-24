@@ -355,11 +355,29 @@ export async function brandChatStream(
       // again, which is what the upstream's own client does, and it is what
       // turns a transient 429 into an answer instead of an error.
       //
-      // Eight attempts, made back to back: a rolling window opens in seconds,
-      // so the re-ask must be fast enough to catch it. A turn that succeeds on
-      // any of them is served and the caller never learns a limit was hit.
-      // Only when every re-ask is refused does the turn surface the reset clock.
-      const quotaAttempts = Math.max(1, Number(process.env.ZYRAXON_QUOTA_ATTEMPTS || 8));
+      // How many times to re-ask before reporting the refusal.
+      //
+      // Eight attempts at a fixed 150ms were too few and too fast. The upstream
+      // hands out capacity in bursts rather than strictly by the clock — a
+      // caller who re-sends the same turn for long enough gets served, which is
+      // why retrying by hand six or seven times works where one call does not.
+      // A burst of twenty sub-second re-asks all lands inside the same closed
+      // window and learns nothing; the re-ask has to outlast the gap, so the
+      // count is raised and the pauses grow. The whole sequence is bounded, so
+      // a genuinely spent window still surfaces its reset clock rather than
+      // holding the caller open indefinitely.
+      const quotaAttempts = Math.max(1, Number(process.env.ZYRAXON_QUOTA_ATTEMPTS || 20));
+      // A ceiling on the whole re-ask sequence, independent of the count. The
+      // growing pauses are what recover a bursty window, but twenty of them
+      // could outlast the edge function's own wall-clock limit and turn a
+      // recoverable turn into a platform timeout — strictly worse than the
+      // refusal it was trying to avoid. Whatever the count, the sequence stops
+      // here and reports the reset clock it has.
+      const quotaBudgetMs = Math.max(
+        1_000,
+        Number(process.env.ZYRAXON_QUOTA_RETRY_BUDGET_MS || 25_000),
+      );
+      const quotaStartedAt = Date.now();
       const tryUpstream = async (
         upstream: string,
       ): Promise<
@@ -407,6 +425,7 @@ export async function brandChatStream(
           // add latency before the same answer.
           if (isUpstreamGate(why)) break;
           if (!isQuotaFailure(why) || quotaTry >= quotaAttempts) break;
+          if (Date.now() - quotaStartedAt >= quotaBudgetMs) break;
           // The address that reported the limit is released here, so the re-ask
           // below is free to leave by a different one when the deployment holds
           // a pool. The pause is deliberately short: a rolling window opens in
@@ -415,7 +434,13 @@ export async function brandChatStream(
           // *not* the address cooldown — that is measured in minutes and would
           // stop the very re-ask that recovers the turn.
           releaseEgress(lane.sessionId);
-          await new Promise((r) => setTimeout(r, 150));
+          // Grow the pause so the sequence spans seconds rather than
+          // milliseconds, and jitter it so parallel callers that were refused
+          // together do not all come back on the same tick and collide.
+          const base = Math.max(0, Number(process.env.ZYRAXON_QUOTA_PAUSE_MS || 400));
+          const cap = Math.max(base, Number(process.env.ZYRAXON_QUOTA_PAUSE_MAX_MS || 2_000));
+          const wait = Math.min(cap, base * quotaTry) + Math.floor(Math.random() * 200);
+          await new Promise((r) => setTimeout(r, wait));
         }
         const detail = String((out as { failed?: any }).failed?.detail ?? "");
         // The refusal may be the *address* being over its limit rather than the

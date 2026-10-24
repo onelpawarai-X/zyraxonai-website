@@ -218,7 +218,9 @@ export class LanePool {
   async run<T>(
     work: (lane: Lane) => Promise<T>,
     seed?: string,
-    attempts = 8,
+    // Must be at least the quota re-ask count, because each re-ask spends one
+    // of these; a lane of eight silently capped the twenty re-asks above it.
+    attempts = Math.max(8, Number(process.env.ZYRAXON_LANE_ATTEMPTS || 24)),
     opts?: { workMs?: number },
   ): Promise<T> {
     const tier = await this.acquire();
@@ -277,7 +279,9 @@ export class LanePool {
   async stream(
     work: (lane: Lane) => Promise<Response>,
     seed?: string,
-    attempts = 8,
+    // Must be at least the quota re-ask count, because each re-ask spends one
+    // of these; a lane of eight silently capped the twenty re-asks above it.
+    attempts = Math.max(8, Number(process.env.ZYRAXON_LANE_ATTEMPTS || 24)),
     opts?: { workMs?: number },
   ): Promise<Response> {
     const tier = await this.acquire();
