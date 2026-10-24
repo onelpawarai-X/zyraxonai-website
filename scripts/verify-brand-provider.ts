@@ -197,7 +197,9 @@ check(
   );
 
   // The free-tier gate fails every model identically, so rotation must stop at
-  // the first refusal rather than burning the whole pool.
+  // the first refusal rather than burning the whole pool. The gate is its
+  // *wording*: a bare `FreeTierError` type name is also what a spent quota
+  // carries, and matching that made every spent window look permanent.
   const gateCalls: string[] = [];
   const out4 = await rotateThrough(["a", "b", "c"], async (u) => {
     gateCalls.push(u);

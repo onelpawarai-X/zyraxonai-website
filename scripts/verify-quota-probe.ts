@@ -18,7 +18,9 @@ process.env.ZEN_BASE_URL = `http://127.0.0.1:${port}/v1`;
 process.env.OPENCODE_ZEN_API_KEY = "test-key";
 process.env.ZYRAXON_QUOTA_PROBE_MS = "0";
 
-const { quotaResetStatus, resetQuotaClock } = await import("../src/lib/providers/quota.server");
+const { quotaResetStatus, resetQuotaClock, clearQuotaReset } = await import(
+  "../src/lib/providers/quota.server"
+);
 const { probeQuotaReset, resetQuotaProbe } = await import("../src/lib/providers/quota-probe.server");
 const { brandChatStream } = await import("../src/lib/providers/zyraxon-brand.server");
 
@@ -34,11 +36,23 @@ async function turn() {
   return res;
 }
 
-// -- nothing is spent: a probe costs no upstream request at all
+// -- a cold isolate has no evidence, so it says so rather than claiming an open
+//    pool it cannot vouch for. This is the state that used to answer "open"
+//    purely because it had never seen a refusal, which is how two browser
+//    profiles read the same instant as "open" and "2h left".
 resetQuotaClock();
 resetQuotaProbe();
-check("an open pool records nothing to probe", quotaResetStatus().spent === false);
+check("a cold isolate is not spent", quotaResetStatus().spent === false);
+check("but says so as unknown, not as open", quotaResetStatus().unknown === true);
+
+// -- once the pool has been *observed* open, a probe costs no upstream request
+//    at all: there is nothing left to re-check.
+clearQuotaReset();
+resetQuotaProbe();
+check("an observed-open pool is not unknown", quotaResetStatus().unknown === undefined);
+const quietBefore = requests.length;
 check("and a probe declines to ask", (await probeQuotaReset()) === false);
+check("costing no upstream request", requests.length === quietBefore, `+${requests.length - quietBefore}`);
 
 // -- a real refusal records the upstream's own clock
 setScenario("quota-all");

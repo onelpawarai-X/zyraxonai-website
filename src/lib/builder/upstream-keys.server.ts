@@ -38,7 +38,13 @@ export function upstreamKeys(): string[] {
  *  level, and no amount of retrying the same key will clear it. */
 export function isQuotaFailure(detail: unknown): boolean {
   const s = String(detail ?? "");
-  return /usage limit|quota|subscribe to opencode|FreeTierError|insufficient|billing/i.test(s);
+  // `FreeUsageLimitError` is the upstream's own name for a spent window, and is
+  // what makes re-asking worthwhile. The bare `FreeTierError` type name is
+  // deliberately absent: the identity refusal carries it too, and matching it
+  // here made a permanent gate look like a momentary limit, so a caller was
+  // re-asked twenty times for a refusal no re-ask could ever clear. The two
+  // predicates are disjoint, and that is what lets the turn tell them apart.
+  return /usage limit|quota|subscribe to opencode|FreeUsageLimitError|insufficient|billing/i.test(s);
 }
 
 /** Per-key cooldown. A key that reported a spent quota is set aside for a

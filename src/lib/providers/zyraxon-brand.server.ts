@@ -11,6 +11,7 @@
  *  host answers every public request with FreeTierError regardless of the
  *  session fingerprint, so pointing at `zen` made every model look broken.
  */
+import { amendLastTrace } from "@/lib/providers/upstream-trace.server";
 import {
   DEFAULT_ZEN_MODEL,
   completeRaw,
@@ -331,7 +332,14 @@ export async function brandChatStream(
     // it, so the budget has to cover both: a chain that exhausts its own passes
     // must still leave room to reach the rest of the pool. The wall-clock
     // budgets, not this count, are what actually stop a turn.
-    const laneAttempts = 24;
+    // Must cover the whole chain's re-asking: with the quota re-ask count at
+    // twenty per model, a budget that only covered one model's worth would stop
+    // the rotation from ever reaching the others — the budget, not the
+    // upstream, would be deciding the turn.
+    const laneAttempts = Math.max(
+      24,
+      Number(process.env.ZYRAXON_LANE_ATTEMPTS_BUDGET || 60),
+    );
     const runner = stream
       ? (work: (lane: any) => Promise<Response>, seed?: string) =>
           lanePool.stream(work, seed, laneAttempts, laneOpts)
@@ -382,6 +390,13 @@ export async function brandChatStream(
         Math.max(1_000, Math.round(remainingMs() * 0.4)),
       );
       const quotaStartedAt = Date.now();
+      // Set the moment any racer serves the turn. A losing racer must stop
+      // re-asking: its answer is already discarded, so every further attempt it
+      // makes is a request against the shared free window that nobody will ever
+      // read — burning exactly the quota the turn is trying to conserve. It is a
+      // flag rather than an abort because the winner's own stream is still open
+      // when this is set, and aborting the shared signal would cut it off.
+      let turnSettled = false;
       const tryUpstream = async (
         upstream: string,
       ): Promise<
@@ -389,8 +404,22 @@ export async function brandChatStream(
       > => {
         let out: Response | { failed: any } = { failed: { detail: "not attempted" } };
         for (let quotaTry = 1; quotaTry <= quotaAttempts; quotaTry++) {
+          // A sibling already served this turn, so this attempt would be spent
+          // on an answer that is thrown away. Stop before the request, not after.
+          if (turnSettled) {
+            return { ok: false as const, status: 499, detail: "sibling served the turn" };
+          }
           if (lane.attemptsLeft <= 0) {
-            return { ok: false as const, status: 503, detail: "lane attempt budget exhausted" };
+            // Report the upstream's own last refusal rather than a generic
+            // "budget exhausted". The budget running out is *why* the turn
+            // stopped, but the caller needs to know *what* it kept being told —
+            // a 429 with its reset clock is actionable, a 503 is not.
+            const last = "failed" in out ? out.failed : undefined;
+            return {
+              ok: false as const,
+              status: last?.status ?? 503,
+              detail: last?.detail ?? "lane attempt budget exhausted",
+            };
           }
           lane.attemptsLeft--;
           out = stream
@@ -421,22 +450,48 @@ export async function brandChatStream(
             // serving because a real turn just was, not because a timer
             // happened to run out.
             clearQuotaReset();
+            amendLastTrace("served", "served");
+            turnSettled = true;
             return { ok: true as const, value: out as Response };
           }
           const why = String(out.failed?.detail ?? "");
-          // A credential gate is an account decision, not a momentary one: the
-          // same request will be refused every time, so re-asking it would only
-          // add latency before the same answer.
-          if (isUpstreamGate(why)) break;
-          if (!isQuotaFailure(why) || quotaTry >= quotaAttempts) break;
-          if (Date.now() - quotaStartedAt >= quotaBudgetMs) break;
+          // Record why the loop stops or continues, so a refusal that reaches
+          // the caller can be explained after the fact: which predicate fired
+          // and whether the re-asks were actually spent.
+          //
+          // A gate is an account decision, not a momentary one: the same
+          // request is refused every time, so re-asking only adds latency
+          // before the same answer.
+          //
+          // This test used to swallow the very refusals the re-asks exist for.
+          // `isUpstreamGate` matched the upstream's `FreeTierError` type name,
+          // which a *spent quota* also carries, so a spent free tier was read as
+          // a permanent gate and the loop broke on its first pass — which is why
+          // re-sending the same request by hand got an answer where one call did
+          // not. The two predicates are disjoint now: the gate matches the
+          // identity refusal's wording, quota matches the limit's, and a
+          // `FreeTierError` that is really a limit falls through to the re-asks.
+          if (isUpstreamGate(why)) {
+            amendLastTrace("stopped: upstream identity gate", "upstream_gate");
+            break;
+          }
+          if (!isQuotaFailure(why)) {
+            amendLastTrace("stopped: not a quota refusal", "non-quota");
+            break;
+          }
+          if (quotaTry >= quotaAttempts) {
+            amendLastTrace("stopped: attempt count spent", "quota");
+            break;
+          }
+          if (Date.now() - quotaStartedAt >= quotaBudgetMs) {
+            amendLastTrace("stopped: re-ask budget spent", "quota");
+            break;
+          }
+          amendLastTrace(`re-ask ${quotaTry + 1} of ${quotaAttempts}`, "quota");
           // The address that reported the limit is released here, so the re-ask
           // below is free to leave by a different one when the deployment holds
-          // a pool. The pause is deliberately short: a rolling window opens in
-          // seconds, so the whole eight-attempt sequence must fit inside the
-          // caller's patience rather than backing off into a long wait. This is
-          // *not* the address cooldown — that is measured in minutes and would
-          // stop the very re-ask that recovers the turn.
+          // a pool. This is *not* the address cooldown — that is measured in
+          // minutes and would stop the very re-ask that recovers the turn.
           releaseEgress(lane.sessionId);
           // Grow the pause so the sequence spans seconds rather than
           // milliseconds, and jitter it so parallel callers that were refused

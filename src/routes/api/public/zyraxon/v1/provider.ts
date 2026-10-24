@@ -7,6 +7,7 @@ import { PROVIDER_SYSTEM_PROMPT } from "@/lib/providers/provider-contract";
 import { brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
 import { quotaResetStatus } from "@/lib/providers/quota.server";
 import { probeQuotaReset } from "@/lib/providers/quota-probe.server";
+import { refusalSummary, upstreamTrace } from "@/lib/providers/upstream-trace.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -110,6 +111,18 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               note: "Limits for the chat-completions endpoint. See the provider guide for media shapes and sizes.",
             },
             egress: egressStatus(),
+            // What actually left this deployment and what came back, so a
+            // refusal can be explained instead of guessed at. The distinction
+            // that matters is the upstream's own error type: a `FreeTierError`
+            // is a rejected client, a `FreeUsageLimitError` is a spent window,
+            // and they need opposite responses.
+            diagnostics: {
+              refusals: refusalSummary(),
+              // Newest last, so a reader follows the turn in the order it
+              // happened. Capped by the ring, so the payload stays small.
+              lastExchanges: upstreamTrace().slice(-12),
+              note: "Live record of recent upstream exchanges from this isolate. In-memory only; nothing secret is recorded, and headers are listed by name.",
+            },
             // Whether the shared free tier is currently spent, and when it opens
             // again. Published here so a page can show a real countdown without
             // having to send a request just to be told "429" first — and so the

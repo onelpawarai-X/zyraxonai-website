@@ -103,12 +103,17 @@ const failUp = (upstream: string, status: number, detail: string) =>
   );
 }
 
-// a credential gate stops the rotation instead of retrying every sibling
+// a credential gate stops the rotation instead of retrying every sibling.
+//
+// The wording matters: this is the identity refusal, which no amount of
+// re-asking clears. A bare `FreeTierError` type name is *not* this — a spent
+// quota carries that too, and treating it as a gate is what stopped the
+// re-asks from ever running.
 {
   let calls = 0;
   const send = (async (_k: any, upstream: string) => {
     calls++;
-    return failUp(upstream, 403, "FreeTierError");
+    return failUp(upstream, 403, "FreeTierError: free tier can only be used from within OpenCode");
   }) as any;
 
   const res = await brandChatStream(
@@ -123,6 +128,36 @@ const failUp = (upstream: string, status: number, detail: string) =>
   check("the error type names the gate", body.error.type === "upstream_gate", body.error.type);
   check("the brand is named, not the upstream", body.error.model === "zyraxon-apex");
   check("the message tells the operator what to do", /OPENCODE_ZEN_API_KEY/.test(body.error.message));
+}
+
+// a spent quota that names `FreeTierError` is re-asked, not mistaken for a gate.
+//
+// This is the regression that made one call fail where six or seven by hand
+// succeeded: the limit's own error type matched the gate pattern, so the loop
+// broke on its first pass and the caller was told the free tier was closed.
+{
+  let calls = 0;
+  const send = (async (_k: any, upstream: string, _m: any, _t: any, label: string) => {
+    calls++;
+    if (calls <= 5) {
+      return failUp(
+        upstream,
+        429,
+        'FreeTierError: usage limit reached, retry after 60s',
+      );
+    }
+    return new Response("ok:" + upstream, { headers: { "X-ZYRAXON-Model": label } });
+  }) as any;
+
+  const res = await brandChatStream(
+    "zyraxon-apex",
+    [{ role: "user", content: "hi" }],
+    undefined,
+    { send, resolve: resolveTo("zyraxon-apex", ["beam-free"]) },
+  );
+  check("a spent quota is re-asked, not treated as a gate", res.status === 200, res.status);
+  check("and it took the re-asks to get there", calls === 6, calls);
+  await res.text();
 }
 
 // a healthy model is used immediately, with no retry

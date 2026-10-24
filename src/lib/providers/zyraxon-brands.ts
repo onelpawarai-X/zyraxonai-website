@@ -594,9 +594,13 @@ export function brandView(
  *  network decision that refuses every model identically, so rotating cannot
  *  help and the caller must be told the truth instead of "all models down". */
 export function isUpstreamGate(detail: string): boolean {
-  return /FreeTierError|free tier can only be used|free models aren'?t available|abusive traffic/i.test(
-    detail,
-  );
+  // Deliberately does NOT match the bare `FreeTierError` type name. That name
+  // is carried by both refusals: the identity gate, where re-asking is futile,
+  // and a spent quota, where re-asking is the whole recovery. Matching it here
+  // made every spent quota look permanent, so the caller was told the free tier
+  // was unavailable when a few seconds of patience would have been served. The
+  // gate is recognised by its wording, which only the identity refusal uses.
+  return /free tier can only be used|free models aren'?t available|abusive traffic/i.test(detail);
 }
 
 export type AttemptFailure = { upstream: string; status: number; detail: string; gate: boolean };

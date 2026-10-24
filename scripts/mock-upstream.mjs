@@ -47,8 +47,16 @@ function models(res) {
 // The gate: exactly the conditions the real upstream documents.
 function gate(req, res, raw) {
   if (scenario === "gate-all") {
+    // Verbatim the identity refusal the real upstream sends, because the
+    // wording is what distinguishes it from a spent window — both carry a
+    // `FreeTierError` type, so a mock that paraphrased this would let a
+    // regression through that the live upstream would catch.
     return json(res, 403, {
-      error: { message: "FreeTierError: credential gate", type: "FreeTierError" },
+      error: {
+        message:
+          "OpenCode's free tier can only be used from within OpenCode. Download it at https://opencode.ai and keep building.",
+        type: "FreeTierError",
+      },
     });
   }
   const h = req.headers;
@@ -71,7 +79,13 @@ function gate(req, res, raw) {
   }
   if (problems.length) {
     return json(res, 403, {
-      error: { message: "FreeTierError: " + problems.join(","), type: "FreeTierError" },
+      error: {
+        message:
+          "OpenCode's free tier can only be used from within OpenCode (" +
+          problems.join(",") +
+          ")",
+        type: "FreeTierError",
+      },
       _debug: {
         problems,
         tools: parsed && parsed.tools,

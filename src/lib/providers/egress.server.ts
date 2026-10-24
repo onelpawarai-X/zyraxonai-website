@@ -184,6 +184,54 @@ export function egressFor(sessionId: string): string | undefined {
   return remember(sessionId, url);
 }
 
+/** The address a gateway actually leaves from.
+ *
+ *  The deployment cannot see this directly: it posts to the gateway, and the
+ *  gateway makes the upstream request from an address of its own. The worker
+ *  exposes that address at `/ip`, so it can be resolved and recorded — which is
+ *  what makes "which IP did this leave by" answerable in a failure report
+ *  rather than a guess.
+ *
+ *  Cached per gateway for a few minutes: the answer changes only when the
+ *  gateway's own egress rotates, and asking on every refusal would double the
+ *  traffic of a turn that is already failing. A failure to resolve is not an
+ *  error — an unavailable answer is recorded as absent, never as a wrong one. */
+const egressIpCache = new Map<string, { ip?: string; colo?: string; at: number }>();
+const EGRESS_IP_TTL_MS = 5 * 60_000;
+
+export async function resolveEgressIp(
+  proxy: string | undefined,
+): Promise<{ ip?: string; colo?: string } | undefined> {
+  if (!proxy || !isGatewayEgress(proxy)) return undefined;
+  const cached = egressIpCache.get(proxy);
+  if (cached && Date.now() - cached.at < EGRESS_IP_TTL_MS) {
+    return { ip: cached.ip, colo: cached.colo };
+  }
+  try {
+    const endpoint = proxy.slice(GATEWAY_PREFIX.length).replace(/\/?$/, "/ip");
+    const headers = new Headers();
+    const token = (process.env.ZYRAXON_EGRESS_TOKEN || "").trim();
+    if (token) headers.set("x-zyraxon-token", token);
+    const res = await fetch(endpoint, { headers });
+    const body: any = await res.json();
+    // The worker reports several echo services because any one of them can be
+    // down; the first that answered is the address the upstream saw.
+    const raw = String(body?.ifconfig ?? body?.ipify ?? body?.myip ?? "");
+    const ip = raw.match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/)?.[0];
+    const colo = typeof body?.colo === "string" ? body.colo : undefined;
+    egressIpCache.set(proxy, { ip, colo, at: Date.now() });
+    return { ip, colo };
+  } catch {
+    egressIpCache.set(proxy, { at: Date.now() });
+    return undefined;
+  }
+}
+
+/** Test seam. */
+export function resetEgressIpCache(): void {
+  egressIpCache.clear();
+}
+
 export function egressStatus(): EgressStatus {
   if (!PROXIES.length) {
     return {

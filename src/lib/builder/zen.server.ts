@@ -9,6 +9,12 @@ import { egressFetch, egressFor } from "@/lib/providers/egress.server";
 import { fitsModalities, type MediaKind } from "@/lib/providers/media";
 import { newSessionId } from "@/lib/providers/session-identity.server";
 import { noteQuotaReset, parseRetryAfter } from "@/lib/providers/quota.server";
+import {
+  errorTypeOf,
+  traceEgressAddress,
+  traceUpstream,
+  type TraceEntry,
+} from "@/lib/providers/upstream-trace.server";
 import ZYRAXON_SYSTEM_PROMPT from "./system-prompt.txt?raw";
 
 /** Upstream base. Overridable so a deployment can route the free pool through
@@ -209,16 +215,101 @@ export function zenFetch(
   // headers land, so only the *silent* part of the wait is bounded.
   const firstByteMs = init?.firstByteMs ?? TURN_IDLE_MS;
   if (!firstByteMs || firstByteMs <= 0) {
-    return egressFetch(url, { ...init, headers }, proxy);
+    return traceThrough(url, init, headers, proxy, sid);
   }
   const abort = new AbortController();
   const timer = setTimeout(() => {
     abort.abort(new Error(`upstream sent no response headers within ${firstByteMs}ms`));
   }, firstByteMs);
   if (typeof timer?.unref === "function") timer.unref();
-  return egressFetch(url, { ...init, headers, signal: abort.signal }, proxy).finally(() => {
+  return traceThrough(url, init, headers, proxy, sid, abort.signal).finally(() => {
     clearTimeout(timer);
   });
+}
+
+/** Send the request and record what happened, both ways.
+ *
+ *  This is the one place every upstream call passes through, so it is the only
+ *  place a complete record can be made: what left, by which address, under
+ *  which identity, and exactly what came back — including the upstream's own
+ *  error type, which is what separates a spent window from a rejected client.
+ *
+ *  The response body is not consumed here. A refusal is read from a *clone* so
+ *  the caller's own reading is untouched, and a served stream is never cloned
+ *  or buffered — that would hold the whole answer in memory and break the
+ *  live-typing the caller sees. */
+function traceThrough(
+  url: string,
+  init: (RequestInit & { sessionId?: string }) | undefined,
+  headers: Headers,
+  proxy: string | undefined,
+  sid: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const method = init?.method || "GET";
+  const body = typeof init?.body === "string" ? init.body : undefined;
+  const identityHeaders = [
+    "user-agent",
+    "x-opencode-session",
+    "x-opencode-session-id",
+    "x-opencode-project",
+    "x-opencode-client",
+  ].filter((h) => headers.has(h));
+  const entry = traceUpstream({
+    method,
+    url,
+    model: body ? body.match(/"model"\s*:\s*"([^"]+)"/)?.[1] : undefined,
+    egress: proxy,
+    egressMode: proxy ? "pool" : "direct",
+    identityHeaders,
+    session: sid,
+    request: {
+      model: body ? body.match(/"model"\s*:\s*"([^"]+)"/)?.[1] : undefined,
+      messages: body ? (body.match(/"role"\s*:/g) || []).length : undefined,
+      stream: body ? /"stream"\s*:\s*true/.test(body) : undefined,
+      bytes: body ? body.length : undefined,
+    },
+  });
+
+  return egressFetch(url, { ...init, headers, signal }, proxy)
+    .then((res) => {
+      entry.status = res.status;
+      entry.outcome = res.ok ? "served" : res.status === 429 ? "refused" : res.status === 403 ? "gated" : "fault";
+      // A refusal is the one case where the address matters, and it is resolved
+      // off the response path so it never delays the caller's answer.
+      if (!res.ok) traceEgressAddress(entry, proxy);
+      const retryAfter = res.headers.get("retry-after");
+      if (retryAfter) entry.retryAfterSeconds = parseRetryAfter(retryAfter);
+      if (!res.ok) {
+        // Only a refusal is read, and only from a clone: the caller still needs
+        // its own body, and a served response must never be buffered.
+        res
+          .clone()
+          .text()
+          .then((text) => {
+            entry.errorType = errorTypeOf(text);
+            entry.message = text.slice(0, 300);
+          })
+          .catch(() => {
+            /* a body that cannot be read is not worth failing the call over */
+          });
+      }
+      return res;
+    })
+    .catch((e: any) => {
+      entry.outcome = "fault";
+      entry.message = String(e?.message || e).slice(0, 300);
+      throw e;
+    });
+}
+
+/** Amend the most recent trace entry with what the rotation decided about it.
+ *  Exported so the turn loop can explain itself where the decision is made,
+ *  which is a different place from where the request was sent. */
+export function traceDecision(entry: TraceEntry | undefined, decision: string, classifiedAs?: string): void {
+  if (!entry) return;
+  entry.decision = decision;
+  if (classifiedAs) entry.classifiedAs = classifiedAs;
 }
 
 /** Free models VERIFIED (2026-08 live probe) to accept image_url parts without

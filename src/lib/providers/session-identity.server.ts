@@ -21,6 +21,9 @@ export function encodeTimestamp(timestamp: number): string {
   ).join("");
 }
 
+/** Monotonic, so two ids generated in the same millisecond still differ. */
+let sessionCounter = 0;
+
 function randomTail(): string {
   const bytes = new Uint8Array(14);
   crypto.getRandomValues(bytes);
@@ -38,9 +41,16 @@ export function newSessionId(seed?: string): string {
   if (!seed) return `ses_${encodeTimestamp(epoch)}${randomTail()}`;
   // FNV-1a over the seed, then mixed with the epoch so the id is stable per
   // seed within a request but never a constant an upstream can fingerprint.
+  //
+  // A monotonic counter is mixed in as well, because the epoch alone has
+  // millisecond resolution: two turns seeded alike and created within the same
+  // millisecond produced the *same* id, which gave them one shared rate-limit
+  // fate — the exact coupling per-request identity exists to avoid. The counter
+  // makes every generated id distinct regardless of clock resolution.
   let h = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 0x01000193) >>> 0;
   h = (h ^ (epoch & 0xffffffff)) >>> 0;
+  h = Math.imul(h ^ (++sessionCounter >>> 0), 0x01000193) >>> 0;
   const tail = Array.from({ length: 14 }, (_, index) => {
     const v = (h >>> ((index % 4) * 8)) ^ (index * 0x9e3779b9);
     return ID_CHARS[(v >>> 0) % ID_CHARS.length];

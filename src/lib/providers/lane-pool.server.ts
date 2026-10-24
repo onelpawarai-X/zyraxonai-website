@@ -220,7 +220,7 @@ export class LanePool {
     seed?: string,
     // Must be at least the quota re-ask count, because each re-ask spends one
     // of these; a lane of eight silently capped the twenty re-asks above it.
-    attempts = Math.max(8, Number(process.env.ZYRAXON_LANE_ATTEMPTS || 24)),
+    attempts = Math.max(8, Number(process.env.ZYRAXON_LANE_ATTEMPTS || 60)),
     opts?: { workMs?: number },
   ): Promise<T> {
     const tier = await this.acquire();
@@ -281,7 +281,7 @@ export class LanePool {
     seed?: string,
     // Must be at least the quota re-ask count, because each re-ask spends one
     // of these; a lane of eight silently capped the twenty re-asks above it.
-    attempts = Math.max(8, Number(process.env.ZYRAXON_LANE_ATTEMPTS || 24)),
+    attempts = Math.max(8, Number(process.env.ZYRAXON_LANE_ATTEMPTS || 60)),
     opts?: { workMs?: number },
   ): Promise<Response> {
     const tier = await this.acquire();
