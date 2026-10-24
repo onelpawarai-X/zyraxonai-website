@@ -3,10 +3,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 import { AppMarquee } from "@/components/site/AppMarquee";
 import { Icon } from "@/components/site/Icon";
-import { FreeTierClock } from "@/components/site/FreeTierClock";
-import { useFreeTier } from "@/hooks/use-free-tier";
+import { StarCountdown } from "@/components/site/StarCountdown";
 import { ButtonAnchor, ButtonLink, Card, Divider, Section, Tag } from "@/components/site/ui";
 import { CommandBox } from "@/components/site/provider-parts";
+import { DownloadCounter } from "@/components/site/DownloadCounter";
+import { StarCounter } from "@/components/site/StarCounter";
 import { CLI_COMMANDS, GITHUB_URL, HOME_DOWNLOADS, RELEASES_URL } from "@/lib/downloads";
 import {
   COMPARE_COLS,
@@ -119,6 +120,8 @@ function HomePage() {
               <Stack />
               <Divider />
               <Community />
+              <Divider />
+              <StarCounter />
             </div>
           </div>
         </div>
@@ -131,7 +134,6 @@ function HomePage() {
 function Hero() {
   // One shared source for the reset clock, so the homepage and the provider
   // page can never disagree about when the pool opens.
-  const { freeTier } = useFreeTier();
   return (
     <section className="relative overflow-hidden px-6 pb-10 pt-12 sm:px-10 sm:pt-16">
       <div className="pointer-events-none absolute inset-0 zx-grid-lines opacity-[0.35]" />
@@ -144,6 +146,10 @@ function Hero() {
             </span>
             Free &amp; source-available · Windows · macOS · Linux
           </span>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <DownloadCounter />
+          </div>
 
           <h1 className="mt-5 text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
             <span className="zx-gradient-text">ZYRAXON AI</span>
@@ -190,14 +196,14 @@ function Hero() {
 
         <div className="zx-float space-y-4">
           <Terminal />
-          {/* The free-tier reset clock sits in the hero's right column, beside
-              the copy that promises the models are free. "When will this work
-              again?" is the first question a free-tier visitor has, and the
-              answer belongs next to the claim it qualifies — not buried on a
-              second page. It is shown in both states: an open pool says so in
-              green, which is the proof that the free tier is live, and a spent
-              one counts down to the moment it opens. */}
-          {freeTier && <FreeTierClock status={freeTier} compact />}
+          {/* The countdown sits in the hero's right column, beside the copy that
+              promises the models. It used to count down to an upstream quota
+              reset — a wait nobody could shorten. It now counts down to the
+              100,000-star goal the provider gate turns on, so the number is
+              something the reader can move by acting: every star makes it
+              earlier. "When does this work?" is still the first question, and
+              the answer now comes with a lever attached. */}
+          <StarCountdown compact />
         </div>
       </div>
 

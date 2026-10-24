@@ -14,8 +14,25 @@ export const PROVIDER_DOCS: DocPage[] = [
     slug: "provider-overview",
     title: "ZYRAXON Provider Overview",
     group: "ZYRAXON Provider",
-    desc: "Ten branded models behind one OpenAI-compatible endpoint. What it is, what it costs, and what it will not do.",
+    desc: "Ten branded models behind one OpenAI-compatible endpoint. The provider is closed until the repository reaches 100,000 stars — what that means, and what stays open.",
     blocks: [
+      {
+        t: "note",
+        kind: "warn",
+        title: "The provider is closed, on purpose, until 100,000 stars",
+        text: "The ZYRAXON provider is published, documented and reachable, but it does **not serve turns yet**. The condition is public: when this repository reaches **100,000 stars on GitHub**, we stand up our own company and our own provider, and the endpoint starts answering. This is permanent in the sense that matters — it is not a quota that resets, not an outage, and not something a retry or a fresh key gets around. Until then, every request to `POST /api/public/zyraxon/v1/chat/completions` is answered with a `503` carrying this notice and the live star count, written in the language you wrote your message in. Star the repository to move the number.",
+      },
+      {
+        t: "p",
+        text: "The count is read live from GitHub and shown on the [provider page](/providers) and at the bottom of the [homepage](https://zyraxonai.lovable.app/). Two endpoints report it in machine-readable form: `GET /api/public/repo-stats` (stars, forks and the download total) and the `gate` block of `GET /api/public/zyraxon/v1/provider`.",
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "What stays open while the model line is closed",
+        text: "Speech does not route through the model line, so **text to speech** (`POST /api/public/tts`) and **speech to text** (`POST /api/public/stt`) stay available, and the ZYRAXON site reads its own pages aloud with them. The catalogue reads — `/models`, `/provider`, `/endpoints`, `/integrations` — also stay available: a client that is going to be refused deserves to know what it would have been calling.",
+      },
+      { t: "h2", text: "What it will be when it opens" },
       {
         t: "p",
         text: "The **ZYRAXON Provider** is our own model line, served over an API that speaks the OpenAI chat-completions dialect. You point any OpenAI client at one base URL, choose a ZYRAXON model, and build. There is no provider key to buy, no per-request billing, and no upstream vendor name anywhere in a response.",
@@ -135,11 +152,7 @@ for await (const chunk of stream) {
         t: "table",
         head: ["Model id", "Built for", "Leads with"],
         rows: [
-          [
-            "`zyraxon-apex`",
-            "Flagship reasoning at a million tokens",
-            "Reasoning · long context",
-          ],
+          ["`zyraxon-apex`", "Flagship reasoning at a million tokens", "Reasoning · long context"],
           ["`zyraxon-matrix`", "Vision plus scale reasoning", "Image · reasoning"],
           ["`zyraxon-pulse`", "Speed on long inputs", "Low latency"],
           ["`zyraxon-titan`", "Heavyweight long context", "Long context"],
@@ -155,7 +168,7 @@ for await (const chunk of stream) {
         t: "note",
         kind: "info",
         title: "Every model takes every modality",
-        text: "The catalogue reports `input_modalities: [\"text\",\"image\",\"audio\",\"video\",\"pdf\"]` on **all ten** models, and that is a real promise: the bytes are accepted and processed. Which upstream model inside the line actually handles your turn is chosen server-side, from a live measurement of each upstream — not from what it declares — so you never have to know or care. See **Routing: how your input reaches the right model**.",
+        text: 'The catalogue reports `input_modalities: ["text","image","audio","video","pdf"]` on **all ten** models, and that is a real promise: the bytes are accepted and processed. Which upstream model inside the line actually handles your turn is chosen server-side, from a live measurement of each upstream — not from what it declares — so you never have to know or care. See **Routing: how your input reaches the right model**.',
       },
       {
         t: "note",
@@ -244,10 +257,26 @@ for await (const chunk of stream) {
         t: "table",
         head: ["Field", "Inline", "Remote URL"],
         rows: [
-          ["Image", "`image_url: { url: \"data:image/png;base64,…\" }`", "`image_url: { url: \"https://…\" }`"],
-          ["Audio", "`input_audio: { data: \"<BASE64>\", format: \"mp3\" }`", "`input_audio: { url: \"https://…\" }`"],
-          ["Video", "`video_url: { url: \"data:video/mp4;base64,…\" }`", "`video_url: { url: \"https://…\" }`"],
-          ["PDF", "`file: { filename, file_data: \"data:application/pdf;base64,…\" }`", "`file: { filename, file_data: \"https://…\" }`"],
+          [
+            "Image",
+            '`image_url: { url: "data:image/png;base64,…" }`',
+            '`image_url: { url: "https://…" }`',
+          ],
+          [
+            "Audio",
+            '`input_audio: { data: "<BASE64>", format: "mp3" }`',
+            '`input_audio: { url: "https://…" }`',
+          ],
+          [
+            "Video",
+            '`video_url: { url: "data:video/mp4;base64,…" }`',
+            '`video_url: { url: "https://…" }`',
+          ],
+          [
+            "PDF",
+            '`file: { filename, file_data: "data:application/pdf;base64,…" }`',
+            '`file: { filename, file_data: "https://…" }`',
+          ],
         ],
       },
       { t: "h2", text: "Images" },
@@ -368,7 +397,7 @@ for await (const chunk of stream) {
     blocks: [
       {
         t: "p",
-        text: "A ZYRAXON model id is a **stable name for a routing policy**, not a fixed machine. When you send a turn to `zyraxon-apex`, the line looks at what the turn actually carries, finds an upstream model measured able to process exactly that, and sends it there. You address a brand; the brand addresses a model. This is why every model can truthfully advertise `input_modalities: [\"text\",\"image\",\"audio\",\"video\",\"pdf\"]` — the media is always handled, whichever name you used.",
+        text: 'A ZYRAXON model id is a **stable name for a routing policy**, not a fixed machine. When you send a turn to `zyraxon-apex`, the line looks at what the turn actually carries, finds an upstream model measured able to process exactly that, and sends it there. You address a brand; the brand addresses a model. This is why every model can truthfully advertise `input_modalities: ["text","image","audio","video","pdf"]` — the media is always handled, whichever name you used.',
       },
       { t: "h2", text: "What happens to one request" },
       {
@@ -438,7 +467,7 @@ for await (const chunk of stream) {
       { t: "h2", text: "When the pool changes under you" },
       {
         t: "p",
-        text: "The upstream pool is added to and retired without notice. The line re-reads it on a short interval and re-binds every brand to a live model, so a retired upstream degrades to a capable sibling rather than a dead end. You keep calling the same ZYRAXON name and it keeps working. A brand whose preferred upstream is temporarily absent reports `status: \"rotated\"` in the models list; it still answers.",
+        text: 'The upstream pool is added to and retired without notice. The line re-reads it on a short interval and re-binds every brand to a live model, so a retired upstream degrades to a capable sibling rather than a dead end. You keep calling the same ZYRAXON name and it keeps working. A brand whose preferred upstream is temporarily absent reports `status: "rotated"` in the models list; it still answers.',
       },
       {
         t: "note",

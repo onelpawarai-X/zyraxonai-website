@@ -7,6 +7,8 @@ import { PROVIDER_SYSTEM_PROMPT } from "@/lib/providers/provider-contract";
 import { brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
 import { quotaResetStatus } from "@/lib/providers/quota.server";
 import { probeQuotaReset } from "@/lib/providers/quota-probe.server";
+import { starCount } from "@/lib/providers/repo-stats.server";
+import { providerGateOpen, starGateState } from "@/lib/providers/star-gate";
 import { refusalSummary, upstreamTrace } from "@/lib/providers/upstream-trace.server";
 
 const CORS = {
@@ -52,6 +54,13 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
             name: "ZYRAXON",
             endpoint: "/api/public/zyraxon/v1",
             count: brands.length,
+            // Whether the line is serving turns. False until the repository
+            // reaches the goal below; every request to the chat endpoint is
+            // answered with the notice in `gate` until then.
+            open: providerGateOpen,
+            gate: providerGateOpen
+              ? null
+              : starGateState(await starCount(), new Date().toISOString()),
             models: brands.map((b) => ({
               id: b.id,
               name: b.label,
@@ -73,7 +82,10 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               // "ready" while every call was refused with a 429 — the badge and
               // the refusal contradicted each other. This is the field that
               // tells a caller the truth without spending a request to find it.
-              servable: !reset.spent,
+              //
+              // The gate counts too: while the line is deliberately closed, no
+              // model is servable, whatever the upstream quota says.
+              servable: providerGateOpen && !reset.spent,
             })),
             // Which input modalities the line can serve right now, so a client
             // can tell at a glance whether video or audio is available today.
@@ -136,7 +148,10 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/provider")({
               // untouched, so it can only ever make the answer more accurate.
               void probeQuotaReset();
               return {
-                available: !reset.spent,
+                // While the line is deliberately closed the tier cannot be
+                // open, whatever the upstream quota says — otherwise the page
+                // would show a green "free tier open" beside the closed notice.
+                available: providerGateOpen && !reset.spent,
                 // An isolate that has no evidence says so, so a surface shows
                 // "checking" rather than a green "Free tier open" it cannot
                 // vouch for — the exact claim two profiles used to disagree on.

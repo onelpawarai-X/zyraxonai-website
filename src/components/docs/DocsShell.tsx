@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { inlineMarkdown } from "@/lib/inline-markdown";
 import { DOCS, DOC_GROUPS, type DocBlock } from "@/lib/docs/content";
 import { X_TOOL_CATEGORIES, X_TOOL_TOTALS } from "@/lib/docs/x-tools";
+import { StarGatePanel } from "@/components/site/StarGatePanel";
 
 function XToolsCatalog({ search }: { search: string }) {
   const q = search.trim().toLowerCase();
@@ -280,6 +281,14 @@ export default function DocsShell({ slug }: { slug?: string }) {
             {doc.title}
           </h1>
           <p className="mt-3 leading-relaxed text-muted-foreground">{doc.desc}</p>
+          {/* Every page in the provider guide carries the gate, because a
+              reader can land on any of them from a search result. The live
+              count is what makes it a status rather than a disclaimer. */}
+          {doc.group === "ZYRAXON Provider" && (
+            <div className="mt-6">
+              <StarGatePanel compact />
+            </div>
+          )}
           {doc.blocks.map((b, i) => (
             <Block key={i} b={b} />
           ))}

@@ -5,9 +5,9 @@ import { PageHeader } from "@/components/site/SiteChrome";
 import { ProviderIntegrations } from "@/components/site/ProviderIntegrations";
 import { ProviderEndpointCatalogue, ProviderFunctions } from "@/components/site/ProviderRotator";
 import { ProviderHighlights } from "@/components/site/ProviderHighlights";
+import { StarGatePanel } from "@/components/site/StarGatePanel";
 import { Button, ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
-import { FreeTierClock } from "@/components/site/FreeTierClock";
-import { useFreeTier } from "@/hooks/use-free-tier";
+import { StarCountdown } from "@/components/site/StarCountdown";
 import { ZYRAXON_BRANDS } from "@/lib/providers/zyraxon-brands";
 import { ENDPOINT_STATS } from "@/lib/providers/endpoints";
 
@@ -233,7 +233,6 @@ function ProvidersPage() {
   const [checked, setChecked] = useState(false);
   // The reset clock is shared with the homepage through one hook, so the two
   // surfaces can never disagree about when the pool opens.
-  const { freeTier } = useFreeTier();
 
   useEffect(() => {
     let alive = true;
@@ -258,7 +257,7 @@ function ProvidersPage() {
         label="Provider"
         title="Ten models. One endpoint. Yours."
         description={`ZYRAXON serves its own line of ten branded models over a single OpenAI-compatible API, and rotates the pool behind those names so your code never has to change when an upstream model does. Chat and streaming, the model catalogue, text to speech and speech to text — ${ENDPOINT_STATS.total} endpoints, no key to buy, and every one of them described in full on this page.`}
-        aside={freeTier ? <FreeTierClock status={freeTier} /> : undefined}
+        aside={<StarCountdown />}
       >
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <ButtonAnchor href="#functions" variant="primary" external={false}>
@@ -281,6 +280,14 @@ function ProvidersPage() {
       </PageHeader>
 
       <ProviderHighlights />
+
+      {/* The gate sits directly under the page header, above everything else.
+          A visitor who reads "ten models, one endpoint, yours" and starts
+          wiring a client must meet the one fact that stops them before they
+          invest the afternoon, not after. */}
+      <div className="px-6 sm:px-10">
+        <StarGatePanel />
+      </div>
 
       <ProviderFunctions />
 

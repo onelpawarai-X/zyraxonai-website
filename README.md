@@ -205,3 +205,121 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+---
+
+## The 100,000-star provider gate
+
+The ZYRAXON provider is **published, documented and reachable, but closed**. It
+does not serve turns. The condition is public: when
+[onelpawarai-X/ZYRAXON-AI](https://github.com/onelpawarai-X/ZYRAXON-AI) reaches
+**100,000 stars on GitHub**, we stand up our own company and our own provider,
+and the endpoint starts answering. Until then every request to the chat endpoint
+is answered with a `503` carrying that notice and the **live star count**,
+written in the language the caller wrote their message in.
+
+This is not a quota and not an outage, and the difference matters: a caller who
+thinks it is an outage retries, and a caller who knows it is a commitment stars
+the repository.
+
+### What the gate touches
+
+| Surface | Behaviour while closed |
+|---|---|
+| `POST /api/public/zyraxon/v1/chat/completions` | `503` + localized notice + live star count. Never reaches a model. |
+| `GET /api/public/zyraxon/v1/models` | Still lists the ten models, with `provider.open: false` and a `gate` block. |
+| `GET /api/public/zyraxon/v1/provider` | `open: false`, `gate` block, and every model reports `servable: false`. |
+| `GET /api/public/zyraxon/v1/endpoints` | Catalogue intact, with `open: false` and a `gate` block. |
+| `GET /api/public/zyraxon/v1/integrations` | Snippets intact, with `provider.open: false` and a `gate` block. |
+| `POST /api/public/tts`, `POST /api/public/stt` | **Open.** Speech does not route through the model line. |
+| `GET /api/public/repo-stats` | Stars, forks and the total download count. |
+
+The catalogue reads stay open on purpose: a client that is going to be refused
+deserves to know what it would have been calling.
+
+### The countdown clock
+
+The clock on the homepage hero and on the provider page counts down to the goal.
+Its rule is stated rather than predicted:
+
+```
+remaining time = (100,000 − stars) × 1 hour
+```
+
+So the clock starts at **100,000 hours** and every star takes exactly **one hour**
+off it. That is the whole rule, and it is deliberately not a forecast: at the
+current pace — 9 stars in 47 days — a linear projection puts the goal about
+1,400 years away. A real number, and one nobody could act on, and capped to
+something printable it would freeze, so a visitor who brought a star would watch
+a clock that did not move.
+
+The measured pace is still published, in the `eta.starsPerDay` and
+`eta.measuredDays` fields and in the footnote under the clock, because it is the
+honest answer to "how fast is this really going". The clock and the forecast are
+two different numbers and the page labels which is which.
+
+The clock is also **not ticked by a timer**. It steps when the count steps, which
+is what keeps it consistent with its own rule — a clock draining every second
+would fall while no star had arrived. The page re-reads `/api/public/repo-stats`
+every five minutes and on tab focus, and the panel fires a burst when the count
+has grown.
+
+The arithmetic lives in `src/lib/providers/star-eta.ts` and is held by
+`scripts/verify-star-eta.ts`, which asserts the rule, that one star shortens the
+clock by exactly one hour, that more stars never lengthen it, that an unreadable
+count produces no number rather than a plausible one, and that the forecast can
+never leak into the clock.
+
+```sh
+npx tsx scripts/verify-star-eta.ts
+```
+
+### How to open the provider
+
+When the repository reaches 100,000 stars, flipping one constant opens the line.
+Everything else follows from it — the endpoints, the provider page, the docs and
+the homepage all read the same flag, so there is no second place that has to
+agree.
+
+```ts
+// src/lib/providers/star-gate.ts
+export const providerGateOpen = false; // ← change to true
+```
+
+Then re-read these, because each one either reports or renders the gate:
+
+1. `src/lib/providers/star-gate.ts` — `providerGateOpen`, and the goal itself.
+   The notice text lives here too; it is what a caller is told.
+2. `src/lib/providers/gate-notice.ts` — the notice in each language. Add a
+   language by adding an entry to `GATE_COPY`; no other file needs to change.
+3. `src/routes/api/public/zyraxon/v1/chat/completions.ts` — the `if (!providerGateOpen) return gateReply(...)`
+   guard, which is the only place a turn is actually refused.
+4. `src/routes/api/public/zyraxon/v1/models.ts` and `provider.ts` — publish
+   `open` and the `gate` block, and `servable`.
+5. `src/routes/api/public/zyraxon/v1/endpoints.ts` and
+   `src/lib/providers/integrations.ts` — the same two fields on the catalogues.
+6. `src/components/site/StarGatePanel.tsx` — the panel on `/providers` and on
+   every page of the provider guide. It hides itself when the gate is open
+   because the endpoints stop sending a `gate` block; the panel's copy is
+   static, so delete the `<StarGatePanel />` usages when opening for good.
+7. `src/components/site/StarCounter.tsx` and `DownloadCounter.tsx` — the
+   homepage counters. They read `/api/public/repo-stats` and are independent of
+   the gate; leave them running.
+
+The upstream that serves the line is unchanged by any of this. Opening the gate
+restores the behaviour that was measured before it was closed.
+
+### Verifying the gate
+
+```sh
+# A turn is refused, in the language it was written in.
+curl -s https://zyraxonai.lovable.app/api/public/zyraxon/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"zyraxon-apex","messages":[{"role":"user","content":"তুমি কেমন আছো?"}]}' | jq -r '.error.message'
+
+# The count behind the notice.
+curl -s https://zyraxonai.lovable.app/api/public/repo-stats | jq '{stars, goal, remaining, downloads}'
+
+# Speech is unaffected.
+curl -s "https://zyraxonai.lovable.app/api/public/tts?text=ok&locale=en" -o /dev/null -w '%{http_code}\n'
+```
