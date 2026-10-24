@@ -9,6 +9,7 @@
  *  a model id. Anything that already speaks the OpenAI chat-completions dialect
  *  — a desktop agent, a mobile terminal, an editor, a workflow runner — connects
  *  by changing two fields. */
+import { providerGateOpen, starGateState } from "./star-gate";
 
 export const API_ORIGIN = "https://zyraxonai.lovable.app";
 export const V1_BASE_URL = `${API_ORIGIN}/api/public/zyraxon/v1`;
@@ -1654,8 +1655,9 @@ export function integrationsByCategory(): {
 export function integrationsDocument() {
   return {
     object: "integrations",
-    provider: { id: "zyraxon", name: "ZYRAXON" },
+    provider: { id: "zyraxon", name: "ZYRAXON", open: providerGateOpen },
     endpoint: V1_BASE_URL,
+    gate: providerGateOpen ? null : starGateState(null, new Date().toISOString()),
     urls: {
       base: V1_BASE_URL,
       models: MODELS_URL,

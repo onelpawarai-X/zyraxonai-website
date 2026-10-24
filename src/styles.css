@@ -101,7 +101,8 @@
   --glass-edge: rgba(255, 255, 255, 0.75);
   --glass-stroke: rgba(15, 23, 42, 0.08);
   --glass-shadow: 0 32px 90px -30px rgba(15, 23, 42, 0.28), 0 2px 10px -2px rgba(15, 23, 42, 0.08);
-  --glass-glow: radial-gradient(120% 120% at 15% 0%, rgba(99, 102, 241, 0.16), transparent 55%),
+  --glass-glow:
+    radial-gradient(120% 120% at 15% 0%, rgba(99, 102, 241, 0.16), transparent 55%),
     radial-gradient(120% 120% at 100% 100%, rgba(6, 182, 212, 0.14), transparent 55%);
 }
 
@@ -146,7 +147,8 @@
   --glass-edge: rgba(255, 255, 255, 0.14);
   --glass-stroke: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.9), 0 2px 12px -2px rgba(0, 0, 0, 0.6);
-  --glass-glow: radial-gradient(120% 120% at 15% 0%, rgba(139, 139, 245, 0.18), transparent 55%),
+  --glass-glow:
+    radial-gradient(120% 120% at 15% 0%, rgba(139, 139, 245, 0.18), transparent 55%),
     radial-gradient(120% 120% at 100% 100%, rgba(34, 211, 238, 0.12), transparent 55%);
 }
 
@@ -167,7 +169,13 @@
   body {
     background: var(--plane);
     color: var(--color-foreground);
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family:
+      "Inter",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -217,7 +225,9 @@
     border: 1px solid var(--glass-stroke);
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
-    box-shadow: inset 0 1px 0 var(--glass-edge), 0 12px 32px -20px rgba(15, 23, 42, 0.35);
+    box-shadow:
+      inset 0 1px 0 var(--glass-edge),
+      0 12px 32px -20px rgba(15, 23, 42, 0.35);
   }
 
   .zx-glass-strong {
@@ -225,7 +235,9 @@
     border: 1px solid var(--glass-stroke);
     backdrop-filter: blur(26px) saturate(160%);
     -webkit-backdrop-filter: blur(26px) saturate(160%);
-    box-shadow: inset 0 1px 0 var(--glass-edge), 0 18px 50px -26px rgba(15, 23, 42, 0.45);
+    box-shadow:
+      inset 0 1px 0 var(--glass-edge),
+      0 18px 50px -26px rgba(15, 23, 42, 0.45);
   }
 
   .zx-chip {
@@ -234,7 +246,10 @@
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     box-shadow: inset 0 1px 0 var(--glass-edge);
-    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease,
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      color 0.18s ease,
       transform 0.18s ease;
   }
 
@@ -325,10 +340,32 @@
     }
   }
 
+  /* A particle thrown outward from the star counter when the count grows.
+     The angle and distance come in as custom properties so one keyframe
+     serves all fourteen of them. */
+  .zx-star-particle {
+    animation: zx-star-burst 1.5s cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+  }
+
+  @keyframes zx-star-burst {
+    from {
+      opacity: 0;
+      transform: rotate(var(--zx-angle)) translateX(0) scale(0.6);
+    }
+    25% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: rotate(var(--zx-angle)) translateX(var(--zx-distance)) scale(1);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .zx-marquee-track,
     .zx-float,
-    .zx-fade-up {
+    .zx-fade-up,
+    .zx-star-particle {
       animation: none;
     }
   }
@@ -345,7 +382,8 @@
   }
 
   .zx-grid-lines {
-    background-image: linear-gradient(to right, var(--glass-stroke) 1px, transparent 1px),
+    background-image:
+      linear-gradient(to right, var(--glass-stroke) 1px, transparent 1px),
       linear-gradient(to bottom, var(--glass-stroke) 1px, transparent 1px);
     background-size: 56px 56px;
   }
@@ -363,7 +401,9 @@
   /* The drained arc eases rather than snapping, so a one-second tick
      reads as a sweep instead of a flicker. */
   .zx-clock-arc {
-    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.6s ease;
+    transition:
+      stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1),
+      stroke 0.6s ease;
   }
 
   /* The orbit is the one motion that never stops, so it is kept brisk: at a
@@ -441,7 +481,9 @@
     position: relative;
     overflow: hidden;
     perspective: 320px;
-    box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 -10px 18px -12px rgba(0, 0, 0, 0.5);
+    box-shadow:
+      inset 0 1px 0 var(--glass-edge),
+      inset 0 -10px 18px -12px rgba(0, 0, 0, 0.5);
   }
 
   /* Both the leaving and the arriving pair share one grid cell, so the cell
@@ -520,10 +562,14 @@
   @keyframes zx-clock-open {
     0%,
     100% {
-      box-shadow: inset 0 1px 0 var(--glass-edge), 0 0 0 0 rgba(16, 185, 129, 0);
+      box-shadow:
+        inset 0 1px 0 var(--glass-edge),
+        0 0 0 0 rgba(16, 185, 129, 0);
     }
     50% {
-      box-shadow: inset 0 1px 0 var(--glass-edge), 0 0 26px -4px rgba(16, 185, 129, 0.45);
+      box-shadow:
+        inset 0 1px 0 var(--glass-edge),
+        0 0 26px -4px rgba(16, 185, 129, 0.45);
     }
   }
 

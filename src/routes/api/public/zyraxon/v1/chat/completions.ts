@@ -3,6 +3,10 @@ import { brandChatStream } from "@/lib/providers/zyraxon-brand.server";
 import { isBrand } from "@/lib/providers/zyraxon-brands";
 import { normaliseContent } from "@/lib/providers/media";
 import { MAX_MEDIA_BODY_BYTES } from "@/lib/providers/media";
+import { starCount } from "@/lib/providers/repo-stats.server";
+import { providerGateOpen, starGateState } from "@/lib/providers/star-gate";
+import { detectLocale } from "@/lib/tts/language";
+import { SITE_URL, gateNotice, pickLocale } from "@/lib/providers/gate-notice";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -64,18 +68,83 @@ async function readJsonCapped(request: Request, maxBytes: number): Promise<any> 
   return JSON.parse(new TextDecoder().decode(merged) || "{}");
 }
 
+/** The shape the gate needs out of a request body. Narrow on purpose: the
+ *  handler below still treats the body loosely, but the language detection only
+ *  ever reads messages, so it gets a type that says so. */
+type GateMessage = { role?: string; content?: string | Array<{ type?: string; text?: string }> };
+type GateBody = { messages?: GateMessage[] };
+
+/** The last thing the caller actually wrote, for language detection.
+ *
+ *  Only `user` turns are read: an assistant turn from a previous exchange or a
+ *  tool result is not evidence of the language this request is being made in,
+ *  and taking the newest user turn is the closest thing to "what language is
+ *  this person writing in right now". */
+function lastUserText(body: GateBody): string {
+  const messages = Array.isArray(body?.messages) ? body.messages : [];
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m?.role !== "user") continue;
+    if (typeof m.content === "string") return m.content;
+    if (Array.isArray(m.content)) {
+      return m.content
+        .filter((p) => p?.type === "text" && typeof p.text === "string")
+        .map((p) => p.text)
+        .join(" ");
+    }
+  }
+  return "";
+}
+
+/** The gate reply, as OpenAI-shaped JSON, in the caller's own language.
+ *
+ *  The shape matters: a client that is refused still parses the body, and one
+ *  written against the OpenAI SDK reads `error.message`. So the notice travels
+ *  in `error` where any client will show it, and the same notice plus the live
+ *  count travels in a `zyraxon_gate` block where a client that knows us can
+ *  read it as data.
+ *
+ *  503 rather than 4xx: nothing about the request was wrong. The service is
+ *  deliberately not serving yet, which is what 503 means, and it keeps a
+ *  retrying client from believing it sent a bad turn. */
+async function gateReply(body: GateBody, request: Request): Promise<Response> {
+  const stars = await starCount();
+  const locale = pickLocale({
+    contentLocale: detectLocale(lastUserText(body)),
+    acceptLanguage: request.headers.get("accept-language"),
+  });
+  const notice = gateNotice(locale, stars);
+  return Response.json(
+    {
+      error: {
+        // The whole notice, newlines and both URLs included, so a client that
+        // shows `error.message` verbatim shows the reader a complete answer.
+        message: notice,
+        type: "provider_not_open",
+        code: "zyraxon_provider_star_gate",
+        language: locale,
+      },
+      // The same facts as fields, for a client that wants the number rather
+      // than the sentence — and so a translated reply is still machine-readable.
+      zyraxon_gate: {
+        ...starGateState(stars, new Date().toISOString()),
+        language: locale,
+        notice,
+        siteUrl: `${SITE_URL}/providers`,
+      },
+    },
+    {
+      status: 503,
+      headers: { ...CORS, "Content-Language": locale, "Retry-After": "86400" },
+    },
+  );
+}
+
 export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
-        if (process.env.ZYRAXON_PROVIDER_KEY && !providerKey(request)) {
-          return Response.json(
-            { error: { message: "Invalid provider key", type: "authentication_error" } },
-            { status: 401, headers: CORS },
-          );
-        }
-
         let body: any;
         try {
           body = await readJsonCapped(request, MAX_BODY_BYTES);
@@ -91,6 +160,20 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/chat/completions")(
               },
             },
             { status: tooLarge ? 413 : 400, headers: CORS },
+          );
+        }
+
+        // The gate comes before the key check and before any validation. The
+        // provider is off by decision, so the answer is the same for a valid
+        // key, a bad one, and a turn that would have failed validation — and
+        // the notice is composed in the language the caller wrote in, which is
+        // why the body is read first.
+        if (!providerGateOpen) return gateReply(body, request);
+
+        if (process.env.ZYRAXON_PROVIDER_KEY && !providerKey(request)) {
+          return Response.json(
+            { error: { message: "Invalid provider key", type: "authentication_error" } },
+            { status: 401, headers: CORS },
           );
         }
 

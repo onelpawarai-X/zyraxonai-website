@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ENDPOINTS, ENDPOINT_GROUPS, endpointUrl } from "@/lib/providers/endpoints";
+import { providerGateOpen, starGateState } from "@/lib/providers/star-gate";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +25,8 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/endpoints")({
         Response.json(
           {
             provider: "zyraxon",
+            open: providerGateOpen,
+            gate: providerGateOpen ? null : starGateState(null, new Date().toISOString()),
             keyRequired: false,
             keyNote: "No API key is needed. Send any non-empty string if a client insists on one.",
             groups: ENDPOINT_GROUPS,

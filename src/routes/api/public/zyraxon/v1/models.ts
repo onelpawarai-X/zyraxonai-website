@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
+import { starCount } from "@/lib/providers/repo-stats.server";
+import { providerGateOpen, starGateState } from "@/lib/providers/star-gate";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -32,7 +34,15 @@ export const Route = createFileRoute("/api/public/zyraxon/v1/models")({
               name: "ZYRAXON",
               since: PROVIDER_SINCE,
               endpoint: "/api/public/zyraxon/v1",
+              // The catalogue still lists the ten models while the gate is
+              // shut: a client that is going to be refused deserves to know
+              // what it would have been calling, and the refusal is what tells
+              // it the line is not open yet.
+              open: providerGateOpen,
             },
+            gate: providerGateOpen
+              ? null
+              : starGateState(await starCount(), new Date().toISOString()),
             data: brands.map((b) => ({
               id: b.id,
               object: "model",
