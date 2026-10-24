@@ -13,18 +13,48 @@ import type { Integration } from "@/lib/providers/integrations";
  *  from. */
 
 export function CopyButton({ text, label }: { text: string; label: string }) {
-  const [done, setDone] = useState(false);
+  const [state, setState] = useState<"idle" | "done" | "failed">("idle");
+
+  const copy = async () => {
+    // The async Clipboard API needs a secure context and a permission that can
+    // be refused, so a bare `navigator.clipboard?.writeText` can do nothing and
+    // still look like it worked. The textarea fallback is what makes this a
+    // genuine one-click copy: it either puts the text on the clipboard or says
+    // so, instead of flashing "copied" over an empty clipboard.
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        throw new Error("no clipboard API");
+      }
+      setState("done");
+    } catch {
+      try {
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(area);
+        setState(ok ? "done" : "failed");
+      } catch {
+        setState("failed");
+      }
+    }
+    window.setTimeout(() => setState("idle"), 1400);
+  };
+
   return (
     <button
       type="button"
-      onClick={() => {
-        void navigator.clipboard?.writeText(text);
-        setDone(true);
-        window.setTimeout(() => setDone(false), 1400);
-      }}
+      onClick={() => void copy()}
+      title={state === "failed" ? "Copy failed — select the text instead" : "Copy to clipboard"}
       className="rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/6 hover:text-foreground"
     >
-      {done ? "copied" : label}
+      {state === "done" ? "copied" : state === "failed" ? "copy failed" : label}
     </button>
   );
 }
