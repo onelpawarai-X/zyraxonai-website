@@ -67,16 +67,22 @@ function gate(req, res, raw) {
   let parsed = null;
   try { parsed = JSON.parse(raw); } catch { problems.push("json"); }
   if (parsed && !Array.isArray(parsed.tools)) problems.push("tools-array");
-  // The gate reads tool *names* and requires enough of OpenCode's core set. The
-  // published floor is two of bash/edit/glob/grep/read; the mock holds the app
-  // to that floor, so a catalogue that shrank back to a single name fails here
-  // the same way it would fail against the real upstream.
+  // The gate reads tool *names* and requires the whole core set. This floor was
+  // measured against the live upstream, not taken from the documentation: four
+  // of bash/edit/glob/grep/read is refused and all five are accepted, the names
+  // are matched case-sensitively, and non-core names do not substitute for a
+  // missing core one. The mock previously held the app to a floor of *two*,
+  // which is why a catalogue that satisfied the mock was refused by the real
+  // upstream — the test was measuring a contract the upstream does not honour.
   const CORE = ["bash", "edit", "glob", "grep", "read"];
   if (parsed && Array.isArray(parsed.tools)) {
     const names = new Set(parsed.tools.map((t) => t?.function?.name));
-    const corePresent = CORE.filter((n) => names.has(n));
-    if (corePresent.length < 2) problems.push("core-tools:" + corePresent.join("|"));
+    const missing = CORE.filter((n) => !names.has(n));
+    if (missing.length) problems.push("core-tools-missing:" + missing.join("|"));
   }
+  // The gate also requires a streaming request. A non-streaming body is refused
+  // even with the full tool set, which the mock now reproduces.
+  if (parsed && parsed.stream !== true) problems.push("stream:not-true");
   if (problems.length) {
     return json(res, 403, {
       error: {

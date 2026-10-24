@@ -224,9 +224,15 @@ export class LanePool {
     opts?: { workMs?: number },
   ): Promise<T> {
     const tier = await this.acquire();
+    const id = laneId();
     const lane: Lane = {
-      id: laneId(),
-      sessionId: newSessionId(seed),
+      id,
+      // The seed keeps one end user's turns in one upstream memory window; the
+      // nonce appended to it keeps two *different* turns apart even when they
+      // are created in the same millisecond. Without it both would derive the
+      // same fingerprint and share one rate-limit fate — the coupling that
+      // per-request identity exists to prevent.
+      sessionId: newSessionId(seed ? `${seed}|${id}` : undefined),
       startedAt: Date.now(),
       attemptsLeft: attempts,
       tier,
@@ -285,9 +291,15 @@ export class LanePool {
     opts?: { workMs?: number },
   ): Promise<Response> {
     const tier = await this.acquire();
+    const id = laneId();
     const lane: Lane = {
-      id: laneId(),
-      sessionId: newSessionId(seed),
+      id,
+      // The seed keeps one end user's turns in one upstream memory window; the
+      // nonce appended to it keeps two *different* turns apart even when they
+      // are created in the same millisecond. Without it both would derive the
+      // same fingerprint and share one rate-limit fate — the coupling that
+      // per-request identity exists to prevent.
+      sessionId: newSessionId(seed ? `${seed}|${id}` : undefined),
       startedAt: Date.now(),
       attemptsLeft: attempts,
       tier,

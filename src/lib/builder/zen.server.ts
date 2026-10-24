@@ -2,7 +2,7 @@
  *  The free model pool is discovered LIVE from models.dev — nothing is hardcoded here.
  *  Only legacy UI aliases (from old saved sessions) are mapped to real upstream ids. */
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateText, streamText, tool } from "ai";
+import { streamText, tool } from "ai";
 import { z } from "zod";
 import { getProviderDetail } from "@/lib/providers/modelsdev.server";
 import { egressFetch, egressFor } from "@/lib/providers/egress.server";
@@ -1853,17 +1853,30 @@ export async function zenChatStream(
   );
 }
 
+/** Ask a single model whether it will answer.
+ *
+ *  This goes through `completeRaw`, the same path a real turn takes, and that is
+ *  the point: the free-tier gate reads the tool catalogue and the streaming flag
+ *  off the request, so a health check that sent neither was refused with
+ *  `403 FreeTierError` on a model that serves fine — the probe itself was the
+ *  thing that looked broken, and it reported the identity refusal as if it were
+ *  the model's fault. Checking a model with a request shape the gate rejects
+ *  tells the caller nothing about the model. */
 export async function testZenModel(model: string, apiKey?: string) {
-  const key = resolveApiKey(apiKey);
   const upstream = normalizeZenModel(model) || DEFAULT_ZEN_MODEL;
   try {
-    const r = await generateText({
-      model: provider(key).chatModel(upstream),
-      messages: [{ role: "user", content: "Reply with OK." }],
-      maxOutputTokens: 8,
-      temperature: 0,
-    });
-    return { ok: true, status: 200, model: upstream, detail: r.text.slice(0, 400) };
+    const out = await completeRaw(
+      apiKey,
+      upstream,
+      [{ role: "user", content: "Reply with OK." }],
+      8,
+      "health-check",
+    );
+    if ("failed" in out) {
+      return { ok: false, status: out.failed.status, model: upstream, detail: String(out.failed.detail).slice(0, 400) };
+    }
+    const text = await out.text();
+    return { ok: true, status: 200, model: upstream, detail: text.slice(0, 400) };
   } catch (e) {
     const c = classify(e);
     return { ok: false, status: c.status, model: upstream, detail: c.detail };
