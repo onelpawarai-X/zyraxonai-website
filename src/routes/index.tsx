@@ -6,10 +6,11 @@ import { Icon } from "@/components/site/Icon";
 import { FreeTierClock } from "@/components/site/FreeTierClock";
 import { useFreeTier } from "@/hooks/use-free-tier";
 import { ButtonAnchor, ButtonLink, Card, Divider, Section, Tag } from "@/components/site/ui";
+import { CopyButton } from "@/components/site/provider-parts";
+import { CLI_COMMANDS, GITHUB_URL, HOME_DOWNLOADS, RELEASES_URL } from "@/lib/downloads";
 import {
   COMPARE_COLS,
   COMPARE_ROWS,
-  DOWNLOADS,
   FEATURES,
   MODES,
   PLATFORM,
@@ -19,7 +20,7 @@ import {
   STATS,
 } from "@/lib/home-content";
 
-const GITHUB = "https://github.com/onelpawarai-X/ZYRAXON-AI";
+const GITHUB = GITHUB_URL;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -199,7 +200,70 @@ function Hero() {
           {freeTier && <FreeTierClock status={freeTier} compact />}
         </div>
       </div>
+
+      {/* The command line sits directly under the hero, above the fold on a
+          laptop. Someone who arrives already knowing they want the CLI should
+          never have to scroll past the marketing to find out how to get it. */}
+      <CliPanel />
     </section>
+  );
+}
+
+/** The install-one-liner block, with a platform switcher. */
+function CliPanel() {
+  // Only the short list: the ARM and musl builds are a click away on the
+  // download page, and six tabs here would bury the common case.
+  const tabs = CLI_COMMANDS.filter((c) =>
+    ["macOS · Apple Silicon", "Linux · x64", "Windows · PowerShell"].includes(c.label),
+  );
+  const [active, setActive] = useState(0);
+  const current = tabs[active];
+
+  return (
+    <div className="mx-auto mt-10 max-w-4xl">
+      <Card className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="zx-glass grid h-9 w-9 place-items-center rounded-lg text-primary">
+            <Icon name="code" size={17} />
+          </span>
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
+            Install the CLI
+          </h2>
+          <span className="text-[12.5px] text-muted-foreground">one line, newest release</span>
+          <div className="ml-auto flex flex-wrap gap-1.5">
+            {tabs.map((t, i) => (
+              <button
+                key={t.label}
+                type="button"
+                onClick={() => setActive(i)}
+                className={`rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${
+                  i === active
+                    ? "bg-primary/12 text-primary"
+                    : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-3 flex items-start gap-2">
+          <pre className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-[12px] leading-relaxed text-foreground">
+            <code>{current.code}</code>
+          </pre>
+          <span className="shrink-0 pt-2">
+            <CopyButton text={current.code} label="copy" />
+          </span>
+        </div>
+        <p className="mt-2.5 text-[12.5px] text-muted-foreground">
+          ARM64, musl and Windows-on-ARM builds, plus the desktop installers, are on the{" "}
+          <ButtonLink to="/download/zyraxon-agent" className="px-0 underline">
+            download page
+          </ButtonLink>
+          .
+        </p>
+      </Card>
+    </div>
   );
 }
 
@@ -469,32 +533,69 @@ function Download() {
     <Section
       label="Download"
       title="Get ZYRAXON Agent"
-      description="Free and source-available. Pick your platform and run the installer."
+      description="Free and source-available. Every button saves the newest build straight from the release — no page in between."
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        {DOWNLOADS.map((d) => (
-          <Card key={d.os} hover className="p-6 text-center">
+        {HOME_DOWNLOADS.map((d) => (
+          <Card key={d.os} hover className="flex flex-col p-6 text-center">
             <span className="zx-glass mx-auto grid h-12 w-12 place-items-center rounded-xl text-primary">
               <Icon name="monitor" size={22} />
             </span>
             <h3 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{d.os}</h3>
             <p className="mt-1 text-[13px] text-muted-foreground">{d.detail}</p>
-            <div className="mt-5">
+            <div className="mt-auto grid gap-2 pt-5">
               <ButtonAnchor
                 href={`/api/download/${d.key}`}
                 external={false}
                 variant="glass"
                 size="sm"
               >
-                Download {d.file}
+                Desktop app {d.ext}
+              </ButtonAnchor>
+              <ButtonAnchor
+                href={`/api/download/${d.cliKey}`}
+                external={false}
+                variant="outline"
+                size="sm"
+              >
+                CLI {d.cliExt}
               </ButtonAnchor>
             </div>
           </Card>
         ))}
       </div>
+
+      {/* The one-liner belongs beside the buttons: anyone who would rather paste
+          a command than run an installer should not have to open another page to
+          find it. */}
+      <Card className="mt-4 p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="zx-glass grid h-9 w-9 place-items-center rounded-lg text-primary">
+            <Icon name="code" size={17} />
+          </span>
+          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">
+            Or install the CLI in one line
+          </h3>
+          <CopyButton text={CLI_COMMANDS[0].code} label="copy" />
+        </div>
+        <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-[12px] leading-relaxed text-foreground">
+          <code>{CLI_COMMANDS[0].code}</code>
+        </pre>
+        <p className="mt-2.5 text-[12.5px] text-muted-foreground">
+          macOS, Linux, Windows PowerShell and ARM builds — all on the{" "}
+          <ButtonLink to="/download/zyraxon-agent" className="px-0 underline">
+            download page
+          </ButtonLink>
+          .
+        </p>
+      </Card>
+
       <div className="mt-4 flex flex-wrap gap-3">
-        <ButtonAnchor href={`${GITHUB}/releases`} variant="glass" size="sm">
-          All releases
+        <ButtonLink to="/download/zyraxon-agent" size="sm">
+          All downloads
+        </ButtonLink>
+        <ButtonAnchor href={RELEASES_URL} variant="glass" size="sm">
+          Release notes
         </ButtonAnchor>
         <ButtonLink to="/packages" variant="glass" size="sm">
           12 NPM packages
