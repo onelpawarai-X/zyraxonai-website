@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { brandChatStream, brandCatalogue } from "@/lib/providers/zyraxon-brand.server";
 import { fallbackComplete, fallbackConfigured } from "@/lib/providers/helper-fallback.server";
-import { askConversation, conversationConfigured } from "@/lib/providers/helper-conversation.server";
+import {
+  askConversation,
+  conversationConfigured,
+  warmConversation,
+} from "@/lib/providers/helper-conversation.server";
 import { helperWirePrompt } from "@/lib/providers/helper-prompt.server";
+import { quotaResetStatus } from "@/lib/providers/quota.server";
 import { STAR_GOAL, STAR_REPO, STAR_REPO_URL } from "@/lib/providers/star-gate";
 
 const CORS: Record<string, string> = {
@@ -169,6 +174,62 @@ const FALLBACK_LABEL = "fallback";
  *  gives — "ZYRAXON Apex" — not a note about which system served them. */
 const CONVERSATION_LABEL = "zyraxon-apex";
 
+/** How long one brand gets before the helper moves on.
+ *
+ *  Rotating through all seven brands at the upstream's own pace took 57s on a
+ *  spent pool, and a visitor will not wait that long. The brands are a best-effort
+ *  fast path: if one cannot answer inside this window the helper stops waiting and
+ *  uses the backend that will. Kept short because the cost of being wrong is small
+ *  — the fallback answers — while the cost of waiting is a visitor who leaves. */
+const BRAND_BUDGET_MS = Number(process.env.ZYRAXON_HELPER_BRAND_BUDGET_MS || 3_000);
+
+/** Try every brand at once, and take the first one that answers.
+ *
+ *  Running the brands one after another cost 3s each — 21s for the pass, and 57s
+ *  before the budget existed — because a spent pool makes every model slow. They
+ *  share one upstream, so trying them in sequence buys nothing: if the pool can
+ *  answer, the first brand usually can; if it cannot, all seven refuse. Racing
+ *  them means the pass costs one budget instead of seven.
+ *
+ *  Each attempt writes into its own buffer, so a losing attempt cannot leak
+ *  events into the visitor's stream. Only the winner's events are replayed, which
+ *  keeps the panel showing exactly one model thinking. */
+async function raceBrands(
+  messages: any[],
+  send: (obj: unknown) => void,
+  budgetMs: number,
+): Promise<boolean> {
+  const attempts = HELPER_MODELS.map(async (model) => {
+    const buffered: unknown[] = [];
+    const ok = await runToolLoop(model, messages, (e) => buffered.push(e));
+    return ok ? { model, buffered } : null;
+  });
+
+  // Settle on the first success, and do not wait for the rest: a loser that is
+  // still retrying internally has nothing to contribute.
+  const winner = await new Promise<{ model: string; buffered: unknown[] } | null>((resolve) => {
+    let remaining = attempts.length;
+    const timer = setTimeout(() => resolve(null), budgetMs);
+    for (const attempt of attempts) {
+      void attempt.then((result) => {
+        if (result) {
+          clearTimeout(timer);
+          resolve(result);
+          return;
+        }
+        if (--remaining === 0) {
+          clearTimeout(timer);
+          resolve(null);
+        }
+      });
+    }
+  });
+
+  if (!winner) return false;
+  for (const event of winner.buffered) send(event);
+  return true;
+}
+
 /** Run the tool loop against one upstream.
  *
  *  Shared by the brand pass and the fallback pass so the two cannot drift: the
@@ -241,6 +302,11 @@ export const Route = createFileRoute("/api/public/zyraxon/helper")({
 
       /** Which models the helper can use, and whether search is live. */
       GET: async () => {
+        // The panel reads this when it opens, so it is the earliest point at
+        // which the conversation can be started. Creating one takes ~25s, and
+        // doing it here means it is ready by the time the visitor has typed a
+        // question — the first turn then costs nothing extra.
+        warmConversation();
         let models: string[] = HELPER_MODELS;
         try {
           const catalogue = await brandCatalogue();
@@ -311,14 +377,23 @@ export const Route = createFileRoute("/api/public/zyraxon/helper")({
             }, 10_000);
 
             try {
-              // First pass: our own line, rotating through the brands as before.
+              // Warm the conversation now, while the brands are being tried. It
+              // takes ~25s to create and the brands usually fail, so starting it
+              // here means the fallback is already on its way when it is needed
+              // instead of the visitor waiting for the brands and then for this.
+              warmConversation();
+
+              // First pass: our own line. All seven brands race inside one short
+              // budget, so this pass costs one wait rather than seven. Skipped
+              // outright when the free pool is known to be spent: every brand
+              // shares that pool, so the pass can only collect the same refusal,
+              // and the three seconds it costs are three seconds of a visitor
+              // waiting for an answer the fallback is about to give anyway.
               let answered = false;
-              for (const model of HELPER_MODELS) {
-                if (await runToolLoop(model, messages, send)) {
-                  answered = true;
-                  break;
-                }
-                send({ type: "rotating", model });
+              if (!quotaResetStatus().spent) {
+                send({ type: "thinking", model: HELPER_MODELS[0], round: 0 });
+                answered = await raceBrands(messages, send, BRAND_BUDGET_MS);
+                if (!answered) send({ type: "rotating", model: HELPER_MODELS.at(-1)! });
               }
 
               // Second pass: the configured OpenAI-compatible fallback.

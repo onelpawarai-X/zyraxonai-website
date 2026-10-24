@@ -28,7 +28,17 @@ const BASE = (process.env.OPENHANDS_API_BASE || "https://app.all-hands.dev").rep
 /** How long to wait for a new conversation to become ready, and for an answer. */
 const READY_TIMEOUT_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_READY_MS || 120_000);
 const ANSWER_TIMEOUT_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_ANSWER_MS || 120_000);
-const POLL_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_POLL_MS || 2_500);
+/** How often to look for the reply while the agent works.
+ *
+ *  Each poll is a cheap read (~0.5s) and the reply usually lands in one to three
+ *  seconds, so a long interval is pure added latency on every turn: at 2.5s a
+ *  reply that arrived at 1.9s was reported at 4.4s. Short enough to be prompt,
+ *  long enough not to hammer the events endpoint. */
+const POLL_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_POLL_MS || 700);
+
+/** The title that marks a conversation as this backend's, and lets a later run
+ *  find and take it over instead of creating another one. */
+const TITLE = "ZYRAXON site helper";
 
 function apiKey(): string {
   return (process.env.OPENHANDS_API_KEY || "").trim();
@@ -53,6 +63,20 @@ type Conversation = {
 
 /** The conversation every visitor shares, or null before the first message. */
 let current: Conversation | null = null;
+
+/** The in-flight creation, so two callers cannot start two conversations. */
+let starting: Promise<Conversation | null> | null = null;
+
+/** When a creation last failed, and why it is not worth retrying yet.
+ *
+ *  The account has a daily cap on new sandboxes, and a conversation needs one.
+ *  Once the cap is reached every attempt is refused, so retrying on each message
+ *  would add a failed round trip to every visitor's answer for the rest of the
+ *  day. Remembering the refusal for a while turns that into one failure and then
+ *  an immediate, honest "we are down" for the rest. */
+let failedAt = 0;
+let failureReason = "";
+const START_COOLDOWN_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_COOLDOWN_MS || 300_000);
 
 /** The tail of the turn queue, so turns run one at a time. */
 let queue: Promise<unknown> = Promise.resolve();
@@ -143,7 +167,7 @@ async function start(): Promise<Conversation | null> {
         ...(process.env.ZYRAXON_HELPER_CONVERSATION_MODEL
           ? { llm_model: process.env.ZYRAXON_HELPER_CONVERSATION_MODEL.trim() }
           : {}),
-        title: "ZYRAXON site helper",
+        title: TITLE,
       }),
     });
   } catch {
@@ -195,7 +219,65 @@ async function alive(conv: Conversation): Promise<boolean> {
   return true;
 }
 
-/** The shared conversation, started if needed and replaced if broken. */
+/** Find conversations this backend created, newest first.
+ *
+ *  The upstream has a small cap on live conversations, and a deployment restarts
+ *  and moves between isolates, so a conversation can be left behind with nothing
+ *  pointing at it. Without this, each restart created another one until the cap
+ *  was reached and every new attempt was refused — the helper then failed fast
+ *  with nowhere to go, which is exactly the outage it exists to prevent. */
+async function listOwn(): Promise<Array<{ id: string; at: string }>> {
+  const res = await oh(`/app-conversations/search?limit=50`);
+  if (!res.ok) return [];
+  const data: any = await res.json().catch(() => null);
+  const items: any[] = Array.isArray(data) ? data : (data?.items ?? []);
+  return items
+    .filter((i) => i?.title === TITLE && typeof i?.id === "string")
+    .map((i) => ({ id: i.id as string, at: String(i.created_at || "") }))
+    .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+}
+
+/** Take over an existing conversation, or clear the leftovers and start one.
+ *
+ *  Preferring the newest existing conversation over a fresh one matters twice
+ *  over: creating one costs the visitor about 25 seconds, and each one occupies
+ *  a slot the account has a fixed number of.
+ *
+ *  The system prompt is checked before adopting. A conversation's prompt is
+ *  fixed when it is created, so one left over from an older build would answer
+ *  from a stale catalogue — the identity rules and endpoint list would silently
+ *  be last week's. A mismatch retires it instead. */
+async function adoptOrStart(): Promise<Conversation | null> {
+  const wanted = helperConversationPrompt();
+  for (const found of await listOwn()) {
+    const candidate: Conversation = { id: found.id, lastMessageId: null };
+    if (!(await alive(candidate)) || !(await promptMatches(found.id, wanted))) {
+      await discard(found.id);
+      continue;
+    }
+    const existing = await messages(found.id);
+    return { id: found.id, lastMessageId: existing.at(-1)?.id ?? null };
+  }
+  return start();
+}
+
+/** Whether a conversation was created with this exact system prompt. */
+async function promptMatches(id: string, wanted: string): Promise<boolean> {
+  const res = await oh(`/conversation/${id}/events/search?limit=100`);
+  if (!res.ok) return false;
+  const data: any = await res.json().catch(() => null);
+  const items: any[] = Array.isArray(data) ? data : (data?.items ?? []);
+  const event = items.find((e) => e?.kind === "SystemPromptEvent");
+  const text = event?.system_prompt?.text;
+  return typeof text === "string" && text.trim() === wanted.trim();
+}
+
+/** The shared conversation, started if needed and replaced if broken.
+ *
+ *  Only one creation runs at a time. Two visitors arriving together would
+ *  otherwise each see no conversation and each start one, which is exactly the
+ *  "a new conversation per message" behaviour this module exists to prevent.
+ *  The second caller waits on the first's promise instead. */
 async function ensure(): Promise<Conversation | null> {
   if (current && (await alive(current))) return current;
   if (current) {
@@ -203,8 +285,45 @@ async function ensure(): Promise<Conversation | null> {
     current = null;
     await discard(dead);
   }
-  current = await start();
-  return current;
+  if (!starting) {
+    starting = adoptOrStart()
+      .then((conv) => {
+        if (conv) {
+          failedAt = 0;
+          failureReason = "";
+        } else {
+          failedAt = Date.now();
+          failureReason = "the conversation backend could not be started";
+        }
+        return conv;
+      })
+      .finally(() => {
+        starting = null;
+      });
+  }
+  return starting;
+}
+
+/** Begin creating the conversation without waiting for it.
+ *
+ *  Creating one provisions a sandbox and takes ~25s. The brand pass runs first
+ *  and usually fails, so warming in parallel with it means the conversation is
+ *  already on its way by the time the helper needs it — the visitor pays one
+ *  wait instead of two. Fire and forget: a failure here is not an error, only a
+ *  slower fallback. */
+export function warmConversation(): void {
+  if (!conversationConfigured()) return;
+  // Nothing to warm while the last attempt is still in its cooldown.
+  if (failedAt && Date.now() - failedAt < START_COOLDOWN_MS) return;
+  void ensure().catch(() => undefined);
+}
+
+/** A short, honest reason the conversation backend is unavailable, or null when
+ *  it is usable or has not been tried yet. */
+export function conversationUnavailable(): string | null {
+  if (!conversationConfigured()) return null;
+  if (failedAt && Date.now() - failedAt < START_COOLDOWN_MS) return failureReason;
+  return null;
 }
 
 /** Send one message and wait for the assistant's reply.
@@ -217,6 +336,11 @@ export async function askConversation(message: string): Promise<string | null> {
   if (!conversationConfigured()) return null;
 
   const run = async (): Promise<string | null> => {
+    // Skip a start we know will be refused. The brand pass has already failed
+    // and the conversation backend has nothing left to give, so the visitor
+    // gets the honest answer now instead of after another failed attempt.
+    if (conversationUnavailable()) return null;
+
     const conv = await ensure();
     if (!conv) return null;
 

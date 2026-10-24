@@ -715,3 +715,47 @@ system prompt past its own limit, and a silently truncated prompt keeps the fact
 while losing whichever section fell off the end. **Order matters:** identity and
 answer rules come first, reference material last, so a trim never drops the rule
 that stops the assistant naming an upstream vendor.
+
+### Why the helper went down, and the two rules that keep it up
+
+The deployed helper answered "I could not reach a model just now" for a morning.
+Neither provider was broken. The OpenHands account had hit its **daily sandbox
+limit of 20**, and the conversation backend needed a sandbox for every new
+conversation it created. Two design mistakes fed that:
+
+1. **Every process restart created another conversation.** The shared conversation
+   lived only in module memory, so a redeploy, a cold isolate or a second
+   instance could not see the previous one and started a fresh conversation —
+   each one a new sandbox against the daily cap. Once the cap was reached,
+   creation was refused outright and there was nothing to fall back to.
+2. **A refusal was retried on every message.** Each visitor's turn paid a failed
+   round trip to find out the same thing.
+
+Both are fixed, and the fixes are the rules to preserve:
+
+- **Adopt before starting.** `adoptOrStart()` lists conversations titled
+  `ZYRAXON site helper`, keeps the newest one whose sandbox is alive *and* whose
+  `SystemPromptEvent` matches the current prompt, and deletes the rest. This is
+  why `TITLE` and the prompt-matching check exist: a conversation's system prompt
+  is fixed at creation, so one left over from an older build would answer from a
+  stale catalogue. A prompt change retires old conversations on purpose.
+- **Never retry a refused start on every turn.** A failed start is remembered for
+  `ZYRAXON_HELPER_CONVERSATION_COOLDOWN_MS` (default 5 minutes), and
+  `conversationUnavailable()` makes the turn fail immediately and honestly
+  instead of after another doomed attempt.
+
+**Diagnosing it again:** `GET /api/v1/app-conversations/start-tasks?ids=<task>` is
+where the truth is. A refused creation is not an HTTP error — it returns 200 and
+the task comes back with `status: "ERROR"` and
+`detail: "Daily sandbox limit of 20 reached..."`. Reading only the HTTP status
+makes it look like success.
+
+**Cost of a cold turn:** a warm conversation answers in ~2s, but a conversation
+idle for more than ~15s answers in ~32s. This is not sandbox pause/resume (a
+`POST /api/v1/sandboxes/<id>/resume` before the turn does not help, and the
+sandbox already reads `RUNNING`), and it is not the prompt size (a 127-char
+prompt and a 28k-char prompt both take 32.8s). Polling the events endpoint to
+keep it warm does not help either — an 8s poll made it *worse* (41s). Treat the
+32s as the price of a cold turn and keep the conversation warm by opening the
+panel, not by polling: `GET /api/public/zyraxon/helper` calls `warmConversation()`
+and `HelpAgent.tsx` reads that route when the panel opens.
