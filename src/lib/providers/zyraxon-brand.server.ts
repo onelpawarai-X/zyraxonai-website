@@ -14,6 +14,8 @@
 import { amendLastTrace } from "@/lib/providers/upstream-trace.server";
 import {
   DEFAULT_ZEN_MODEL,
+  MIN_FREE_TIER_VERSION,
+  ZEN_UA_VERSION,
   completeRaw,
   completeWireRaw,
   needsWire,
@@ -55,6 +57,7 @@ import {
   ZYRAXON_BRANDS,
   brandView,
   getBrand,
+  isUpgradeRequired,
   isUpstreamGate,
   measuredTtftMs,
   raceFor,
@@ -475,6 +478,12 @@ export async function brandChatStream(
             amendLastTrace("stopped: upstream identity gate", "upstream_gate");
             break;
           }
+          // A release below the free tier's floor is refused on every model, so
+          // re-asking only adds latency before the same 426.
+          if (isUpgradeRequired(why)) {
+            amendLastTrace("stopped: client release below free-tier floor", "upgrade_required");
+            break;
+          }
           if (!isQuotaFailure(why)) {
             amendLastTrace("stopped: not a quota refusal", "non-quota");
             break;
@@ -609,7 +618,7 @@ export async function brandChatStream(
       // A spent quota is the exception: it is an account decision, so the sweep
       // would walk every remaining model only to collect the same 429 from each
       // and make the caller wait through all of it. Report it now.
-      const quota = outcome.quota === true || outcome.tried.every((t) => isQuotaFailure(t.detail));
+      const quota = outcome.quota === true || outcome.tried.some((t) => isQuotaFailure(t.detail));
       const attempted = new Set(outcome.tried.map((t: { upstream: string }) => t.upstream));
       const NEUTRAL_TTFT_MS = 3_000;
       const rank = (id: string) => {
@@ -620,7 +629,7 @@ export async function brandChatStream(
         .map((m) => m.id)
         .filter((id: string) => !attempted.has(id))
         .sort((a: string, b: string) => rank(a) - rank(b));
-      if (sweep.length && !quota) {
+      if (sweep.length && !quota && outcome.upgrade !== true) {
         const recovered = mediaNeed
           ? await rotateThrough(sweep, tryUpstream, lane.attemptsLeft, retryHook, {
               budgetMs: remainingMs(),
@@ -651,7 +660,7 @@ export async function brandChatStream(
         }
         outcome.tried.push(...recovered.tried);
       }
-      return brandFailureResponse(brand, outcome.tried, outcome.gate, quota);
+      return brandFailureResponse(brand, outcome.tried, outcome.gate, quota, outcome.upgrade === true);
     }, seed);
   } catch (e) {
     if (e instanceof LaneShedError) {
@@ -678,12 +687,22 @@ function brandFailureResponse(
   tried: Array<{ upstream: string; status: number; gate: boolean; detail?: string }>,
   gate: boolean,
   quotaHint = false,
+  upgradeHint = false,
 ): Response {
   // A spent free-tier quota is not an outage. Every model in the rotation sits
   // on the same account, so a 429 here means the account is out of free turns
   // for now — telling the caller "every model was unavailable" hides the one
   // fact that explains it and the one thing that helps: wait, or add a key.
-  const quota = !gate && tried.length > 0 && (quotaHint || tried.every((t) => isQuotaFailure(t.detail)));
+  const quota =
+    !gate && !upgradeHint && tried.length > 0 && (quotaHint || tried.some((t) => isQuotaFailure(t.detail)));
+  // A release below the upstream's floor is also not an outage, and it is the
+  // one failure the caller cannot wait out: the same request is refused with
+  // the same 426 until the version pin moves. Reporting it as "unavailable"
+  // sends the operator to look at the upstream, the network and the keys —
+  // everything except the one value that is actually wrong.
+  const upgrade =
+    !gate && (upgradeHint || tried.some((t) => isUpgradeRequired(String(t.detail ?? ""))));
+  const staleVersion = tried.find((t) => isUpgradeRequired(String(t.detail ?? "")))?.detail;
   // The upstream's own reset clock. A quota refusal is not a guess: the
   // `retry-after` the official server sent says exactly when its window rolls
   // over, and only that number is published. When the server stated no clock
@@ -704,18 +723,30 @@ function brandFailureResponse(
   };
   const message = gate
     ? `${brand.label} could not be served: the upstream free tier refused this caller (FreeTierError). Set OPENCODE_ZEN_API_KEY, or call from a network the upstream free tier serves.`
-    : quota && retryAfterSeconds && resetAt
-      ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window. It opens again in about ${humanWait(retryAfterSeconds)} (around ${new Date(resetAt).toUTCString()}), as stated by the upstream server. Set OPENCODE_ZEN_API_KEY for a keyed quota that does not wait.`
-      : quota
-        ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window, and the upstream did not state a reset time, so none is shown rather than a guess. Set OPENCODE_ZEN_API_KEY for a keyed quota that does not wait, or retry shortly.`
-        : `${brand.label} could not be served right now — every model in its rotation was unavailable. Retrying in a moment usually works.`;
+    : upgrade
+      ? `${brand.label} could not be served: the upstream free tier refused this client as too old (UpgradeRequired) — it requires a newer OpenCode release than the one this deployment reports. Raise ZYRAXON_OPENCODE_UA (currently opencode/${ZEN_UA_VERSION}) to at least ${MIN_FREE_TIER_VERSION}, or set OPENCODE_ZEN_API_KEY to bypass the free tier.`
+      : quota && retryAfterSeconds && resetAt
+        ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window. It opens again in about ${humanWait(retryAfterSeconds)} (around ${new Date(resetAt).toUTCString()}), as stated by the upstream server. Set OPENCODE_ZEN_API_KEY for a keyed quota that does not wait.`
+        : quota
+          ? `${brand.label} is temporarily out of free capacity — the shared upstream free tier has spent its quota for this window, and the upstream did not state a reset time, so none is shown rather than a guess. Set OPENCODE_ZEN_API_KEY for a keyed quota that does not wait, or retry shortly.`
+          : `${brand.label} could not be served right now — every model in its rotation was unavailable. Retrying in a moment usually works.`;
 
   return Response.json(
     {
       error: {
         message,
-        type: gate ? "upstream_gate" : quota ? "free_tier_quota" : "provider_unavailable",
+        type: gate ? "upstream_gate" : upgrade ? "upgrade_required" : quota ? "free_tier_quota" : "provider_unavailable",
         model: brand.id,
+        ...(upgrade
+          ? {
+              // The value that is actually wrong, and the value it must be.
+              // A caller cannot act on "the upstream refused this client"
+              // without being told which release it reported.
+              reportedClient: `opencode/${ZEN_UA_VERSION}`,
+              minimumClient: MIN_FREE_TIER_VERSION,
+              ...(staleVersion ? { upstreamDetail: String(staleVersion).slice(0, 200) } : {}),
+            }
+          : {}),
         // When the free tier opens again, in the same shape the upstream states
         // it: a countdown a client can tick down, and the absolute moment it
         // lands on. Both are published because a countdown needs the seconds
@@ -736,7 +767,10 @@ function brandFailureResponse(
       })),
     },
     {
-      status: gate ? 503 : quota ? 429 : 502,
+      // 426 is the upstream's own code for this refusal, and passing it through
+      // is the difference between an operator checking the version pin and an
+      // operator debugging a phantom outage.
+      status: gate ? 503 : upgrade ? 426 : quota ? 429 : 502,
       headers: {
         "Access-Control-Allow-Origin": "*",
         // Relay the upstream's own clock, never a substitute for it.

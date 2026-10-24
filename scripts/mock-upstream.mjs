@@ -103,6 +103,19 @@ function gate(req, res, raw) {
     const m = parsed?.model;
     if (m === "beam-free") return json(res, 404, { error: { message: "model not found" } });
   }
+  if (scenario === "upgrade-all") {
+    // Verbatim the refusal the live upstream sends when the reported client
+    // release is below its floor: 426 with `UpgradeRequired`. It is a permanent
+    // decision for this deployment, so it must stop the rotation rather than be
+    // reported as "every model unavailable".
+    return json(res, 426, {
+      type: "error",
+      error: {
+        type: "UpgradeRequired",
+        message: "OpenCode 1.18.0 or newer is required to use the free tier",
+      },
+    });
+  }
   if (scenario === "quota-all") {
     // Every model is valid but the account's free window is spent: the upstream
     // answers 429 with its own words. This is not an outage and must not be

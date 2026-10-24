@@ -603,10 +603,24 @@ export function isUpstreamGate(detail: string): boolean {
   return /free tier can only be used|free models aren'?t available|abusive traffic/i.test(detail);
 }
 
+/** True when the upstream refused the turn because the *client release* is too
+ *  old for the free tier.
+ *
+ *  Measured against the live upstream: it answers `426 UpgradeRequired` with
+ *  "OpenCode 1.18.0 or newer is required to use the free tier" before any model
+ *  is considered. Like the identity gate this is a permanent decision — the
+ *  same request is refused every time, on every model — so re-asking and
+ *  rotating are both wasted work. It is kept apart from the gate because the
+ *  remedy is different: the gate says "this caller is not an OpenCode client",
+ *  this says "this client is too old", and only the version pin can fix it. */
+export function isUpgradeRequired(detail: string): boolean {
+  return /UpgradeRequired|or newer is required/i.test(detail);
+}
+
 export type AttemptFailure = { upstream: string; status: number; detail: string; gate: boolean };
 export type RotationOutcome<T> =
   | { ok: true; value: T; upstream: string }
-  | { ok: false; tried: AttemptFailure[]; gate: boolean; quota?: boolean };
+  | { ok: false; tried: AttemptFailure[]; gate: boolean; quota?: boolean; upgrade?: boolean };
 
 /** True when a failure is the upstream's free-tier quota being spent.
  *
@@ -759,6 +773,9 @@ export async function raceFor<T>(
     tried.push(failure);
     lastFailure = failure;
     if (res.status === 401 || g) return { ok: false, tried, gate };
+    // A release below the free tier's floor is refused identically on every
+    // model, so racing the rest of the queue would only collect the same 426.
+    if (isUpgradeRequired(res.detail)) return { ok: false, tried, gate, upgrade: true };
     // Quota is account-wide, so the models still queued behind this one would
     // answer the same 429. Stop the race and let the caller report the truth
     // instead of spending the budget collecting identical refusals.
@@ -861,6 +878,9 @@ export async function rotateThrough<T>(
         };
         tried.push(failure);
         if (out.status === 401 || g) return { ok: false, tried, gate };
+        // A release below the free tier's floor is refused on every model, so
+        // walking the rest of the chain would only repeat the same 426.
+        if (isUpgradeRequired(out.detail)) return { ok: false, tried, gate, upgrade: true };
         // Quota is account-wide: the next model answers the same 429. Stop here
         // instead of walking the pool and making the caller wait for the same
         // answer from every model.
