@@ -50,6 +50,16 @@ export default function HelpAgent() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  useEffect(() => {
+    // Opening the panel is the earliest moment we know someone may ask
+    // something, so ask the route to get ready now. The route warms its
+    // OpenHands conversation on a status read, and that conversation takes about
+    // half a minute to start; doing it here means it is ready by the time the
+    // question is typed, instead of the first answer paying for it.
+    if (!open) return;
+    void fetch("/api/public/zyraxon/helper", { method: "GET" }).catch(() => undefined);
+  }, [open]);
+
   const send = useCallback(
     async (text: string) => {
       const question = text.trim();
