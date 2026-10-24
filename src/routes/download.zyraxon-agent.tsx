@@ -4,7 +4,7 @@ import { PageShell } from "@/components/site/PageShell";
 import { PageHeader } from "@/components/site/SiteChrome";
 import { ButtonAnchor, Card, Tag } from "@/components/site/ui";
 import { Icon } from "@/components/site/Icon";
-import { CopyButton } from "@/components/site/provider-parts";
+import { CommandBox, CopyButton } from "@/components/site/provider-parts";
 import { CLI_COMMANDS, CLI_PATH_COMMANDS, CLI_USAGE, GITHUB_REPO } from "@/lib/downloads";
 
 const RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases`;
@@ -148,6 +148,8 @@ export const Route = createFileRoute("/download/zyraxon-agent")({
 function DownloadZyraxonAgent() {
   const [data, setData] = useState<Resolved | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [cli, setCli] = useState(0);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,80 +200,67 @@ function DownloadZyraxonAgent() {
       </PageHeader>
 
       {/* The commands come first: most people who arrive here want the CLI, and
-          a copy button beats a download for anyone who already has a terminal. */}
-      <Card className="p-6">
-        <div className="flex flex-wrap items-center gap-2">
+          a copy button beats a download for anyone who already has a terminal.
+          One platform is shown at a time. Six long one-liners stacked up ran
+          off the side of the page and buried the download buttons below them;
+          a switcher keeps the whole block the height of a single line. */}
+      <Card className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="zx-glass grid h-9 w-9 place-items-center rounded-lg text-primary">
             <Icon name="code" size={17} />
           </span>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
             Install in one command
           </h2>
+          <div className="ml-auto flex flex-wrap gap-1.5">
+            {CLI_COMMANDS.map((c, i) => (
+              <button
+                key={c.label}
+                type="button"
+                onClick={() => setCli(i)}
+                className={`rounded-full px-3 py-1.5 text-[11.5px] font-semibold transition-colors ${
+                  i === cli
+                    ? "bg-primary/12 text-primary"
+                    : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                }`}
+              >
+                {c.short ?? c.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
-          Run the line for your system. It fetches the newest command-line build from the release,
-          unpacks it and prints the version — so a failed download is obvious straight away. Nothing
-          in these archives carries the execute bit, which is why every Unix line runs{" "}
-          <span className="font-mono">chmod +x</span> before it tries to run anything.
-        </p>
-        <div className="mt-4 grid gap-3">
-          {CLI_COMMANDS.map((c) => (
-            <div key={c.label}>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {c.label}
-                </span>
-                <CopyButton text={c.code} label="copy" />
-              </div>
-              <pre className="mt-1.5 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-[12px] leading-relaxed text-foreground">
-                <code>{c.code}</code>
-              </pre>
+
+        <div className="mt-3">
+          <CommandBox code={CLI_COMMANDS[cli].code} label="copy command" />
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-4">
+          {CLI_PATH_COMMANDS.map((c) => (
+            <div key={c.label} className="min-w-0 flex-1 basis-64">
+              <span className="text-[11px] font-semibold text-muted-foreground">{c.label}</span>
+              <CommandBox code={c.code} className="mt-1" />
             </div>
           ))}
         </div>
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          <div>
-            <h3 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Put it on your PATH
-            </h3>
-            <div className="mt-2 grid gap-3">
-              {CLI_PATH_COMMANDS.map((c) => (
-                <div key={c.label}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-muted-foreground">
-                      {c.label}
-                    </span>
-                    <CopyButton text={c.code} label="copy" />
-                  </div>
-                  <pre className="mt-1.5 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-[12px] leading-relaxed text-foreground">
-                    <code>{c.code}</code>
-                  </pre>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Once it is installed
-            </h3>
-            <div className="mt-2 grid gap-3">
-              {CLI_USAGE.map((c) => (
-                <div key={c.label}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-muted-foreground">
-                      {c.label}
-                    </span>
-                    <CopyButton text={c.code} label="copy" />
-                  </div>
-                  <pre className="mt-1.5 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-[12px] leading-relaxed text-foreground">
-                    <code>{c.code}</code>
-                  </pre>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <span className="text-[11px] font-semibold text-muted-foreground">Then</span>
+          {CLI_USAGE.map((c) => (
+            <span
+              key={c.label}
+              className="rounded-md bg-foreground/5 px-2 py-1 font-mono text-[11px] text-muted-foreground"
+              title={c.label}
+            >
+              {c.code}
+            </span>
+          ))}
         </div>
+
+        <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
+          Each line fetches the newest build for that platform, so it keeps working when a release
+          renames a file. Nothing in the archives carries the execute bit, which is why every Unix
+          line runs <span className="font-mono">chmod +x</span> before it runs anything.
+        </p>
       </Card>
 
       {GROUPS.map((g) => (
@@ -303,21 +292,22 @@ function DownloadZyraxonAgent() {
                     {asset?.size ? ` · ${formatSize(asset.size)}` : ""}
                   </p>
                   <div className="mt-auto pt-4">
-                    {available ? (
-                      <ButtonAnchor
-                        href={`/api/download/${row.id}`}
-                        external={false}
-                        variant="glass"
-                        size="sm"
-                        className="w-full"
-                      >
-                        Download {row.ext}
-                      </ButtonAnchor>
-                    ) : (
-                      <span className="block text-center text-[12px] text-muted-foreground">
-                        {state === "loading" ? "Checking…" : "Not in this release"}
-                      </span>
-                    )}
+                    {/* The button is always here, whatever the resolver said.
+                        It used to be swapped for a "Not in this release" label
+                        when the release read failed, which turned one failed
+                        fetch into sixteen dead buttons claiming a file that
+                        does exist. The route resolves the asset on click and
+                        falls back to the release page, so a working button is
+                        always the better answer than a false absence. */}
+                    <ButtonAnchor
+                      href={`/api/download/${row.id}`}
+                      external={false}
+                      variant="glass"
+                      size="sm"
+                      className="w-full"
+                    >
+                      Download {row.ext}
+                    </ButtonAnchor>
                   </div>
                 </Card>
               );
@@ -326,16 +316,27 @@ function DownloadZyraxonAgent() {
         </div>
       ))}
 
-      <Card className="mt-8 p-6">
-        <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
-          Every file in this release
-        </h2>
-        <p className="mt-1.5 text-[13px] text-muted-foreground">
-          {assetCount > 0
-            ? `All ${assetCount} files attached to ${tag}, each one a direct download.`
-            : "The list appears once the release is read."}
-        </p>
-        {assetCount > 0 && (
+      {/* A developer's index of the release, collapsed by default. Thirty raw
+          filenames is not a download page — it is a directory listing, and it
+          used to sit open at the bottom pushing the real links further up. */}
+      <Card className="mt-6 p-5 sm:p-6">
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="flex w-full items-center gap-2 text-left"
+          aria-expanded={showAll}
+        >
+          <h2 className="text-[14px] font-semibold tracking-tight text-foreground">
+            Every file in this release
+          </h2>
+          <span className="text-[12px] text-muted-foreground">
+            {assetCount > 0 ? `${assetCount} files` : "…"}
+          </span>
+          <span className="ml-auto text-[12px] font-semibold text-muted-foreground">
+            {showAll ? "hide" : "show"}
+          </span>
+        </button>
+        {showAll && assetCount > 0 && (
           <div className="mt-4 grid gap-1.5 sm:grid-cols-2">
             {data?.assets?.map((a) => (
               <a

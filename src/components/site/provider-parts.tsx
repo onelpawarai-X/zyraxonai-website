@@ -63,23 +63,47 @@ export function MethodTag({ endpoint }: { endpoint: Endpoint }) {
   return <Tag tone={endpoint.method === "GET" ? "success" : "primary"}>{endpoint.method}</Tag>;
 }
 
-/** One labelled code block with its own copy button. */
-export function Snippet({
-  label,
-  lang,
+/**
+ * One command on one line, with its copy button inside the same box.
+ *
+ * Deliberately not a heading above a `<pre>`. A stack of those is as tall as
+ * the commands are long, and a command that wraps to three lines pushes the
+ * whole page sideways. Here the line scrolls under the cursor instead: the box
+ * is a fixed strip, `min-w-0` stops it from widening its parent, and the copy
+ * button sits against the right edge where the eye already is.
+ */
+export function CommandBox({
   code,
+  label = "copy",
+  className = "",
 }: {
-  label: string;
-  lang: string;
   code: string;
+  label?: string;
+  className?: string;
 }) {
+  return (
+    <div
+      className={`flex min-w-0 items-center gap-2 rounded-lg bg-foreground/5 py-1.5 pl-3 pr-1.5 ${className}`}
+    >
+      <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre font-mono text-[11.5px] leading-6 text-foreground">
+        {code}
+      </code>
+      <CopyButton text={code} label={label} />
+    </div>
+  );
+}
+
+/** One labelled code block with its own copy button. */
+export function Snippet({ label, lang, code }: { label: string; lang: string; code: string }) {
   return (
     <div>
       <div className="flex items-center gap-2">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {label}
         </span>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">{lang}</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          {lang}
+        </span>
         <CopyButton text={code} label="copy code" />
       </div>
       <pre className="mt-1.5 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 text-[12px] leading-relaxed text-foreground">
@@ -90,15 +114,7 @@ export function Snippet({
 }
 
 /** A value the caller types into some other app's form. */
-export function FieldRow({
-  label,
-  value,
-  note,
-}: {
-  label: string;
-  value: string;
-  note?: string;
-}) {
+export function FieldRow({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="border-b border-border/60 py-2.5 last:border-0">
       <div className="flex items-center justify-between gap-3">
