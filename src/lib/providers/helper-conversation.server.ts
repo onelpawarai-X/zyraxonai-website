@@ -21,13 +21,13 @@
  *  A conversation that breaks — sandbox gone, errored, or gone quiet — is deleted
  *  and replaced, so the assistant heals itself rather than staying dead. */
 
-import { helperConversationPrompt } from "./helper-prompt.server";
+import { helperConversationPrompt, PROMPT_SIGNATURE } from "./helper-prompt.server";
 
 const BASE = (process.env.OPENHANDS_API_BASE || "https://app.all-hands.dev").replace(/\/+$/, "");
 
 /** How long to wait for a new conversation to become ready, and for an answer. */
 const READY_TIMEOUT_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_READY_MS || 120_000);
-const ANSWER_TIMEOUT_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_ANSWER_MS || 120_000);
+const ANSWER_TIMEOUT_MS = Number(process.env.ZYRAXON_HELPER_CONVERSATION_ANSWER_MS || 90_000);
 /** How often to look for the reply while the agent works.
  *
  *  Each poll is a cheap read (~0.5s) and the reply usually lands in one to three
@@ -153,17 +153,13 @@ async function start(): Promise<Conversation | null> {
         // The identity and answer rules are fixed at creation: this backend has
         // no per-turn system message, so the prompt has to be installed once and
         // stand alone. It is the same prompt the brand path uses.
+        //
+        // No `initial_message`: a greeting sent at creation is an agent reply
+        // that lands *after* the baseline is taken, so the first visitor's
+        // question would be answered with that greeting. Leaving it out also
+        // saves a whole model turn on every cold start, which is most of the
+        // time the visitor used to spend waiting.
         system_prompt: helperConversationPrompt(),
-        initial_message: {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Introduce yourself in one sentence, then wait for questions.",
-            },
-          ],
-          run: true,
-        },
         ...(process.env.ZYRAXON_HELPER_CONVERSATION_MODEL
           ? { llm_model: process.env.ZYRAXON_HELPER_CONVERSATION_MODEL.trim() }
           : {}),
@@ -191,6 +187,7 @@ async function start(): Promise<Conversation | null> {
       // Baseline the last message, so the greeting the conversation writes on
       // creation is not mistaken for the answer to the first visitor's question.
       const existing = await messages(id);
+      console.log(`[zyraxon-helper] conversation ready: ${id}`);
       return { id, lastMessageId: existing.at(-1)?.id ?? null };
     }
     if (item?.status === "ERROR" || item?.status === "FAILED") return null;
@@ -237,11 +234,22 @@ async function listOwn(): Promise<Array<{ id: string; at: string }>> {
     .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
 }
 
+/** A conversation id fixed by configuration.
+ *
+ *  `current` lives in the module, and a serverless deployment runs several
+ *  isolates — each with its own memory — so two visitors arriving on different
+ *  isolates both see "no conversation" and each create one. That is a second
+ *  source of the duplicate conversations, and it cannot be fixed from inside one
+ *  isolate. Pinning the id in the environment does fix it: every isolate adopts
+ *  the same conversation instead of racing to create one. Unset by default, so
+ *  the search-based behaviour is unchanged when the pin is not configured. */
+const PINNED_ID = (process.env.ZYRAXON_HELPER_CONVERSATION_ID || "").trim();
+
 /** Take over an existing conversation, or clear the leftovers and start one.
  *
- *  Preferring the newest existing conversation over a fresh one matters twice
- *  over: creating one costs the visitor about 25 seconds, and each one occupies
- *  a slot the account has a fixed number of.
+ *  Preferring an existing conversation over a fresh one matters twice over:
+ *  creating one costs the visitor about 25 seconds, and each one occupies a slot
+ *  the account has a fixed number of.
  *
  *  The system prompt is checked before adopting. A conversation's prompt is
  *  fixed when it is created, so one left over from an older build would answer
@@ -249,6 +257,18 @@ async function listOwn(): Promise<Array<{ id: string; at: string }>> {
  *  be last week's. A mismatch retires it instead. */
 async function adoptOrStart(): Promise<Conversation | null> {
   const wanted = helperConversationPrompt();
+
+  if (PINNED_ID) {
+    const pinned: Conversation = { id: PINNED_ID, lastMessageId: null };
+    if ((await alive(pinned)) && (await promptMatches(PINNED_ID, wanted))) {
+      const existing = await messages(PINNED_ID);
+      return { id: PINNED_ID, lastMessageId: existing.at(-1)?.id ?? null };
+    }
+    // A pinned conversation that is gone falls through to the search rather
+    // than being deleted here: the pin cannot be rewritten from the server, so
+    // the useful move is to find the newest healthy one and use that.
+  }
+
   for (const found of await listOwn()) {
     const candidate: Conversation = { id: found.id, lastMessageId: null };
     if (!(await alive(candidate)) || !(await promptMatches(found.id, wanted))) {
@@ -261,15 +281,26 @@ async function adoptOrStart(): Promise<Conversation | null> {
   return start();
 }
 
-/** Whether a conversation was created with this exact system prompt. */
-async function promptMatches(id: string, wanted: string): Promise<boolean> {
+/** Whether a conversation was created with the current prompt.
+ *
+ *  The stored prompt is never byte-identical to the submitted one: OpenHands
+ *  appends its own blocks (browser rules, tool descriptions) and may rewrap the
+ *  text. An equality check therefore fails on every conversation, and the old
+ *  code's "mismatch means retire it" turned that into delete-and-recreate on
+ *  every restart — a fresh sandbox per message, which is both the slow turn and
+ *  the pile of conversations. The check is a substring test on the version marker
+ *  the prompt carries, which survives the upstream's own additions. */
+async function promptMatches(id: string, _wanted: string): Promise<boolean> {
   const res = await oh(`/conversation/${id}/events/search?limit=100`);
   if (!res.ok) return false;
   const data: any = await res.json().catch(() => null);
   const items: any[] = Array.isArray(data) ? data : (data?.items ?? []);
   const event = items.find((e) => e?.kind === "SystemPromptEvent");
   const text = event?.system_prompt?.text;
-  return typeof text === "string" && text.trim() === wanted.trim();
+  if (typeof text !== "string") return false;
+  // A conversation with no marker predates the marker; it is retired once, and
+  // the replacement carries the marker for every adoption after that.
+  return text.includes(PROMPT_SIGNATURE);
 }
 
 /** The shared conversation, started if needed and replaced if broken.
@@ -415,10 +446,10 @@ async function awaitReply(conv: Conversation): Promise<string | null> {
     }
     // Only the visitor's own message so far: keep waiting.
   }
-  // No answer in time. Treat the conversation as unreliable rather than leaving
-  // the next visitor to inherit the same silence.
-  const stalled = conv.id;
-  current = null;
-  void discard(stalled);
+  // No answer in time. The conversation is left in place rather than discarded:
+  // a turn that ran long is usually a cold sandbox waking up, and the next
+  // message into a warm conversation is fast. Deleting it here would pay the
+  // ~25s setup again and, with the account's small sandbox cap, burn a slot —
+  // which is how a slow turn turned into a pile of conversations.
   return null;
 }
