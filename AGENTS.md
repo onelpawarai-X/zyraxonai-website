@@ -818,3 +818,42 @@ turn goes to the OpenHands conversation directly; the fallback sits between them
 **Rule:** the brand pass is allowed only when `quotaResetStatus().spent` is
 false. There is deliberately no `providerGateOpen` check here — that gate talks
 to API callers, not to visitors on the site.
+
+## The download buttons: one resolver, four families, four repositories
+
+`src/routes/api/public/downloads.ts` is the single place a download is resolved.
+`TARGETS` describes every button, `resolveReleases()` reads GitHub once and caches
+for a minute, and `/api/download/<id>` answers a 302 to the asset's own URL — so a
+click saves the file and never opens a page. Adding a platform means adding one
+`TARGETS` entry; the download page, the homepage and the redirect route all read
+that list.
+
+**A target may name the repositories it searches.** `Target.repos` scopes the
+search; without it a target searches `ALL_REPOS`. The Android APK ships from
+`onelpawarai-X/zyraxon-mobile-ai` on its own version (`v19.0.8` while the desktop
+repo is on `v19.0.7`), so `android` sets `repos` and can never be answered by a
+file from the desktop release. The "latest release" label stays pinned to the
+desktop repo: `computeReleases()` picks `perRepo.find(r => r.repo === REPO)` rather
+than the first entry, or a newer mobile tag would relabel the whole page.
+
+**Both the homepage and the download page advertise Android.** The homepage has an
+Android card in the download row and its own `MobileApp` section at the foot of the
+page; the download page has a `mobile` group above `desktop`. The `smartphone` icon
+in `Icon.tsx` exists for these.
+
+## The conversation's reply loop must filter its reads
+
+`GET /conversation/<id>/events/search` returns every event kind — tool actions,
+observations, state updates. On a real conversation the unfiltered 100-event
+window is about **3 MB**, and the reply loop reads once a second, so an unfiltered
+poll costs a second of transfer on every tick. Add `kind__eq=MessageEvent` and the
+same read is about **5 KB**. `messages()` and `promptMatches()` both filter for
+this reason; dropping the filter is a silent 600× regression in the hot path.
+
+**The conversation's LLM is the other half of the latency.** The account's default
+profile (`zyraxon`) points at the closed ZYRAXON provider, and the model in use
+(`openhands/deepseek-v4.1-flash`) runs with `reasoning_effort: high` and a 200k
+extended-thinking budget — so even "reply PING" takes ~30s of thinking. Measured
+on the live account: ready ~21s, answer ~35s. `ZYRAXON_HELPER_CONVERSATION_MODEL`
+picks a faster model when one is available; the value is passed as `llm_model` at
+creation.

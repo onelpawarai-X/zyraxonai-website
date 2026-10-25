@@ -1,5 +1,6 @@
 const paths: Record<string, string> = {
   monitor: "M3 4.5h18v10.5H3zM8 19.5h8M12 15v4.5",
+  smartphone: "M7.5 2.5h9a2 2 0 012 2v15a2 2 0 01-2 2h-9a2 2 0 01-2-2v-15a2 2 0 012-2zM11 18.5h2",
   code: "M9 7.5L4.5 12 9 16.5M15 7.5L19.5 12 15 16.5",
   bolt: "M13 2.5L4.5 13.5H11l-1 8 8.5-11H12z",
   wrench:

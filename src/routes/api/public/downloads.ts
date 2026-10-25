@@ -25,6 +25,18 @@ import { createFileRoute } from "@tanstack/react-router";
 export const REPO = "onelpawarai-X/ZYRAXON-AI";
 /** Primary account first, mirror/fallback account second. */
 export const REPOS = ["onelpawarai-X/ZYRAXON-AI", "onelpawarai/ZYRAXON-AI"];
+/** The Android app is built and released from its own repository. */
+export const MOBILE_REPO = "onelpawarai-X/zyraxon-mobile-ai";
+
+/**
+ * Every repository a download can come from.
+ *
+ * The desktop repo stays first, and it is what the page's "latest release"
+ * label and its full file list report. The mobile repo is read as well so the
+ * Android button resolves from the newest mobile release, which is versioned
+ * independently — the two do not ship on the same tag.
+ */
+const ALL_REPOS = [...REPOS, MOBILE_REPO];
 
 const HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -51,10 +63,16 @@ export type Target = {
   ext: string;
   /** Human description of who it is for. */
   detail: string;
-  /** "desktop", "cli" or "source" — the three families of download. */
-  family: "desktop" | "cli" | "source";
+  /** "desktop", "mobile", "cli" or "source" — the four families of download. */
+  family: "desktop" | "mobile" | "cli" | "source";
   /** Asset names to accept, most specific first. First match wins. */
   patterns: RegExp[];
+  /**
+   * Repositories to look in, when this target does not come from the desktop
+   * repo. Without it a target searches `REPOS`; with it, only these — so the
+   * Android build cannot be answered with a file from the desktop release.
+   */
+  repos?: string[];
   /**
    * For a target that is not a release asset. GitHub serves a source archive
    * for every tag at a predictable URL, so there is nothing to look up.
@@ -70,6 +88,20 @@ export type Target = {
  * moment a release shipped one and not the other.
  */
 export const TARGETS: Target[] = [
+  // ── Mobile application ────────────────────────────────────────────────
+  {
+    id: "android",
+    label: "Android",
+    ext: ".apk",
+    detail: "Android 8+ · install the APK directly",
+    family: "mobile",
+    // The Android build ships from its own repository, so the search is scoped
+    // to it. A desktop release does not contain an .apk, but scoping means the
+    // Android button can never be answered by the wrong repo's release.
+    repos: ["onelpawarai-X/zyraxon-mobile-ai"],
+    patterns: [/^zyraxon.*\.apk$/i, /\.apk$/i],
+  },
+
   // ── Desktop application ───────────────────────────────────────────────
   {
     id: "windows",
@@ -410,7 +442,7 @@ async function computeReleases(): Promise<Resolved> {
   const perRepo: { repo: string; tag: string; assets: { name: string; size: number | null }[] }[] =
     [];
 
-  for (const repo of REPOS) {
+  for (const repo of ALL_REPOS) {
     // The newest tag, then the handful before it. Stepping back matters because
     // a release is occasionally published without every build — a platform can
     // fail in CI, or a matrix leg can be skipped. Falling back to the previous
@@ -431,9 +463,9 @@ async function computeReleases(): Promise<Resolved> {
       latest: null,
       assets: [],
       platforms: Object.fromEntries(TARGETS.map((t) => [t.id, null])),
-      sources: REPOS.map((repo, i) => ({
+      sources: ALL_REPOS.map((repo, i) => ({
         repo,
-        role: i === 0 ? "primary" : "fallback",
+        role: i === 0 ? "primary" : repo === MOBILE_REPO ? "mobile" : "fallback",
         assets: 0,
         releasesUrl: `https://github.com/${repo}/releases`,
       })),
@@ -442,9 +474,10 @@ async function computeReleases(): Promise<Resolved> {
     };
   }
 
-  // The newest tag wins for the "latest release" label, and is the first place
-  // every button looks.
-  const primary = perRepo[0];
+  // The desktop repo's newest tag wins for the "latest release" label, and is
+  // the first place every desktop and CLI button looks. The mobile repo is
+  // versioned on its own tag, so it must not displace this label.
+  const primary = perRepo.find((r) => r.repo === REPO) ?? perRepo[0];
 
   const platforms: Record<string, ResolvedAsset | null> = {};
   for (const target of TARGETS) {
@@ -465,7 +498,13 @@ async function computeReleases(): Promise<Resolved> {
       continue;
     }
 
-    outer: for (const rel of perRepo) {
+    // A target that names its repositories is searched only there, in the order
+    // given; everything else searches the desktop list.
+    const scope = target.repos
+      ? perRepo.filter((r) => target.repos!.includes(r.repo))
+      : perRepo;
+
+    outer: for (const rel of scope) {
       const usable = rel.assets.filter((a) => !NOISE.test(a.name));
       for (const pattern of target.patterns) {
         const hit = usable.find((a) => pattern.test(a.name));
@@ -492,16 +531,16 @@ async function computeReleases(): Promise<Resolved> {
       publishedAt: null,
       repo: primary.repo,
     },
-    // The newest release's own files, in the order GitHub lists them.
+    // The newest desktop release's own files, in the order GitHub lists them.
     assets: primary.assets.map((a) => ({
       name: a.name,
       size: a.size,
       url: downloadUrl(primary.repo, primary.tag, a.name),
     })),
     platforms,
-    sources: REPOS.map((repo, i) => ({
+    sources: ALL_REPOS.map((repo, i) => ({
       repo,
-      role: i === 0 ? "primary" : "fallback",
+      role: i === 0 ? "primary" : repo === MOBILE_REPO ? "mobile" : "fallback",
       assets: perRepo.filter((r) => r.repo === repo).length,
       releasesUrl: `https://github.com/${repo}/releases`,
     })),

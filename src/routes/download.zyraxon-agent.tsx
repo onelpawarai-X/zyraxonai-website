@@ -18,16 +18,30 @@ type Resolved = {
   error?: string;
 };
 
-/** One family of buttons: the desktop app, the command line, the source. */
+/** One family of buttons: the mobile app, the desktop app, the command line, the source. */
 type Group = {
   key: string;
   label: string;
   blurb: string;
-  icon: "monitor" | "code" | "layers";
+  icon: "monitor" | "smartphone" | "code" | "layers";
   rows: { id: string; os: string; detail: string; ext: string }[];
 };
 
 const GROUPS: Group[] = [
+  {
+    key: "mobile",
+    label: "Mobile application",
+    blurb: "The same agent in your pocket. Android installs the APK directly.",
+    icon: "smartphone",
+    rows: [
+      {
+        id: "android",
+        os: "Android",
+        detail: "Android 8+ · install the APK directly",
+        ext: ".apk",
+      },
+    ],
+  },
   {
     key: "desktop",
     label: "Desktop application",
