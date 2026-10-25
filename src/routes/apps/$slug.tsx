@@ -5,6 +5,7 @@ import { ButtonAnchor, Card, Section, Tag } from "@/components/site/ui";
 import { TIER_HINT, TIER_LABEL, faviconUrl } from "@/lib/apps";
 import { getMcpPage, relatedMcpPages, type McpPage } from "@/lib/mcp-registry.server";
 import { pageSeo, SITE_ORIGIN } from "@/lib/seo";
+import { MCP_CURATED_TEXT, MCP_VERIFIED_TEXT } from "@/lib/mcp-facts.generated";
 
 /** How the server is installed, as a reader would say it. */
 const INSTALL_LABEL: Record<string, string> = {
@@ -237,7 +238,8 @@ function McpPageView() {
           <Card className="p-6">
             <SectionLabel>Panel</SectionLabel>
             <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-              This server is one of {page.curated ? "108 curated" : "8,094 verified"} MCP
+              This server is one of{" "}
+              {page.curated ? `${MCP_CURATED_TEXT} curated` : `${MCP_VERIFIED_TEXT} verified`} MCP
               integrations your agent can connect. Browse the whole catalogue by category or auth
               tier.
             </p>

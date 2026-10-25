@@ -4,6 +4,7 @@ import { PageShell } from "@/components/site/PageShell";
 import { PageHeader } from "@/components/site/SiteChrome";
 import { ButtonAnchor, Card, Divider, Section, StatTile, Tag } from "@/components/site/ui";
 import { Icon } from "@/components/site/Icon";
+import { MCP_TOTAL_TEXT } from "@/lib/mcp-facts.generated";
 
 export const Route = createFileRoute("/zsl")({
   head: () => ({
@@ -97,7 +98,7 @@ const FAQ = [
 const PROJECTS_USING_ZSL = [
   {
     name: "ZYRAXON-AI",
-    desc: "Main AI platform with 888 tools across 63 categories and 108 MCP integrations",
+    desc: `Main AI platform with 888 tools across 63 categories and ${MCP_TOTAL_TEXT} MCP integrations`,
     repo: "onelpawarai-X/ZYRAXON-AI",
     color: "#2563eb",
   },

@@ -199,9 +199,9 @@ const AppsIndexRoute = AppsIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppsSlugRoute = AppsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => AppsRoute,
+  id: '/apps/$slug',
+  path: '/apps/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityIdRoute = CommunityIdRouteImport.update({
   id: '/community/$id',
@@ -1119,6 +1119,7 @@ export interface RootRouteChildren {
   ApiSplatRoute: typeof ApiSplatRoute
   ApiHelpAgentRoute: typeof ApiHelpAgentRoute
   ApiMarketplaceSearchRoute: typeof ApiMarketplaceSearchRoute
+  AppsSlugRoute: typeof AppsSlugRoute
   CommunityIdRoute: typeof CommunityIdRoute
   DocsSlugRoute: typeof DocsSlugRoute
   DownloadZyraxonAgentRoute: typeof DownloadZyraxonAgentRoute
@@ -1324,10 +1325,10 @@ declare module '@tanstack/react-router' {
     }
     '/apps/$slug': {
       id: '/apps/$slug'
-      path: '/$slug'
+      path: '/apps/$slug'
       fullPath: '/apps/$slug'
       preLoaderRoute: typeof AppsSlugRouteImport
-      parentRoute: typeof AppsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/community/$id': {
       id: '/community/$id'
@@ -1888,6 +1889,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSplatRoute: ApiSplatRoute,
   ApiHelpAgentRoute: ApiHelpAgentRoute,
   ApiMarketplaceSearchRoute: ApiMarketplaceSearchRoute,
+  AppsSlugRoute: AppsSlugRoute,
   CommunityIdRoute: CommunityIdRoute,
   DocsSlugRoute: DocsSlugRoute,
   DownloadZyraxonAgentRoute: DownloadZyraxonAgentRoute,

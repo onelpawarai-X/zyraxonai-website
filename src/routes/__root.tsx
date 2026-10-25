@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import HelpAgent from "../components/HelpAgent";
 import { ThemeProvider, themeInitScript } from "../lib/theme";
+import { MCP_TOTAL_TEXT } from "@/lib/mcp-facts.generated";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -18,9 +19,7 @@ function NotFoundComponent() {
   return (
     <div className="grid min-h-screen place-items-center bg-[var(--plane)] px-4">
       <div className="zx-sheet w-full max-w-md px-8 py-10 text-center">
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
-          Error 404
-        </p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">Error 404</p>
         <h1 className="mt-3 text-5xl font-bold tracking-tight text-foreground">Not found</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           The page you're looking for doesn't exist or has been moved.
@@ -86,8 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "ZYRAXON AI — Free Desktop AI Agent for Windows, macOS and Linux" },
       {
         name: "description",
-        content:
-          "ZYRAXON AI is a free, source-available desktop AI agent for Windows, macOS and Linux: 888 tools across 63 categories, 11 agent modes, 108 app integrations, screen vision and eternal memory.",
+        content: `ZYRAXON AI is a free, source-available desktop AI agent for Windows, macOS and Linux: 888 tools across 63 categories, 11 agent modes, ${MCP_TOTAL_TEXT} app integrations, screen vision and eternal memory.`,
       },
       { name: "author", content: "ZYRAXON AI" },
       {
@@ -96,8 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:description",
-        content:
-          "A free, source-available desktop AI agent: 888 tools, 11 agent modes, 108 app integrations, screen vision and eternal memory.",
+        content: `A free, source-available desktop AI agent: 888 tools, 11 agent modes, ${MCP_TOTAL_TEXT} app integrations, screen vision and eternal memory.`,
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://zyraxonai.lovable.app" },
@@ -109,8 +106,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         name: "twitter:description",
-        content:
-          "The World's Most Advanced Desktop AI Agent. 888 tools across 63 categories, 11 agent modes, 108 MCP integrations, Screen Vision, Eternal Memory.",
+        content: `The World's Most Advanced Desktop AI Agent. 888 tools across 63 categories, 11 agent modes, ${MCP_TOTAL_TEXT} MCP integrations, Screen Vision, Eternal Memory.`,
       },
       {
         property: "og:image",

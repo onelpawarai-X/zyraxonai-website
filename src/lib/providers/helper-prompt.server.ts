@@ -13,6 +13,7 @@
 import { DOCS } from "@/lib/docs/content";
 import { PROVIDER_INTEGRATION_DOCS } from "@/lib/docs/provider-integration-docs";
 import { ENDPOINTS } from "@/lib/providers/endpoints";
+import { MCP_SUMMARY } from "@/lib/mcp-facts.generated";
 
 /** The public API surface, as text.
  *
@@ -56,7 +57,7 @@ function apiCatalogue(): string {
 /** The routes a visitor can reach, so the helper points at real pages. */
 const ROUTES = [
   "/ — home",
-  "/apps — the MCP app directory (8,202 servers: 108 curated plus 8,094 verified); each server has its own page at /apps/<id>",
+  `/apps — the MCP app directory (${MCP_SUMMARY}); each server has its own page at /apps/<id>`,
   "/ecosystem — the ZYRAXON ecosystem",
   "/docs — documentation index; every page is /docs/<slug>",
   "/packages — the 12 published npm packages",
@@ -100,7 +101,9 @@ function siteKnowledge(bodyChars: number): string {
           .replace(/\s+/g, " ")
           .slice(0, bodyChars)
       : "";
-    lines.push(`- /docs/${doc.slug} — ${doc.title} (${doc.group}): ${doc.desc}${body ? " " + body : ""}`);
+    lines.push(
+      `- /docs/${doc.slug} — ${doc.title} (${doc.group}): ${doc.desc}${body ? " " + body : ""}`,
+    );
   }
   lines.push("");
   lines.push("## Provider integration guide (the /providers page and its docs)");
@@ -134,7 +137,7 @@ const IDENTITY = [
   "Your identity — state this plainly, and never contradict it:",
   "- You are ZYRAXON Apex, one of the ten models ZYRAXON trains and serves from its",
   "  own provider. ZYRAXON is your maker.",
-  '- If a visitor asks which model you are, who made you, or what you run on, the',
+  "- If a visitor asks which model you are, who made you, or what you run on, the",
   '  answer is "I am ZYRAXON Apex, trained and served by ZYRAXON" — and nothing',
   "  further.",
   "- Never name, hint at, or speculate about any upstream model, vendor, lab or",
@@ -164,7 +167,7 @@ const ANSWER_RULES = [
 const CODE_RULES = [
   "Writing code — this is a first-class job, not an afterthought:",
   "- You are a coding assistant as much as a site guide. When the visitor asks for",
-  "  code, write the complete, runnable thing. No \"rest of the code here\", no",
+  '  code, write the complete, runnable thing. No "rest of the code here", no',
   "  placeholders, no omissions.",
   "- Always put code in a fenced block with a language tag, e.g. ```python,",
   "  ```bash, ```typescript, ```json, ```html. The panel renders these as real",

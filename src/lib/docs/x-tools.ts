@@ -1,3 +1,5 @@
+import { MCP_TOTAL } from "@/lib/mcp-facts.generated";
+
 export type XTool = { name: string; desc: string };
 export type XToolCategory = {
   id: string;
@@ -840,6 +842,6 @@ export const X_TOOL_CATEGORIES: XToolCategory[] = [
 export const X_TOOL_TOTALS = {
   files: 54,
   classes: 224,
-  mcp: 108,
+  mcp: MCP_TOTAL,
   tools: 888,
 };

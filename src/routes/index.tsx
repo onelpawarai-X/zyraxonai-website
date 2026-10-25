@@ -20,6 +20,12 @@ import {
   STACK,
   STATS,
 } from "@/lib/home-content";
+import {
+  MCP_TOTAL_TEXT,
+  MCP_CURATED_TEXT,
+  MCP_VERIFIED_TEXT,
+  MCP_CATEGORY_COUNT,
+} from "@/lib/mcp-facts.generated";
 
 const GITHUB = GITHUB_URL;
 
@@ -35,8 +41,7 @@ export const Route = createFileRoute("/")({
       },
       {
         name: "description",
-        content:
-          "The world's most advanced desktop AI agent. 888 tools across 63 categories, 11 agent modes, 108 live app integrations, screen vision and eternal memory.",
+        content: `The world's most advanced desktop AI agent. 888 tools across 63 categories, 11 agent modes, ${MCP_TOTAL_TEXT} live app integrations, screen vision and eternal memory.`,
       },
       {
         name: "keywords",
@@ -58,7 +63,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:title", content: "ZYRAXON AI — All in One." },
       {
         name: "twitter:description",
-        content: "Desktop AI agent with 888 tools, 11 agent modes and 108 live app integrations.",
+        content: `Desktop AI agent with 888 tools, 11 agent modes and ${MCP_TOTAL_TEXT} live app integrations.`,
       },
     ],
     links: [{ rel: "canonical", href: "https://zyraxonai.lovable.app/" }],
@@ -163,8 +168,8 @@ function Hero() {
           <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             A chatbot talks. ZYRAXON acts. It reads your files, writes your code, runs your
             commands, builds your projects and deploys your apps — with 11 agent modes, 888 tools
-            across 63 categories, 8,202 MCP integrations, 224+ control systems, eternal memory and
-            always-on screen vision.
+            across 63 categories, {MCP_TOTAL_TEXT} MCP integrations, 224+ control systems, eternal
+            memory and always-on screen vision.
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
@@ -498,7 +503,7 @@ function AppsTeaser() {
     <Section
       label="Integrations"
       title="Your whole stack, connected"
-      description="8,202 MCP integrations across 18 categories: 108 curated apps with connect guides, and 8,094 servers each probed with a real handshake before it was listed."
+      description={`${MCP_TOTAL_TEXT} MCP integrations across ${MCP_CATEGORY_COUNT} categories: ${MCP_CURATED_TEXT} curated apps with connect guides, and ${MCP_VERIFIED_TEXT} servers each probed with a real handshake before it was listed.`}
     >
       <Card className="relative overflow-hidden p-8">
         <div className="pointer-events-none absolute inset-0 zx-grid-lines opacity-30" />
