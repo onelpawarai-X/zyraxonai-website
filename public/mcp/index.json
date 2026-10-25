@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-10-25T16:33:18.800Z",
+  "source": "https://raw.githubusercontent.com/onelpawarai-X/ZYRAXON-AI/main/MCP%20Hub/ALL%20MCP.md",
+  "total": 8202,
+  "curated": 108,
+  "verified": 8094,
+  "tiers": {
+    "browser": 3174,
+    "key": 319,
+    "open": 4698,
+    "local": 11
+  },
+  "categories": [
+    {
+      "category": "AI & ML",
+      "file": "ai-and-ml",
+      "count": 2293
+    },
+    {
+      "category": "Web & Search",
+      "file": "web-and-search",
+      "count": 1367
+    },
+    {
+      "category": "Developer Tools",
+      "file": "developer-tools",
+      "count": 731
+    },
+    {
+      "category": "Communication",
+      "file": "communication",
+      "count": 327
+    },
+    {
+      "category": "Productivity & Docs",
+      "file": "productivity-and-docs",
+      "count": 164
+    },
+    {
+      "category": "Data & Analytics",
+      "file": "data-and-analytics",
+      "count": 372
+    },
+    {
+      "category": "Design & Media",
+      "file": "design-and-media",
+      "count": 149
+    },
+    {
+      "category": "Business & CRM",
+      "file": "business-and-crm",
+      "count": 79
+    },
+    {
+      "category": "Finance & Crypto",
+      "file": "finance-and-crypto",
+      "count": 213
+    },
+    {
+      "category": "Cloud & Infrastructure",
+      "file": "cloud-and-infrastructure",
+      "count": 64
+    },
+    {
+      "category": "Maps & Travel",
+      "file": "maps-and-travel",
+      "count": 121
+    },
+    {
+      "category": "Security",
+      "file": "security",
+      "count": 51
+    },
+    {
+      "category": "Knowledge & Memory",
+      "file": "knowledge-and-memory",
+      "count": 44
+    },
+    {
+      "category": "Files & Storage",
+      "file": "files-and-storage",
+      "count": 34
+    },
+    {
+      "category": "IoT & Hardware",
+      "file": "iot-and-hardware",
+      "count": 9
+    },
+    {
+      "category": "General",
+      "file": "general",
+      "count": 2076
+    }
+  ]
+}

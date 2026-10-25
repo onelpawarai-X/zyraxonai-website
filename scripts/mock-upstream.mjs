@@ -25,6 +25,7 @@ export function startMock({ port = 0 } = {}) {
     req.on("end", () => {
       const url = req.url || "";
       requests.push({ url, headers: req.headers, body });
+      if (url.endsWith("/api.json")) return catalog(res);
       if (url.endsWith("/models")) return models(res);
       if (!url.endsWith("/chat/completions")) return json(res, 404, { error: { message: "no route" } });
       gate(req, res, body);
@@ -41,7 +42,40 @@ function json(res, status, obj) {
 }
 
 function models(res) {
+  if (scenario === "console-hang") {
+    // Accepts the connection and then says nothing at all. This is the failure
+    // the catalogue timeout exists for: the caller must give up on the console
+    // and still serve a pool, rather than hold the request open.
+    return;
+  }
   json(res, 200, { object: "list", data: [{ id: "big-pickle" }, { id: "beam-free" }] });
+}
+
+/** A models.dev-shaped catalogue, enough for the metadata read to succeed.
+ *  Only the `opencode` provider matters here, and every model is free because
+ *  that is what the pool filter keeps. */
+function catalog(res) {
+  if (scenario === "catalog-hang") return;
+  json(res, 200, {
+    opencode: {
+      id: "opencode",
+      name: "OpenCode Zen",
+      models: {
+        "big-pickle": {
+          id: "big-pickle",
+          name: "Big Pickle",
+          modalities: { input: ["text"] },
+          cost: { input: 0, output: 0 },
+        },
+        "beam-free": {
+          id: "beam-free",
+          name: "Beam",
+          modalities: { input: ["text"] },
+          cost: { input: 0, output: 0 },
+        },
+      },
+    },
+  });
 }
 
 // The gate: exactly the conditions the real upstream documents.

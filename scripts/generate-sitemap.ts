@@ -18,6 +18,7 @@ import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { DOCS } from "../src/lib/docs/content";
 import { PROVIDER_FUNCTIONS } from "../src/lib/providers/functions";
+import { SEO_CURATED_IDS, SEO_ROWS } from "../src/lib/mcp-seo-index.server";
 
 const ORIGIN = "https://zyraxonai.lovable.app";
 const ROOT = new URL("../", import.meta.url).pathname;
@@ -179,8 +180,31 @@ for (const path of pageRoutesFromDisk()) {
 pages.sort((a, b) => a.path.localeCompare(b.path));
 ENDPOINTS.sort((a, b) => a.path.localeCompare(b.path));
 
+// One page per MCP server. They are generated from the same catalogue the panel
+// reads, so a server added to the product's `MCP Hub/ALL MCP.md` is in the
+// sitemap the next time this runs. They live in their own file because there are
+// thousands of them and a crawler should be able to fetch them without pulling
+// the whole page list again.
+// The curated entries have the same page shape, and their copy is richer, so
+// they are listed too — at a slightly higher weight, because their pages carry a
+// connect guide a searcher is more likely to want.
+const mcpEntries: Entry[] = [
+  ...SEO_CURATED_IDS.map((id) => ({
+    path: `/apps/${id}`,
+    changefreq: "weekly" as const,
+    priority: "0.6",
+  })),
+  ...SEO_ROWS.map((row) => ({
+    path: `/apps/${row[0]}`,
+    changefreq: "monthly" as const,
+    priority: "0.5",
+  })),
+];
+mcpEntries.sort((a, b) => a.path.localeCompare(b.path));
+
 writeFileSync(join(ROOT, "public/sitemap.xml"), render(pages));
 writeFileSync(join(ROOT, "public/sitemap-api.xml"), render(ENDPOINTS));
+writeFileSync(join(ROOT, "public/sitemap-mcp.xml"), render(mcpEntries));
 
 // An index so a crawler finds both.
 writeFileSync(
@@ -189,9 +213,11 @@ writeFileSync(
     `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     `  <sitemap>\n    <loc>${ORIGIN}/sitemap.xml</loc>\n    <lastmod>${TODAY}</lastmod>\n  </sitemap>\n` +
     `  <sitemap>\n    <loc>${ORIGIN}/sitemap-api.xml</loc>\n    <lastmod>${TODAY}</lastmod>\n  </sitemap>\n` +
+    `  <sitemap>\n    <loc>${ORIGIN}/sitemap-mcp.xml</loc>\n    <lastmod>${TODAY}</lastmod>\n  </sitemap>\n` +
     `</sitemapindex>\n`,
 );
 
 console.log(`pages:     ${pages.length}`);
+console.log(`mcp:       ${mcpEntries.length}`);
 console.log(`endpoints: ${ENDPOINTS.length}`);
 console.log(`docs:      ${docsEntries.length}`);

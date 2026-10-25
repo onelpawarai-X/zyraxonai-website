@@ -74,6 +74,17 @@ Capacity is per-process and operator-tunable: `ZYRAXON_MAX_LANES`,
 past its queue deadline or its work deadline is shed with a 503 rather than
 queued forever, so a flood cannot take the process down.
 
+Catalogue reads have their own patience. `TURN_IDLE_MS` (30s) is what a chat turn
+is owed when a model goes quiet mid-answer; `ZEN_CATALOG_MS` (6s) is what a model
+listing is owed. The two must stay separate — a listing has nothing to stream and
+sits on the critical path of every `/v1/models` request, so inheriting the turn
+timeout made a cold catalogue cost 8s (models.dev) + 30s (console) ≈ 40s on the
+live deployment while a warm one took 4ms. `zenFreeModels` also reads models.dev
+and the console listing concurrently for the same reason. `scripts/verify-catalog-latency.ts`
+pins both: it points the transport at a console that accepts the connection and
+never answers, and asserts the read gives up in about `ZEN_CATALOG_MS` rather
+than 30s.
+
 Tests: `npm run test:provider`. Most scripts run under plain `tsx`, but the ones
 that import `system-prompt.txt` need
 `--import ./scripts/raw-import-loader.mjs` (a bare `tsx` run dies with
@@ -457,6 +468,41 @@ and its sitemap entry all appear; do not hand-write one into a page.
 sitemap generator (`scripts/generate-sitemap.ts`) walks both catalogues, so a
 new function is in the sitemap on the next run rather than when someone
 remembers it.
+
+### The MCP Hub: one page per server, generated from the registry
+
+The site publishes the whole MCP registry, not a curated handful. `scripts/build-mcp-catalog.ts`
+parses `MCP Hub/ALL MCP.md` from the assets repository, emits
+`src/lib/mcp-catalog.generated.ts` (the 108 curated servers and their copy),
+sharded registry assets under `public/mcp/*.json` (16 category files plus
+`index.json`, ~3.5 MB total, fetched lazily per category so a phone never
+downloads the lot), and a compact SSR index `src/lib/mcp-seo-index.server.ts`.
+
+Current totals, which the copy and the tests both read: 8,202 servers — 108
+curated plus 8,094 verified — across 18 categories.
+
+`src/lib/mcp-seo.ts` is the one composer for the per-server page text
+(`describeRegistryServer`, the connect/install/verify vocabularies). Both the
+generator and the pages import it, so a page cannot describe a server
+differently from the way the sitemap does. `/apps` groups by category and loads
+one shard at a time; `/apps/$slug` is the per-server page.
+
+Two things that bit, both worth keeping:
+
+- The routes are directory-form (`src/routes/apps/index.tsx` and
+  `src/routes/apps/$slug.tsx`), not sibling files. A parent route's `head()`
+  applies to its children, so `apps.tsx` carrying `canonical: /apps` put a
+  *second* canonical on all 8,202 child pages pointing at the parent — Google
+  would have indexed the index instead of the servers. Directory form makes
+  `/apps` a sibling of `/apps/$slug` rather than its parent, so each page has
+  exactly one canonical. Verify with
+  `curl -s --compressed .../apps/<id> | grep -c 'rel="canonical"'` → 1.
+- The generator's table parser is escape-aware. Server descriptions contain
+  `\|`, and a naive split on `|` both truncated those rows and let separator
+  rows through as servers.
+
+`scripts/verify-seo.ts` asserts the MCP sitemap lists every server page by
+count and that `robots.txt` points at `/sitemap-mcp.xml`.
 
 The pages are written to be read by a search or fetch tool as well as a person,
 so their detail lives in `<details>` rather than behind `useState`. A collapsed

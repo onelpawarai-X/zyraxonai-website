@@ -22,4 +22,5 @@ Disallow: /nebula
 
 Sitemap: https://zyraxonai.lovable.app/sitemap.xml
 Sitemap: https://zyraxonai.lovable.app/sitemap-api.xml
+Sitemap: https://zyraxonai.lovable.app/sitemap-mcp.xml
 Sitemap: https://zyraxonai.lovable.app/api/public/sitemap-dynamic

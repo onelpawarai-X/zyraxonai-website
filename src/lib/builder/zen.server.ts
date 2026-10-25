@@ -76,6 +76,17 @@ export const PROBE_MS = Number(process.env.ZYRAXON_PROBE_MS || 4_000);
  *  still working. Only a turn that produces nothing for this long is abandoned. */
 export const TURN_IDLE_MS = Number(process.env.ZYRAXON_TURN_IDLE_MS || 30_000);
 
+/** How long a *catalogue* read may wait for response headers.
+ *
+ *  Deliberately separate from TURN_IDLE_MS: a chat turn and a model listing are
+ *  different kinds of request with different patience. A listing is small, has
+ *  nothing to stream, and sits on the critical path of every catalogue request,
+ *  so a console that accepts the connection and then goes quiet must be given up
+ *  on quickly — the caller can serve the allow-list pool without it. Six seconds
+ *  is several times the observed 0.3s response and short enough that a dead
+ *  console is not felt by the caller. */
+export const ZEN_CATALOG_MS = Number(process.env.ZYRAXON_CATALOG_MS || 6_000);
+
 /** How long the non-streaming path may wait for *any* activity — a token, a
  *  reasoning delta, a tool call — before it gives up. Deliberately the same
  *  number as `TURN_IDLE_MS`: the two paths fail the same way and should fail at
@@ -513,7 +524,13 @@ function modelFromAllowList(id: string, known: Map<string, ZenModel>): ZenModel 
 export async function zenFreeModels(): Promise<ZenModel[]> {
   if (poolCache && Date.now() - poolCache.at < POOL_TTL) return poolCache.models;
   try {
-    const detail = await getProviderDetail("opencode");
+    // The metadata catalogue and the console listing are two independent reads.
+    // Awaiting them one after the other made a cold catalogue cost the sum of
+    // both: measured on the live deployment at ~8s + ~30s ≈ 40s for the first
+    // caller of `/v1/models`, while a warm one answered in 4ms. Nothing about
+    // the second read depends on the first, so they run together and a cold
+    // read costs the slower of the two instead.
+    const [detail, live] = await Promise.all([getProviderDetail("opencode"), zenLiveIds()]);
     const models: ZenModel[] = (detail?.models || [])
       .filter((m) => m.free)
       .map((m) => {
@@ -544,7 +561,6 @@ export async function zenFreeModels(): Promise<ZenModel[]> {
     // Order: the default model first, then the console's listing. The console is
     // a priority here, never a filter — see `liveFirst`. Capability and speed
     // ordering for a brand happens in `rotationFor`, not here.
-    const live = await zenLiveIds();
     const listedFirst = (a: ZenModel, b: ZenModel) =>
       a.id === DEFAULT_ZEN_MODEL ? -1 : b.id === DEFAULT_ZEN_MODEL ? 1 : 0;
     const finalPool = [...allow].sort(
@@ -568,7 +584,18 @@ let liveCache: { at: number; ids: Set<string> | null } | null = null;
 export async function zenLiveIds(): Promise<Set<string> | null> {
   if (liveCache && Date.now() - liveCache.at < POOL_TTL) return liveCache.ids;
   try {
-    const r = await zenFetch(ZEN_MODELS_URL, { headers: { Accept: "application/json" } });
+    // A catalogue read is not a turn. `zenFetch` defaults its header wait to
+    // TURN_IDLE_MS (30s), which is right for a chat turn — a model that has
+    // gone quiet mid-answer deserves that long — but wrong here: this read sits
+    // on the critical path of *every* catalogue request, and a console that
+    // accepts the connection and then says nothing held each caller for the
+    // full 30s. Measured on the live deployment, that plus the 8s metadata read
+    // made the first `/v1/models` take ~40s while a warm one took 4ms. A
+    // listing endpoint has nothing to stream, so it gets a listing timeout.
+    const r = await zenFetch(ZEN_MODELS_URL, {
+      headers: { Accept: "application/json" },
+      firstByteMs: ZEN_CATALOG_MS,
+    });
     if (!r.ok) throw new Error(`console ${r.status}`);
     const d = (await r.json()) as { data?: Array<{ id?: string }> };
     const ids = new Set((d?.data || []).map((x) => String(x?.id || "")).filter(Boolean));
