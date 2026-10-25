@@ -102,24 +102,34 @@ export const CLI_USAGE: CliCommand[] = [
   { label: "Update to the newest build", code: "zyraxon upgrade" },
 ];
 
-/** The three platforms the homepage advertises, and where each button leads. */
+/** The platforms the homepage advertises, and where each button leads. */
 export const HOME_DOWNLOADS = [
   {
     os: "Windows",
     detail: "Windows 10/11 (x64)",
     ext: ".exe",
     key: "windows",
+    icon: "monitor",
   },
   {
     os: "macOS",
     detail: "macOS 12+ (Apple Silicon)",
     ext: ".dmg",
     key: "mac-arm",
+    icon: "monitor",
   },
   {
     os: "Linux",
     detail: "Ubuntu / Debian / Fedora (x64)",
     ext: ".AppImage",
     key: "linux-appimage",
+    icon: "monitor",
+  },
+  {
+    os: "Android",
+    detail: "Android 8+ (APK)",
+    ext: ".apk",
+    key: "android",
+    icon: "smartphone",
   },
 ];

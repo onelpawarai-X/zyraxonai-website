@@ -121,6 +121,8 @@ function HomePage() {
               <Divider />
               <Community />
               <Divider />
+              <MobileApp />
+              <Divider />
               <StarCounter />
             </div>
           </div>
@@ -538,11 +540,11 @@ function Download() {
           choices with no way to tell which one a visitor wanted. The desktop
           build is the answer for someone on the download page; the command
           line gets its own single line below. */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {HOME_DOWNLOADS.map((d) => (
           <Card key={d.os} hover className="flex flex-col p-6">
             <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
-              <Icon name="monitor" size={20} />
+              <Icon name={d.icon} size={20} />
             </span>
             <h3 className="mt-4 text-[17px] font-semibold tracking-tight text-foreground">
               {d.os}
@@ -722,6 +724,46 @@ function Community() {
             <ButtonLink to="/docs" variant="glass" size="sm">
               Read the docs
             </ButtonLink>
+          </div>
+        </Card>
+      </div>
+    </Section>
+  );
+}
+
+/** The Android build, given its own section at the foot of the page.
+ *
+ *  It ships from a separate repository and on its own version, so it does not
+ *  belong in the desktop row above — and it is the one download a visitor
+ *  cannot get from a package manager. The button points at the resolver route,
+ *  which reads the newest release of the mobile repository on every click, so
+ *  it keeps working when a new APK is published and needs no deploy. */
+function MobileApp() {
+  return (
+    <Section
+      label="Mobile"
+      title="ZYRAXON in your pocket"
+      description="The Android build ships from its own repository and on its own version. This button reads the newest release each time, so it is always the current APK."
+    >
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card hover className="flex flex-col p-6">
+          <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
+            <Icon name="smartphone" size={20} />
+          </span>
+          <h3 className="mt-4 text-[17px] font-semibold tracking-tight text-foreground">Android</h3>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Android 8+ · download and install the APK directly.
+          </p>
+          <div className="mt-auto pt-5">
+            <ButtonAnchor
+              href="/api/download/android"
+              external={false}
+              variant="primary"
+              size="sm"
+              className="w-full"
+            >
+              Download APK
+            </ButtonAnchor>
           </div>
         </Card>
       </div>

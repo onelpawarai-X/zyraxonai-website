@@ -105,12 +105,17 @@ async function oh(path: string, init: RequestInit = {}): Promise<Response> {
  *  verbatim. */
 async function messages(
   id: string,
-): Promise<Array<{ id: string; source: string; text: string }>> {
-  const res = await oh(`/conversation/${id}/events/search?limit=100`);
+): Promise<Array<{ id: string; source: string; text: string; at: string }>> {
+  // `kind__eq` is not cosmetic. The unfiltered feed carries every tool action,
+  // observation and state update — on a real conversation that is 3 MB per read,
+  // and the reply loop reads about once a second. Filtering server-side drops the
+  // same read to about 5 KB, which is the difference between a poll that costs
+  // milliseconds and one that costs a second of transfer on every tick.
+  const res = await oh(`/conversation/${id}/events/search?limit=100&kind__eq=MessageEvent`);
   if (!res.ok) return [];
   const data: any = await res.json().catch(() => null);
   const items: any[] = Array.isArray(data) ? data : data?.items || [];
-  const out: Array<{ id: string; source: string; text: string }> = [];
+  const out: Array<{ id: string; source: string; text: string; at: string }> = [];
   for (const e of items) {
     if (e?.kind !== "MessageEvent") continue;
     const content = e?.llm_message?.content;
@@ -123,7 +128,12 @@ async function messages(
         ? content.trim()
         : "";
     if (!text) continue;
-    out.push({ id: String(e?.id || ""), source: String(e?.source || ""), text });
+    out.push({
+      id: String(e?.id || ""),
+      source: String(e?.source || ""),
+      text,
+      at: String(e?.timestamp || ""),
+    });
   }
   return out;
 }
@@ -291,7 +301,7 @@ async function adoptOrStart(): Promise<Conversation | null> {
  *  the pile of conversations. The check is a substring test on the version marker
  *  the prompt carries, which survives the upstream's own additions. */
 async function promptMatches(id: string, _wanted: string): Promise<boolean> {
-  const res = await oh(`/conversation/${id}/events/search?limit=100`);
+  const res = await oh(`/conversation/${id}/events/search?limit=1&kind__eq=SystemPromptEvent`);
   if (!res.ok) return false;
   const data: any = await res.json().catch(() => null);
   const items: any[] = Array.isArray(data) ? data : (data?.items ?? []);
@@ -427,9 +437,9 @@ export async function askConversation(message: string): Promise<string | null> {
 /** Wait for an agent message that appears after the conversation's last known one.
  *
  *  Position is found by id, not by count, so a conversation long enough to push
- *  older messages out of the 100-event window still resolves correctly: the
- *  baseline either appears in the window (and everything after it is new) or it
- *  does not (and the newest agent message is the reply). */
+ *  older messages out of the window still resolves correctly: the baseline either
+ *  appears in the window (and everything after it is new) or it does not (and the
+ *  newest agent message is the reply). */
 async function awaitReply(conv: Conversation): Promise<string | null> {
   const deadline = Date.now() + ANSWER_TIMEOUT_MS;
   while (Date.now() < deadline) {
