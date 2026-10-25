@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
 import { PageHeader, SectionLabel } from "@/components/site/SiteChrome";
 import { ButtonLink, Card, Tag } from "@/components/site/ui";
+import { ReleaseClips } from "@/components/site/ReleaseClips";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -38,7 +39,7 @@ type Clip = {
   title: string;
   subtitle: string;
   src: string;
-  poster: string;
+  poster?: string;
 };
 
 const CLIPS: Clip[] = [
@@ -111,6 +112,10 @@ function DemoPage() {
           />
         ))}
       </div>
+
+      {/* Read from the studio repository's releases, so a walkthrough published
+          as a release asset shows up here on its own. */}
+      <ReleaseClips />
 
       <section className="mt-12">
         <SectionLabel>Screenshots</SectionLabel>

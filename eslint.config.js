@@ -6,7 +6,20 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi", "bolt-builder/**", "public/**", "scripts/**"] },
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      "bolt-builder/**",
+      "public/**",
+      "scripts/**",
+      // Generated data tables. Reformatting a 500 KB literal buys nothing and
+      // would be undone by the next run of the generator that writes it.
+      "src/lib/*.generated.ts",
+      "src/lib/mcp-seo-index.server.ts",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

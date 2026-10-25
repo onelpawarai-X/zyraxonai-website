@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppsRouteImport } from './routes/apps'
 import { Route as BludarRouteImport } from './routes/bludar'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as CommunityArtRouteImport } from './routes/community-art'
@@ -29,6 +28,8 @@ import { Route as ZslRouteImport } from './routes/zsl'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiHelpAgentRouteImport } from './routes/api/help-agent'
 import { Route as ApiMarketplaceSearchRouteImport } from './routes/api/marketplace-search'
+import { Route as AppsIndexRouteImport } from './routes/apps/index'
+import { Route as AppsSlugRouteImport } from './routes/apps/$slug'
 import { Route as CommunityIdRouteImport } from './routes/community/$id'
 import { Route as DocsIndexRouteImport } from './routes/docs.index'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
@@ -44,6 +45,8 @@ import { Route as ApiGithubReposRouteImport } from './routes/api/github/repos'
 import { Route as ApiPublicCommunityRouteImport } from './routes/api/public/community'
 import { Route as ApiPublicCommunityActRouteImport } from './routes/api/public/community-act'
 import { Route as ApiPublicCommunityStoreRouteImport } from './routes/api/public/community-store'
+import { Route as ApiPublicDemoVideoRouteImport } from './routes/api/public/demo-video'
+import { Route as ApiPublicDemoVideosRouteImport } from './routes/api/public/demo-videos'
 import { Route as ApiPublicDesktopFeedbackRouteImport } from './routes/api/public/desktop-feedback'
 import { Route as ApiPublicDownloadsRouteImport } from './routes/api/public/downloads'
 import { Route as ApiPublicGithubDeviceRouteImport } from './routes/api/public/github-device'
@@ -98,11 +101,6 @@ import { Route as ApiPublicZyraxonV1ChatCompletionsRouteImport } from './routes/
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppsRoute = AppsRouteImport.update({
-  id: '/apps',
-  path: '/apps',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BludarRoute = BludarRouteImport.update({
@@ -195,6 +193,16 @@ const ApiMarketplaceSearchRoute = ApiMarketplaceSearchRouteImport.update({
   path: '/api/marketplace-search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppsIndexRoute = AppsIndexRouteImport.update({
+  id: '/apps/',
+  path: '/apps/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppsSlugRoute = AppsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AppsRoute,
+} as any)
 const CommunityIdRoute = CommunityIdRouteImport.update({
   id: '/community/$id',
   path: '/community/$id',
@@ -268,6 +276,16 @@ const ApiPublicCommunityActRoute = ApiPublicCommunityActRouteImport.update({
 const ApiPublicCommunityStoreRoute = ApiPublicCommunityStoreRouteImport.update({
   id: '/api/public/community-store',
   path: '/api/public/community-store',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDemoVideoRoute = ApiPublicDemoVideoRouteImport.update({
+  id: '/api/public/demo-video',
+  path: '/api/public/demo-video',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDemoVideosRoute = ApiPublicDemoVideosRouteImport.update({
+  id: '/api/public/demo-videos',
+  path: '/api/public/demo-videos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicDesktopFeedbackRoute =
@@ -539,7 +557,6 @@ const ApiPublicZyraxonV1ChatCompletionsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/apps': typeof AppsRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
@@ -558,12 +575,14 @@ export interface FileRoutesByFullPath {
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/apps/$slug': typeof AppsSlugRoute
   '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/share/$id': typeof ShareIdRoute
   '/updates/$slug': typeof UpdatesSlugRoute
+  '/apps/': typeof AppsIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
   '/extensions/': typeof ExtensionsIndexRoute
@@ -573,6 +592,8 @@ export interface FileRoutesByFullPath {
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
+  '/api/public/demo-video': typeof ApiPublicDemoVideoRoute
+  '/api/public/demo-videos': typeof ApiPublicDemoVideosRoute
   '/api/public/desktop-feedback': typeof ApiPublicDesktopFeedbackRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
@@ -626,7 +647,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/apps': typeof AppsRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
@@ -645,12 +665,14 @@ export interface FileRoutesByTo {
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/apps/$slug': typeof AppsSlugRoute
   '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/share/$id': typeof ShareIdRoute
   '/updates/$slug': typeof UpdatesSlugRoute
+  '/apps': typeof AppsIndexRoute
   '/docs': typeof DocsIndexRoute
   '/ecosystem': typeof EcosystemIndexRoute
   '/extensions': typeof ExtensionsIndexRoute
@@ -660,6 +682,8 @@ export interface FileRoutesByTo {
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
+  '/api/public/demo-video': typeof ApiPublicDemoVideoRoute
+  '/api/public/demo-videos': typeof ApiPublicDemoVideosRoute
   '/api/public/desktop-feedback': typeof ApiPublicDesktopFeedbackRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
@@ -714,7 +738,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/apps': typeof AppsRoute
   '/bludar': typeof BludarRoute
   '/builder': typeof BuilderRoute
   '/community-art': typeof CommunityArtRoute
@@ -733,12 +756,14 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/api/help-agent': typeof ApiHelpAgentRoute
   '/api/marketplace-search': typeof ApiMarketplaceSearchRoute
+  '/apps/$slug': typeof AppsSlugRoute
   '/community/$id': typeof CommunityIdRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/download/zyraxon-agent': typeof DownloadZyraxonAgentRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/share/$id': typeof ShareIdRoute
   '/updates/$slug': typeof UpdatesSlugRoute
+  '/apps/': typeof AppsIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/ecosystem/': typeof EcosystemIndexRoute
   '/extensions/': typeof ExtensionsIndexRoute
@@ -748,6 +773,8 @@ export interface FileRoutesById {
   '/api/public/community': typeof ApiPublicCommunityRoute
   '/api/public/community-act': typeof ApiPublicCommunityActRoute
   '/api/public/community-store': typeof ApiPublicCommunityStoreRoute
+  '/api/public/demo-video': typeof ApiPublicDemoVideoRoute
+  '/api/public/demo-videos': typeof ApiPublicDemoVideosRoute
   '/api/public/desktop-feedback': typeof ApiPublicDesktopFeedbackRoute
   '/api/public/downloads': typeof ApiPublicDownloadsRoute
   '/api/public/github-device': typeof ApiPublicGithubDeviceRoute
@@ -803,7 +830,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/apps'
     | '/bludar'
     | '/builder'
     | '/community-art'
@@ -822,12 +848,14 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/api/help-agent'
     | '/api/marketplace-search'
+    | '/apps/$slug'
     | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
     | '/providers/$slug'
     | '/share/$id'
     | '/updates/$slug'
+    | '/apps/'
     | '/docs/'
     | '/ecosystem/'
     | '/extensions/'
@@ -837,6 +865,8 @@ export interface FileRouteTypes {
     | '/api/public/community'
     | '/api/public/community-act'
     | '/api/public/community-store'
+    | '/api/public/demo-video'
+    | '/api/public/demo-videos'
     | '/api/public/desktop-feedback'
     | '/api/public/downloads'
     | '/api/public/github-device'
@@ -890,7 +920,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/apps'
     | '/bludar'
     | '/builder'
     | '/community-art'
@@ -909,12 +938,14 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/api/help-agent'
     | '/api/marketplace-search'
+    | '/apps/$slug'
     | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
     | '/providers/$slug'
     | '/share/$id'
     | '/updates/$slug'
+    | '/apps'
     | '/docs'
     | '/ecosystem'
     | '/extensions'
@@ -924,6 +955,8 @@ export interface FileRouteTypes {
     | '/api/public/community'
     | '/api/public/community-act'
     | '/api/public/community-store'
+    | '/api/public/demo-video'
+    | '/api/public/demo-videos'
     | '/api/public/desktop-feedback'
     | '/api/public/downloads'
     | '/api/public/github-device'
@@ -977,7 +1010,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/apps'
     | '/bludar'
     | '/builder'
     | '/community-art'
@@ -996,12 +1028,14 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/api/help-agent'
     | '/api/marketplace-search'
+    | '/apps/$slug'
     | '/community/$id'
     | '/docs/$slug'
     | '/download/zyraxon-agent'
     | '/providers/$slug'
     | '/share/$id'
     | '/updates/$slug'
+    | '/apps/'
     | '/docs/'
     | '/ecosystem/'
     | '/extensions/'
@@ -1011,6 +1045,8 @@ export interface FileRouteTypes {
     | '/api/public/community'
     | '/api/public/community-act'
     | '/api/public/community-store'
+    | '/api/public/demo-video'
+    | '/api/public/demo-videos'
     | '/api/public/desktop-feedback'
     | '/api/public/downloads'
     | '/api/public/github-device'
@@ -1065,7 +1101,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppsRoute: typeof AppsRoute
   BludarRoute: typeof BludarRoute
   BuilderRoute: typeof BuilderRoute
   CommunityArtRoute: typeof CommunityArtRoute
@@ -1089,6 +1124,7 @@ export interface RootRouteChildren {
   DownloadZyraxonAgentRoute: typeof DownloadZyraxonAgentRoute
   ShareIdRoute: typeof ShareIdRoute
   UpdatesSlugRoute: typeof UpdatesSlugRoute
+  AppsIndexRoute: typeof AppsIndexRoute
   DocsIndexRoute: typeof DocsIndexRoute
   EcosystemIndexRoute: typeof EcosystemIndexRoute
   ExtensionsIndexRoute: typeof ExtensionsIndexRoute
@@ -1098,6 +1134,8 @@ export interface RootRouteChildren {
   ApiPublicCommunityRoute: typeof ApiPublicCommunityRoute
   ApiPublicCommunityActRoute: typeof ApiPublicCommunityActRoute
   ApiPublicCommunityStoreRoute: typeof ApiPublicCommunityStoreRoute
+  ApiPublicDemoVideoRoute: typeof ApiPublicDemoVideoRoute
+  ApiPublicDemoVideosRoute: typeof ApiPublicDemoVideosRoute
   ApiPublicDesktopFeedbackRoute: typeof ApiPublicDesktopFeedbackRoute
   ApiPublicDownloadsRoute: typeof ApiPublicDownloadsRoute
   ApiPublicGithubDeviceRoute: typeof ApiPublicGithubDeviceRoute
@@ -1149,13 +1187,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/apps': {
-      id: '/apps'
-      path: '/apps'
-      fullPath: '/apps'
-      preLoaderRoute: typeof AppsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bludar': {
@@ -1284,6 +1315,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMarketplaceSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/apps/': {
+      id: '/apps/'
+      path: '/apps'
+      fullPath: '/apps/'
+      preLoaderRoute: typeof AppsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apps/$slug': {
+      id: '/apps/$slug'
+      path: '/$slug'
+      fullPath: '/apps/$slug'
+      preLoaderRoute: typeof AppsSlugRouteImport
+      parentRoute: typeof AppsRoute
+    }
     '/community/$id': {
       id: '/community/$id'
       path: '/community/$id'
@@ -1387,6 +1432,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/community-store'
       fullPath: '/api/public/community-store'
       preLoaderRoute: typeof ApiPublicCommunityStoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/demo-video': {
+      id: '/api/public/demo-video'
+      path: '/api/public/demo-video'
+      fullPath: '/api/public/demo-video'
+      preLoaderRoute: typeof ApiPublicDemoVideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/demo-videos': {
+      id: '/api/public/demo-videos'
+      path: '/api/public/demo-videos'
+      fullPath: '/api/public/demo-videos'
+      preLoaderRoute: typeof ApiPublicDemoVideosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/desktop-feedback': {
@@ -1811,7 +1870,6 @@ const ApiPublicAuthGithubRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppsRoute: AppsRoute,
   BludarRoute: BludarRoute,
   BuilderRoute: BuilderRoute,
   CommunityArtRoute: CommunityArtRoute,
@@ -1835,6 +1893,7 @@ const rootRouteChildren: RootRouteChildren = {
   DownloadZyraxonAgentRoute: DownloadZyraxonAgentRoute,
   ShareIdRoute: ShareIdRoute,
   UpdatesSlugRoute: UpdatesSlugRoute,
+  AppsIndexRoute: AppsIndexRoute,
   DocsIndexRoute: DocsIndexRoute,
   EcosystemIndexRoute: EcosystemIndexRoute,
   ExtensionsIndexRoute: ExtensionsIndexRoute,
@@ -1844,6 +1903,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCommunityRoute: ApiPublicCommunityRoute,
   ApiPublicCommunityActRoute: ApiPublicCommunityActRoute,
   ApiPublicCommunityStoreRoute: ApiPublicCommunityStoreRoute,
+  ApiPublicDemoVideoRoute: ApiPublicDemoVideoRoute,
+  ApiPublicDemoVideosRoute: ApiPublicDemoVideosRoute,
   ApiPublicDesktopFeedbackRoute: ApiPublicDesktopFeedbackRoute,
   ApiPublicDownloadsRoute: ApiPublicDownloadsRoute,
   ApiPublicGithubDeviceRoute: ApiPublicGithubDeviceRoute,

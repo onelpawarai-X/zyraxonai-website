@@ -56,7 +56,7 @@ function apiCatalogue(): string {
 /** The routes a visitor can reach, so the helper points at real pages. */
 const ROUTES = [
   "/ — home",
-  "/apps — the MCP app directory (108 verified integrations)",
+  "/apps — the MCP app directory (8,202 servers: 108 curated plus 8,094 verified); each server has its own page at /apps/<id>",
   "/ecosystem — the ZYRAXON ecosystem",
   "/docs — documentation index; every page is /docs/<slug>",
   "/packages — the 12 published npm packages",

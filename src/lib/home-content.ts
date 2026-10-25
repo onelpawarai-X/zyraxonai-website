@@ -43,8 +43,8 @@ export const FEATURES = [
     icon: "cpu",
   },
   {
-    title: "108 MCP Integrations",
-    body: "GitHub, Figma, Notion, Slack, Stripe, Linear, Google Workspace and 100 more — each probed with a real handshake before it is listed. Press Connect and the tools are live.",
+    title: "8,202 MCP Integrations",
+    body: "GitHub, Figma, Notion, Slack, Stripe, Linear, Google Workspace and 8,195 more — each probed with a real handshake before it is listed. Press Connect and the tools are live.",
     icon: "plug",
   },
   {

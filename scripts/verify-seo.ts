@@ -136,9 +136,25 @@ for (const endpoint of [
   check(`the API sitemap lists ${endpoint}`, apiSitemap.includes(endpoint));
 }
 
+// Every MCP server has a page, and every one of those pages has to be in the
+// sitemap. The file is large, so this checks the boundary entries and the count
+// rather than reading all 8,202 into a string comparison.
+const mcpSitemap = readFileSync(join(ROOT, "public/sitemap-mcp.xml"), "utf8");
+{
+  const { SEO_CURATED_IDS, SEO_ROWS } = await import("../src/lib/mcp-seo-index.server");
+  const expected = SEO_CURATED_IDS.length + SEO_ROWS.length;
+  check(
+    `the MCP sitemap lists all ${expected} server pages`,
+    (mcpSitemap.match(/<loc>/g) ?? []).length === expected,
+  );
+  check("the MCP sitemap lists a curated page", mcpSitemap.includes(`/apps/${SEO_CURATED_IDS[0]}`));
+  check("the MCP sitemap lists a verified page", mcpSitemap.includes(`/apps/${SEO_ROWS[0][0]}`));
+}
+
 const robots = readFileSync(join(ROOT, "public/robots.txt"), "utf8");
 check("robots.txt points at the page sitemap", robots.includes("/sitemap.xml"));
 check("robots.txt points at the API sitemap", robots.includes("/sitemap-api.xml"));
+check("robots.txt points at the MCP sitemap", robots.includes("/sitemap-mcp.xml"));
 check("robots.txt points at the dynamic sitemap", robots.includes("sitemap-dynamic"));
 check("robots.txt allows crawling the pages", /Allow:\s*\//.test(robots));
 

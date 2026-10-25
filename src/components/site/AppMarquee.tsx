@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { FEATURED_APPS, faviconUrl, loadApps, type McpApp } from "@/lib/apps";
+import { FEATURED_APPS, appSlug, faviconUrl, loadCuratedApps, type McpApp } from "@/lib/apps";
 
 function AppPill({ app }: { app: McpApp }) {
   return (
     <a
-      href="/apps"
+      href={`/apps/${appSlug(app)}`}
       className="zx-chip mx-1.5 flex shrink-0 items-center gap-2.5 rounded-full py-2 pl-2 pr-4"
     >
       <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full bg-foreground/6">
@@ -42,7 +42,10 @@ export function AppMarquee() {
 
   useEffect(() => {
     let alive = true;
-    loadApps()
+    // The curated list is the small one (108 rows), and every featured name is
+    // in it, so the marquee never pulls the multi-megabyte registry. Each pill
+    // links to that app's own page, which is also how the crawler finds them.
+    loadCuratedApps()
       .then((all) => {
         if (!alive) return;
         const byName = new Map(all.map((a) => [a.n, a]));

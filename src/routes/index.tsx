@@ -163,7 +163,7 @@ function Hero() {
           <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             A chatbot talks. ZYRAXON acts. It reads your files, writes your code, runs your
             commands, builds your projects and deploys your apps — with 11 agent modes, 888 tools
-            across 63 categories, 108 MCP integrations, 224+ control systems, eternal memory and
+            across 63 categories, 8,202 MCP integrations, 224+ control systems, eternal memory and
             always-on screen vision.
           </p>
 
@@ -498,7 +498,7 @@ function AppsTeaser() {
     <Section
       label="Integrations"
       title="Your whole stack, connected"
-      description="108 live MCP integrations across 27 categories. Each endpoint was verified against its live server before it was listed."
+      description="8,202 MCP integrations across 18 categories: 108 curated apps with connect guides, and 8,094 servers each probed with a real handshake before it was listed."
     >
       <Card className="relative overflow-hidden p-8">
         <div className="pointer-events-none absolute inset-0 zx-grid-lines opacity-30" />
