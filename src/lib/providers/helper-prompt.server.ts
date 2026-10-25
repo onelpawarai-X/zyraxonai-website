@@ -149,6 +149,11 @@ const ANSWER_RULES = [
   "How to answer:",
   "- Write in the language the visitor used. Bengali question, Bengali answer.",
   "- Be concise and concrete. Point at the exact page or command.",
+  "- Answer from this prompt first. Everything below — the routes, the endpoint",
+  "  list, the licence, the tiers, the download page — is already here, so a",
+  "  question about ZYRAXON or this site never needs a lookup. Only reach for a",
+  "  tool when the answer is genuinely absent, because a lookup adds half a minute",
+  "  to the visitor's wait for something already written down.",
   "- When you look something up, do not narrate the mechanics; just answer from what",
   "  you found.",
   "- Never invent a download link, a version number or a feature. If the site pages",
@@ -183,6 +188,39 @@ const LINK_RULES = [
   "  clickable, but an explicit [label](url) is clearer.",
   "- Prefer a link to the exact page over a description of where to look.",
 ].join("\n");
+
+/** The only origin the helper may put in a link or a code sample.
+ *
+ *  The OpenHands agent has its own ideas about where "the app" lives, and left to
+ *  itself it writes links to the backend host it happens to run on. Those URLs are
+ *  wrong for a visitor: they point at the assistant's own infrastructure, not at
+ *  the site, and a visitor following one leaves ZYRAXON. The rule is stated as a
+ *  fact about the world rather than a preference, because that is what it is —
+ *  the site has exactly one public origin. */
+export const SITE_ORIGIN = "https://zyraxonai.lovable.app";
+
+const URL_RULES = [
+  "The site's origin, and the only one you may use:",
+  `- Every URL you give a visitor starts with ${SITE_ORIGIN} — no exceptions.`,
+  "- Never link to, name, or paste any other host: not the platform that runs this",
+  "  chat, not a backend or API host, not a preview domain. If you find a fact on",
+  "  another host, restate the fact and cite the ZYRAXON page that carries it.",
+  `- Documentation: ${SITE_ORIGIN}/docs and ${SITE_ORIGIN}/docs/<slug>.`,
+  `- The provider's API base URL: ${SITE_ORIGIN}/api/public/zyraxon/v1.`,
+  `- Downloads: ${SITE_ORIGIN}/download/zyraxon-agent.`,
+  "- If a page you are asked about does not exist on this origin, say so instead of",
+  "  inventing a URL.",
+].join("\n");
+
+/** A short marker identifying the prompt's current shape.
+ *
+ *  OpenHands keeps a conversation's system prompt fixed at creation, and adds its
+ *  own text (browser rules, tool descriptions) around whatever is submitted. That
+ *  makes an exact comparison of the stored prompt impossible, so the version is
+ *  carried inside the prompt itself and looked for as a substring: it is stable,
+ *  it is what the adoption check matches on, and bumping it is how a prompt change
+ *  retires the old conversation. */
+export const PROMPT_SIGNATURE = "zyraxon-helper-2026-10-25.2";
 
 /** How long a prompt may be.
  *
@@ -234,6 +272,8 @@ export function helperWirePrompt(): string {
       "  site's own pages do not answer the question. Do not guess at news or versions.",
       "- fetch_page: read a URL's text, including pages on this site.",
       "",
+      URL_RULES,
+      "",
       CODE_RULES,
       "",
       LINK_RULES,
@@ -264,6 +304,7 @@ export function helperConversationPrompt(): string {
   return capPrompt(
     [
       "You are the ZYRAXON AI helper, the assistant built into the ZYRAXON website.",
+      `Prompt version: ${PROMPT_SIGNATURE}.`,
       "You answer questions about ZYRAXON and this site, and you can look things up.",
       "Several visitors share this one conversation, one message after another, so",
       "answer the message you were just given rather than continuing an earlier thread.",
@@ -282,6 +323,8 @@ export function helperConversationPrompt(): string {
       "- Do not describe your process, do not announce that you are about to look",
       "  something up, and do not mention commands, tools, terminals or files.",
       "- Do not greet the visitor at the start of every message, and do not sign off.",
+      "",
+      URL_RULES,
       "",
       CODE_RULES,
       "",

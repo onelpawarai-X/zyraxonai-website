@@ -735,14 +735,51 @@ Both are fixed, and the fixes are the rules to preserve:
 
 - **Adopt before starting.** `adoptOrStart()` lists conversations titled
   `ZYRAXON site helper`, keeps the newest one whose sandbox is alive *and* whose
-  `SystemPromptEvent` matches the current prompt, and deletes the rest. This is
-  why `TITLE` and the prompt-matching check exist: a conversation's system prompt
-  is fixed at creation, so one left over from an older build would answer from a
-  stale catalogue. A prompt change retires old conversations on purpose.
+  `SystemPromptEvent` carries the current `PROMPT_SIGNATURE`, and deletes the
+  rest. This is why `TITLE` and the signature check exist: a conversation's system
+  prompt is fixed at creation, so one left over from an older build would answer
+  from a stale catalogue. A prompt change retires old conversations on purpose.
+- **Match the signature, never the whole prompt.** OpenHands appends its own
+  blocks (`<BROWSER_TOOLS>`, tool descriptions) to the stored prompt, so an
+  equality check fails on *every* conversation. That is exactly what happened: the
+  old `promptMatches` compared byte-for-byte, never matched, and the code retired
+  and recreated the conversation on every turn — one new sandbox per visitor
+  message, the pile of conversations and the multi-minute waits. `PROMPT_SIGNATURE`
+  is carried inside the prompt and matched as a substring, which survives the
+  upstream's additions. Bump it when the prompt changes.
+- **Pin the id when the deployment runs more than one isolate.** `current` is
+  module memory; serverless isolates do not share it, so two visitors can each
+  see "no conversation" and each create one. Setting
+  `ZYRAXON_HELPER_CONVERSATION_ID` makes every isolate adopt the same
+  conversation. The id is logged as `[zyraxon-helper] conversation ready: <id>`
+  when one is created, which is where to read it from.
 - **Never retry a refused start on every turn.** A failed start is remembered for
   `ZYRAXON_HELPER_CONVERSATION_COOLDOWN_MS` (default 5 minutes), and
   `conversationUnavailable()` makes the turn fail immediately and honestly
   instead of after another doomed attempt.
+- **Do not delete a conversation because one turn timed out.** A slow turn is
+  usually a cold sandbox waking up; the next message into a warm conversation is
+  fast. Discarding it pays the ~25s setup again and burns one of the 20 daily
+  sandbox slots.
+- **No `initial_message` at creation.** A greeting sent at creation is an agent
+  reply that lands after the baseline is taken, so the first visitor's question
+  gets answered with the greeting. Leaving it out also saves a whole model turn on
+  every cold start.
+
+### URLs in answers must be the site's own
+
+The agent behind the conversation will happily cite the host it runs on. Those
+URLs are wrong for a visitor and were showing up in answers. `URL_RULES` in
+`helper-prompt.server.ts` names `SITE_ORIGIN` (`https://zyraxonai.lovable.app`) as
+the only origin allowed in a link or a code sample, in both prompts. If a new
+prompt is added, include `URL_RULES` — a missing rule is how the wrong host comes
+back.
+
+**Answer from the prompt first.** The prompt already carries every route, the
+licence, the tiers, the download page and the endpoint catalogue. `ANSWER_RULES`
+tells the assistant to answer from it and reach for a tool only when the answer is
+genuinely absent: a lookup costs the visitor ~30s for something already written
+down.
 
 **Diagnosing it again:** `GET /api/v1/app-conversations/start-tasks?ids=<task>` is
 where the truth is. A refused creation is not an HTTP error — it returns 200 and
