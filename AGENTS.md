@@ -760,26 +760,24 @@ keep it warm does not help either — an 8s poll made it *worse* (41s). Treat th
 panel, not by polling: `GET /api/public/zyraxon/helper` calls `warmConversation()`
 and `HelpAgent.tsx` reads that route when the panel opens.
 
-### The helper is behind the same gate as the API
+### The helper's brand pass is quota-gated, not gate-gated
 
-`providerGateOpen` in `star-gate.ts` is the single switch for the brand line, and
-it is `false` until the repository reaches 100,000 stars. **The helper must
-honour it.** The helper is not a private back door: it is the most-called surface
-on the site, so a brand pass here reaches the shared free pool far more often
-than any public API caller does.
+`providerGateOpen` in `star-gate.ts` is the single switch for the *public* API
+line: until the repository reaches 100,000 stars, `v1/chat/completions.ts`
+returns `gateReply()` before anything else, and it never reads the brand line.
 
-This was missed once, and the cost was the whole line. `v1/chat/completions.ts`
-correctly returns `gateReply()` before anything else, but the helper's POST
-handler ran `raceBrands()` with no gate check at all. Every visitor question
-spent seven brand attempts against a pool the provider was deliberately waiting
-on, which is what left the pool refusing every request. When the gate is shut the
-helper now goes **straight to the fallback and the conversation**, and it also
-skips the `brandCatalogue()` read in GET, which is a request to the same line.
+The helper's POST handler is different by design. It runs `raceBrands()` first —
+the brand line is the product, and the decision to walk visitors past the
+countdown is the owner's call, not the code's. The protection against burning the
+shared free pool is the pool itself: the pass is skipped outright once
+`quotaResetStatus().spent` is known, so a spent line is not touched at all, and
+when the line still has room the pass is a fast win or a thin sting while the
+conversation warms. The conversation then catches every visitor the brand pass
+cannot answer.
 
-**Rule:** any new path that can reach `brandChatStream` or `brandCatalogue` must
-check `providerGateOpen` first. One flag opens the whole product; nothing should
-reach around it.
+When the pool is spent (or on a spent pool the pass never ran), the visitor's
+turn goes to the OpenHands conversation directly; the fallback sits between them.
 
-The fallback and the conversation are *not* the brand line and are not gated —
-they are the backends that let the assistant keep answering while the provider is
-off, which is the entire reason they exist.
+**Rule:** the brand pass is allowed only when `quotaResetStatus().spent` is
+false. There is deliberately no `providerGateOpen` check here — that gate talks
+to API callers, not to visitors on the site.
