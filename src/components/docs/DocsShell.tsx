@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { inlineMarkdown } from "@/lib/inline-markdown";
 import { DOCS, DOC_GROUPS, type DocBlock } from "@/lib/docs/content";
 import { X_TOOL_CATEGORIES, X_TOOL_TOTALS } from "@/lib/docs/x-tools";
+import { MCP_TOTAL_TEXT, MCP_VERIFIED_CATEGORY_COUNT } from "@/lib/mcp-facts.generated";
 import { StarGatePanel } from "@/components/site/StarGatePanel";
 
 function XToolsCatalog({ search }: { search: string }) {
@@ -30,7 +31,7 @@ function XToolsCatalog({ search }: { search: string }) {
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           ["Total Tools", String(X_TOOL_TOTALS.tools)],
-          ["MCP Apps", String(X_TOOL_TOTALS.mcp)],
+          ["MCP Servers", X_TOOL_TOTALS.mcp.toLocaleString("en-US")],
           ["Control Systems", String(X_TOOL_TOTALS.classes)],
           ["Source Files", String(X_TOOL_TOTALS.files)],
         ].map(([label, value]) => (
@@ -220,8 +221,8 @@ export default function DocsShell({ slug }: { slug?: string }) {
           </h1>
           <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
             Complete technical reference for ZYRAXON-AI — the source-available desktop AI agent with
-            11 agent modes, 888 tools across 63 categories, 108 MCP integrations, eternal memory,
-            self-healing and real-time screen vision.
+            11 agent modes, 888 tools across 63 categories, {MCP_TOTAL_TEXT} MCP integrations,
+            eternal memory, self-healing and real-time screen vision.
           </p>
           {DOC_GROUPS.map((g) => {
             const pages = DOCS.filter((d) => d.group === g);

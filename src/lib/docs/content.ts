@@ -3,6 +3,13 @@ import { PROVIDER_INTEGRATION_DOCS } from "./provider-integration-docs";
 import { SPEECH_DOCS } from "./speech-docs";
 import { PROVIDER_SYSTEM_DOCS } from "./provider-system-docs";
 import { ENDPOINT_DOCS } from "./endpoint-docs";
+import {
+  MCP_TOTAL_TEXT,
+  MCP_CURATED_TEXT,
+  MCP_VERIFIED_TEXT,
+  MCP_CATEGORY_COUNT,
+  MCP_CATEGORY_NAMES,
+} from "../mcp-facts.generated";
 
 export type DocBlock =
   | { t: "h2"; text: string }
@@ -101,7 +108,7 @@ export const DOCS: DocPage[] = [
           [
             "ZYRAXON Agent",
             "Windows, macOS, Linux",
-            "Desktop AI agent with 11 agent modes, 888 tools across 63 categories, 108 MCP integrations, eternal memory, self-healing and a built-in Monaco AI editor",
+            `Desktop AI agent with 11 agent modes, 888 tools across 63 categories, ${MCP_TOTAL_TEXT} MCP integrations, eternal memory, self-healing and a built-in Monaco AI editor`,
           ],
         ],
       },
@@ -120,7 +127,7 @@ export const DOCS: DocPage[] = [
           ],
           [
             "MCP Integrations",
-            "108 connectable apps, each verified with a real MCP handshake before being listed",
+            `${MCP_CURATED_TEXT} curated apps, each verified with a real MCP handshake before being listed`,
           ],
           [
             "Control Systems",
@@ -718,7 +725,7 @@ export const DOCS: DocPage[] = [
     slug: "mcp-hub",
     title: "MCP Hub and Integrations",
     group: "ZYRAXON Agent",
-    desc: "108 connectable apps, verified against their real servers.",
+    desc: `${MCP_CURATED_TEXT} curated apps, verified against their real servers.`,
     blocks: [
       {
         t: "p",
@@ -748,7 +755,7 @@ export const DOCS: DocPage[] = [
       { t: "h2", text: "Categories" },
       {
         t: "p",
-        text: "The 108 apps span 27 categories: AI & Media, Automation, Code, Commerce, Communication, Database, Design, Developer, Documents, Finance, Hosting, Infrastructure, Knowledge, Maps, Marketing, Media, Monitoring, Payments, Productivity, Project, Sales, Search, Social, Storage, System, Weather and more.",
+        text: `The ${MCP_CURATED_TEXT} curated apps are folded onto the same ${MCP_CATEGORY_COUNT} categories the rest of the Hub uses: ${MCP_CATEGORY_NAMES.join(", ")}.`,
       },
       { t: "h2", text: "How authentication is classified" },
       {
@@ -1215,7 +1222,7 @@ export const DOCS: DocPage[] = [
           ["Screen vision", "Yes", "No", "No", "Limited", "No"],
           ["Voice communication", "Yes", "No", "No", "No", "No"],
           ["888 tools built-in (63 categories)", "Yes", "Limited", "Limited", "Limited", "Limited"],
-          ["108 MCP integrations", "Yes", "Limited", "Limited", "Limited", "Limited"],
+          [`${MCP_TOTAL_TEXT} MCP integrations`, "Yes", "Limited", "Limited", "Limited", "Limited"],
           ["224 control systems", "Yes", "No", "No", "No", "No"],
           ["25+ AI providers", "Yes", "Limited", "Limited", "Limited", "Limited"],
           ["Free & source-available", "ZSL-X", "Paid", "Paid", "Paid", "Yes"],
@@ -1367,7 +1374,7 @@ export const DOCS: DocPage[] = [
       { t: "h3", text: "How many tools does it have?" },
       {
         t: "p",
-        text: "888 registered tools across 63 categories, split 186 free / 317 pro / 324 max / 61 ultra. There are also 108 MCP integrations and 224 control-system classes.",
+        text: `888 registered tools across 63 categories, split 186 free / 317 pro / 324 max / 61 ultra. There are also ${MCP_TOTAL_TEXT} MCP integrations and 224 control-system classes.`,
       },
       { t: "h3", text: "How do I give feedback?" },
       {
@@ -1408,7 +1415,7 @@ export const DOCS: DocPage[] = [
         rows: [
           [
             "Shipped",
-            "11 agent modes (incl. Beast / APEX / DARK EMPEROR / AUTO), 888 tools, 224 control systems, 108 MCP integrations, vision, eternal memory, self-healing, YouTube streaming, Pro Builder",
+            `11 agent modes (incl. Beast / APEX / DARK EMPEROR / AUTO), 888 tools, 224 control systems, ${MCP_TOTAL_TEXT} MCP integrations, vision, eternal memory, self-healing, YouTube streaming, Pro Builder`,
           ],
           ["Planned", "Plugin marketplace, team collaboration, optional cloud sync"],
           ["Committed at 100k stars", "Our own model, our own provider, our own ecosystem"],

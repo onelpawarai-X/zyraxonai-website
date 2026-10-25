@@ -16,14 +16,19 @@ import {
   type McpIndex,
 } from "@/lib/apps";
 import { pageSeo } from "@/lib/seo";
+import {
+  MCP_TOTAL_TEXT,
+  MCP_CURATED_TEXT,
+  MCP_VERIFIED_TEXT,
+  MCP_CATEGORY_COUNT,
+} from "@/lib/mcp-facts.generated";
 
 export const Route = createFileRoute("/apps/")({
   head: () => {
     const seo = pageSeo({
       path: "/apps",
-      title: "MCP Hub — 8,202 MCP servers your agent can connect",
-      description:
-        "Browse the ZYRAXON MCP Hub: 8,202 Model Context Protocol servers across 18 categories, with browser sign-in, token auth, open and local tiers. 108 curated apps with connect guides, and 8,094 verified servers measured with a real handshake.",
+      title: `MCP Hub — ${MCP_TOTAL_TEXT} MCP servers your agent can connect`,
+      description: `Browse the ZYRAXON MCP Hub: ${MCP_TOTAL_TEXT} Model Context Protocol servers across ${MCP_CATEGORY_COUNT} categories, with browser sign-in, token auth, open and local tiers. ${MCP_CURATED_TEXT} curated apps with connect guides, and ${MCP_VERIFIED_TEXT} verified servers measured with a real handshake.`,
       keywords: [
         "MCP servers",
         "MCP Hub",
@@ -137,7 +142,7 @@ function AppsPage() {
       <PageHeader
         label="Integrations"
         title="Every app your agent can drive"
-        description={`The ZYRAXON MCP Hub: ${total.toLocaleString()} Model Context Protocol servers across ${index?.categories.length ?? 18} categories. ${curatedCount} curated apps come with a description and a connect guide; the other ${verifiedCount.toLocaleString()} were each reached by a verifier, and the depth it reached is shown on the card. Pick a category or an auth tier to narrow the list.`}
+        description={`The ZYRAXON MCP Hub: ${total.toLocaleString()} Model Context Protocol servers across ${index?.categories.length ?? MCP_CATEGORY_COUNT} categories. ${curatedCount} curated apps come with a description and a connect guide; the other ${verifiedCount.toLocaleString()} were each reached by a verifier, and the depth it reached is shown on the card. Pick a category or an auth tier to narrow the list.`}
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">

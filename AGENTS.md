@@ -474,12 +474,22 @@ remembers it.
 The site publishes the whole MCP registry, not a curated handful. `scripts/build-mcp-catalog.ts`
 parses `MCP Hub/ALL MCP.md` from the assets repository, emits
 `src/lib/mcp-catalog.generated.ts` (the 108 curated servers and their copy),
+`src/lib/mcp-facts.generated.ts` (the counts the copy quotes),
 sharded registry assets under `public/mcp/*.json` (16 category files plus
 `index.json`, ~3.5 MB total, fetched lazily per category so a phone never
 downloads the lot), and a compact SSR index `src/lib/mcp-seo-index.server.ts`.
 
 Current totals, which the copy and the tests both read: 8,202 servers — 108
-curated plus 8,094 verified — across 18 categories.
+curated plus 8,094 verified — across 18 categories (16 of which hold a verified
+server and so have a category file; Automation and Monitoring are curated-only).
+
+**Never write an MCP count as a literal.** Every page, doc and prompt that
+quotes a figure imports it from `src/lib/mcp-facts.generated.ts`
+(`MCP_TOTAL_TEXT`, `MCP_CURATED_TEXT`, `MCP_VERIFIED_TEXT`, `MCP_SUMMARY`).
+The prose used to carry "108 MCP integrations" as a literal while the catalog
+had grown to 8,202, and nothing caught it — the number was regenerated in one
+place and quoted in another. `scripts/verify-mcp-facts.ts` now fails if any
+surface still hardcodes a stale figure.
 
 `src/lib/mcp-seo.ts` is the one composer for the per-server page text
 (`describeRegistryServer`, the connect/install/verify vocabularies). Both the

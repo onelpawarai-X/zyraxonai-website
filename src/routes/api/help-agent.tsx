@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { MCP_TOTAL_TEXT } from "@/lib/mcp-facts.generated";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +16,7 @@ Your mission is to assist visitors, developers, and users with the ZYRAXON ecosy
 
 Key facts about ZYRAXON AI:
 - Main Repository: https://github.com/onelpawarai-X/ZYRAXON-AI
-- Flagship App: ZYRAXON Agent (Desktop AI agent for Windows, macOS, Linux with 888 tools across 63 categories, 11 agent modes, 108 MCP integrations, Eternal Memory, Screen Vision, built-in Monaco AI editor).
+- Flagship App: ZYRAXON Agent (Desktop AI agent for Windows, macOS, Linux with 888 tools across 63 categories, 11 agent modes, ${MCP_TOTAL_TEXT} MCP integrations, Eternal Memory, Screen Vision, built-in Monaco AI editor).
 - License: ZSL-X v2.0.0 (Zyraxon Sovereign License).
 - Downloads: Windows (.exe), Linux (.deb), macOS (.dmg).
 - Nebula Core: Private owner command center for instant feature uploads, announcements, and telemetry.
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/api/help-agent")({
             ],
             defaultModel: DEFAULT_MODEL,
           },
-          { headers: { ...CORS, "Cache-Control": "public, max-age=300" } }
+          { headers: { ...CORS, "Cache-Control": "public, max-age=300" } },
         );
       },
 
@@ -55,9 +56,7 @@ export const Route = createFileRoute("/api/help-agent")({
           const apiKey = process.env.LOVABLE_API_KEY || "";
           const targetModel = model || DEFAULT_MODEL;
 
-          const messages: any[] = [
-            { role: "system", content: ZYRAXON_KNOWLEDGE },
-          ];
+          const messages: any[] = [{ role: "system", content: ZYRAXON_KNOWLEDGE }];
 
           if (history && typeof history === "string") {
             messages.push({ role: "user", content: `Previous context:\n${history}` });
@@ -70,7 +69,7 @@ export const Route = createFileRoute("/api/help-agent")({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${apiKey}`,
+              Authorization: `Bearer ${apiKey}`,
               "Lovable-API-Key": apiKey,
             },
             body: JSON.stringify({
@@ -84,7 +83,7 @@ export const Route = createFileRoute("/api/help-agent")({
             const errText = await upstreamRes.text().catch(() => "");
             return Response.json(
               { error: `AI Gateway error: ${upstreamRes.status} ${errText.slice(0, 100)}` },
-              { status: upstreamRes.status, headers: CORS }
+              { status: upstreamRes.status, headers: CORS },
             );
           }
 
@@ -97,7 +96,10 @@ export const Route = createFileRoute("/api/help-agent")({
             },
           });
         } catch (err: any) {
-          return Response.json({ error: err?.message || "Internal server error" }, { status: 500, headers: CORS });
+          return Response.json(
+            { error: err?.message || "Internal server error" },
+            { status: 500, headers: CORS },
+          );
         }
       },
     },

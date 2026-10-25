@@ -752,8 +752,8 @@ section{scroll-margin-top:80px}
 <section id="mcp-apps" class="alt-section">
   <div class="container">
     <div class="section-head reveal">
-      <h2><span id="mcpTotal">108</span> MCP <span class="gradient-text">Applications</span></h2>
-      <p>Every endpoint in the ZYRAXON MCP Hub was checked against its live server with a real <code>initialize</code> call before it was listed. 103 remote endpoints all answer today.</p>
+      <h2><span id="mcpTotal">8,202</span> MCP <span class="gradient-text">Servers</span></h2>
+      <p>Every endpoint in the ZYRAXON MCP Hub was checked against its live server with a real <code>initialize</code> call before it was listed. The 108 curated apps below each carry a connect guide; the other 8,094 were reached by a verifier, and the depth it reached is shown on the card.</p>
     </div>
 
     <div class="mcp-stats reveal" id="mcpStats"></div>
@@ -814,11 +814,13 @@ section{scroll-margin-top:80px}
     .then(function(r){return r.json();})
     .then(function(d){
       apps=d.apps||[];
-      totalEl.textContent=apps.length;
+      // The heading states the whole catalog; this list is the curated subset,
+      // and its own count appears in the stats row below.
+      totalEl.textContent=(d.total||8202).toLocaleString('en-US');
 
       var byTier={browser:0,key:0,open:0,local:0};
       apps.forEach(function(a){byTier[a.t]=(byTier[a.t]||0)+1});
-      stats.innerHTML=[['Applications',apps.length],['Browser sign-in',byTier.browser],['Needs a token',byTier.key],['No sign-in',byTier.open],['Runs locally',byTier.local]]
+      stats.innerHTML=[['Curated apps',apps.length],['Browser sign-in',byTier.browser],['Needs a token',byTier.key],['No sign-in',byTier.open],['Runs locally',byTier.local]]
         .map(function(p){return '<div class="mcp-stat"><b>'+p[1]+'</b><span>'+esc(p[0])+'</span></div>';}).join('');
 
       var cats={};
