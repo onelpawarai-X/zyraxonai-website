@@ -11,6 +11,7 @@ import { execFileSync } from "node:child_process";
 import {
   chunkTextIntoSentences,
   escapeXml,
+  normaliseGender,
   normaliseTone,
   pickVoice,
   speakable,
@@ -76,8 +77,11 @@ check(
 // ── the voice picker must honour the language ───────────────────────────────
 const voices: Voice[] = [
   { name: "en-US-EmmaMultilingualNeural", locale: "en-US", gender: "Female" },
+  { name: "en-US-AndrewNeural", locale: "en-US", gender: "Male" },
   { name: "en-GB-SoniaNeural", locale: "en-GB", gender: "Female" },
   { name: "bn-BD-NabanitaNeural", locale: "bn-BD", gender: "Female" },
+  { name: "bn-BD-PradeepNeural", locale: "bn-BD", gender: "Male" },
+  { name: "bn-IN-TanishaaNeural", locale: "bn-IN", gender: "Female" },
   { name: "bn-IN-BashkarNeural", locale: "bn-IN", gender: "Male" },
   { name: "hi-IN-SwaraNeural", locale: "hi-IN", gender: "Female" },
 ];
@@ -88,8 +92,13 @@ check(
 );
 check(
   "a region locale picks that region",
-  pickVoice("bn-IN", voices) === "bn-IN-BashkarNeural",
+  pickVoice("bn-IN", voices)?.startsWith("bn-IN-") === true,
   pickVoice("bn-IN", voices),
+);
+check(
+  "a region locale with a gender picks that region and gender",
+  pickVoice("bn-IN", voices, undefined, "male") === "bn-IN-BashkarNeural",
+  pickVoice("bn-IN", voices, undefined, "male"),
 );
 check("a full locale matches exactly", pickVoice("hi-IN", voices) === "hi-IN-SwaraNeural");
 check(
@@ -102,6 +111,60 @@ check(
   pickVoice("xx-YY", voices),
 );
 check("an empty locale falls back to English", pickVoice("", voices)?.startsWith("en-") === true);
+
+// ── gender picks the kind of voice, the language still wins ─────────────────
+check(
+  "female picks the female Bengali voice",
+  pickVoice("bn", voices, undefined, "female") === "bn-BD-NabanitaNeural",
+  pickVoice("bn", voices, undefined, "female"),
+);
+check(
+  "male picks the male Bengali voice",
+  pickVoice("bn", voices, undefined, "male") === "bn-BD-PradeepNeural",
+  pickVoice("bn", voices, undefined, "male"),
+);
+check(
+  "gender is matched case-insensitively",
+  pickVoice("bn", voices, undefined, "MALE") === "bn-BD-PradeepNeural",
+  pickVoice("bn", voices, undefined, "MALE"),
+);
+check(
+  "a named voice beats the gender",
+  pickVoice("bn", voices, "bn-BD-NabanitaNeural", "male") === "bn-BD-NabanitaNeural",
+  pickVoice("bn", voices, "bn-BD-NabanitaNeural", "male"),
+);
+check(
+  "an unknown gender is ignored, not an error",
+  pickVoice("bn", voices, undefined, "robot") === "bn-BD-NabanitaNeural",
+  pickVoice("bn", voices, undefined, "robot"),
+);
+check(
+  "a language with no voice of that gender still gets a voice in the language",
+  (() => {
+    const onlyFemale: Voice[] = [
+      { name: "xx-XX-SoloNeural", locale: "xx-XX", gender: "Female" },
+    ];
+    const picked = pickVoice("xx", onlyFemale, undefined, "male");
+    return picked === "xx-XX-SoloNeural";
+  })(),
+  pickVoice("xx", voices, undefined, "male"),
+);
+check(
+  "a gender with no locale still picks an English voice of that gender",
+  pickVoice("", voices, undefined, "female")?.startsWith("en-") === true,
+  pickVoice("", voices, undefined, "female"),
+);
+check(
+  "normaliseGender accepts female and male, in any case",
+  normaliseGender("Female") === "female" &&
+    normaliseGender("MALE") === "male" &&
+    normaliseGender("woman") === "female" &&
+    normaliseGender("man") === "male",
+);
+check(
+  "normaliseGender treats a typo or nothing as no preference",
+  normaliseGender("robot") === "" && normaliseGender(null) === "" && normaliseGender("") === "",
+);
 
 // ── what gets spoken must be speakable ──────────────────────────────────────
 const withCode = "Here is how:\n\n```python\nprint('hi')\nprint('there')\n```\n\nThat is all.";

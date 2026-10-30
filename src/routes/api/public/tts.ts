@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   listVoices,
+  normaliseGender,
   normaliseTone,
   pickVoice,
   speakable,
@@ -38,6 +39,10 @@ const MAX_CHARS = 50_000;
  *  starts arriving before the sentence is finished, so a client can begin
  *  playing immediately rather than waiting for the whole file.
  *
+ *  `gender` chooses a female or male voice in that language when no `voice` is
+ *  named. It is how a caller picks the *kind* of voice without knowing the
+ *  catalogue; a caller who knows the exact voice names it instead.
+ *
  *  `tone` changes the delivery — `warm`, `expressive`, `natural` or `clear`.
  *  Every tone keeps the same pauses at commas and sentence ends, because the
  *  pauses are what make the speech intelligible; the tone changes only rate,
@@ -56,7 +61,8 @@ export const Route = createFileRoute("/api/public/tts")({
         const voice = (url.searchParams.get("voice") || "").trim();
         const locale = (url.searchParams.get("locale") || "").trim();
         const tone = normaliseTone(url.searchParams.get("tone"));
-        return speak(text, voice, locale, tone, request.signal);
+        const gender = normaliseGender(url.searchParams.get("gender"));
+        return speak(text, voice, locale, tone, gender, request.signal);
       },
 
       POST: async ({ request }) => {
@@ -70,7 +76,8 @@ export const Route = createFileRoute("/api/public/tts")({
         const voice = typeof body?.voice === "string" ? body.voice.trim() : "";
         const locale = typeof body?.locale === "string" ? body.locale.trim() : "";
         const tone = normaliseTone(body?.tone);
-        return speak(text, voice, locale, tone, request.signal);
+        const gender = normaliseGender(typeof body?.gender === "string" ? body.gender : null);
+        return speak(text, voice, locale, tone, gender, request.signal);
       },
     },
   },
@@ -81,6 +88,7 @@ async function speak(
   voice: string,
   locale: string,
   tone: Tone,
+  gender: string,
   signal?: AbortSignal,
 ): Promise<Response> {
   if (!text) {
@@ -104,26 +112,48 @@ async function speak(
     );
   }
 
-  // The catalogue is only needed to *choose* a voice. A caller who named one
-  // exactly has already made that decision, so the 322-voice fetch is skipped —
-  // it is a network round trip in front of the first byte of audio, which is the
-  // difference between a reply that starts instantly and one that waits.
+  // The catalogue is needed to *choose* a voice and to *check* a named one. It is
+  // fetched whenever the caller did not name a voice, and also when they named
+  // one — a name that is not in the catalogue is the one case that would
+  // otherwise answer 200 with an empty body and no error, which reads as "the
+  // audio is broken" rather than "that voice does not exist".
   let voices: Voice[] = [];
-  if (!voice) {
-    try {
-      voices = await listVoices();
-    } catch {
-      // Without the catalogue a language still resolves through the fallback
-      // below; only locale matching needs the list.
-    }
+  try {
+    voices = await listVoices();
+  } catch {
+    // Without the catalogue a language still resolves through the fallback
+    // below; only matching needs the list.
   }
+
+  // A named voice is matched case-insensitively and canonicalised, because the
+  // engine accepts `bn-bd-pradeepneural` but the catalogue spells it
+  // `bn-BD-PradeepNeural`. A name that matches nothing is refused by name
+  // instead of being forwarded, where it produces silence.
+  let named = voice;
+  if (voice && voices.length) {
+    const found = voices.find((v) => v.name.toLowerCase() === voice.toLowerCase());
+    if (!found) {
+      return Response.json(
+        {
+          error: "unknown voice",
+          detail: `"${voice}" is not in the voice catalogue.`,
+          hint: "Pick a voice from GET /api/public/tts/voices, or send a locale (e.g. locale=bn) and let one be chosen.",
+        },
+        { status: 400, headers: CORS },
+      );
+    }
+    named = found.name;
+  }
+
   // The voice is chosen from the *answer's own language* when the caller did not
   // name one. Without this an English voice reads Bengali text and the result is
   // unintelligible — the letters are simply not pronounced — which is exactly
   // what a Bengali answer sounded like before.
-  const detected = voice ? undefined : detectLocale(spoken);
+  const detected = named ? undefined : detectLocale(spoken);
   const chosen =
-    voice || pickVoice(locale || detected || "en-US", voices) || "en-US-EmmaMultilingualNeural";
+    named ||
+    pickVoice(locale || detected || "en-US", voices, undefined, gender) ||
+    "en-US-EmmaMultilingualNeural";
 
   try {
     const response = speechResponse(spoken, chosen, tone, signal);

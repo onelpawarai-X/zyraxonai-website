@@ -292,6 +292,45 @@ back as it is synthesised. Three things there are easy to get wrong:
 is unusable, so a fence becomes "a code block, N lines". The voice is chosen from
 the answer's language, so a Bengali reply is read by a Bengali voice.
 
+#### Choosing the voice: `voice` names it, `gender` picks its kind
+
+A caller decides who speaks in one of two ways, and they are not the same lever:
+
+- **`voice`** names an exact voice from the catalogue
+  (`GET /api/public/tts/voices`). It is matched **case-insensitively** and
+  canonicalised before it is sent upstream — the engine accepts
+  `bn-bd-pradeepneural`, but the catalogue spells it `bn-BD-PradeepNeural`, and
+  the response header always carries the catalogue spelling. A name that matches
+  nothing is refused with a **400 `unknown voice`**. That check matters: the
+  engine answers an unknown name with `200` and **zero bytes of audio**, which a
+  caller reads as "the audio is broken" rather than "that voice does not exist".
+  It was doing exactly that on the live site until the check was added.
+- **`gender`** (`female` / `male`, plus `f`/`m`/`woman`/`man`) chooses the *kind*
+  of voice **in the language of the text**, without the caller knowing any name.
+  It is consulted only when `voice` was not given.
+
+`pickVoice(locale, voices, preferred, gender)` applies them in that order, and
+the rule is that **the language outranks the gender**: if a language has no voice
+of the requested gender, the gender is dropped and a voice in the language is
+chosen anyway, because a voice in the wrong language does not read the text at
+all. `gender` is also applied to an **exact** locale match, not only to a
+language-prefix match — the first cut returned the first voice of `bn-IN` and
+ignored `male`, which `verify-tts.ts` now pins.
+
+Measured live, by median F0 of the returned audio (autocorrelation over voiced
+frames), so the choice is proven and not just labelled:
+
+| Voice | median F0 | reads as |
+| --- | --- | --- |
+| `bn-BD-NabanitaNeural` | 213 Hz | female |
+| `bn-IN-TanishaaNeural` | 250 Hz | female |
+| `bn-BD-PradeepNeural` | 121 Hz | male |
+| `bn-IN-BashkarNeural` | 120 Hz | male |
+
+Bengali ships four voices — two female, two male — across `bn-BD` and `bn-IN`,
+so both genders resolve in Bengali. `X-ZYRAXON-Voice` reports the voice that
+actually spoke, which is how a client confirms what it got.
+
 #### The engine answers a pause *element* with silence
 
 This one is worth its own heading because it is invisible until someone listens.
