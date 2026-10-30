@@ -223,3 +223,54 @@ export function segmentPlan(
     bytesPerSecond: safeRate * 2,
   };
 }
+
+/** Strip whitespace, keeping each surviving character's index in the original. */
+function compact(text: string): { text: string; index: number[] } {
+  let out = "";
+  const index: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    if (/\s/.test(text[i]!)) continue;
+    out += text[i];
+    index.push(i);
+  }
+  return { text: out, index };
+}
+
+/** The part of a fresh transcript that the caller does not already have.
+ *
+ *  A rolling window loses its first word to the recogniser as it slides — the
+ *  audio before that word is no longer there to prime it — so a later transcript
+ *  can differ from the committed text in the middle and not only at the end. A
+ *  plain prefix check then fails and the whole window is re-emitted, which
+ *  duplicates words on screen. So the longest suffix of the committed text that
+ *  is also a prefix of the fresh text is found and everything past it is the
+ *  addition. Whitespace is ignored in the comparison, because the recogniser is
+ *  not consistent about where it puts a space; the addition is still sliced out
+ *  of the fresh text with its own spacing intact. */
+export function alignAddition(committed: string, fresh: string): string {
+  const c = committed.trim();
+  const f = fresh.trim();
+  if (!c) return f;
+  if (!f) return "";
+  if (f.startsWith(c)) return f.slice(c.length);
+
+  const cf = compact(c);
+  const ff = compact(f);
+  // The fresh window is shorter than what the caller already has: the window
+  // slid back, and there is nothing new to add.
+  if (cf.text.startsWith(ff.text)) return "";
+
+  const max = Math.min(cf.text.length, ff.text.length);
+  for (let len = max; len > 0; len--) {
+    if (ff.text.startsWith(cf.text.slice(cf.text.length - len))) {
+      if (len >= ff.text.length) return "";
+      // Slice from just after the matched suffix's last character, so the space
+      // that separates the addition from what precedes it is kept. Slicing from
+      // the addition's own first character would drop it and run two words
+      // together when the client appends.
+      const from = ff.index[len - 1]! + 1;
+      return f.slice(from);
+    }
+  }
+  return f;
+}

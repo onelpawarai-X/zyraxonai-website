@@ -285,6 +285,51 @@ ffmpeg -i recording.mp3 -ar 16000 -ac 1 -f s16le - \\
         title: "A word on the boundary is not lost",
         text: "When a segment closes, the last fraction of a second carries into the next one, so a word straddling the cut is heard whole rather than clipped in half. Committed text is never rewritten, so a display only ever grows.",
       },
+      { t: "h2", text: "When the host buffers the upload: rolling mode" },
+      {
+        t: "p",
+        text: "The live mode above needs the host to hand the worker the request body **as it arrives**. Some hosts — a browser behind a proxy, a preview deployment — hold the whole upload first and only then run the handler. There, `ready` arrives after the speaker has already stopped, and no single stream can be real-time. The endpoint cannot fix that from the inside; the request has to be shaped so the host passes each piece straight through.",
+      },
+      {
+        t: "p",
+        text: "**Rolling mode** does exactly that. Instead of one long upload, the caller sends a short, **complete** window of audio every few hundred milliseconds and gets the transcript of that window back. Each tick is a small request the host delivers immediately, so text appears while the person is still talking.",
+      },
+      {
+        t: "code",
+        lang: "bash",
+        code: `# One tick of rolling mode: the last few seconds of speech, sent again each time.
+# The window is re-sent, not just the new part — the whole window is what lets
+# the recogniser resolve a word a shorter slice cannot.
+curl -s -X POST "${STT}?mode=rolling&language=bn" \\
+    -H "Content-Type: audio/l16; rate=16000" \\
+    --data-binary @window.pcm
+
+# {"success":true,"text":"আজ আকাশ পরিষ্কার","added":" পরিষ্কার","committed":"আজ আকাশ পরিষ্কার"}`,
+      },
+      {
+        t: "table",
+        head: ["Field", "Meaning"],
+        rows: [
+          ["`text`", "The transcript of the window you just sent."],
+          [
+            "`added`",
+            "The part of `text` past what you sent as `committed`. **Append this** to the line you are showing.",
+          ],
+          ["`committed`", "Send this back as the `committed` query parameter on the next tick."],
+        ],
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "Send the utterance as it grows, and append only `added`",
+        text: "The unit is an **utterance**, not a fixed slice. Post the audio of the sentence being spoken as it arrives — the whole utterance, re-sent each tick — and start a new one when the speaker pauses. Cutting on a pause is what makes the join clean; cutting mid-word leaves two half-words the recogniser joins without a space. Then append `added` to a fixed prefix: committed text never rewrites, so the caption only grows. The alignment is tolerant of the one thing that does change as an utterance grows — the recogniser revises its first word — so the same word is never shown twice.",
+      },
+      {
+        t: "note",
+        kind: "warn",
+        title: "Which mode to pick",
+        text: "If the host streams the body as it arrives (a Worker, a Node server, a direct socket), use the live SSE mode — one connection, lowest overhead. If the host buffers the upload, use rolling mode — it is the only shape that stays real-time there. The two are chosen by the request: `?mode=live` or a raw PCM body for the stream, `?mode=rolling` for the tick.",
+      },
       { t: "h2", text: "A complete spoken conversation" },
       {
         t: "p",

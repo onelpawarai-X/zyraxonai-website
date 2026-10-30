@@ -348,6 +348,45 @@ A missing `language` is a 422 naming the field. `GET` on the same URL returns th
 endpoint's own contract (modes, required fields, languages) so a client can read
 it without the docs.
 
+#### Rolling mode exists because the host can buffer the upload
+
+The SSE live mode needs the host to hand the worker the request body **as it
+arrives**. On the live deployment it does not: measured directly, the worker saw
+`ready` at **11.4 s** for a 5.3 s clip whose body was streamed in over 5 s, and
+at **6.2 s** over HTTP/2 — i.e. only after the whole upload landed. The same
+request against local `workerd` answered `ready` at **0.07 s**. So the code was
+never the problem: the platform holds the request body, and no single-stream
+design can be real-time behind it. Do not "fix" this by rewriting the SSE path —
+it is correct on a runtime that streams the body, and that is what it is for.
+
+`?mode=rolling` (or `?rolling=1`) is the shape that works behind a buffering
+host. The caller sends a short, **complete** window per tick — `multipart/form-
+data`, `audio/wav`, `audio/l16` or JSON — and gets `{ text, added, committed }`
+back. `added` is the part of `text` past the `committed` the caller sent, so the
+client appends and never rewrites. Each tick is a small request the host passes
+straight through; measured live, the first text arrived at **0.13–0.24 s** and a
+6.5-minute clip transcribed at **2.2× real time**.
+
+Two things about the protocol are load-bearing:
+
+- **The unit is an utterance, not a fixed slice.** Post the sentence being spoken
+  as it grows and start a new one when the speaker **pauses**. A hard cut
+  mid-word leaves two half-words that the recogniser joins without a space —
+  measured on a 6.5-minute clip, that dropped verbatim sentences from 10/12 to
+  8/12. Cutting on silence is what makes the join clean.
+- **`alignAddition` must keep the space at the seam.** It returns the fresh text
+  from just after the matched suffix's last character, not from the addition's
+  first one; slicing from the addition drops the separating space and runs two
+  words together when the client appends. It also matches with whitespace
+  ignored and handles the window sliding back, because the recogniser revises its
+  first word as the window grows. `verify-stt-realtime.ts` pins every one of
+  these cases, including a sequence that must never duplicate a word.
+
+`wantsRolling` is checked **before** `wantsStream` in the POST handler: a
+`?mode=rolling` request is not a stream, and letting it fall into the SSE path
+would give the caller a stream that only starts after they stop speaking.
+
+
 `src/lib/stt/stream.ts` holds the live path. Committed text never rewrites, and
 each segment carries the last `overlapSeconds` into the next so a word on the
 boundary is heard whole and then trimmed — that is what keeps captions from

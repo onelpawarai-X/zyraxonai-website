@@ -150,6 +150,10 @@ A client paces itself by bytes, not by wall-clock time. At 16 kHz, one second of
 >
 > When a segment closes, the last fraction of a second carries into the next one, so a word straddling the cut is heard whole rather than clipped in half. Committed text is never rewritten, so a display only ever grows.
 
+> Warning: **If the host buffers the upload, use rolling mode**
+>
+> The live mode needs the host to hand the worker the request body as it arrives. A host that holds the whole upload first — a browser behind a proxy, a preview deployment — delivers `ready` only after the speaker has stopped, and no single stream can be real-time there. `POST ?mode=rolling&language=bn` is the answer: send a short, complete window (the last two to four seconds of speech, re-sent each tick) and read `added` from the response. Each tick is a small request the host passes straight through, so text appears while the person is still talking. Append `added` to a fixed prefix — the alignment tolerates the word the recogniser drops as the window slides, so nothing is duplicated. Use the SSE mode when the host streams the body; use rolling when it buffers.
+
 ## A complete browser microphone, end to end
 
 This is the whole live client. It captures from the microphone, converts to 16-bit mono PCM at 16 kHz, and prints partial and committed text as they arrive. Nothing else is needed to put a working microphone in a chat box.
@@ -214,6 +218,63 @@ async function start(language: string, onText: (text: string, done: boolean) => 
 > Note: **The worklet is five lines**
 >
 > An `AudioWorkletProcessor` that forwards each input block as an `Int16Array` is all the client-side DSP this needs — no encoder, no library. The endpoint accepts 32-bit float too, but 16-bit halves the bytes on the wire with no effect on recognition.
+
+On a host that buffers the upload the stream above still works, but its text arrives late. The rolling client is the same microphone and the same worklet; only the sending changes — a timer drains the last few seconds of speech and posts them as one small, complete request.
+
+```typescript
+// Rolling client: real-time text even where the host buffers the upload.
+//
+// The unit is an *utterance*, not a fixed slice. Audio is posted as it arrives,
+// and the utterance is finalised when the speaker pauses — cutting on silence is
+// what makes the join clean. Cutting mid-word leaves two half-words that the
+// recogniser joins without a space.
+async function startRolling(language: string, onText: (full: string) => void) {
+  const ctx = new AudioContext({ sampleRate: 16000 });
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const node = new AudioWorkletNode(ctx, "pcm-worklet");
+  ctx.createMediaStreamSource(stream).connect(node);
+
+  const STEP = 700;       // ms between posts
+  const MIN_UTTERANCE = 2; // seconds of speech before a pause may end it
+  const MAX_UTTERANCE = 12;
+  const SILENCE = 0.35;   // seconds of quiet that ends an utterance
+
+  let utterance: Int16Array[] = [];  // this utterance's audio
+  let pending = 0;                   // samples in it
+  let settled = "";                  // the utterance's text so far
+  let full = "";                     // everything finalised; only grows
+
+  node.port.onmessage = (e) => {
+    const frame = new Int16Array(e.data);
+    utterance.push(frame);
+    pending += frame.length;
+  };
+
+  const quiet = () => {
+    const tail = concat(utterance.slice(-4));   // roughly the last 0.35 s
+    let sum = 0;
+    for (const v of tail) sum += v * v;
+    return Math.sqrt(sum / tail.length) < 350;  // below speech level
+  };
+
+  setInterval(async () => {
+    if (pending < 16000 * 0.8) return;          // less than ~0.8 s of speech
+    const body = concat(utterance);
+    const res = await fetch(
+      `${STT}?mode=rolling&language=${language}&committed=${encodeURIComponent(settled)}`,
+      { method: "POST", headers: { "Content-Type": "audio/l16; rate=16000" }, body },
+    );
+    const data = await res.json();
+    if (data.added) { full += data.added; onText(full); }  // append, never rewrite
+    settled = data.committed ?? "";
+
+    const seconds = pending / 16000;
+    if ((quiet() && seconds >= MIN_UTTERANCE) || seconds >= MAX_UTTERANCE) {
+      utterance = []; pending = 0; settled = "";   // a pause: start the next one
+    }
+  }, STEP);
+}
+```
 
 ## Very large recordings
 

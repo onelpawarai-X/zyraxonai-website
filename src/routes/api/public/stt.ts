@@ -4,7 +4,7 @@ import { sniff } from "@/lib/stt/audio";
 import { recognize, type AudioInput } from "@/lib/stt/engine";
 import { audioChunks, canStream, decodeContainer, toInput, WINDOW_SECONDS, type Decoded, type Window } from "@/lib/stt/ingest";
 
-import { liveTranscript, segmentPlan, type LiveEvent } from "@/lib/stt/stream";
+import { alignAddition, liveTranscript, segmentPlan, type LiveEvent } from "@/lib/stt/stream";
 
 /**
  * POST /api/public/stt — speech to text.
@@ -401,7 +401,7 @@ async function transcribeWindows(
 }
 
 /** True when the caller wants live transcription rather than a batch answer. */
-function wantsStream(request: Request): boolean {
+export function wantsStream(request: Request): boolean {
   const url = new URL(request.url);
   if (url.searchParams.get("stream") === "1") return true;
   if (url.searchParams.get("mode") === "live") return true;
@@ -411,6 +411,26 @@ function wantsStream(request: Request): boolean {
   // can only be a live stream.
   const contentType = (request.headers.get("content-type") || "").toLowerCase();
   return contentType.includes("audio/l16") || contentType.includes("audio/pcm");
+}
+
+/** True when the caller wants the *rolling* live mode.
+ *
+ *  `?mode=rolling` (or `?rolling=1`) is for a browser on a host that buffers a
+ *  request body before the worker sees it. In that situation the SSE mode above
+ *  cannot be real-time no matter how the worker is written: the platform holds
+ *  the whole upload, so `ready` arrives only once the speaker has stopped. The
+ *  rolling mode is fed one small, *complete* body per tick instead, so each tick
+ *  is a fresh request the host passes straight through, and the caller gets text
+ *  while the person is still talking.
+ *
+ *  It is deliberately a different mode rather than a change to the SSE path: a
+ *  caller on a runtime that does stream the body (workerd, Node, a direct
+ *  socket) is better served by one long stream, and switching that path to
+ *  request-per-tick would add a connection per update for no gain. */
+export function wantsRolling(request: Request): boolean {
+  const url = new URL(request.url);
+  if (url.searchParams.get("mode") === "rolling") return true;
+  return url.searchParams.get("rolling") === "1";
 }
 
 /** The rate a raw PCM stream is arriving at, from the Content-Type. */
@@ -485,6 +505,62 @@ function streamResponse(request: Request): Response {
   });
 }
 
+/** One tick of the rolling live mode: a short, *complete* window of audio.
+ *
+ *  The caller sends the last `windowSeconds` of speech — not just the new part —
+ *  on every tick, and gets back the transcript of that window together with the
+ *  part of it that is new. Sending the whole window is what makes the text
+ *  stable: the recogniser sees the word before the one being spoken, so it
+ *  resolves the ambiguity a two-second slice cannot, and the tail of the previous
+ *  window is the overlap that keeps a word straddling two ticks from being cut.
+ *
+ *  `committed` is the text the caller already has. The response carries only
+ *  `text.slice(committed.length)` as `added`, so a client appends and never
+ *  rewrites — the same "committed text never rewrites" rule the SSE path keeps,
+ *  and the reason a caption does not flicker. */
+async function rollingTick(
+  request: Request,
+  read: { bytes: Uint8Array; declared: string; language?: string },
+): Promise<Response> {
+  const url = new URL(request.url);
+  const language = read.language;
+  if (!language) {
+    return fail(
+      "The `language` field is required, e.g. `bn` or `bn-BD`. This endpoint does not detect language.",
+      422,
+    );
+  }
+  if (read.bytes.length === 0) return fail("The audio is empty.");
+
+  const container = sniff(read.bytes);
+  if (container === "unknown") {
+    return fail(
+      "The upload does not look like audio. Send WAV, MP3, FLAC, Ogg, WebM, AAC, or raw PCM.",
+    );
+  }
+
+  const committed = url.searchParams.get("committed") || "";
+  const started = Date.now();
+
+  try {
+    const decoded = await decodeContainer(read.bytes, container, read.declared);
+    const text = (await transcribeLong(decoded, language, request.signal)).text.trim();
+    const added = alignAddition(committed, text);
+    return json({
+      success: true,
+      text,
+      added,
+      committed: text,
+      language,
+      container,
+      elapsed: (Date.now() - started) / 1000,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "transcription failed";
+    return fail(message, 502);
+  }
+}
+
 export const Route = createFileRoute("/api/public/stt")({
   server: {
     handlers: {
@@ -540,6 +616,25 @@ export const Route = createFileRoute("/api/public/stt")({
                 },
               },
             },
+            rolling: {
+              when: "Someone is speaking now, on a host that buffers a request body before the worker sees it — a browser behind a proxy, for instance. Live text still has to appear as they speak.",
+              why: "The `live` mode above needs the host to hand the worker the body as it arrives. Where the host holds the whole upload, `ready` only arrives after the speaker stops, so a single stream cannot be real-time there. This mode sends one small, complete window per tick instead, so every tick is a request the host passes straight through.",
+              contentType: "multipart/form-data (file), audio/wav, audio/l16, or application/json",
+              body: "The last `window` seconds of speech, re-sent each tick — not only the new part. The whole window is what lets the recogniser resolve a word the shorter slice cannot, and its tail is the overlap that stops a word on a boundary being cut.",
+              query: {
+                mode: "rolling (or rolling=1)",
+                language: "required, e.g. bn or bn-BD",
+                committed: "the text you already have; the response returns only what is new",
+                window: "seconds of audio to send per tick, 2–4 recommended",
+              },
+              response: {
+                text: "the transcript of the window",
+                added: "the part of `text` past what you sent as committed — append this",
+                committed: "send this back as `committed` on the next tick",
+                elapsed: "seconds spent transcribing",
+              },
+              rule: "Committed text never rewrites: a client appends `added` to a fixed prefix, so a caption only ever grows. If the recogniser disagrees with the prefix, `added` falls back to the whole window rather than emitting a contradictory tail.",
+            },
           },
           containers: ["wav", "mp3", "flac", "ogg", "webm", "aac", "pcm"],
           notSupported: {
@@ -565,6 +660,16 @@ export const Route = createFileRoute("/api/public/stt")({
 
       POST: async ({ request }) => {
         try {
+          // Rolling live mode: one short, complete window per request. Chosen
+          // before the SSE check because `?mode=rolling` is not a stream, and a
+          // caller on a host that buffers a request body needs this path to get
+          // real-time text at all.
+          if (wantsRolling(request)) {
+            const read = await readInput(request);
+            if (read instanceof Response) return read;
+            return rollingTick(request, read);
+          }
+
           // Live mode: the caller is streaming audio now and wants text as it
           // arrives. Chosen by the request itself — an SSE Accept header, a
           // `?stream=1`, or a raw PCM content type.
