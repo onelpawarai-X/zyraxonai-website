@@ -53,17 +53,37 @@ export type Backend = {
 
 /** The client key the Chromium speech service publishes for browser use. It is
  *  not a secret — it ships inside every copy of Chrome — and it is the reason
- *  this endpoint needs no account of its own.
+ *  this endpoint needs no account of its own. */
+const PUBLISHED_CHROMIUM_KEY = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw";
+
+/** The keys to rotate through.
  *
- *  More than one is kept because the service limits by key and by egress
- *  address; a key that starts refusing is rested and the next is used, so one
- *  key going bad does not take speech down. */
-const KEYS = ["AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw", "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"];
+ *  The service limits by key *and* by egress address, so a single key is a
+ *  single point of refusal: when it starts answering 403/429 every request
+ *  fails, and the failure looks like an outage rather than a rate limit.
+ *  `ZYRAXON_STT_KEYS` takes a comma-separated list of additional keys — a
+ *  deployment with its own keys gets the rotation for free — and the published
+ *  Chromium key is always present, so an unconfigured deployment still works.
+ *
+ *  Duplicates are dropped: the same key twice in a rotation is one key with two
+ *  chances to be rested, which only delays the failure. */
+function configuredKeys(): string[] {
+  const raw = (process.env.ZYRAXON_STT_KEYS || "").trim();
+  const extra = raw
+    ? raw
+        .split(/[\s,]+/)
+        .map((k) => k.trim())
+        .filter(Boolean)
+    : [];
+  return [...new Set([PUBLISHED_CHROMIUM_KEY, ...extra])];
+}
+
+const KEYS = configuredKeys();
 
 /** How long a key stays out of rotation after a refusal. Long enough that a
  *  limited key recovers, short enough that a transient 403 does not bench it for
  *  the rest of the day. */
-const KEY_COOLDOWN_MS = 60_000;
+const KEY_COOLDOWN_MS = Number(process.env.ZYRAXON_STT_KEY_COOLDOWN_MS || 60_000);
 
 type KeyState = { until: number; strikes: number };
 const keyState: KeyState[] = KEYS.map(() => ({ until: 0, strikes: 0 }));

@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   listVoices,
+  normaliseTone,
   pickVoice,
   speakable,
   speechResponse,
+  type Tone,
   type Voice,
 } from "@/lib/tts/edge-speech.server";
 import { detectLocale } from "@/lib/tts/language";
@@ -14,20 +16,32 @@ const CORS = {
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 };
 
-/** How much text one request may speak. Long enough for any real answer, short
- *  enough that a caller cannot pin a connection with a whole book. */
-const MAX_CHARS = 5000;
+/** How much text one request may speak.
+ *
+ *  A whole long-form answer — an article, a document, a full explanation — is a
+ *  normal thing to ask for, and the endpoint can speak it without holding it in
+ *  memory: past a couple of thousand characters the text is split into
+ *  sentences and piped through one continuous MP3 stream, so the first sentence
+ *  is heard while the rest is still being synthesised. The ceiling is therefore
+ *  about what a caller may reasonably send, not about what can be spoken, and
+ *  the first byte of audio does not get slower as the text grows. */
+const MAX_CHARS = 50_000;
 
 /** Speech synthesis, streamed as MP3.
  *
  *  Two ways to call it:
- *    GET  /api/public/tts?text=...&voice=bn-BD-NabanitaNeural
- *    POST /api/public/tts  { "text": "...", "voice": "...", "locale": "bn" }
+ *    GET  /api/public/tts?text=...&voice=bn-BD-NabanitaNeural&tone=warm
+ *    POST /api/public/tts  { "text": "...", "voice": "...", "locale": "bn", "tone": "warm" }
  *
  *  `voice` wins; otherwise `locale` picks one by language, so a caller who only
  *  knows the answer's language still gets a voice in that language. The audio
  *  starts arriving before the sentence is finished, so a client can begin
  *  playing immediately rather than waiting for the whole file.
+ *
+ *  `tone` changes the delivery — `warm`, `expressive`, `natural` or `clear`.
+ *  Every tone keeps the same pauses at commas and sentence ends, because the
+ *  pauses are what make the speech intelligible; the tone changes only rate,
+ *  pitch and volume.
  *
  *  Nothing is cached server-side: every reply is a fresh utterance of whatever
  *  text the caller sent, which is what makes it usable for a live AI answer. */
@@ -41,7 +55,8 @@ export const Route = createFileRoute("/api/public/tts")({
         const text = (url.searchParams.get("text") || "").trim();
         const voice = (url.searchParams.get("voice") || "").trim();
         const locale = (url.searchParams.get("locale") || "").trim();
-        return speak(text, voice, locale, request.signal);
+        const tone = normaliseTone(url.searchParams.get("tone"));
+        return speak(text, voice, locale, tone, request.signal);
       },
 
       POST: async ({ request }) => {
@@ -54,7 +69,8 @@ export const Route = createFileRoute("/api/public/tts")({
         const text = typeof body?.text === "string" ? body.text.trim() : "";
         const voice = typeof body?.voice === "string" ? body.voice.trim() : "";
         const locale = typeof body?.locale === "string" ? body.locale.trim() : "";
-        return speak(text, voice, locale, request.signal);
+        const tone = normaliseTone(body?.tone);
+        return speak(text, voice, locale, tone, request.signal);
       },
     },
   },
@@ -64,6 +80,7 @@ async function speak(
   text: string,
   voice: string,
   locale: string,
+  tone: Tone,
   signal?: AbortSignal,
 ): Promise<Response> {
   if (!text) {
@@ -109,9 +126,10 @@ async function speak(
     voice || pickVoice(locale || detected || "en-US", voices) || "en-US-EmmaMultilingualNeural";
 
   try {
-    const response = speechResponse(spoken, chosen, signal);
+    const response = speechResponse(spoken, chosen, tone, signal);
     const headers = new Headers(response.headers);
     headers.set("X-ZYRAXON-Voice", chosen);
+    headers.set("X-ZYRAXON-Tone", tone);
     headers.set("Access-Control-Allow-Origin", "*");
     return new Response(response.body, { status: 200, headers });
   } catch (e) {

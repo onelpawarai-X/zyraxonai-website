@@ -221,12 +221,12 @@ A recording of an hour is a normal thing to transcribe, and the endpoint is buil
 
 > Success: **A 100 MB WAV and an hour-long MP3 both come back 200**
 >
-> Past 8 MB the recording is decoded **window by window** instead of being held whole: about 25 seconds of audio is decoded, transcribed and released before the next window is read. Peak memory is a function of the window length, not the recording's, which is what lets an hour-long file succeed where a whole-file decode would exhaust the runtime.
+> Past 8 MB the recording is decoded **window by window** instead of being held whole: about 30 seconds of audio is decoded, transcribed and released before the next window is read. Peak memory is a function of the window length, not the recording's, which is what lets an hour-long file succeed where a whole-file decode would exhaust the runtime.
 
 | Size | What happens |
 | --- | --- |
 | Up to 8 MB | Whole-file decode. Cheaper for a short clip, and the windowing overhead is not worth paying. |
-| 8 MB – 100 MB | Streamed window by window. Peak memory tracks the ~25 s window, not the file. |
+| 8 MB – 100 MB | Streamed window by window. Peak memory tracks the ~30 s window, not the file. |
 | Over 100 MB | `413`, with the byte count and the limit in the message. |
 
 ### Windows are joined in order, not in the order they finish

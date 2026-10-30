@@ -6,9 +6,10 @@
  *  is one, resample, and report what happened.
  *
  *  Every container ends up as PCM. FLAC used to be handed to the engine
- *  untouched, because the engine can read it — but only up to the length of a
- *  single request, so a long FLAC recording came back truncated. Decoding it
- *  here puts it on the same windowed path as everything else. */
+ *  untouched, because the engine can read it — but with a hard-coded 16 kHz rate
+ *  the engine took on trust, so a 22 050 Hz FLAC (ffmpeg's default) produced an
+ *  empty transcript. Decoding it here puts it on the same windowed path as
+ *  everything else and reports the rate the file actually carries. */
 
 import {
   isSilent,
@@ -113,9 +114,15 @@ function fromPcm(pcm: Pcm, container: Container): Decoded {
   };
 }
 
-/** Seconds of audio in a window the recogniser is sent. The service truncates
- *  somewhere past a minute, so a longer recording is cut here. */
-const WINDOW_SECONDS = 25;
+/** Seconds of audio in a window the recogniser is sent.
+ *
+ *  The batch endpoint imports this rather than keeping its own copy: the
+ *  streaming decoder and the whole-file slicer must cut at the same length, or
+ *  a recording transcribed from its stream and the same recording transcribed
+ *  from memory would be joined from different pieces. A window is sized in the
+ *  *source* rate's samples and resampled after, so this is a duration, not a
+ *  count. */
+export const WINDOW_SECONDS = 30;
 
 /** The audio of one window, already mono and resampled to the rate the
  *  recogniser is fed. */

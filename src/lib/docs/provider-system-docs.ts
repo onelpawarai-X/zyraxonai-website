@@ -311,7 +311,7 @@ async function start(language: string, onText: (text: string, done: boolean) => 
         t: "note",
         kind: "success",
         title: "A 100 MB WAV and an hour-long MP3 both come back 200",
-        text: "Past 8 MB the recording is decoded **window by window** instead of being held whole: about 25 seconds of audio is decoded, transcribed and released before the next window is read. Peak memory is a function of the window length, not the recording's, which is what lets an hour-long file succeed where a whole-file decode would exhaust the runtime.",
+        text: "Past 8 MB the recording is decoded **window by window** instead of being held whole: about 30 seconds of audio is decoded, transcribed and released before the next window is read. Peak memory is a function of the window length, not the recording's, which is what lets an hour-long file succeed where a whole-file decode would exhaust the runtime.",
       },
       {
         t: "table",
@@ -323,7 +323,7 @@ async function start(language: string, onText: (text: string, done: boolean) => 
           ],
           [
             "8 MB – 100 MB",
-            "Streamed window by window. Peak memory tracks the ~25 s window, not the file.",
+            "Streamed window by window. Peak memory tracks the ~30 s window, not the file.",
           ],
           ["Over 100 MB", "`413`, with the byte count and the limit in the message."],
         ],
@@ -468,7 +468,7 @@ curl -s ${TTS} -H "Content-Type: application/json" \\
         t: "table",
         head: ["Field", "Required", "What it does"],
         rows: [
-          ["`text`", "Yes", "What to speak. Up to 5000 characters. Markdown is stripped first."],
+          ["`text`", "Yes", "What to speak. Up to 50,000 characters. Markdown is stripped first, then the text is streamed sentence by sentence."],
           ["`voice`", "No", "An exact voice name from the voices list. Wins over `locale`."],
           [
             "`locale`",
@@ -614,7 +614,7 @@ function finish() {
             "`text` is missing, or nothing remained after markup was removed.",
             "Send the answer's text.",
           ],
-          ["`413`", "The text is over 5000 characters.", "Split it and speak it in parts."],
+          ["`413`", "The text is over 50,000 characters.", "Split it and speak it in parts."],
           ["`502`", "The speech engine refused the connection.", "Retry; it is usually transient."],
         ],
       },

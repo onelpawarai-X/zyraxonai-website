@@ -8,7 +8,15 @@
 //
 // Run: npx tsx --import ./scripts/raw-import-loader.mjs scripts/verify-tts.ts
 import { execFileSync } from "node:child_process";
-import { pickVoice, speakable, escapeXml, type Voice } from "../src/lib/tts/edge-speech.server";
+import {
+  chunkTextIntoSentences,
+  escapeXml,
+  normaliseTone,
+  pickVoice,
+  speakable,
+  ssml,
+  type Voice,
+} from "../src/lib/tts/edge-speech.server";
 import { detectLocale, intoSentences } from "../src/lib/tts/language";
 import { secMsGec, SEC_MS_GEC_VERSION } from "../src/lib/tts/edge-tts-token";
 
@@ -160,6 +168,79 @@ check(
   JSON.stringify(long.map((s) => s.length)),
 );
 check("empty text produces nothing to say", intoSentences("   ").length === 0);
+
+// ── delivery: prosody, breath, and the shape of a long reply ────────────────
+// These are what make the voice sound like a person rather than a machine, and
+// they are pure functions, so they can be pinned without the network.
+const warm = ssml("bn-BD-NabanitaNeural", "এক, দুই। তিন", "warm");
+check("a tone reaches the SSML as prosody", warm.includes("<prosody rate='-3%' pitch='+1Hz'"), warm);
+check(
+  "the voice and language are on the SSML",
+  warm.includes("<voice name='bn-BD-NabanitaNeural'>") && warm.includes("xml:lang='bn-BD'"),
+);
+
+// The engine returns *no audio at all* when the SSML contains a pause element.
+// This is the check that stops that regression coming back: markup that looks
+// like a pause is the one thing that must never be sent.
+check(
+  "no pause element is ever sent, because the engine silences the whole reply",
+  !/<break|<s>|mstts:silence/i.test(warm),
+  warm,
+);
+check(
+  "a terminator is separated from the next word, so its pause survives",
+  ssml("bn-BD-NabanitaNeural", "এক।দুই", "warm").includes("এক। দুই"),
+  ssml("bn-BD-NabanitaNeural", "এক।দুই", "warm"),
+);
+check(
+  "a comma keeps its pause and gains a space",
+  ssml("bn-BD-NabanitaNeural", "এক,দুই", "warm").includes("এক, দুই"),
+);
+check(
+  "a sentence terminator is not mangled",
+  ssml("en-US-EmmaMultilingualNeural", "One. Two.", "warm").includes("One. Two."),
+  ssml("en-US-EmmaMultilingualNeural", "One. Two.", "warm"),
+);
+
+const expressive = ssml("en-US-EmmaMultilingualNeural", "Hello, world.", "expressive");
+check(
+  "expressive is a different delivery, not the same one",
+  expressive.includes("rate='+2%'") && expressive.includes("pitch='+3Hz'") && expressive.includes("volume='+4%'"),
+  expressive,
+);
+check(
+  "natural leaves the engine's own rate",
+  ssml("en-US-EmmaMultilingualNeural", "Hello.", "natural").includes("rate='+0%' pitch='+0Hz'"),
+);
+check("a misspelled tone becomes the default", normaliseTone("wram") === "warm");
+check("a tone is matched case-insensitively", normaliseTone("EXPRESSIVE") === "expressive");
+check("no tone at all becomes the default", normaliseTone(null) === "warm");
+check("an empty code block says nothing at all", speakable("```\n\n```") === "", JSON.stringify(speakable("```\n\n```")));
+check(
+  "a number is not split into sentences",
+  !ssml("en-US-EmmaMultilingualNeural", "Version 19.0.8 is out", "warm").includes("19. 0"),
+  ssml("en-US-EmmaMultilingualNeural", "Version 19.0.8 is out", "warm"),
+);
+check(
+  "a paragraph break is a sentence break",
+  speakable("First para.\n\nSecond para.") === "First para. Second para.",
+  speakable("First para.\n\nSecond para."),
+);
+check(
+  "a hard-wrapped line is not cut into two sentences",
+  speakable("A sentence that was\nwrapped by the editor.") === "A sentence that was wrapped by the editor.",
+  speakable("A sentence that was\nwrapped by the editor."),
+);
+check(
+  "a paragraph after a colon is not spoken as a full stop",
+  !speakable("Here is how:\n\ncode").includes(":."),
+  speakable("Here is how:\n\ncode"),
+);
+check(
+  "a very long reply is cut for streaming",
+  chunkTextIntoSentences("এক। ".repeat(600)).length > 1,
+  `${chunkTextIntoSentences("এক। ".repeat(600)).length} pieces`,
+);
 
 console.log("");
 if (failures) {

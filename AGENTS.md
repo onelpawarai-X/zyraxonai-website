@@ -292,6 +292,39 @@ back as it is synthesised. Three things there are easy to get wrong:
 is unusable, so a fence becomes "a code block, N lines". The voice is chosen from
 the answer's language, so a Bengali reply is read by a Bengali voice.
 
+#### The engine answers a pause *element* with silence
+
+This one is worth its own heading because it is invisible until someone listens.
+Measured against the live engine: an SSML request containing `<break>` — any
+spelling, with `time` or `strength`, self-closed or not — comes back with **zero
+bytes of audio**. Not a short utterance, not an error: `turn.start`, then
+`turn.end`, and nothing in between. `<s>` and `<mstts:silence>` fail the same
+way. So the obvious way to add a "natural breathing pause" silences the entire
+reply, and every check that only asserts a 200 still passes.
+
+The pauses have to come from the text, and they do. On the same two words:
+a comma adds ~0.36 s, a sentence terminator ~1.08 s. `ssml()` therefore only
+normalises the spacing around a terminator — a `।` glued to the next word is read
+as part of it and loses its pause — and leaves the punctuation itself alone. It
+must never emit a pause element. `verify-tts.ts` asserts the absence of one
+(`/<break|<s>|mstts:silence/i`) as well as the spacing, because the failure mode
+is silent audio rather than an error.
+
+`<prosody>` is the one SSML element the engine honours, and it is what the
+`tone` parameter (`warm` default, `expressive`, `natural`, `clear`) sets: rate,
+pitch and volume for the whole utterance. Tone does not change the pauses — a
+pause is what makes speech intelligible, and no tone is better without one.
+
+#### Long text is chunked, so the first byte does not wait for the last word
+
+`SINGLE_UTTERANCE_CHARS` (2000) is where a request stops being one utterance.
+The engine plans a whole utterance before it sends the first frame, so one
+50,000-character utterance makes the caller wait for that plan; chunking bounds
+the wait to the first sentence. Measured on a 5000-character Bengali request:
+time-to-first-audio 7 ms, whole 5.3 MB body in 60 s. `MAX_CHARS` is 50,000 and
+the chunks are piped through one continuous MP3 stream, so a player hears one
+recording rather than a series of clips.
+
 ### Speech to text: one endpoint, two modes, a language you must state
 
 `POST /api/public/stt` is the only speech-to-text URL. It answers in two shapes
@@ -406,13 +439,37 @@ an error:
 - The declared sample rate was hard-coded to `16000`. The engine takes that on
   trust and returns nothing when it does not match the stream, and ffmpeg's FLAC
   default is `22050`.
-- A single request is capped at about thirty seconds. Anything longer was
-  truncated with no indication that text was lost.
 
 So FLAC now goes through `decodeFlac()` like every other container: one PCM
 buffer, cut into windows by `transcribeLong`. The decoder reports the rate it
-found, and `verify-stt.ts` asserts it against a 22 050 Hz fixture, so neither
-half of the bug can come back unnoticed.
+found, and `verify-stt.ts` asserts it against a 22 050 Hz fixture, so the rate
+half of the bug cannot come back unnoticed.
+
+A note on the other half, because the code comment used to claim more than is
+true. It said a single request was "capped at about thirty seconds" and anything
+longer was silently truncated. Measured against the live recogniser, that is
+wrong: clips of 60 s, 90 s and 120 s all came back complete, with no cut-off and
+no error. The window is **30 s for memory and latency, not because the engine
+refuses more** — a window is decoded, transcribed and released before the next is
+read, so peak memory tracks the window rather than the recording. Do not shrink
+it back on the strength of a truncation that does not happen.
+
+#### Window size and concurrency are measured, not guessed
+
+`WINDOW_SECONDS` (30) lives in `ingest.ts` and the batch endpoint imports it, so
+there is one number rather than two that can disagree. `WINDOW_CONCURRENCY` (8)
+is how many windows are in flight. Both were checked against the live engine
+rather than assumed:
+
+- Concurrency 4, 8, 12, 16 and 24 all completed with zero empty results and zero
+  errors. 8 is a comfortable middle: parallel enough to make a long file fast,
+  not so parallel that a burst looks like abuse.
+- A multi-window clip packs back to exactly the whole recording — 30 s/8, 30 s/4
+  and 25 s/4 all produced the same transcript and the same 748 characters, with
+  no empty window — which is the property that matters, because a dropped window
+  is a silently missing sentence, not an error.
+- Measured end to end: a 99 s Bengali recording (four windows) transcribed in
+  3.4 s, complete and in order.
 
 #### A very large recording is streamed, not decoded whole
 
@@ -420,7 +477,7 @@ A whole-file decode holds the entire recording as PCM before the first window is
 sent — a hundred-megabyte MP3 is well over an hour, hundreds of megabytes of
 samples — and the Worker heap dies well before the response. So past
 `STREAM_THRESHOLD_BYTES` (8 MB) the batch path switches to `transcribeStream`,
-which pulls ~25-second windows lazily from `audioChunks()` in `ingest.ts`: the
+which pulls ~30-second windows lazily from `audioChunks()` in `ingest.ts`: the
 streaming decoders in `decode.ts` for compressed containers, and a header-only
 read of the WAV data chunk (or bare PCM) for the rest. Peak memory is then a
 function of the window length rather than the recording's.
@@ -433,7 +490,7 @@ a second at 44.1 kHz. `TRANSCRIBE_BUDGET_MS` still applies: a recording too long
 to finish inside it returns the transcript so far with `truncated: true`, rather
 than holding the connection until the host drops it. `canStream()` reports
 whether a container has this path, and `verify-stt.ts` asserts that a 60 s clip
-comes out as several full 25 s windows carrying exactly the whole recording.
+comes out as several full 30 s windows carrying exactly the whole recording.
 
 #### M4A/AAC is refused, not silently emptied
 
