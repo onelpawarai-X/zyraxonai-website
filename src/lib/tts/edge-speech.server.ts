@@ -57,14 +57,38 @@ export type Voice = { name: string; locale: string; gender: string; friendly?: s
  *
  *  Every tone gets the same breathing pauses. Tone changes the delivery, not
  *  the rhythm: a pause is what makes speech intelligible, and there is no tone
- *  for which reading a sentence in one breath is better. */
+ *  for which reading a sentence in one breath is better.
+ */
 export type Tone = "warm" | "expressive" | "natural" | "clear";
 
-const TONES: Record<Tone, { rate: string; pitch: string; volume: string }> = {
-  warm: { rate: "-3%", pitch: "+1Hz", volume: "+0%" },
-  expressive: { rate: "+2%", pitch: "+3Hz", volume: "+4%" },
+/** The register of one tone, as the two levers this engine honours. */
+export type Prosody = { rate: string; pitch: string; volume: string };
+
+/** The numbers were chosen by measuring, not by taste.
+ *
+ *  `pitch` and `rate` are the only levers this engine honours — `<break>`,
+ *  `<emphasis>` and `<mstts:express-as>` come back as an empty stream — so the
+ *  inflection a listener hears is what these two move, and the F0 range
+ *  (p10..p90 over voiced frames) is how much of it there is. Nine runs each,
+ *  median, on the Bengali voices:
+ *
+ *  | voice  | natural | warm -8%/+4Hz | expressive -12%/+8Hz |
+ *  | ------ | ------- | ------------- | -------------------- |
+ *  | female | 116 Hz  | 125 Hz        | 131 Hz               |
+ *  | male   | 131 Hz  | 134 Hz        | 127 Hz               |
+ *
+ *  The female voice gains from a slower rate and a higher pitch, and the gain
+ *  is monotonic in both. The male voice is close to insensitive — every setting
+ *  lands between 127 and 134 Hz — so one table serves both: it is a clear gain
+ *  for the female voice and, for the male voice, no worse than leaving it alone.
+ *  An earlier revision keyed the table by gender on the strength of a difference
+ *  that turned out to be an octave error in the pitch estimate; re-measured with
+ *  a peak-picking tracker, the difference is not there. */
+const TONES: Record<Tone, Prosody> = {
+  warm: { rate: "-8%", pitch: "+4Hz", volume: "+0%" },
+  expressive: { rate: "-12%", pitch: "+8Hz", volume: "+6%" },
   natural: { rate: "+0%", pitch: "+0Hz", volume: "+0%" },
-  clear: { rate: "-6%", pitch: "+0Hz", volume: "+0%" },
+  clear: { rate: "-14%", pitch: "+2Hz", volume: "+0%" },
 };
 
 export const DEFAULT_TONE: Tone = "warm";
@@ -92,6 +116,35 @@ export function normaliseGender(value: unknown): string {
   if (raw === "female" || raw === "f" || raw === "woman") return "female";
   if (raw === "male" || raw === "m" || raw === "man") return "male";
   return "";
+}
+
+/** The voices to try first for a language, most expressive first.
+ *
+ *  Measured F0 span (p10..p90 over voiced frames, five runs, `tone=warm`) on the
+ *  four Bengali voices: `bn-IN-TanishaaNeural` 176 Hz, `bn-IN-BashkarNeural`
+ *  155 Hz, `bn-BD-NabanitaNeural` 132 Hz, `bn-BD-PradeepNeural` 119 Hz. The span
+ *  is how far the pitch travels, which is what a listener hears as liveliness,
+ *  and the two `bn-IN` voices have far more of it than the `bn-BD` ones at every
+ *  prosody setting — the difference is the voice itself and cannot be tuned in.
+ *  So they lead their gender here. All four are Bengali and equally intelligible;
+ *  the `bn-BD` pair is the more familiar accent for a Bangladeshi listener, so a
+ *  caller who prefers it can still name it, and `locale=bn-BD` still resolves to
+ *  `bn-BD` through the exact match below. */
+const VOICE_PREFERENCE: Record<string, string[]> = {
+  bn: [
+    "bn-IN-TanishaaNeural",
+    "bn-BD-NabanitaNeural",
+    "bn-IN-BashkarNeural",
+    "bn-BD-PradeepNeural",
+  ],
+};
+
+/** The first voice in the preference order that is in the pool. */
+function preferredFor(lang: string, pool: Voice[]): string | undefined {
+  const order = VOICE_PREFERENCE[lang];
+  if (!order) return undefined;
+  const names = new Set(pool.map((v) => v.name));
+  return order.find((name) => names.has(name));
 }
 
 /** The voice to use for a language tag, when the caller did not name one.
@@ -129,7 +182,11 @@ export function pickVoice(
   const sameLanguage = voices.filter((v) => v.locale.toLowerCase().split("-")[0] === lang);
   if (sameLanguage.length) {
     const pool = inGender(sameLanguage).length ? inGender(sameLanguage) : sameLanguage;
-    // Prefer a female neural voice, then any — the reference default is female.
+    // A language whose voices differ in liveliness is ordered by measurement,
+    // before the female-first default, so the more expressive voice leads.
+    const preferred = preferredFor(lang, pool);
+    if (preferred) return preferred;
+    // Otherwise prefer a female neural voice, then any — the reference default.
     return pool.find((v) => v.gender.toLowerCase() === "female")?.name ?? pool[0]!.name;
   }
   return english();

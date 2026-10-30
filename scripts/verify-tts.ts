@@ -114,18 +114,18 @@ check("an empty locale falls back to English", pickVoice("", voices)?.startsWith
 
 // ── gender picks the kind of voice, the language still wins ─────────────────
 check(
-  "female picks the female Bengali voice",
-  pickVoice("bn", voices, undefined, "female") === "bn-BD-NabanitaNeural",
+  "female picks the most expressive female Bengali voice",
+  pickVoice("bn", voices, undefined, "female") === "bn-IN-TanishaaNeural",
   pickVoice("bn", voices, undefined, "female"),
 );
 check(
-  "male picks the male Bengali voice",
-  pickVoice("bn", voices, undefined, "male") === "bn-BD-PradeepNeural",
+  "male picks the most expressive male Bengali voice",
+  pickVoice("bn", voices, undefined, "male") === "bn-IN-BashkarNeural",
   pickVoice("bn", voices, undefined, "male"),
 );
 check(
   "gender is matched case-insensitively",
-  pickVoice("bn", voices, undefined, "MALE") === "bn-BD-PradeepNeural",
+  pickVoice("bn", voices, undefined, "MALE") === "bn-IN-BashkarNeural",
   pickVoice("bn", voices, undefined, "MALE"),
 );
 check(
@@ -135,7 +135,7 @@ check(
 );
 check(
   "an unknown gender is ignored, not an error",
-  pickVoice("bn", voices, undefined, "robot") === "bn-BD-NabanitaNeural",
+  pickVoice("bn", voices, undefined, "robot") === "bn-IN-TanishaaNeural",
   pickVoice("bn", voices, undefined, "robot"),
 );
 check(
@@ -148,6 +148,16 @@ check(
     return picked === "xx-XX-SoloNeural";
   })(),
   pickVoice("xx", voices, undefined, "male"),
+);
+check(
+  "the preference order is scoped to the language that was measured",
+  (() => {
+    // Bengali is ordered by liveliness. A language with no measured order must
+    // keep the old rule, or every language would silently change its voice.
+    const hindi = voices.filter((v) => v.locale.startsWith("hi-"));
+    return pickVoice("hi", hindi) === pickVoice("hi-IN", hindi);
+  })(),
+  pickVoice("hi", voices),
 );
 check(
   "a gender with no locale still picks an English voice of that gender",
@@ -236,7 +246,7 @@ check("empty text produces nothing to say", intoSentences("   ").length === 0);
 // These are what make the voice sound like a person rather than a machine, and
 // they are pure functions, so they can be pinned without the network.
 const warm = ssml("bn-BD-NabanitaNeural", "এক, দুই। তিন", "warm");
-check("a tone reaches the SSML as prosody", warm.includes("<prosody rate='-3%' pitch='+1Hz'"), warm);
+check("a tone reaches the SSML as prosody", warm.includes("<prosody rate='-8%' pitch='+4Hz'"), warm);
 check(
   "the voice and language are on the SSML",
   warm.includes("<voice name='bn-BD-NabanitaNeural'>") && warm.includes("xml:lang='bn-BD'"),
@@ -268,7 +278,7 @@ check(
 const expressive = ssml("en-US-EmmaMultilingualNeural", "Hello, world.", "expressive");
 check(
   "expressive is a different delivery, not the same one",
-  expressive.includes("rate='+2%'") && expressive.includes("pitch='+3Hz'") && expressive.includes("volume='+4%'"),
+  expressive.includes("rate='-12%'") && expressive.includes("pitch='+8Hz'") && expressive.includes("volume='+6%'"),
   expressive,
 );
 check(

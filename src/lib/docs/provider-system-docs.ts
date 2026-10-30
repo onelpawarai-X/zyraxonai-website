@@ -556,7 +556,7 @@ curl -s ${TTS} -H "Content-Type: application/json" \\
         t: "note",
         kind: "tip",
         title: "Naming `voice` also skips a lookup",
-        text: "An exact `voice` skips the voice-catalogue search, so the first byte of audio arrives sooner. It is worth doing in a loop where the language never changes. When the language is not fixed, send `gender` instead and let the voice follow the language: `?locale=bn&gender=female` is read by `bn-BD-NabanitaNeural`, `gender=male` by `bn-BD-PradeepNeural`.",
+        text: "An exact `voice` skips the voice-catalogue search, so the first byte of audio arrives sooner. It is worth doing in a loop where the language never changes. When the language is not fixed, send `gender` instead and let the voice follow the language: `?locale=bn&gender=female` is read by `bn-IN-TanishaaNeural`, `gender=male` by `bn-IN-BashkarNeural`.",
       },
       { t: "h2", text: "Which voices exist" },
       {
@@ -601,13 +601,19 @@ curl -s "${TTS}?text=আজ সকালে আমি চা খেয়েছ�
       },
       {
         t: "table",
-        head: ["Voice", "Median pitch", "Reads as"],
+        head: ["Voice", "Median pitch", "Pitch span", "Reads as"],
         rows: [
-          ["`bn-BD-NabanitaNeural`", "213 Hz", "female"],
-          ["`bn-IN-TanishaaNeural`", "250 Hz", "female"],
-          ["`bn-BD-PradeepNeural`", "121 Hz", "male"],
-          ["`bn-IN-BashkarNeural`", "120 Hz", "male"],
+          ["`bn-IN-TanishaaNeural`", "262 Hz", "176 Hz", "female — the liveliest"],
+          ["`bn-BD-NabanitaNeural`", "232 Hz", "132 Hz", "female"],
+          ["`bn-IN-BashkarNeural`", "133 Hz", "155 Hz", "male — the liveliest"],
+          ["`bn-BD-PradeepNeural`", "132 Hz", "119 Hz", "male"],
         ],
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "Which Bengali voice `locale=bn` picks",
+        text: "The **pitch span** — how far the pitch travels across a sentence — is what a listener hears as liveliness. Measured over the four Bengali voices, the two `bn-IN` voices move nearly twice as far as the `bn-BD` ones, and that is a property of the voice, not a setting: no `tone` narrows the gap. So `locale=bn` resolves to `bn-IN-TanishaaNeural` for `gender=female` and `bn-IN-BashkarNeural` for `gender=male`. Name `bn-BD-NabanitaNeural` or `bn-BD-PradeepNeural` for the Bangladeshi accent, or send `locale=bn-BD` — an exact region match still wins.",
       },
       {
         t: "note",
