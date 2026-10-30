@@ -47,7 +47,7 @@ curl -s https://zyraxonai.lovable.app/api/public/tts -H "Content-Type: applicati
 
 | Field | Required | What it does |
 | --- | --- | --- |
-| `text` | Yes | What to speak. Up to 5000 characters. Markdown is stripped first. |
+| `text` | Yes | What to speak. Up to 50,000 characters. Markdown is stripped first, then the text is streamed sentence by sentence. |
 | `voice` | No | An exact voice name from the voices list. Wins over `locale`. |
 | `locale` | No | A language or region, e.g. `bn`, `bn-IN`, `en-US`. Picks a voice in that language. |
 
@@ -166,5 +166,5 @@ Synthesis runs on Microsoft Edge's Read Aloud engine — the same one behind the
 | Status | Means | What to do |
 | --- | --- | --- |
 | `400` | `text` is missing, or nothing remained after markup was removed. | Send the answer's text. |
-| `413` | The text is over 5000 characters. | Split it and speak it in parts. |
+| `413` | The text is over 50,000 characters. | Split it and speak it in parts. |
 | `502` | The speech engine refused the connection. | Retry; it is usually transient. |

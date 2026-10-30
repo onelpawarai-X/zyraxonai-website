@@ -67,20 +67,36 @@ curl -s ${TTS} -H "Content-Type: application/json" \\
         t: "table",
         head: ["Field", "Required", "What it does"],
         rows: [
-          ["`text`", "Yes", "What to speak. Up to 5000 characters."],
+          ["`text`", "Yes", "What to speak. Up to 50,000 characters. Long text is streamed sentence by sentence."],
           ["`voice`", "No", "An exact voice name from the voices list. Wins over `locale`."],
           [
             "`locale`",
             "No",
             "A language or region, e.g. `bn`, `bn-IN`, `en-US`. Picks a voice in that language.",
           ],
+          [
+            "`tone`",
+            "No",
+            "How it should sound: `warm` (default), `expressive`, `natural` or `clear`. An unknown value becomes the default rather than an error.",
+          ],
         ],
+      },
+      {
+        t: "note",
+        kind: "success",
+        title: "It sounds like a person, and that is deliberate",
+        text: "The text is wrapped in prosody, so the register of a whole answer is set once, and the pauses come from the punctuation the answer already contains: about a third of a second at a comma and about a second at a sentence end. A neural voice reads a long run-on with no pause exactly as written — one unbroken sentence — which is the single biggest reason synthetic speech sounds synthetic. The punctuation was already there; the job is only to make sure the engine sees it as punctuation, which is why a terminator is separated from the word after it. Every tone keeps the same pauses: a pause is what makes speech intelligible, and the tone only changes rate, pitch and volume. Note that a pause *element* in the SSML is not an option: this engine answers a request containing one with no audio at all, so the punctuation is the only mechanism there is.",
       },
       {
         t: "note",
         kind: "success",
         title: "The language is detected — you do not have to send it",
         text: "The endpoint reads the script of the text you send and picks a voice for it. Bengali text is read by a Bengali voice, Devanagari by a Hindi one, Arabic by an Arabic one, and Latin script falls back to English. This is what makes a Bengali answer audible: an English voice reading Bengali does not pronounce the letters at all. Send `locale` only when you want to override the detection.",
+      },
+      { t: "h2", text: "Speaking a whole article" },
+      {
+        t: "p",
+        text: "Long text does not need to be split by the caller. Past about two thousand characters the endpoint splits the text into sentences itself and pipes them through **one continuous MP3 stream**, so the first sentence is heard while the rest is still being synthesised. The first byte of audio does not get slower as the text grows — a whole article starts just as fast as a one-line reply — and a player hears one recording, not a series of clips.",
       },
       { t: "h2", text: "Speaking in real time" },
       {
@@ -352,7 +368,7 @@ ffplay -nodisp -autoexit reply.mp3`,
             "`text` is missing, or nothing remained after markup was removed.",
             "Send the answer's text.",
           ],
-          ["`413`", "The text is over 5000 characters.", "Split it and speak it in parts."],
+          ["`413`", "The text is over 50,000 characters.", "Split it and speak it in parts."],
           [
             "`422`",
             "`language` was not sent to `/api/public/stt`.",

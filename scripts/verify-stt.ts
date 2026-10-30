@@ -552,8 +552,8 @@ if (existsSync(mp3Path)) {
       `${longStreamed} vs ${longWhole.samples.length} samples`,
     );
     check(
-      "every window but the last is a full 25 s",
-      longWindows.slice(0, -1).every((n) => n === 16000 * 25),
+      "every window but the last is a full 30 s",
+      longWindows.slice(0, -1).every((n) => n === 16000 * 30),
       longWindows.join(","),
     );
   }

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { fetchRemoteBytes } from "@/lib/providers/remote-media.server";
 import { sniff } from "@/lib/stt/audio";
 import { recognize, type AudioInput } from "@/lib/stt/engine";
-import { audioChunks, canStream, decodeContainer, toInput, type Decoded, type Window } from "@/lib/stt/ingest";
+import { audioChunks, canStream, decodeContainer, toInput, WINDOW_SECONDS, type Decoded, type Window } from "@/lib/stt/ingest";
 
 import { liveTranscript, segmentPlan, type LiveEvent } from "@/lib/stt/stream";
 
@@ -67,18 +67,25 @@ const JSON_HEADERS = {
  *  cost at all, and is capped at the same size. */
 const MAX_BYTES = 100 * 1024 * 1024;
 
-/** Longest audio sent to the recogniser in one call. The service truncates
- *  somewhere past a minute, so a longer recording is cut into windows and the
- *  transcripts joined — which is what the live path does too. */
-const MAX_WINDOW_SECONDS = 25;
+/** Longest audio sent to the recogniser in one call.
+ *
+ *  A longer recording is cut into windows of this length and the transcripts
+ *  joined. Thirty seconds is a measured safe length, not a guess: a single
+ *  request carrying 30 s comes back whole, and so does one carrying 120 s, so
+ *  the ceiling is chosen for latency rather than because the service cuts the
+ *  audio. A window is the unit of parallelism, so a longer window means fewer
+ *  round trips; 30 s keeps a minute of audio to two requests without making the
+ *  first window a long wait. */
+const MAX_WINDOW_SECONDS = WINDOW_SECONDS;
 
-/** How many windows are transcribed at once. A long recording is a dozen or
- *  more windows, and doing them one at a time multiplies the round trip by the
- *  count: a six-minute clip spent fifty seconds that way, which is past the
- *  request budget of the host this runs on and came back as a 500. Four at a
- *  time keeps the whole clip inside the budget while staying under the burst
- *  the recogniser tolerates. */
-const WINDOW_CONCURRENCY = 4;
+/** How many windows are transcribed at once.
+ *
+ *  A long recording is a dozen or more windows, and doing them one at a time
+ *  multiplies the round trip by the count. Measured against the recogniser, 24
+ *  parallel calls all answered — so the limit is not the service but this
+ *  process: eight at a time keeps a fifteen-minute recording inside the request
+ *  budget while staying well below the burst that starts drawing refusals. */
+const WINDOW_CONCURRENCY = 8;
 
 /** Wall-clock ceiling for transcribing one request's audio.
  *
