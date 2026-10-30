@@ -68,11 +68,20 @@ curl -s ${TTS} -H "Content-Type: application/json" \\
         head: ["Field", "Required", "What it does"],
         rows: [
           ["`text`", "Yes", "What to speak. Up to 50,000 characters. Long text is streamed sentence by sentence."],
-          ["`voice`", "No", "An exact voice name from the voices list. Wins over `locale`."],
+          [
+            "`voice`",
+            "No",
+            "An exact voice name from the voices list. Wins over `locale` and `gender`.",
+          ],
           [
             "`locale`",
             "No",
             "A language or region, e.g. `bn`, `bn-IN`, `en-US`. Picks a voice in that language.",
+          ],
+          [
+            "`gender`",
+            "No",
+            "`female` or `male`. Chooses that kind of voice in the language. Ignored when the language has no voice of that gender.",
           ],
           [
             "`tone`",
@@ -174,6 +183,45 @@ curl -s ${VOICES} | jq -r '.data[] | select(.locale | startswith("bn")) | .name'
 # bn-BD-PradeepNeural
 # bn-IN-BashkarNeural
 # bn-IN-TanishaaNeural`,
+      },
+      { t: "h2", text: "Choosing a female or a male voice" },
+      {
+        t: "p",
+        text: "Two levers decide who speaks. **`voice`** names an exact voice from the catalogue. **`gender`** asks for a *kind* of voice — `female` or `male` — in whatever language the text is in, so you never have to know a voice name. If both are sent, `voice` wins.",
+      },
+      {
+        t: "code",
+        lang: "bash",
+        code: `# By kind: the voice follows the language of the text.
+curl -s "${TTS}?text=আজ সকালে আমি চা খেয়েছি&locale=bn&gender=female" -o female.mp3
+curl -s "${TTS}?text=আজ সকালে আমি চা খেয়েছি&locale=bn&gender=male"   -o male.mp3
+
+# By name: an exact voice from the catalogue.
+curl -s "${TTS}?text=আজ সকালে আমি চা খেয়েছি&voice=bn-BD-PradeepNeural" -o named.mp3
+
+# X-ZYRAXON-Voice in the response names the voice that actually spoke.`,
+      },
+      {
+        t: "table",
+        head: ["Voice", "Median pitch", "Reads as"],
+        rows: [
+          ["`bn-BD-NabanitaNeural`", "213 Hz", "female"],
+          ["`bn-IN-TanishaaNeural`", "250 Hz", "female"],
+          ["`bn-BD-PradeepNeural`", "121 Hz", "male"],
+          ["`bn-IN-BashkarNeural`", "120 Hz", "male"],
+        ],
+      },
+      {
+        t: "note",
+        kind: "warn",
+        title: "An unknown voice name is a 400, not silence",
+        text: "The engine replies to a voice name it does not know with a 200 and **no audio**, which looks like a broken file rather than a typo. The endpoint checks the name against the catalogue and answers **400 `unknown voice`** instead. Names are matched case-insensitively, and the header always reports the catalogue spelling.",
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "The language outranks the gender",
+        text: "When a language has no voice of the requested gender, the gender is dropped and a voice in that language is used anyway — a voice in the wrong language does not read the text at all. Bengali has a female and a male voice, so `gender` always resolves there.",
       },
       { t: "h2", text: "Play it in a browser, as it streams" },
       {

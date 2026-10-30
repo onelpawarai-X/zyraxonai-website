@@ -79,27 +79,60 @@ export function normaliseTone(value: unknown): Tone {
   return raw in TONES ? (raw as Tone) : DEFAULT_TONE;
 }
 
+/** The gender a caller asked for, or an empty string when they did not.
+ *
+ *  Only `female` and `male` are recognised, because those are the two the voice
+ *  catalogue uses. Anything else — a typo, "woman", an empty value — is treated
+ *  as "no preference" rather than as an error: the voice is then chosen by
+ *  language, which is what happens when the parameter is absent. */
+export function normaliseGender(value: unknown): string {
+  const raw = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (raw === "female" || raw === "f" || raw === "woman") return "female";
+  if (raw === "male" || raw === "m" || raw === "man") return "male";
+  return "";
+}
+
 /** The voice to use for a language tag, when the caller did not name one.
  *
  *  Matching is by language prefix, so `bn` finds `bn-BD-NabanitaNeural` and a
  *  caller who writes "Bengali" or "bn-IN" still gets a Bengali voice. Falling
  *  back to a fixed voice would answer a Bengali question in English, which is
- *  the one outcome that makes a spoken reply worse than none. */
-export function pickVoice(locale: string, voices: Voice[], preferred?: string): string | undefined {
+ *  the one outcome that makes a spoken reply worse than none.
+ *
+ *  `gender` (`female`/`male`) narrows the choice within that language. It is the
+ *  weaker of the two: when the language has no voice of the asked gender the
+ *  gender is dropped, because a voice in the wrong language reads nothing. */
+export function pickVoice(
+  locale: string,
+  voices: Voice[],
+  preferred?: string,
+  gender?: string,
+): string | undefined {
   if (preferred && voices.some((v) => v.name === preferred)) return preferred;
   const want = locale.trim().toLowerCase().replace("_", "-");
-  if (!want) return voices.find((v) => v.locale === "en-US")?.name;
-  const exact = voices.find((v) => v.locale.toLowerCase() === want);
-  if (exact) return exact.name;
+  // A requested gender narrows the candidates. When the language has no voice of
+  // that gender the whole list is kept: the language is the stronger
+  // requirement, because a voice in the wrong language does not read the text.
+  const asked = gender?.trim().toLowerCase();
+  const inGender = (list: Voice[]) =>
+    asked ? list.filter((v) => v.gender.toLowerCase() === asked) : list;
+  const english = () => inGender(voices.filter((v) => v.locale === "en-US"))[0]?.name;
+  if (!want) return english();
+  const exactMatches = voices.filter((v) => v.locale.toLowerCase() === want);
+  if (exactMatches.length) {
+    const pool = inGender(exactMatches).length ? inGender(exactMatches) : exactMatches;
+    return pool[0]!.name;
+  }
   const lang = want.split("-")[0]!;
   const sameLanguage = voices.filter((v) => v.locale.toLowerCase().split("-")[0] === lang);
   if (sameLanguage.length) {
+    const pool = inGender(sameLanguage).length ? inGender(sameLanguage) : sameLanguage;
     // Prefer a female neural voice, then any — the reference default is female.
-    return (
-      sameLanguage.find((v) => v.gender.toLowerCase() === "female")?.name ?? sameLanguage[0]!.name
-    );
+    return pool.find((v) => v.gender.toLowerCase() === "female")?.name ?? pool[0]!.name;
   }
-  return voices.find((v) => v.locale === "en-US")?.name;
+  return english();
 }
 
 /** Escape text for SSML, so a reply containing `<` or `&` is spoken, not parsed. */

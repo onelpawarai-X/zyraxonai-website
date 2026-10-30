@@ -535,11 +535,20 @@ curl -s ${TTS} -H "Content-Type: application/json" \\
         head: ["Field", "Required", "What it does"],
         rows: [
           ["`text`", "Yes", "What to speak. Up to 50,000 characters. Markdown is stripped first, then the text is streamed sentence by sentence."],
-          ["`voice`", "No", "An exact voice name from the voices list. Wins over `locale`."],
+          [
+            "`voice`",
+            "No",
+            "An exact voice name from the voices list. Wins over `locale` and `gender`.",
+          ],
           [
             "`locale`",
             "No",
             "A language or region, e.g. `bn`, `bn-IN`, `en-US`. Picks a voice in that language.",
+          ],
+          [
+            "`gender`",
+            "No",
+            "`female` or `male`. Chooses that kind of voice in the language, so a caller can pick the voice without knowing the catalogue. Ignored when the language has no voice of that gender.",
           ],
         ],
       },
@@ -547,7 +556,7 @@ curl -s ${TTS} -H "Content-Type: application/json" \\
         t: "note",
         kind: "tip",
         title: "Naming `voice` also skips a lookup",
-        text: "An exact `voice` skips the voice-catalogue search, so the first byte of audio arrives sooner. It is worth doing in a loop where the language never changes.",
+        text: "An exact `voice` skips the voice-catalogue search, so the first byte of audio arrives sooner. It is worth doing in a loop where the language never changes. When the language is not fixed, send `gender` instead and let the voice follow the language: `?locale=bn&gender=female` is read by `bn-BD-NabanitaNeural`, `gender=male` by `bn-BD-PradeepNeural`.",
       },
       { t: "h2", text: "Which voices exist" },
       {
@@ -571,6 +580,46 @@ curl -s ${VOICES} | jq -r '.locales[]' | sort -u | head -20`,
         kind: "info",
         title: "Read the catalogue once, then cache it",
         text: "The voice list changes rarely, so a client that offers a picker should fetch it once and keep it. Matching a voice to the language an answer came back in is the whole reason to read it.",
+      },
+      { t: "h2", text: "Choosing a female or a male voice" },
+      {
+        t: "p",
+        text: "There are two ways to decide who speaks, and they are different levers. **`voice`** names an exact voice from the catalogue. **`gender`** asks for a *kind* of voice — `female` or `male` — in whatever language the text is in, so a caller does not need to know any voice name.",
+      },
+      {
+        t: "code",
+        lang: "bash",
+        code: `# By kind: let the voice follow the language of the text.
+curl -s "${TTS}?text=আজ সকালে আমি চা খেয়েছি&locale=bn&gender=female" -o female.mp3
+curl -s "${TTS}?text=আজ সকালে আমি চা খেয়েছি&locale=bn&gender=male"   -o male.mp3
+
+# By name: an exact voice from the catalogue.
+curl -s "${TTS}?text=আজ সকালে আমি চা খেয়েছি&voice=bn-BD-PradeepNeural" -o named.mp3
+
+# The response header says which voice actually spoke.
+# X-ZYRAXON-Voice: bn-BD-PradeepNeural`,
+      },
+      {
+        t: "table",
+        head: ["Voice", "Median pitch", "Reads as"],
+        rows: [
+          ["`bn-BD-NabanitaNeural`", "213 Hz", "female"],
+          ["`bn-IN-TanishaaNeural`", "250 Hz", "female"],
+          ["`bn-BD-PradeepNeural`", "121 Hz", "male"],
+          ["`bn-IN-BashkarNeural`", "120 Hz", "male"],
+        ],
+      },
+      {
+        t: "note",
+        kind: "warn",
+        title: "A voice name that does not exist is a 400, not silence",
+        text: "The engine answers an unknown voice name with a 200 and **no audio at all**, which looks like a broken file rather than a mistake. The endpoint checks the name against the catalogue first and returns **400 `unknown voice`**, so the error is visible. The name is also matched case-insensitively, so `bn-bd-pradeepneural` works and the header reports the catalogue spelling.",
+      },
+      {
+        t: "note",
+        kind: "tip",
+        title: "The language outranks the gender",
+        text: "If a language has no voice of the requested gender, the gender is dropped and a voice in that language is used anyway — a voice in the wrong language does not read the text at all, so the language is the stronger requirement. Bengali has both a female and a male voice, so `gender` always resolves there.",
       },
       { t: "h2", text: "Speaking a streaming answer" },
       {
