@@ -136,14 +136,22 @@ export async function* liveTranscript(
     sampleRate: rate,
   });
 
+  /** Fold a fresh transcript into the committed text and return only what it
+   *  added. The overlap that carries a word across a segment boundary makes the
+   *  recogniser hear that word a second time, so a plain join would print it
+   *  twice — `alignAddition` finds the longest suffix of what is committed that
+   *  is also a prefix of the fresh text and keeps only what follows. */
+  const merge = (text: string): string => {
+    const added = alignAddition(committed, text);
+    if (added) committed = `${committed} ${added}`.replace(/\s+/g, " ").trim();
+    return added;
+  };
+
   const commit = async (): Promise<LiveEvent[]> => {
     const out: LiveEvent[] = [];
     const pcm = currentPcm();
     const text = await transcribe(pcm);
-    if (text) {
-      committed = committed ? `${committed} ${text}` : text;
-      segments++;
-    }
+    if (merge(text)) segments++;
     // Carry the tail so a word on the boundary is heard whole by the next
     // segment, then report the new committed text.
     const tail = keepNewest(pcm, overlapSeconds).samples;
@@ -181,9 +189,10 @@ export async function* liveTranscript(
       try {
         const pcm = currentPcm();
         const text = await transcribe(pcm);
+        const added = text ? alignAddition(committed, text) : "";
         yield {
           type: "partial",
-          text: text ? (committed ? `${committed} ${text}` : text) : committed,
+          text: added ? `${committed} ${added}`.replace(/\s+/g, " ").trim() : committed,
         };
       } finally {
         busy = false;
@@ -197,10 +206,7 @@ export async function* liveTranscript(
   if (pendingLength > rate / 4) {
     const pcm = currentPcm();
     const text = await transcribe(pcm);
-    if (text) {
-      committed = committed ? `${committed} ${text}` : text;
-      segments++;
-    }
+    if (merge(text)) segments++;
   }
   yield {
     type: "done",

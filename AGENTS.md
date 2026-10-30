@@ -271,6 +271,37 @@ failure break everyone else's stream.
 
 ### Speech: the Edge engine, and the token that guards it
 
+**Only `<prosody>` works.** Measured against the live engine, an SSML body
+containing `<break>`, `<emphasis>`, `<sub>`, `<phoneme>` or
+`<mstts:express-as>` — in any spelling — comes back as a turn with **zero bytes
+of audio**, no error. So the entire expressive surface is `rate`, `pitch` and
+`volume` on one `<prosody>` element, and the only other lever is the punctuation
+in the text: a comma adds ~0.36 s and a sentence terminator ~1.08 s, while
+newlines and `…` add nothing at all. That is why `ssml()` normalises the spacing
+around punctuation and never emits a pause tag.
+
+**The numbers in `TONES` are measured, not taste.** The metric is F0 span —
+p10..p90 over voiced frames — because that is what a listener hears as
+liveliness. Nine runs each, median, on the Bengali voices: the female voice goes
+116 Hz at `natural` → 125 Hz at `warm` → 131 Hz at `expressive`, while the male
+voice sits at 127–134 Hz at every setting. So one table serves both: a clear gain
+for the female voice and no worse than neutral for the male one. An earlier
+revision keyed the table by gender on the strength of a difference that turned
+out to be an **octave error in the pitch estimate** — the naive tracker picks the
+second autocorrelation peak and reports half the true F0. Pick the *first* strong
+peak, not the global maximum, and the difference disappears.
+
+**Voice liveliness is a property of the voice, not of prosody.** Same measurement
+on all four Bengali voices: `bn-IN-TanishaaNeural` 176 Hz, `bn-IN-BashkarNeural`
+155 Hz, `bn-BD-NabanitaNeural` 132 Hz, `bn-BD-PradeepNeural` 119 Hz. The `bn-IN`
+pair moves nearly twice as far as the `bn-BD` pair at every setting, and no
+`tone` closes the gap. `VOICE_PREFERENCE` in `edge-speech.server.ts` therefore
+orders `bn` by that measurement, so `locale=bn` resolves to the livelier voice
+for each gender. It is scoped per language on purpose: a language with no
+measured order keeps the old female-first rule, so this cannot silently change
+some other language's default. `locale=bn-BD` still gets `bn-BD`, because an
+exact region match is checked before the language fallback.
+
 Every answer can be spoken. `src/lib/tts/edge-speech.server.ts` drives Microsoft
 Edge's Read Aloud engine over a WebSocket, and `/api/public/tts` streams the MP3
 back as it is synthesised. Three things there are easy to get wrong:
