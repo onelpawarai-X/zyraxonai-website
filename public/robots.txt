@@ -8,6 +8,11 @@ Allow: /api/public/zyraxon/v1/models
 Allow: /api/public/zyraxon/v1/provider
 Allow: /api/public/zyraxon/v1/integrations
 Allow: /api/public/stt
+# The two download contracts are documents in the same sense: a client reads
+# them to find the newest file, it does not call them. The OS one names the
+# image and its checksums, so a fetch tool can answer "where do I get ZyraxonOS".
+Allow: /api/public/downloads
+Allow: /api/public/os
 
 # Everything else under the API is a call, not a document: a crawler has no
 # reason to hit one, and letting it would waste both sides' budget. The pages

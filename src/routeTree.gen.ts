@@ -54,6 +54,7 @@ import { Route as ApiPublicGithubReleasesRouteImport } from './routes/api/public
 import { Route as ApiPublicMcpRegistryRouteImport } from './routes/api/public/mcp-registry'
 import { Route as ApiPublicNebulaRouteImport } from './routes/api/public/nebula'
 import { Route as ApiPublicNpmPackagesRouteImport } from './routes/api/public/npm-packages'
+import { Route as ApiPublicOsRouteImport } from './routes/api/public/os'
 import { Route as ApiPublicRepoStatsRouteImport } from './routes/api/public/repo-stats'
 import { Route as ApiPublicSitemapDynamicRouteImport } from './routes/api/public/sitemap-dynamic'
 import { Route as ApiPublicSttRouteImport } from './routes/api/public/stt'
@@ -322,6 +323,11 @@ const ApiPublicNebulaRoute = ApiPublicNebulaRouteImport.update({
 const ApiPublicNpmPackagesRoute = ApiPublicNpmPackagesRouteImport.update({
   id: '/api/public/npm-packages',
   path: '/api/public/npm-packages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicOsRoute = ApiPublicOsRouteImport.update({
+  id: '/api/public/os',
+  path: '/api/public/os',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRepoStatsRoute = ApiPublicRepoStatsRouteImport.update({
@@ -601,6 +607,7 @@ export interface FileRoutesByFullPath {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
+  '/api/public/os': typeof ApiPublicOsRoute
   '/api/public/repo-stats': typeof ApiPublicRepoStatsRoute
   '/api/public/sitemap-dynamic': typeof ApiPublicSitemapDynamicRoute
   '/api/public/stt': typeof ApiPublicSttRoute
@@ -691,6 +698,7 @@ export interface FileRoutesByTo {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
+  '/api/public/os': typeof ApiPublicOsRoute
   '/api/public/repo-stats': typeof ApiPublicRepoStatsRoute
   '/api/public/sitemap-dynamic': typeof ApiPublicSitemapDynamicRoute
   '/api/public/stt': typeof ApiPublicSttRoute
@@ -782,6 +790,7 @@ export interface FileRoutesById {
   '/api/public/mcp-registry': typeof ApiPublicMcpRegistryRoute
   '/api/public/nebula': typeof ApiPublicNebulaRouteWithChildren
   '/api/public/npm-packages': typeof ApiPublicNpmPackagesRoute
+  '/api/public/os': typeof ApiPublicOsRoute
   '/api/public/repo-stats': typeof ApiPublicRepoStatsRoute
   '/api/public/sitemap-dynamic': typeof ApiPublicSitemapDynamicRoute
   '/api/public/stt': typeof ApiPublicSttRoute
@@ -874,6 +883,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
+    | '/api/public/os'
     | '/api/public/repo-stats'
     | '/api/public/sitemap-dynamic'
     | '/api/public/stt'
@@ -964,6 +974,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
+    | '/api/public/os'
     | '/api/public/repo-stats'
     | '/api/public/sitemap-dynamic'
     | '/api/public/stt'
@@ -1054,6 +1065,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-registry'
     | '/api/public/nebula'
     | '/api/public/npm-packages'
+    | '/api/public/os'
     | '/api/public/repo-stats'
     | '/api/public/sitemap-dynamic'
     | '/api/public/stt'
@@ -1144,6 +1156,7 @@ export interface RootRouteChildren {
   ApiPublicMcpRegistryRoute: typeof ApiPublicMcpRegistryRoute
   ApiPublicNebulaRoute: typeof ApiPublicNebulaRouteWithChildren
   ApiPublicNpmPackagesRoute: typeof ApiPublicNpmPackagesRoute
+  ApiPublicOsRoute: typeof ApiPublicOsRoute
   ApiPublicRepoStatsRoute: typeof ApiPublicRepoStatsRoute
   ApiPublicSitemapDynamicRoute: typeof ApiPublicSitemapDynamicRoute
   ApiPublicSttRoute: typeof ApiPublicSttRoute
@@ -1496,6 +1509,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/npm-packages'
       fullPath: '/api/public/npm-packages'
       preLoaderRoute: typeof ApiPublicNpmPackagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/os': {
+      id: '/api/public/os'
+      path: '/api/public/os'
+      fullPath: '/api/public/os'
+      preLoaderRoute: typeof ApiPublicOsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/repo-stats': {
@@ -1914,6 +1934,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMcpRegistryRoute: ApiPublicMcpRegistryRoute,
   ApiPublicNebulaRoute: ApiPublicNebulaRouteWithChildren,
   ApiPublicNpmPackagesRoute: ApiPublicNpmPackagesRoute,
+  ApiPublicOsRoute: ApiPublicOsRoute,
   ApiPublicRepoStatsRoute: ApiPublicRepoStatsRoute,
   ApiPublicSitemapDynamicRoute: ApiPublicSitemapDynamicRoute,
   ApiPublicSttRoute: ApiPublicSttRoute,

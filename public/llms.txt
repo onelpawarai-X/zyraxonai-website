@@ -18,6 +18,13 @@
 - [Integration catalogue](https://zyraxonai.lovable.app/api/public/zyraxon/v1/integrations):
   the exact values and snippets for OpenHands, Cursor, Cline, Aider, LiteLLM,
   LangChain, the Vercel AI SDK, Termux and others.
+- [Agent downloads as JSON](https://zyraxonai.lovable.app/api/public/downloads):
+  every ZYRAXON Agent build of the newest release, per platform, each with a
+  direct-download URL.
+- [ZyraxonOS as JSON](https://zyraxonai.lovable.app/api/public/os):
+  the newest ZyraxonOS image — the tag, the file, its size, whether it is one
+  file or several parts, and the published checksums. The image downloads from
+  `/api/download/zyraxon-os`.
 
 ## One page per function
 

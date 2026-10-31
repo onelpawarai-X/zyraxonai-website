@@ -7,8 +7,10 @@ import { StarCountdown } from "@/components/site/StarCountdown";
 import { ButtonAnchor, ButtonLink, Card, Divider, Section, Tag } from "@/components/site/ui";
 import { CommandBox } from "@/components/site/provider-parts";
 import { DownloadCounter } from "@/components/site/DownloadCounter";
+import { OsDownloadCard } from "@/components/site/OsDownload";
 import { StarCounter } from "@/components/site/StarCounter";
 import { CLI_COMMANDS, GITHUB_URL, HOME_DOWNLOADS, RELEASES_URL } from "@/lib/downloads";
+import { OS_RELEASES_URL } from "@/lib/os-download";
 import {
   COMPARE_COLS,
   COMPARE_ROWS,
@@ -126,6 +128,8 @@ function HomePage() {
               <Divider />
               <Community />
               <Divider />
+              <ZyraxonOs />
+              <Divider />
               <MobileApp />
               <Divider />
               <StarCounter />
@@ -177,6 +181,15 @@ function Hero() {
               <Icon name="monitor" size={17} />
               Download for desktop
             </ButtonLink>
+            <ButtonAnchor
+              href="/api/download/zyraxon-os"
+              external={false}
+              size="lg"
+              variant="glass"
+            >
+              <Icon name="layers" size={17} />
+              Download ZyraxonOS
+            </ButtonAnchor>
             <ButtonLink to="/demo" size="lg" variant="glass">
               <Icon name="eye" size={17} />
               Watch the demo
@@ -570,6 +583,15 @@ function Download() {
         ))}
       </div>
 
+      {/* The OS belongs in this band: it is a download of the same product, and a
+          visitor scanning for "where do I get it" should find it without opening
+          the download page. It is the whole machine rather than an app, so it
+          sits on its own beneath the four platform cells and is kept to a
+          readable width rather than stretched across the row. */}
+      <div className="mt-4 max-w-2xl">
+        <OsDownloadCard />
+      </div>
+
       {/* The one-liner belongs beside the buttons: anyone who would rather paste
           a command than run an installer should not have to open another page to
           find it. */}
@@ -729,6 +751,55 @@ function Community() {
             <ButtonLink to="/docs" variant="glass" size="sm">
               Read the docs
             </ButtonLink>
+          </div>
+        </Card>
+      </div>
+    </Section>
+  );
+}
+
+/** Why a visitor would want the whole OS rather than the app on their own. */
+const OS_WHY = [
+  "The agent is built in — no install, no configuration, no separate download.",
+  "A glass-morphism desktop on a Debian base, so the tools you already know are there.",
+  "Boot it from a USB to try it, or install it to the disk and keep it.",
+  "Every release is published from the ZyraxonOS repository on its own version.",
+];
+
+/** ZyraxonOS, given its own section at the foot of the page.
+ *
+ *  It ships from a separate repository and on its own version, and it is the
+ *  whole machine rather than an app to run on one, so it does not belong in the
+ *  desktop row. The card reads the newest release of the OS repository on every
+ *  load, so the tag and the file it offers are always current without a deploy. */
+function ZyraxonOs() {
+  return (
+    <Section
+      label="Operating system"
+      title="Or boot straight into ZYRAXON"
+      description="ZyraxonOS is a glass-morphism Linux built on Debian with the agent permanently installed. It ships from its own repository and on its own version, so this card reads the newest release each time it loads — the file it offers is always the current image."
+    >
+      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <OsDownloadCard />
+        <Card className="flex flex-col p-6">
+          <span className="zx-glass grid h-11 w-11 place-items-center rounded-xl text-primary">
+            <Icon name="bolt" size={20} />
+          </span>
+          <h3 className="mt-4 text-[17px] font-semibold tracking-tight text-foreground">
+            Why an OS and not just the app
+          </h3>
+          <ul className="mt-3 space-y-2.5">
+            {OS_WHY.map((w) => (
+              <li key={w} className="flex items-start gap-2.5 text-[13.5px] text-muted-foreground">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
+                {w}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-auto pt-5">
+            <ButtonAnchor href={OS_RELEASES_URL} variant="glass" size="sm">
+              All ZyraxonOS releases
+            </ButtonAnchor>
           </div>
         </Card>
       </div>
