@@ -15,9 +15,6 @@ import {
   OS_REQUIREMENTS,
   OS_TAGLINE,
   formatBytes,
-  osFetchScript,
-  osPartId,
-  osRejoinCommand,
 } from "@/lib/os-download";
 
 const RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases`;
@@ -31,13 +28,9 @@ type OsData = {
   release: {
     tag: string;
     releaseUrl: string;
-    primary: OsAsset | null;
-    parts: OsAsset[];
-    split: boolean;
-    isoName: string | null;
-    isoSha256: string | null;
-    totalBytes: number | null;
-    checksums: { name: string; hash: string }[];
+    isLatest: boolean;
+    iso: OsAsset;
+    sha256: string | null;
     screenshot: OsAsset | null;
   } | null;
   error?: string;
@@ -427,35 +420,13 @@ function DownloadZyraxonAgent() {
  * The ZyraxonOS card.
  *
  * It sits above the Agent's buttons because it is the whole machine, not an app
- * to run on one. Everything on it comes from the resolver: the tag, the file
- * name, the size and whether the image is one file or several parts.
- *
- * The split case is the one it exists to explain. The current image is over
- * GitHub's 2 GB per-asset limit, so there is no ISO to download — only parts,
- * which are not bootable on their own. The card says so, offers one command that
- * fetches, rejoins and verifies them, still lists every part for anyone who would
- * rather click, and shows the checksum of the *rejoined* ISO, which is the only
- * thing that proves the download is complete.
+ * to run on one. The image is a single `.iso` — the resolver only answers with a
+ * real ISO file, stepping back to the newest release that carries one — so the
+ * card is one download button and the facts around it: the tag, the file name,
+ * the size. Nothing to assemble, nothing to explain.
  */
 function OsCard({ os }: { os: OsData | null }) {
   const rel = os?.release ?? null;
-  const parts = rel?.parts ?? [];
-  const rejoin =
-    rel?.split && rel.isoName
-      ? osRejoinCommand(
-          rel.isoName,
-          parts.map((p) => p.name),
-        )
-      : "";
-  const script =
-    rel?.split && rel.isoName
-      ? osFetchScript(
-          rel.tag,
-          rel.isoName,
-          parts.map((p) => p.name),
-          rel.isoSha256,
-        )
-      : "";
 
   return (
     <Card className="mt-6 overflow-hidden p-0">
@@ -469,7 +440,9 @@ function OsCard({ os }: { os: OsData | null }) {
               {OS_NAME} — the whole operating system
             </h2>
             {rel?.tag ? (
-              <Tag tone="success">Newest release {rel.tag}</Tag>
+              <Tag tone="success">
+                {rel.isLatest ? "Newest release" : "Latest with an ISO"} {rel.tag}
+              </Tag>
             ) : (
               <Tag tone="muted">{os?.error ? "Release unread" : "Checking releases…"}</Tag>
             )}
@@ -484,10 +457,8 @@ function OsCard({ os }: { os: OsData | null }) {
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <ButtonAnchor href={`/api/download/${OS_ID}`} external={false} size="md">
-              <Icon name="layers" size={16} />
-              {rel?.split
-                ? `Download part 1 of ${parts.length} (.iso.part00)`
-                : "Download ZyraxonOS (.iso)"}
+              <Icon name="download" size={16} />
+              Download {OS_NAME} (.iso)
             </ButtonAnchor>
             <ButtonAnchor href={OS_RELEASES_URL} variant="glass" size="md">
               Release notes
@@ -496,65 +467,19 @@ function OsCard({ os }: { os: OsData | null }) {
 
           <p className="mt-3 font-mono text-[11.5px] text-muted-foreground">
             {OS_DETAIL}
-            {rel?.totalBytes ? ` · ${formatBytes(rel.totalBytes)}` : ""}
-            {rel?.isoName ? ` · ${rel.isoName}` : ""}
+            {rel?.iso?.size ? ` · ${formatBytes(rel.iso.size)}` : ""}
+            {rel?.iso?.name ? ` · ${rel.iso.name}` : ""}
           </p>
 
-          {rel?.split && (
-            <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-4">
-              <p className="text-[13px] font-semibold text-foreground">
-                There is no single ISO file to click — here is why
-              </p>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
-                {rel.isoName} is {formatBytes(rel.totalBytes)}, and GitHub refuses any release file
-                over 2 GB. The image is therefore published as {parts.length} parts. A part on its
-                own is not bootable, so every part must be downloaded and rejoined into the ISO
-                before you write it to a USB stick.
-              </p>
-
-              <p className="mt-3 text-[12.5px] font-semibold text-foreground">
-                Fastest way — one command fetches, rejoins and verifies
-              </p>
-              <div className="mt-2">
-                <CommandBox code={script} label="copy command" />
-              </div>
-
-              <p className="mt-3 text-[12.5px] font-semibold text-foreground">
-                Or download the parts yourself
-              </p>
-              <div className="mt-2 grid gap-1.5">
-                {parts.map((p) => (
-                  <a
-                    key={p.name}
-                    href={`/api/download/${osPartId(p.name)}`}
-                    className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 font-mono text-[11.5px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-                  >
-                    <span className="truncate">{p.name}</span>
-                    <span className="shrink-0 text-muted-foreground/70">{formatBytes(p.size)}</span>
-                  </a>
-                ))}
-              </div>
-
-              <p className="mt-3 text-[12.5px] font-semibold text-foreground">Then rejoin them</p>
-              <div className="mt-2">
-                <CommandBox code={rejoin} label="copy command" />
-              </div>
-            </div>
-          )}
-
-          {rel?.isoSha256 ? (
+          {rel?.sha256 ? (
             <details className="mt-4 rounded-xl border border-border p-4">
               <summary className="cursor-pointer text-[12.5px] font-semibold text-foreground">
-                Verify the finished ISO
+                Verify the download
               </summary>
               <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                This is the checksum of the rejoined {rel.isoName} — the release publishes it
-                against the ISO, not against any part, so it can only be checked once the parts are
-                joined. It is how you know the download is complete.
+                Check the ISO against its published SHA-256 after downloading it.
               </p>
-              <p className="mt-2 break-all font-mono text-[11px] text-foreground">
-                {rel.isoSha256}
-              </p>
+              <p className="mt-2 break-all font-mono text-[11px] text-foreground">{rel.sha256}</p>
             </details>
           ) : null}
         </div>
