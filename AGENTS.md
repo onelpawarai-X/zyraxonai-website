@@ -1063,6 +1063,49 @@ Android card in the download row and its own `MobileApp` section at the foot of 
 page; the download page has a `mobile` group above `desktop`. The `smartphone` icon
 in `Icon.tsx` exists for these.
 
+## ZyraxonOS: a second resolver, because it is a second repository
+
+The OS ships from `onelpawarai-X/ZyraxonOS` on its own version, so it does not go
+through `TARGETS`. It has its own resolver, `src/lib/os-releases.server.ts`, its own
+JSON route (`GET /api/public/os`) and its own ids on the *same* redirect route
+(`/api/download/zyraxon-os`, `/api/download/zyraxon-os-part01`). `$platform.ts`
+checks `isOsId()` first, so a future Agent target cannot shadow the OS id.
+
+The GitHub read itself — `latestTag`, `assetsOf`, `recentTags`, `downloadUrl`,
+`releaseUrl` — lives once, in `src/lib/github-releases.server.ts`, and both
+resolvers import it. It is the public-HTML read: no token, so a rejected credential
+can never be mistaken for "this repo has no releases", which is the bug that once
+blanked the download page.
+
+**The tag is never hardcoded, and neither is the file name.** The resolver walks
+`recentTags()` newest-first and takes the first release that actually carries an
+image, so a release published a minute ago is on the page after the next 60 s cache
+lapse with no deploy — and a release whose upload failed falls back to the previous
+tag that has one. `verify-os-downloads.ts` asserts the resolved tag equals
+`/releases/latest`, so a stale pin fails the suite instead of the page.
+
+**An image may be one file or several parts, and both must work.** GitHub refuses
+an asset over 2 GB, so an image past that is published as
+`ZyraxonOS-<v>-amd64.iso.part00`, `.part01`, … — and the repository has shipped
+both shapes (`v1.0`/`v1.1` single, `v9.0.0` split). `readImage()` handles each and
+the split case is not cosmetic: a part is not bootable, so the page says "published
+in N parts", lists every part, and hands over `cat part00 part01 … > <iso>`. The
+parts are ordered by their **numeric** suffix, not by GitHub's listing order — the
+listing put `part01` before `part00` for `v9.0.0`, and rejoining in that order
+produces a corrupt image. `readImage()` is exported so the test can pin both shapes
+on fixtures, because only one is live at a time.
+
+Two smaller things that would be silent bugs: the rejoin name strips only the
+`.part<NN>` suffix (stripping the whole match once produced
+`ZyraxonOS-9.0.0-amd64`, an ISO with no `.iso`), and a checksum file
+(`SHA256SUMS`, `.sha256`) is never read as the image — `.iso.sha256` ends in
+`.iso` to a careless pattern.
+
+`src/lib/os-download.ts` holds the client-safe facts (the repo, the button id, the
+rejoin command, the requirements) so a page never imports a `.server` module.
+`OsDownloadCard` is the one card the homepage's download band and its own
+`ZyraxonOs` section both render, so the two cannot name different tags.
+
 ## The conversation's reply loop must filter its reads
 
 `GET /conversation/<id>/events/search` returns every event kind — tool actions,

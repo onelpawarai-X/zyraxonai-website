@@ -74,6 +74,9 @@ const ENDPOINTS: Entry[] = [
   { path: "/api/public/github-releases", changefreq: "daily", priority: "0.5" },
   { path: "/api/public/zyraxon-releases", changefreq: "daily", priority: "0.5" },
   { path: "/api/public/downloads", changefreq: "weekly", priority: "0.5" },
+  // The ZyraxonOS image has its own resolver and its own repository, so it has
+  // its own contract URL beside the Agent's.
+  { path: "/api/public/os", changefreq: "weekly", priority: "0.5" },
   { path: "/api/public/desktop-feedback", changefreq: "monthly", priority: "0.4" },
   { path: "/api/public/site-content", changefreq: "weekly", priority: "0.4" },
   { path: "/api/public/builder/chat", changefreq: "weekly", priority: "0.4" },

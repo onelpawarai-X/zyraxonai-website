@@ -1,26 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { assetsOf, downloadUrl, recentTags, releaseUrl } from "@/lib/github-releases.server";
 
 /**
- * Server-side release resolver for the download buttons.
+ * Server-side release resolver for the ZYRAXON Agent download buttons.
  *
- * Reads GitHub the way a browser does, not the way the REST API does: no
- * token, no rate-limit bucket, nothing that can expire. Two public requests,
- * both of which any visitor could make by hand:
- *
- *   1. `GET /releases/latest`  — 302s to `.../releases/tag/<tag>`, so the tag
- *      comes out of the Location header.
- *   2. `GET /releases/expanded_assets/<tag>` — the HTML fragment GitHub itself
- *      renders for the release page's asset list. Every asset name is in it.
- *
- * A token was the previous design and it was the bug: when the configured
- * token was rejected GitHub answers 401, and the old code read that as "this
- * repo has no releases" and silently produced an empty page. The public paths
- * cannot fail that way — there is no credential to be stale.
- *
- * Assets are then addressed through GitHub's own
- * `/releases/latest/download/<name>` shortcut, which 302s to the asset and
- * answers `content-disposition: attachment`, so a click saves the file instead
- * of opening a page.
+ * The GitHub read itself lives in `@/lib/github-releases.server` — public HTML,
+ * no token — and is shared with the ZyraxonOS resolver. This module is what
+ * turns that read into one answer per button: which asset a platform gets, and
+ * which release it came from.
  */
 export const REPO = "onelpawarai-X/ZYRAXON-AI";
 /** Primary account first, mirror/fallback account second. */
@@ -47,12 +34,6 @@ const HEADERS = {
 
 // Files that are never a real download.
 const NOISE = /(\.blockmap$|\.ya?ml$|\.sha\d*$|\.sig$|\.txt$|^latest|\.json$)/i;
-
-/** What a browser-like read of GitHub sends. No Authorization, ever. */
-const GH_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (compatible; ZYRAXON-site/1.0; +https://zyraxonai.lovable.app)",
-  Accept: "text/html,application/xhtml+xml",
-};
 
 export type Target = {
   /** Stable id used in URLs: /api/download/<id>. */
@@ -305,103 +286,6 @@ export type Resolved = {
   error?: string;
 };
 
-/** `GET /releases/latest` and read the tag out of the redirect. */
-async function latestTag(repo: string): Promise<string | null> {
-  try {
-    const res = await fetch(`https://github.com/${repo}/releases/latest`, {
-      headers: GH_HEADERS,
-      redirect: "manual",
-    });
-    const location = res.headers.get("location") ?? "";
-    const tag = location.match(/\/releases\/tag\/(.+)$/)?.[1];
-    return tag ? decodeURIComponent(tag) : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * The asset list GitHub renders on the release page.
- *
- * Parsed from the anchor `href`s rather than the surrounding markup, because the
- * classes are presentation and change without notice. The size sits in the same
- * row as the link, so both come out of one request.
- */
-async function assetsOf(
-  repo: string,
-  tag: string,
-): Promise<{ name: string; size: number | null }[]> {
-  try {
-    const res = await fetch(
-      `https://github.com/${repo}/releases/expanded_assets/${encodeURIComponent(tag)}`,
-      { headers: GH_HEADERS },
-    );
-    if (!res.ok) return [];
-    const html = await res.text();
-
-    const seen = new Set<string>();
-    const out: { name: string; size: number | null }[] = [];
-
-    // Each asset is one <li> row. Splitting on the row boundary keeps a size
-    // paired with the link in its own row instead of the next one's.
-    for (const row of html.split(/<li\b/)) {
-      const link = row.match(/href="\/[^"]*\/releases\/download\/[^"]*?\/([^"/]+)"/);
-      if (!link) continue;
-      const name = decodeURIComponent(link[1]);
-      if (seen.has(name)) continue;
-      seen.add(name);
-
-      // "30.3 MB" — the unit is always present, so the number is unambiguous.
-      const size = row.match(/([\d.]+)\s*(KB|MB|GB)\b/);
-      let bytes: number | null = null;
-      if (size) {
-        const n = Number(size[1]);
-        const factor = size[2] === "GB" ? 1024 ** 3 : size[2] === "MB" ? 1024 ** 2 : 1024;
-        bytes = Math.round(n * factor);
-      }
-      out.push({ name, size: bytes });
-    }
-    return out;
-  } catch {
-    return [];
-  }
-}
-
-/**
- * The tags this repository has published, newest first.
- *
- * Read from the releases page rather than `/releases/latest`, because the page
- * carries the whole tag history. That is what lets the resolver keep working
- * when the newest release happens to be missing a build: it can step back to
- * the previous tag that does carry one, instead of showing a dead button until
- * someone re-uploads.
- */
-async function recentTags(repo: string): Promise<string[]> {
-  try {
-    const res = await fetch(`https://github.com/${repo}/releases`, { headers: GH_HEADERS });
-    if (!res.ok) return [];
-    const html = await res.text();
-    const escaped = repo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(`/${escaped}/releases/tag/([^"?#]+)`, "g");
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const m of html.matchAll(re)) {
-      const tag = decodeURIComponent(m[1]);
-      if (seen.has(tag)) continue;
-      seen.add(tag);
-      out.push(tag);
-    }
-    return out;
-  } catch {
-    return [];
-  }
-}
-
-export function downloadUrl(repo: string, tag: string, name: string) {
-  // GitHub's own shortcut: 302 to the asset, served as an attachment.
-  return `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${encodeURIComponent(name)}`;
-}
-
 /**
  * Resolve every target against the newest release that actually carries it.
  *
@@ -489,7 +373,7 @@ async function computeReleases(): Promise<Resolved> {
       platforms[target.id] = {
         name: `${primary.tag}${target.ext}`,
         url: target.fromTag(primary.repo, primary.tag),
-        releaseUrl: `https://github.com/${primary.repo}/releases/tag/${encodeURIComponent(primary.tag)}`,
+        releaseUrl: releaseUrl(primary.repo, primary.tag),
         size: null,
         tag: primary.tag,
         publishedAt: null,
@@ -500,9 +384,7 @@ async function computeReleases(): Promise<Resolved> {
 
     // A target that names its repositories is searched only there, in the order
     // given; everything else searches the desktop list.
-    const scope = target.repos
-      ? perRepo.filter((r) => target.repos!.includes(r.repo))
-      : perRepo;
+    const scope = target.repos ? perRepo.filter((r) => target.repos!.includes(r.repo)) : perRepo;
 
     outer: for (const rel of scope) {
       const usable = rel.assets.filter((a) => !NOISE.test(a.name));
@@ -512,7 +394,7 @@ async function computeReleases(): Promise<Resolved> {
           platforms[target.id] = {
             name: hit.name,
             url: downloadUrl(rel.repo, rel.tag, hit.name),
-            releaseUrl: `https://github.com/${rel.repo}/releases/tag/${encodeURIComponent(rel.tag)}`,
+            releaseUrl: releaseUrl(rel.repo, rel.tag),
             size: hit.size,
             tag: rel.tag,
             publishedAt: null,
@@ -527,7 +409,7 @@ async function computeReleases(): Promise<Resolved> {
   return {
     latest: {
       tag: primary.tag,
-      url: `https://github.com/${primary.repo}/releases/tag/${encodeURIComponent(primary.tag)}`,
+      url: releaseUrl(primary.repo, primary.tag),
       publishedAt: null,
       repo: primary.repo,
     },
