@@ -26,9 +26,9 @@ function check(name: string, ok: boolean, detail?: unknown) {
 process.env.GITHUB_PERSONAL_ACCESS_TOKEN = "ghp_thisTokenIsDeliberatelyInvalid00000000";
 process.env.GITHUB_TOKEN = "ghp_thisTokenIsDeliberatelyInvalid00000000";
 
-const { OS_ID, OS_PART_PREFIX, OS_REPO, isOsId, readImage, resolveOs, resolveOsTarget } = await import(
-  "../src/lib/os-releases.server"
-);
+const { OS_ID, OS_PART_PREFIX, OS_REPO, isOsId, readImage, resolveOs, resolveOsTarget } =
+  await import("../src/lib/os-releases.server");
+const { osFetchScript, osPartId } = await import("../src/lib/os-download");
 
 // ── Both release shapes, on fixtures ─────────────────────────────────────────
 //
@@ -44,10 +44,16 @@ const { OS_ID, OS_PART_PREFIX, OS_REPO, isOsId, readImage, resolveOs, resolveOsT
   ]);
   check(
     "a single-file release resolves to its ISO",
-    single?.primary?.name === "ZyraxonOS-1.0-amd64.iso" && single.parts.length === 1 && !single.split,
+    single?.primary?.name === "ZyraxonOS-1.0-amd64.iso" &&
+      single.parts.length === 1 &&
+      !single.split,
     single?.primary?.name,
   );
-  check("a single-file release keeps the ISO name", single?.isoName === "ZyraxonOS-1.0-amd64.iso", single?.isoName);
+  check(
+    "a single-file release keeps the ISO name",
+    single?.isoName === "ZyraxonOS-1.0-amd64.iso",
+    single?.isoName,
+  );
   check(
     "a single-file release reports the whole size",
     single?.totalBytes === 1487339520,
@@ -75,6 +81,43 @@ const { OS_ID, OS_PART_PREFIX, OS_REPO, isOsId, readImage, resolveOs, resolveOsT
     "a split release sums its parts",
     split?.totalBytes === 1992294400 + 595476480,
     split?.totalBytes,
+  );
+
+  // The download id must come from the part's own number. A padded release
+  // (`part01`...) would be addressed by the wrong id if the array index were
+  // used, and the button would quietly fetch its neighbour.
+  check(
+    "a part id is built from the part's own number, not its position",
+    osPartId("ZyraxonOS-9.0.0-amd64.iso.part01") === `${OS_ID}-part01`,
+    osPartId("ZyraxonOS-9.0.0-amd64.iso.part01"),
+  );
+
+  // The one-command fetch must download every part, rejoin them and verify the
+  // result - those three steps are the whole reason it is offered.
+  const script = osFetchScript(
+    "v9.0.0",
+    "ZyraxonOS-9.0.0-amd64.iso",
+    ["ZyraxonOS-9.0.0-amd64.iso.part00", "ZyraxonOS-9.0.0-amd64.iso.part01"],
+    "12bca1bbb7b51b9b73e6bf5fd2da51837f2733749fb26aeedc5f229fdd1050b0",
+  );
+  check(
+    "the fetch command names every part",
+    script.includes("part00") && script.includes("part01"),
+  );
+  check(
+    "the fetch command rejoins the parts into the ISO",
+    script.includes(
+      'cat ZyraxonOS-9.0.0-amd64.iso.part00 ZyraxonOS-9.0.0-amd64.iso.part01 > "ZyraxonOS-9.0.0-amd64.iso"',
+    ),
+  );
+  check(
+    "the fetch command verifies the rejoined ISO",
+    script.includes("sha256sum -c -") &&
+      script.includes("12bca1bbb7b51b9b73e6bf5fd2da51837f2733749fb26aeedc5f229fdd1050b0"),
+  );
+  check(
+    "the fetch command points at the release, not a hardcoded file",
+    script.includes("/releases/download/v9.0.0"),
   );
 
   // A release with no image at all must not be mistaken for one.
@@ -129,21 +172,25 @@ if (rel) {
     check("a split image sums to a whole size", Boolean(rel.totalBytes), rel.totalBytes);
     // The rejoin name must still be an ISO: `cat part00 part01 > x` is only a
     // bootable image when `x` ends in `.iso`.
-    check(
-      "the rejoin name drops only the part suffix",
-      /\.iso$/i.test(rel.isoName!),
-      rel.isoName,
-    );
+    check("the rejoin name drops only the part suffix", /\.iso$/i.test(rel.isoName!), rel.isoName);
   } else {
     check("a single-file image is one part", rel.parts.length === 1, `${rel.parts.length}`);
   }
 
-  // Every part id the page could build must resolve to its own part.
-  const ids = rel.parts.map((_, i) => `${OS_PART_PREFIX}${String(i).padStart(2, "0")}`);
+  // Every part id the page builds must resolve to its own part. The id comes
+  // from the part's own number (`osPartId`), not its position in the list —
+  // building it from the index is the bug this pins, because a release that
+  // numbers its parts `part01`… would then serve the neighbouring part.
+  const ids = rel.parts.map((p) => osPartId(p.name));
   const resolved = await Promise.all(ids.map((id) => resolveOsTarget(id)));
   check(
     "every part id resolves to its own part",
     resolved.every((a, i) => a?.name === rel.parts[i]?.name),
+    ids.join(", "),
+  );
+  check(
+    "part ids come from each part's own number",
+    ids.every((id, i) => id === `${OS_ID}-part${rel.parts[i]!.name.match(/\.part(\d+)$/i)![1]}`),
     ids.join(", "),
   );
   check(
@@ -156,7 +203,10 @@ if (rel) {
   check("the bare id is recognised", isOsId(OS_ID));
   check("a part id is recognised", isOsId(`${OS_PART_PREFIX}01`));
   check("an unrelated id is not claimed", !isOsId("windows") && !isOsId("android"));
-  check("an out-of-range part does not resolve", (await resolveOsTarget(`${OS_PART_PREFIX}99`)) === null);
+  check(
+    "an out-of-range part does not resolve",
+    (await resolveOsTarget(`${OS_PART_PREFIX}99`)) === null,
+  );
 
   // Checksums are optional; when present they must be real.
   if (rel.checksums.length) {
@@ -164,6 +214,14 @@ if (rel) {
       "every checksum is a 64-character hex digest",
       rel.checksums.every((c) => /^[0-9a-f]{64}$/.test(c.hash)),
       `${rel.checksums.length} checksum(s)`,
+    );
+    // The published checksum is of the *rejoined* image. A part's hash would be
+    // useless here: it can only be checked before the rejoin, which proves
+    // nothing about the ISO the visitor boots.
+    check(
+      "the image checksum names the ISO, never a part",
+      Boolean(rel.isoSha256) && /^[0-9a-f]{64}$/.test(rel.isoSha256!),
+      rel.isoSha256 ?? "(none matched the ISO)",
     );
   } else {
     console.log("SKIP  no checksum file in this release");

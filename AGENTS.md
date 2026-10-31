@@ -1087,13 +1087,34 @@ tag that has one. `verify-os-downloads.ts` asserts the resolved tag equals
 **An image may be one file or several parts, and both must work.** GitHub refuses
 an asset over 2 GB, so an image past that is published as
 `ZyraxonOS-<v>-amd64.iso.part00`, `.part01`, … — and the repository has shipped
-both shapes (`v1.0`/`v1.1` single, `v9.0.0` split). `readImage()` handles each and
-the split case is not cosmetic: a part is not bootable, so the page says "published
-in N parts", lists every part, and hands over `cat part00 part01 … > <iso>`. The
-parts are ordered by their **numeric** suffix, not by GitHub's listing order — the
-listing put `part01` before `part00` for `v9.0.0`, and rejoining in that order
-produces a corrupt image. `readImage()` is exported so the test can pin both shapes
-on fixtures, because only one is live at a time.
+both shapes (`v1.0`/`v1.1` single, `v9.0.0` split). The current image **is** split,
+so there is no ISO file on the release page at all, and that is the whole reason
+the card exists: a visitor who expects one `.iso` and finds `part00` reads it as a
+broken page. The card therefore says in as many words that GitHub caps a release
+file at 2 GB and the image is over it, and hands over **one command** that fetches
+every part, rejoins them and checks the published hash — a bare `cat` line leaves
+the visitor to fetch each part, run it in the right directory and verify by hand,
+three steps where any one wrong gives an image that will not boot. The parts are
+ordered by their **numeric** suffix, not by GitHub's listing order — the listing
+put `part01` before `part00` for `v9.0.0`, and rejoining in that order produces a
+corrupt image. `readImage()` is exported so the test can pin both shapes on
+fixtures, because only one is live at a time.
+
+**A part id comes from the part's own number, never its array index.** The page
+builds `/api/download/<id>` with `osPartId(name)`, which reads the digits out of
+`.part<NN>`. Building it from the loop index (`part${i}`) works only while the
+release numbers its parts from zero with two digits — the moment it ships
+`part01`… or `part1`…, every button fetches its neighbour, and nothing about the
+page looks wrong. `verify-os-downloads.ts` pins the derivation, not just the
+round-trip, because the earlier version built its fixture ids from the index and so
+agreed with the bug it was meant to catch.
+
+**The published checksum is of the rejoined ISO, not of a part.** A split
+release's `SHA256SUMS` names `…amd64.iso` and no part at all, so `isoSha256` is
+matched on the basename (one release wrote `build/ZyraxonOS-1.0-amd64.iso`) and can
+only be checked after the rejoin. It is the one way a visitor can tell a complete
+download from a truncated one, which a part download makes easy to get wrong — so
+the verify step is the last line of the fetch command, not a note beside it.
 
 Two smaller things that would be silent bugs: the rejoin name strips only the
 `.part<NN>` suffix (stripping the whole match once produced
@@ -1102,9 +1123,10 @@ Two smaller things that would be silent bugs: the rejoin name strips only the
 `.iso` to a careless pattern.
 
 `src/lib/os-download.ts` holds the client-safe facts (the repo, the button id, the
-rejoin command, the requirements) so a page never imports a `.server` module.
-`OsDownloadCard` is the one card the homepage's download band and its own
-`ZyraxonOs` section both render, so the two cannot name different tags.
+rejoin command, the part-id builder, the fetch command, the requirements) so a page
+never imports a `.server` module. `OsDownloadCard` is the one card the homepage's
+download band and its own `ZyraxonOs` section both render, so the two cannot name
+different tags.
 
 ## The conversation's reply loop must filter its reads
 
