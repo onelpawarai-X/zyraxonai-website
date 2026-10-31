@@ -32,58 +32,6 @@ export const OS_REQUIREMENTS = [
 export const OS_BLURB =
   "Boot the whole machine into ZYRAXON. Debian underneath, the agent on top — no install of the app first, no separate download.";
 
-/**
- * How the parts of a split image are rejoined.
- *
- * GitHub refuses an asset larger than 2 GB, so a bigger image is published as
- * `.iso.part00`, `.iso.part01`, … and they must be joined before the file is an
- * ISO again. `cat` in order does exactly that, and the caller passes the parts
- * in order.
- */
-export function osRejoinCommand(isoName: string, partNames: string[]): string {
-  return `cat ${partNames.join(" ")} > ${isoName}`;
-}
-
-/**
- * The download id for one part, taken from the part's own number.
- *
- * Not from its position in the list: a release that numbers its parts
- * `part01`…`part02` (or pads them differently) would be addressed by the wrong
- * id if the index were used, and the button would fetch its neighbour.
- */
-export function osPartId(partName: string): string {
-  const n = partName.match(/\.part(\d+)$/i)?.[1] ?? "0";
-  return `${OS_ID}-part${n}`;
-}
-
-/**
- * One command that fetches every part, rejoins them and verifies the result.
- *
- * The card can hand a visitor two links and a `cat` line, but that still leaves
- * them to fetch each part, run the rejoin in the right directory and check the
- * hash themselves — three steps where any one wrong gives an image that will not
- * boot, with nothing to say why. This does all three from a single paste, and it
- * refuses to leave a half-downloaded ISO behind if a part fails.
- */
-export function osFetchScript(
-  tag: string,
-  isoName: string,
-  partNames: string[],
-  sha256?: string | null,
-): string {
-  const base = `https://github.com/${OS_REPO}/releases/download/${tag}`;
-  const parts = partNames.join(" ");
-  const lines = [
-    `BASE="${base}"`,
-    `for p in ${parts}; do curl -fL --retry 3 -O "$BASE/$p" || exit 1; done`,
-    `cat ${parts} > "${isoName}" && rm -f ${parts}`,
-  ];
-  // The rejoin is only trustworthy if the hash is checked after it, so the
-  // published checksum is the last step rather than a note beside the command.
-  if (sha256) lines.push(`echo "${sha256}  ${isoName}" | sha256sum -c -`);
-  return lines.join("\n");
-}
-
 /** The whole image's size, or the sum of its parts, as a human string. */
 export function formatBytes(bytes?: number | null): string {
   if (!bytes) return "";

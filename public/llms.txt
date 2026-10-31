@@ -22,9 +22,9 @@
   every ZYRAXON Agent build of the newest release, per platform, each with a
   direct-download URL.
 - [ZyraxonOS as JSON](https://zyraxonai.lovable.app/api/public/os):
-  the newest ZyraxonOS image — the tag, the file, its size, whether it is one
-  file or several parts, and the published checksums. The image downloads from
-  `/api/download/zyraxon-os`.
+  the newest downloadable ZyraxonOS image — the tag, the `.iso` file, its size and
+  the published checksum. A release that carries no `.iso` is skipped, so the file
+  is always one bootable image. It downloads from `/api/download/zyraxon-os`.
 
 ## One page per function
 

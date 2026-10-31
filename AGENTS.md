@@ -1067,9 +1067,9 @@ in `Icon.tsx` exists for these.
 
 The OS ships from `onelpawarai-X/ZyraxonOS` on its own version, so it does not go
 through `TARGETS`. It has its own resolver, `src/lib/os-releases.server.ts`, its own
-JSON route (`GET /api/public/os`) and its own ids on the *same* redirect route
-(`/api/download/zyraxon-os`, `/api/download/zyraxon-os-part01`). `$platform.ts`
-checks `isOsId()` first, so a future Agent target cannot shadow the OS id.
+JSON route (`GET /api/public/os`) and its own id on the *same* redirect route
+(`/api/download/zyraxon-os`). `$platform.ts` checks `isOsId()` first, so a future
+Agent target cannot shadow the OS id.
 
 The GitHub read itself — `latestTag`, `assetsOf`, `recentTags`, `downloadUrl`,
 `releaseUrl` — lives once, in `src/lib/github-releases.server.ts`, and both
@@ -1077,56 +1077,35 @@ resolvers import it. It is the public-HTML read: no token, so a rejected credent
 can never be mistaken for "this repo has no releases", which is the bug that once
 blanked the download page.
 
-**The tag is never hardcoded, and neither is the file name.** The resolver walks
-`recentTags()` newest-first and takes the first release that actually carries an
-image, so a release published a minute ago is on the page after the next 60 s cache
-lapse with no deploy — and a release whose upload failed falls back to the previous
-tag that has one. `verify-os-downloads.ts` asserts the resolved tag equals
-`/releases/latest`, so a stale pin fails the suite instead of the page.
+**One file, one button.** The page offers exactly one thing — the `.iso` — and a
+single click saves it. The tag is never hardcoded and neither is the file name: the
+resolver walks `recentTags()` newest-first and takes the first release that carries
+an `.iso`, so a release published a minute ago is on the page after the next 60 s
+cache lapse with no deploy.
 
-**An image may be one file or several parts, and both must work.** GitHub refuses
-an asset over 2 GB, so an image past that is published as
-`ZyraxonOS-<v>-amd64.iso.part00`, `.part01`, … — and the repository has shipped
-both shapes (`v1.0`/`v1.1` single, `v9.0.0` split). The current image **is** split,
-so there is no ISO file on the release page at all, and that is the whole reason
-the card exists: a visitor who expects one `.iso` and finds `part00` reads it as a
-broken page. The card therefore says in as many words that GitHub caps a release
-file at 2 GB and the image is over it, and hands over **one command** that fetches
-every part, rejoins them and checks the published hash — a bare `cat` line leaves
-the visitor to fetch each part, run it in the right directory and verify by hand,
-three steps where any one wrong gives an image that will not boot. The parts are
-ordered by their **numeric** suffix, not by GitHub's listing order — the listing
-put `part01` before `part00` for `v9.0.0`, and rejoining in that order produces a
-corrupt image. `readImage()` is exported so the test can pin both shapes on
-fixtures, because only one is live at a time.
+**Only a real `.iso` counts.** `readIso()` matches `/\.iso$/i` and nothing else.
+`.iso.part00` and `.iso.sha256` do not end in `.iso`, so a split image and a
+checksum file are both invisible to it — deliberately. The repository's newest
+release (`v9.0.0`) is over GitHub's 2 GB per-asset limit and is therefore published
+as `.iso.part00`/`.part01`, which are not files a visitor can boot; the resolver
+steps back to the newest release that *does* carry an ISO (`v1.1`) and offers that.
+That fallback is why `isLatest` exists: the page labels the file "Newest release" or
+"Latest with an ISO" from it, so an older image is never mislabelled as the newest.
+The step-back is bounded by `TAG_LOOKBACK` so a repository that stopped publishing
+ISOs does not cost an unbounded number of GitHub reads.
 
-**A part id comes from the part's own number, never its array index.** The page
-builds `/api/download/<id>` with `osPartId(name)`, which reads the digits out of
-`.part<NN>`. Building it from the loop index (`part${i}`) works only while the
-release numbers its parts from zero with two digits — the moment it ships
-`part01`… or `part1`…, every button fetches its neighbour, and nothing about the
-page looks wrong. `verify-os-downloads.ts` pins the derivation, not just the
-round-trip, because the earlier version built its fixture ids from the index and so
-agreed with the bug it was meant to catch.
-
-**The published checksum is of the rejoined ISO, not of a part.** A split
-release's `SHA256SUMS` names `…amd64.iso` and no part at all, so `isoSha256` is
-matched on the basename (one release wrote `build/ZyraxonOS-1.0-amd64.iso`) and can
-only be checked after the rejoin. It is the one way a visitor can tell a complete
-download from a truncated one, which a part download makes easy to get wrong — so
-the verify step is the last line of the fetch command, not a note beside it.
-
-Two smaller things that would be silent bugs: the rejoin name strips only the
-`.part<NN>` suffix (stripping the whole match once produced
-`ZyraxonOS-9.0.0-amd64`, an ISO with no `.iso`), and a checksum file
-(`SHA256SUMS`, `.sha256`) is never read as the image — `.iso.sha256` ends in
-`.iso` to a careless pattern.
+**The published checksum is the ISO's own.** `readChecksum()` matches the digest on
+the basename (`SHA256SUMS` names `…amd64.iso`; one release wrote
+`build/ZyraxonOS-1.0-amd64.iso`) and surfaces it as `sha256`, shown as a collapsible
+"Verify the download". A checksum file is never read as the image: `.iso.sha256`
+ends in `.sha256`, and the pattern is anchored so it cannot be mistaken for one.
 
 `src/lib/os-download.ts` holds the client-safe facts (the repo, the button id, the
-rejoin command, the part-id builder, the fetch command, the requirements) so a page
-never imports a `.server` module. `OsDownloadCard` is the one card the homepage's
-download band and its own `ZyraxonOs` section both render, so the two cannot name
-different tags.
+requirements) so a page never imports a `.server` module. `OsDownloadCard` is the
+one card the homepage's download band and its own `ZyraxonOs` section both render,
+so the two cannot name different tags. `verify-os-downloads.ts` asserts the resolved
+file really is an `.iso`, that a split fixture reads as no image, that the button id
+resolves to it, and that it answers as an attachment.
 
 ## The conversation's reply loop must filter its reads
 
