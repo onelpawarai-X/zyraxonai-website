@@ -15,6 +15,8 @@ import {
   OS_REQUIREMENTS,
   OS_TAGLINE,
   formatBytes,
+  osFetchScript,
+  osPartId,
   osRejoinCommand,
 } from "@/lib/os-download";
 
@@ -33,6 +35,7 @@ type OsData = {
     parts: OsAsset[];
     split: boolean;
     isoName: string | null;
+    isoSha256: string | null;
     totalBytes: number | null;
     checksums: { name: string; hash: string }[];
     screenshot: OsAsset | null;
@@ -425,10 +428,14 @@ function DownloadZyraxonAgent() {
  *
  * It sits above the Agent's buttons because it is the whole machine, not an app
  * to run on one. Everything on it comes from the resolver: the tag, the file
- * name, the size and whether the image is one file or several parts. The one
- * thing it must get right is the split case — a part is not an ISO, so the page
- * says so and hands over the command that rejoins them rather than letting a
- * visitor boot from `part00`.
+ * name, the size and whether the image is one file or several parts.
+ *
+ * The split case is the one it exists to explain. The current image is over
+ * GitHub's 2 GB per-asset limit, so there is no ISO to download — only parts,
+ * which are not bootable on their own. The card says so, offers one command that
+ * fetches, rejoins and verifies them, still lists every part for anyone who would
+ * rather click, and shows the checksum of the *rejoined* ISO, which is the only
+ * thing that proves the download is complete.
  */
 function OsCard({ os }: { os: OsData | null }) {
   const rel = os?.release ?? null;
@@ -438,6 +445,15 @@ function OsCard({ os }: { os: OsData | null }) {
       ? osRejoinCommand(
           rel.isoName,
           parts.map((p) => p.name),
+        )
+      : "";
+  const script =
+    rel?.split && rel.isoName
+      ? osFetchScript(
+          rel.tag,
+          rel.isoName,
+          parts.map((p) => p.name),
+          rel.isoSha256,
         )
       : "";
 
@@ -469,7 +485,9 @@ function OsCard({ os }: { os: OsData | null }) {
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <ButtonAnchor href={`/api/download/${OS_ID}`} external={false} size="md">
               <Icon name="layers" size={16} />
-              {rel?.split ? "Download first part (.iso.part00)" : "Download ZyraxonOS (.iso)"}
+              {rel?.split
+                ? `Download part 1 of ${parts.length} (.iso.part00)`
+                : "Download ZyraxonOS (.iso)"}
             </ButtonAnchor>
             <ButtonAnchor href={OS_RELEASES_URL} variant="glass" size="md">
               Release notes
@@ -484,21 +502,31 @@ function OsCard({ os }: { os: OsData | null }) {
 
           {rel?.split && (
             <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-4">
-              <p className="text-[12.5px] font-semibold text-foreground">
-                This image is published in {parts.length} parts
+              <p className="text-[13px] font-semibold text-foreground">
+                There is no single ISO file to click — here is why
               </p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
-                GitHub refuses an asset larger than 2 GB, so the ISO is cut. Download every part,
-                then rejoin them in order — a part on its own is not bootable.
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                {rel.isoName} is {formatBytes(rel.totalBytes)}, and GitHub refuses any release file
+                over 2 GB. The image is therefore published as {parts.length} parts. A part on its
+                own is not bootable, so every part must be downloaded and rejoined into the ISO
+                before you write it to a USB stick.
               </p>
-              <div className="mt-3">
-                <CommandBox code={rejoin} label="copy command" />
+
+              <p className="mt-3 text-[12.5px] font-semibold text-foreground">
+                Fastest way — one command fetches, rejoins and verifies
+              </p>
+              <div className="mt-2">
+                <CommandBox code={script} label="copy command" />
               </div>
-              <div className="mt-3 grid gap-1.5">
-                {parts.map((p, i) => (
+
+              <p className="mt-3 text-[12.5px] font-semibold text-foreground">
+                Or download the parts yourself
+              </p>
+              <div className="mt-2 grid gap-1.5">
+                {parts.map((p) => (
                   <a
                     key={p.name}
-                    href={`/api/download/${OS_ID}-part${String(i).padStart(2, "0")}`}
+                    href={`/api/download/${osPartId(p.name)}`}
                     className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 font-mono text-[11.5px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
                   >
                     <span className="truncate">{p.name}</span>
@@ -506,23 +534,27 @@ function OsCard({ os }: { os: OsData | null }) {
                   </a>
                 ))}
               </div>
+
+              <p className="mt-3 text-[12.5px] font-semibold text-foreground">Then rejoin them</p>
+              <div className="mt-2">
+                <CommandBox code={rejoin} label="copy command" />
+              </div>
             </div>
           )}
 
-          {rel?.checksums?.length ? (
+          {rel?.isoSha256 ? (
             <details className="mt-4 rounded-xl border border-border p-4">
               <summary className="cursor-pointer text-[12.5px] font-semibold text-foreground">
-                Verify the download ({rel.checksums.length} checksum
-                {rel.checksums.length > 1 ? "s" : ""})
+                Verify the finished ISO
               </summary>
-              <div className="mt-3 grid gap-1.5">
-                {rel.checksums.map((c) => (
-                  <div key={c.name} className="min-w-0">
-                    <p className="truncate font-mono text-[11.5px] text-foreground">{c.name}</p>
-                    <p className="truncate font-mono text-[11px] text-muted-foreground">{c.hash}</p>
-                  </div>
-                ))}
-              </div>
+              <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+                This is the checksum of the rejoined {rel.isoName} — the release publishes it
+                against the ISO, not against any part, so it can only be checked once the parts are
+                joined. It is how you know the download is complete.
+              </p>
+              <p className="mt-2 break-all font-mono text-[11px] text-foreground">
+                {rel.isoSha256}
+              </p>
             </details>
           ) : null}
         </div>

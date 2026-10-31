@@ -9,7 +9,7 @@ import {
   OS_NAME,
   OS_RELEASES_URL,
   formatBytes,
-  osRejoinCommand,
+  osFetchScript,
 } from "@/lib/os-download";
 
 type OsAsset = { name: string; url: string; size: number | null };
@@ -21,6 +21,7 @@ type OsData = {
     parts: OsAsset[];
     split: boolean;
     isoName: string | null;
+    isoSha256: string | null;
     totalBytes: number | null;
   } | null;
   error?: string;
@@ -59,21 +60,24 @@ function useOsRelease(): OsData | null {
 /**
  * The compact OS download card.
  *
- * The whole image is one button. When the release publishes the ISO in parts
- * (GitHub caps an asset at 2 GB) the card says so and hands over the rejoin
- * command, because a part on its own is not bootable — offering `part00` as if
- * it were the image would be the one genuinely misleading thing this card could
- * do.
+ * A single-file release is one button. The current image is not one file: it is
+ * over GitHub's 2 GB per-asset limit, so it is published as parts and there is no
+ * ISO to click at all. The card says that in as many words and hands over one
+ * command that fetches every part, rejoins them and checks the published hash —
+ * because "why is this part00 and not an ISO" is the question a visitor actually
+ * arrives with, and a bare `cat` line does not answer it.
  */
 export function OsDownloadCard({ className = "" }: { className?: string }) {
   const os = useOsRelease();
   const rel = os?.release ?? null;
   const parts = rel?.parts ?? [];
-  const rejoin =
+  const script =
     rel?.split && rel.isoName
-      ? osRejoinCommand(
+      ? osFetchScript(
+          rel.tag,
           rel.isoName,
           parts.map((p) => p.name),
+          rel.isoSha256,
         )
       : "";
 
@@ -97,23 +101,30 @@ export function OsDownloadCard({ className = "" }: { className?: string }) {
         {rel?.totalBytes ? ` · ${formatBytes(rel.totalBytes)}` : ""}
       </p>
 
+      {/* The one question a visitor actually has. The latest image is over
+          GitHub's 2 GB per-asset limit, so it is published as parts and there is
+          no single file to click. Saying that plainly — and handing over one
+          command that fetches, rejoins and checks them — is the difference
+          between "the site is broken" and "this is how a big image ships". */}
       {rel?.split && (
         <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-3.5">
           <p className="text-[12.5px] font-semibold text-foreground">
-            Published in {parts.length} parts — download all of them
+            One command gets the whole ISO
           </p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
-            GitHub caps an asset at 2 GB, so the ISO is cut. Rejoin the parts before booting.
+            {rel.isoName} is {formatBytes(rel.totalBytes)}, over GitHub&apos;s 2 GB per-file limit,
+            so it is published as {parts.length} parts. This downloads every part, rejoins them into
+            the ISO and verifies it.
           </p>
           <div className="mt-2.5">
-            <CommandBox code={rejoin} label="copy command" />
+            <CommandBox code={script} label="copy command" />
           </div>
         </div>
       )}
 
       <div className="mt-auto flex flex-wrap items-center gap-3 pt-5">
         <ButtonAnchor href={`/api/download/${OS_ID}`} external={false} variant="primary" size="sm">
-          {rel?.split ? "Download part 1 of " + parts.length : "Download .iso"}
+          {rel?.split ? `Download part 1 of ${parts.length}` : "Download .iso"}
         </ButtonAnchor>
         <ButtonAnchor href={OS_RELEASES_URL} variant="glass" size="sm">
           Release notes

@@ -64,6 +64,16 @@ export type OsRelease = {
   split: boolean;
   /** The name the parts rejoin to, e.g. `ZyraxonOS-9.0.0-amd64.iso`. */
   isoName: string | null;
+  /**
+   * The checksum of the *rejoined* image, not of any one part.
+   *
+   * A split release publishes its checksum against the ISO the parts rebuild —
+   * `SHA256SUMS` names `…amd64.iso` and no part at all — so the hash can only be
+   * checked after the rejoin. It is the one way a visitor can tell a complete
+   * download from a truncated one, which is exactly what a part download makes
+   * easy to get wrong.
+   */
+  isoSha256: string | null;
   /** The whole image's size when it is one file, or the sum of the parts. */
   totalBytes: number | null;
   /** Published checksums, when the release carries them. */
@@ -181,6 +191,13 @@ async function computeOs(): Promise<OsResolved> {
     if (!image) continue;
 
     const shot = assets.find((a) => IMAGE.test(a.name));
+    const checksums = await readChecksums(OS_REPO, tag, assets);
+    // The published checksum names the rejoined ISO, never a part, so it is
+    // matched on the basename — one release wrote `build/ZyraxonOS-1.0-amd64.iso`.
+    const isoBase = image.isoName?.split("/").pop() ?? null;
+    const isoSha256 = isoBase
+      ? (checksums.find((c) => c.name.split("/").pop() === isoBase)?.hash ?? null)
+      : null;
     return {
       repo: OS_REPO,
       latest: { tag, url: releaseUrl(OS_REPO, tag), repo: OS_REPO },
@@ -188,7 +205,8 @@ async function computeOs(): Promise<OsResolved> {
         tag,
         releaseUrl: releaseUrl(OS_REPO, tag),
         ...image,
-        checksums: await readChecksums(OS_REPO, tag, assets),
+        isoSha256,
+        checksums,
         screenshot: shot
           ? { name: shot.name, url: downloadUrl(OS_REPO, tag, shot.name), size: shot.size }
           : null,
